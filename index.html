@@ -1409,6 +1409,15 @@ function getDemoTokens() {
 async function fetchTokens() {
   const loadEl = document.getElementById('scanner-loading');
   const rowsEl = document.getElementById('token-rows');
+
+  // Timeout de sécurité — si le fetch prend >15s, afficher un message
+  const timeout = setTimeout(() => {
+    if(loadEl && loadEl.style.display !== 'none') {
+      loadEl.innerHTML = `<div style="font-family:Space Mono,monospace;font-size:10px;color:var(--muted2);padding:20px;text-align:center;">
+        ⌛ Connexion lente… actualisation dans 30s</div>`;
+    }
+  }, 15000);
+
   try {
     let pairs = [];
     let isDemo = false;
@@ -1467,6 +1476,10 @@ async function fetchTokens() {
     const addrs = (Array.isArray(pairs)?pairs:[]).filter(p=>p?.baseToken).map(p=>p.baseToken.address);
     await fetchKOLMentions(addrs);
 
+    // Cacher le loading dès qu'on a des données (même vides)
+    clearTimeout(timeout);
+    if(loadEl) loadEl.style.display = 'none';
+
     // Scorer tous les tokens qui passent les hard filters
     const allScored = (Array.isArray(pairs)?pairs:[])
       .filter(p=>p&&p.baseToken)
@@ -1487,8 +1500,6 @@ async function fetchTokens() {
       scored = allScored.slice(0,5);
       isFallback = true;
     }
-
-    loadEl.style.display='none';
 
     if(!scored.length) {
       rowsEl.innerHTML=`<div style="padding:60px 20px;text-align:center;">
@@ -1521,8 +1532,10 @@ async function fetchTokens() {
     renderTokenRows(scored);
 
   } catch(err) {
+    clearTimeout(timeout);
     const loadEl2 = document.getElementById('scanner-loading');
-    if(loadEl2) loadEl2.innerHTML=`<div style="font-family:Space Mono,monospace;font-size:10px;color:var(--muted2);padding:32px;text-align:center;">⚠ Erreur de chargement.<br><span style="color:var(--green);margin-top:6px;display:block;">Actualisation dans 30s…</span></div>`;
+    if(loadEl2) loadEl2.innerHTML=`<div style="font-family:Space Mono,monospace;font-size:10px;color:var(--muted2);padding:32px;text-align:center;">⚠ Erreur: ${err.message||err}<br><span style="color:var(--green);margin-top:6px;display:block;">Actualisation dans 30s…</span></div>`;
+    console.error('fetchTokens error:', err);
   }
 }
 
