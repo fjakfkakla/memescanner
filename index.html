@@ -1006,13 +1006,15 @@ function hardFilter(p) {
   if (c24 > 9000)    return 'x90+ déjà';
 
   // ── FEES MINIMUM selon McAp ───────────────────────────────
-  // Vérifie que l'activité de trading est réelle, pas juste un pump initial
-  const feesSOL = estimateFeesSol(vol24);
-  if      (mcap >= 1000000 && feesSOL < 5)   return `fees trop bas (${ feesSOL.toFixed(1)}SOL, need 5+)`;
-  else if (mcap >= 500000  && feesSOL < 3)   return `fees trop bas (${feesSOL.toFixed(1)}SOL, need 3+)`;
-  else if (mcap >= 200000  && feesSOL < 1.5) return `fees trop bas (${feesSOL.toFixed(1)}SOL, need 1.5+)`;
-  else if (mcap >= 50000   && feesSOL < 0.5) return `fees trop bas (${feesSOL.toFixed(1)}SOL, need 0.5+)`;
-
+  // Filtre l'inactivité réelle — seuils assouplis pour laisser passer les early gems
+  // On n'applique le filtre fees que si mcap > 0 (données disponibles)
+  if (mcap > 0) {
+    const feesSOL = estimateFeesSol(vol24);
+    if      (mcap >= 1000000 && feesSOL < 3)   return `fees trop bas (${feesSOL.toFixed(1)}SOL, need 3+)`;
+    else if (mcap >= 500000  && feesSOL < 1.5) return `fees trop bas (${feesSOL.toFixed(1)}SOL, need 1.5+)`;
+    else if (mcap >= 200000  && feesSOL < 0.8) return `fees trop bas (${feesSOL.toFixed(1)}SOL, need 0.8+)`;
+    else if (mcap >= 50000   && feesSOL < 0.2) return `fees trop bas (${feesSOL.toFixed(1)}SOL, need 0.2+)`;
+  }
   // ── DUMP EN COURS ─────────────────────────────────────────
   const sr1h = (b1h+s1h)>0 ? s1h/(b1h+s1h) : 0;
   if (sr1h > 0.72) return 'dump 1h (sells>72%)';
@@ -1053,11 +1055,11 @@ function hardFilter(p) {
   if (c24>200 && c6h>30 && c1h<-5) return 'escalier cassé → dump';
 
   // ── ANTI-RANGE : EXPANSION VOL REQUISE ───────────────────
-  // Si token >4h ET vol1h < 50% de la moyenne horaire = range sans intérêt
-  // = consolidation plate sans acheteurs frais
-  if (age>4 && vol24>0) {
-    const avgHourly = vol24/Math.min(age,24);
-    if (vol1h < avgHourly*0.4) return 'range plat (vol1h<40% avg)';
+  // Seulement si token >6h ET volume 1h quasi mort (< 20% de la moyenne)
+  // On ne rejette pas les tokens récents qui peuvent juste être en consolidation courte
+  if (age > 6 && vol24 > 0) {
+    const avgHourly = vol24 / Math.min(age, 24);
+    if (vol1h < avgHourly * 0.2) return 'range mort (vol1h<20% avg, pas de continuation)';
   }
 
   // ── MCAP/LIQ DISPROPORTIONNÉ ─────────────────────────────
@@ -1427,51 +1429,61 @@ async function fetchTokens() {
       const r1 = await fetch('https://api.dexscreener.com/token-profiles/latest/v1',{headers:{Accept:'application/json'}});
       if(r1.ok) {
         const d1 = await r1.json();
-        const solToks = (Array.isArray(d1)?d1:[]).filter(t=>t.chainId==='solana').slice(0,25);
+        const solToks = (Array.isArray(d1)?d1:[]).filter(t=>t.chainId==='solana').slice(0,30);
         if(solToks.length>0) {
           const addrs = solToks.map(t=>t.tokenAddress).join(',');
           const r2 = await fetch(`https://api.dexscreener.com/tokens/v1/solana/${addrs}`);
-          if(r2.ok) pairs = await r2.json();
+          if(r2.ok) {
+            const raw2 = await r2.json();
+            // /tokens/v1 peut retourner soit un array direct soit {pairs:[...]}
+            pairs = Array.isArray(raw2) ? raw2 : (raw2?.pairs || raw2?.data || []);
+          }
         }
       }
-    } catch(e) {}
+    } catch(e) { console.warn('Fetch 1 error:',e.message); }
 
     // Essai 2 — Top boosts fallback
-    if(!pairs.length) {
+    if(!Array.isArray(pairs)||!pairs.length) {
       try {
         const rb = await fetch('https://api.dexscreener.com/token-boosts/top/v1');
         if(rb.ok) {
           const db = await rb.json();
-          const sb = (Array.isArray(db)?db:[]).filter(t=>t.chainId==='solana').slice(0,15);
+          const sb = (Array.isArray(db)?db:[]).filter(t=>t.chainId==='solana').slice(0,20);
           if(sb.length>0) {
             const ab = sb.map(t=>t.tokenAddress).join(',');
             const rp = await fetch(`https://api.dexscreener.com/tokens/v1/solana/${ab}`);
-            if(rp.ok) pairs = await rp.json();
+            if(rp.ok) {
+              const rawp = await rp.json();
+              pairs = Array.isArray(rawp) ? rawp : (rawp?.pairs || rawp?.data || []);
+            }
           }
         }
-      } catch(e) {}
+      } catch(e) { console.warn('Fetch 2 error:',e.message); }
     }
 
     // Essai 3 — Proxy allorigins (contourne CORS en local)
-    if(!pairs.length) {
+    if(!Array.isArray(pairs)||!pairs.length) {
       try {
         const proxy = 'https://api.allorigins.win/raw?url=';
         const url = encodeURIComponent('https://api.dexscreener.com/token-boosts/top/v1');
         const rp = await fetch(proxy+url);
         if(rp.ok) {
           const dp = await rp.json();
-          const sp = (Array.isArray(dp)?dp:[]).filter(t=>t.chainId==='solana').slice(0,12);
+          const sp = (Array.isArray(dp)?dp:[]).filter(t=>t.chainId==='solana').slice(0,15);
           if(sp.length>0) {
             const ap = sp.map(t=>t.tokenAddress).join(',');
             const rr = await fetch(proxy+encodeURIComponent(`https://api.dexscreener.com/tokens/v1/solana/${ap}`));
-            if(rr.ok) pairs = await rr.json();
+            if(rr.ok) {
+              const rawrr = await rr.json();
+              pairs = Array.isArray(rawrr) ? rawrr : (rawrr?.pairs || rawrr?.data || []);
+            }
           }
         }
-      } catch(e) {}
+      } catch(e) { console.warn('Fetch 3 error:',e.message); }
     }
 
-    // Fallback — si tout échoue (CORS local)
-    // Pas de démo, on affiche juste un message d'attente
+    // S'assurer que pairs est toujours un tableau propre
+    if(!Array.isArray(pairs)) pairs = [];
 
     const addrs = (Array.isArray(pairs)?pairs:[]).filter(p=>p?.baseToken).map(p=>p.baseToken.address);
     await fetchKOLMentions(addrs);
