@@ -647,6 +647,8 @@ function createSession(code) {
 }
 
 let isUnlocked = false;
+let isAdminMode = false;
+let lastScored = []; // pour le debug panel
 
 // ═══════════════════════════════════════════════════════════════
 // MODAL / UNLOCK
@@ -728,10 +730,100 @@ function checkPw() {
     document.getElementById('adminPwScreen').style.display = 'none';
     document.getElementById('adminContent').style.display = 'block';
     renderCodes();
+    // Activer mode debug — boutons DEBUG apparaissent sur chaque token
+    isAdminMode = true;
+    closeAdmin();
+    renderTokenRows(lastScored); // re-render avec boutons debug
   } else {
     document.getElementById('pwErr').style.display = 'block';
     document.getElementById('adminPwInp').value = '';
   }
+}
+
+// ── DEBUG PANEL (admin only) ──────────────────────────────
+function showDebug(idx) {
+  const tok = lastScored[idx];
+  if (!tok) return;
+  const rows = tok.debugRows || [];
+  const bd = tok.breakdown || {};
+  let html = `
+    <div id="debug-overlay" onclick="if(event.target===this)closeDebug()" style="
+      position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:9999;
+      display:flex;align-items:center;justify-content:center;padding:20px;">
+      <div style="background:#0f1117;border:1px solid #2a2d3a;border-radius:12px;
+        width:min(540px,100%);max-height:85vh;overflow-y:auto;padding:24px;position:relative;">
+        <button onclick="closeDebug()" style="position:absolute;top:14px;right:14px;
+          background:none;border:none;color:#666;font-size:18px;cursor:pointer;">✕</button>
+        <div style="font-family:Syne,sans-serif;font-size:16px;font-weight:700;
+          color:#fff;margin-bottom:4px;">${tok.baseToken?.symbol} — Score Debug</div>
+        <div style="font-family:Space Mono,monospace;font-size:10px;color:#666;margin-bottom:16px;">
+          ${tok.baseToken?.address?.slice(0,20)}…</div>
+
+        <!-- Breakdown categories -->
+        <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:20px;">
+          ${[['W',bd.wallet,25,'#7b7bff'],['T',bd.trading,25,'#00e676'],['L',bd.liquidity,15,'#ffd32a'],['M',bd.momentum,20,'#ff6b35'],['S',bd.social,15,'#ff4f9a']].map(([k,v,max,col])=>`
+            <div style="background:rgba(255,255,255,.04);border-radius:8px;padding:10px;text-align:center;">
+              <div style="font-family:Space Mono,monospace;font-size:9px;color:#666;margin-bottom:4px;">${k==='W'?'WALLET':k==='T'?'TRADING':k==='L'?'LIQ':k==='M'?'MOMENTUM':'SOCIAL'}</div>
+              <div style="font-size:20px;font-weight:700;color:${col};font-family:Syne,sans-serif;">${v||0}</div>
+              <div style="font-family:Space Mono,monospace;font-size:8px;color:#444;">/ ${max}</div>
+              <div style="height:3px;background:#1a1d27;border-radius:2px;margin-top:6px;">
+                <div style="height:100%;width:${Math.round((v||0)/max*100)}%;background:${col};border-radius:2px;"></div>
+              </div>
+            </div>`).join('')}
+        </div>
+
+        <!-- Score total -->
+        <div style="background:rgba(0,230,118,.06);border:1px solid rgba(0,230,118,.2);
+          border-radius:8px;padding:12px;text-align:center;margin-bottom:16px;">
+          <span style="font-family:Syne,sans-serif;font-size:28px;font-weight:800;color:#00e676;">${tok.score}</span>
+          <span style="font-family:Space Mono,monospace;font-size:12px;color:#666;">/100 — ${tok.label}</span>
+        </div>
+
+        <!-- Détail critères -->
+        <div style="font-family:Space Mono,monospace;font-size:9px;color:#666;
+          text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;">Détail par critère</div>
+        <div style="border:1px solid #1e2130;border-radius:8px;overflow:hidden;">
+          ${rows.map((r,i)=>{
+            const isTot = r.k.includes('TOTAL');
+            const pct   = r.max>0 ? r.pts/r.max : 0;
+            const col   = isTot ? '#00e676' : pct>=0.7?'#00e676':pct>=0.4?'#ffd32a':'#ff4757';
+            return `<div style="display:grid;grid-template-columns:1fr auto auto;gap:8px;
+              padding:7px 12px;${i%2===0?'background:rgba(255,255,255,.02)':''}
+              ${isTot?'border-top:1px solid #2a2d3a;background:rgba(0,230,118,.04);':''}">
+              <div style="color:${isTot?'#fff':'#ccc'};font-size:${isTot?'10':'9'}px;
+                font-weight:${isTot?'600':'400'}">${r.k}</div>
+              <div style="color:#555;font-size:8px;text-align:right;margin-top:1px;">${r.v}</div>
+              <div style="color:${col};font-weight:600;font-size:10px;text-align:right;min-width:32px;">
+                ${r.pts}${r.max?'<span style="color:#333">/${r.max}</span>':''}</div>
+            </div>`;
+          }).join('')}
+        </div>
+
+        <!-- Raw data -->
+        <details style="margin-top:12px;">
+          <summary style="font-family:Space Mono,monospace;font-size:9px;color:#555;cursor:pointer;">
+            ▶ Données brutes DexScreener</summary>
+          <pre style="font-family:Space Mono,monospace;font-size:8px;color:#444;margin-top:8px;
+            white-space:pre-wrap;word-break:break-all;">${JSON.stringify({
+              liq: tok.liquidity?.usd,
+              vol24: tok.volume?.h24, vol6h: tok.volume?.h6, vol1h: tok.volume?.h1,
+              c24: tok.priceChange?.h24, c6h: tok.priceChange?.h6, c1h: tok.priceChange?.h1,
+              mcap: tok.marketCap,
+              buys24: tok.txns?.h24?.buys, sells24: tok.txns?.h24?.sells,
+              buys1h: tok.txns?.h1?.buys, sells1h: tok.txns?.h1?.sells,
+              pairAge: `${((Date.now()-(tok.pairCreatedAt||Date.now()))/3600000).toFixed(1)}h`,
+              socials: tok.info?.socials?.length, websites: tok.info?.websites?.length
+            }, null, 2)}</pre>
+        </details>
+      </div>
+    </div>`;
+  const div = document.createElement('div');
+  div.id = 'debug-modal-wrap';
+  div.innerHTML = html;
+  document.body.appendChild(div);
+}
+function closeDebug() {
+  document.getElementById('debug-modal-wrap')?.remove();
 }
 function changePw() {
   const v = document.getElementById('newPwInp').value.trim();
@@ -872,30 +964,128 @@ async function fetchKOLMentions(addrs) {
 }
 
 // ─────────────────────────────────────────────────────────────
-// HARD FILTERS  (reject before scoring)
-// top10 > 45% | liq < 8k | bundle > 5 | dev_alloc > 15%
+// ANTI-RUG FILTERS — rejet immédiat avant scoring
+// Détecte les patterns de rug avec les données DexScreener disponibles
 // ─────────────────────────────────────────────────────────────
 function hardFilter(p) {
-  const liq     = p.liquidity?.usd || 0;
-  const buys    = p.txns?.h24?.buys  || 0;
-  const sells   = p.txns?.h24?.sells || 0;
-  const buyRatio= (buys+sells)>0 ? buys/(buys+sells) : 0;
-  const age     = (Date.now()-(p.pairCreatedAt||Date.now()))/3600000;
-  const c24     = p.priceChange?.h24||0;
+  const liq      = p.liquidity?.usd    || 0;
+  const vol24    = p.volume?.h24       || 0;
+  const vol1h    = p.volume?.h1        || 0;
+  const vol5m    = p.volume?.m5        || 0;
+  const buys24   = p.txns?.h24?.buys   || 0;
+  const sells24  = p.txns?.h24?.sells  || 0;
+  const buys1h   = p.txns?.h1?.buys    || 0;
+  const sells1h  = p.txns?.h1?.sells   || 0;
+  const buys5m   = p.txns?.m5?.buys    || 0;
+  const sells5m  = p.txns?.m5?.sells   || 0;
+  const c24      = p.priceChange?.h24  || 0;
+  const c6h      = p.priceChange?.h6   || 0;
+  const c1h      = p.priceChange?.h1   || 0;
+  const c5m      = p.priceChange?.m5   || 0;
+  const age      = (Date.now()-(p.pairCreatedAt||Date.now()))/3600000;
+  const mcap     = p.marketCap         || 0;
+  const fdv      = p.fdv               || 0;
 
-  if (liq < 8000)        return 'liq<8k';
-  if (liq > 5000000)     return 'liq>5M';
-  if (c24 < 0)           return 'dumping';
-  if (c24 > 8000)        return 'x80+déjà';
-  if (age > 72)          return '>72h';
-  if (buyRatio < 0.40)   return 'sell>buy';
-  // top10 & bundle checks: best-effort from DexScreener data
-  // (full check requires Birdeye/Helius — approximated here)
-  return null; // pass
+  // ── FILTRES DE BASE ──────────────────────────────────────
+  if (liq < 8000)      return 'liq<$8K';
+  if (liq > 5000000)   return 'liq>$5M';
+  if (age > 72)        return '>72h';
+  if (c24 > 9000)      return 'x90+ déjà';
+
+  // ── PATTERN RUG #1 : DUMP EN COURS ───────────────────────
+  // Sell pressure massive sur dernière heure
+  const sellRatio1h = (buys1h+sells1h)>0 ? sells1h/(buys1h+sells1h) : 0;
+  if (sellRatio1h > 0.72) return 'dump 1h (sells>72%)';
+
+  // Sell pressure sur 5 dernières minutes (rug actif)
+  const sellRatio5m = (buys5m+sells5m)>5 ? sells5m/(buys5m+sells5m) : 0;
+  if (sellRatio5m > 0.80) return 'dump 5m actif';
+
+  // Price crash récent : -40% sur 1h = rug en cours
+  if (c1h < -40) return 'crash -40% 1h';
+
+  // Price crash sur 5m : -25% flash = rug actif
+  if (c5m < -25) return 'flash crash 5m';
+
+  // ── PATTERN RUG #2 : PUMP & DUMP ─────────────────────────
+  // Token a fait +500% sur 24h MAIS dernière heure negative = distribution
+  if (c24 > 500 && c1h < -10) return 'pump&dump pattern';
+
+  // Token a fait +200% sur 6h MAIS 1h en rouge = dip forcé
+  if (c6h > 200 && c1h < -20) return 'reversal après pump';
+
+  // ── PATTERN RUG #3 : LIQUIDITÉ DISPARAÎT ─────────────────
+  // Liq/mcap ratio trop bas = LP pas proportionnel = risque retrait LP
+  if (mcap > 0 && liq/mcap < 0.02) return 'liq/mcap<2% (LP risk)';
+
+  // Vol24 ridiculement élevé vs liq = manipulation wash trading
+  const vlr = liq > 0 ? vol24/liq : 0;
+  if (vlr > 80) return 'vol/liq>80x (wash)';
+
+  // ── PATTERN RUG #4 : ACTIVITÉ SUSPECTE ───────────────────
+  // Sell 24h > buy 24h = distribution nette
+  const sellRatio24 = (buys24+sells24)>0 ? sells24/(buys24+sells24) : 0;
+  if (sellRatio24 > 0.65) return 'sells>65% 24h';
+
+  // Ratio buys/sells trop parfait = bots ou fake volume
+  // Si exactement 50/50 sur beaucoup de trades = wash trading
+  const exactHalf = (buys24+sells24)>200 && Math.abs(buys24-sells24)<5;
+  if (exactHalf) return 'wash trading détecté';
+
+  // ── PATTERN RUG #5 : FDV / MCAP SUSPECT ──────────────────
+  // FDV >> McAp = énorme % de supply pas encore vendu = risque dev dump
+  if (fdv > 0 && mcap > 0 && fdv/mcap > 10) return 'FDV/McAp>10x (supply risk)';
+
+  // ── PATTERN RUG #6 : TOKEN TROP RÉCENT + VOLUME IMMÉDIAT ─
+  if (age < 0.5 && vol1h > 500000) return '<30min+vol>500K (bundle?)';
+  if (age < 1 && c5m > 200) return 'pump<1h (bot launch?)';
+
+  // ── PATTERN RUG #7 : BUNDLE LAUNCH (ta chart) ─────────────
+  // Signature : gros pump au lancement (c24 énorme) MAIS
+  // prix actuel quasi identique au lancement = personne n'a vendu = bundlers hold
+  // = ils vont dump d'un coup
+
+  // Si token < 6h ET c24 > 400% ET c1h très faible = pump initial puis flat = bundle hold
+  if (age < 6 && c24 > 400 && Math.abs(c1h) < 5) return 'bundle hold pattern (flat après pump)';
+
+  // Si vol au lancement très concentré : vol5m >> vol1h/12 = spike initial bots
+  const avgVol5mExpected = (vol1h / 12); // vol moyen par 5min
+  if (vol5m > avgVol5mExpected * 8 && age < 3) return 'vol spike lancement (bots)';
+
+  // ── PATTERN RUG #8 : ESCALIER DE DISTRIBUTION ─────────────
+  // Signature : c24 très fort, c6h correct, c1h faible ou négatif
+  // = le pump est vieux, les early holders distribuent progressivement
+  // Pattern : pump -> flat -> flat -> léger dump (les paliers de ta chart)
+
+  // c24 > 300% mais c6h < 20% = tout le pump est vieux, plus de momentum frais
+  if (c24 > 300 && c6h < 20 && c6h >= 0) return 'distribution escalier (pump>6h old)';
+
+  // c24 fort, c6h moyen, c1h négatif = escalier cassé = début du vrai dump
+  if (c24 > 200 && c6h > 30 && c1h < -5) return 'escalier cassé → dump imminent';
+
+  // ── PATTERN RUG #9 : RATIO VOL/TRADES SUSPECT ─────────────
+  // Peu de trades mais gros volume = quelques gros wallets = concentration = rug risk
+  const totalTrades24 = buys24 + sells24;
+  const avgTradeSize = totalTrades24 > 0 ? vol24 / totalTrades24 : 0;
+  // Trade moyen > $2000 = wallet(s) dominants = pas organique
+  if (avgTradeSize > 2000 && totalTrades24 < 100) return 'trades concentrés (whale control)';
+
+  // ── PATTERN RUG #10 : MCAP / LIQ DISPROPORTIONNÉ ──────────
+  // McAp $800K+ mais liq < $20K = énorme illiquidité = 1 vente = crash
+  if (mcap > 800000 && liq < 20000) return 'mcap/liq dangereux ($800K+, liq<$20K)';
+  if (mcap > 300000 && liq < 10000) return 'mcap/liq dangereux ($300K+, liq<$10K)';
+
+  return null; // ✅ passe tous les filtres
 }
 
 // ─────────────────────────────────────────────────────────────
-// SCORING MODEL v4 — 100 pts total
+// SCORING MODEL v5 — recalibré pour données DexScreener réelles
+// Bugs v4 corrigés :
+//  - Dev age donnait 0pt pour tokens <7j (100% des memecoins)
+//  - Bundle proxy impossible → remplacé par avg trade size
+//  - LP pts bloqués sur tokens récents → critère temps ajusté
+//  - Max théorique ~45pts → maintenant 100pts atteignables
+// Distribution : W25 + T25 + L15 + M20 + S15 = 100pts
 // ─────────────────────────────────────────────────────────────
 function scoreToken(p) {
   const filterResult = hardFilter(p);
@@ -912,205 +1102,203 @@ function scoreToken(p) {
   const socials  = p.info?.socials     || [];
   const websites = p.info?.websites    || [];
   const age      = (Date.now()-(p.pairCreatedAt||Date.now()))/3600000;
-  const buys     = p.txns?.h24?.buys   || 0;
-  const sells    = p.txns?.h24?.sells  || 0;
-  const txns1h   = (p.txns?.h1?.buys||0)+(p.txns?.h1?.sells||0);
-  const buyRatio = (buys+sells)>0 ? buys/(buys+sells) : 0;
-  const avgBuySz = vol24>0&&buys>0 ? vol24/buys : 0; // avg buy size USD
+  const buys24   = p.txns?.h24?.buys   || 0;
+  const sells24  = p.txns?.h24?.sells  || 0;
+  const buys1h   = p.txns?.h1?.buys    || 0;
+  const sells1h  = p.txns?.h1?.sells   || 0;
+  const txns1h   = buys1h + sells1h;
+  const buyRatio24 = (buys24+sells24)>0 ? buys24/(buys24+sells24) : 0.5;
+  const buyRatio1h = (buys1h+sells1h)>0 ? buys1h/(buys1h+sells1h) : 0.5;
+  const avgTrade = (buys24+sells24)>0 ? vol24/(buys24+sells24) : 9999;
+  const avgBuySz = buys24>0 ? vol24/buys24 : 0;
   const avgVol1h = vol24/24;
   const liqMcap  = mcap>0 ? liq/mcap : 0;
+  const vlr      = liq>0 ? vol24/liq : 0;
 
   const indicators = [];
+  const debugRows  = [];
   const breakdown  = {};
   let score = 0;
 
-  // ── 1. WALLET QUALITY (30 pts) ───────────────────────────
-  // DexScreener doesn't expose dev_wallet_age / bundle_wallets directly.
-  // We approximate from available signals + info fields.
+  // ── CAT 1 : WALLET QUALITY (25pts) ───────────────────────
   let wScore = 0;
 
-  // Dev allocation proxy: if info has no suspicious concentration → assume OK
-  // Approximation: if top pair is the only one, likely no multi-wallet dump
-  const hasInfo = p.info && (p.info.socials?.length || p.info.websites?.length);
+  // [W1] Holders proxy via vlr (8pts)
+  if      (vlr >= 1  && vlr <= 8)  { wScore+=8; indicators.push({label:'Holders sains',ok:true}); debugRows.push({k:'W1 Holders',v:`vlr ${vlr.toFixed(1)}x`,pts:8,max:8}); }
+  else if (vlr > 8   && vlr <= 20) { wScore+=5; indicators.push({label:'Holders ~',ok:true});      debugRows.push({k:'W1 Holders',v:`vlr ${vlr.toFixed(1)}x`,pts:5,max:8}); }
+  else if (vlr > 20  && vlr <= 40) { wScore+=2;                                                    debugRows.push({k:'W1 Holders',v:`vlr ${vlr.toFixed(1)}x`,pts:2,max:8}); }
+  else                              {                                                               debugRows.push({k:'W1 Holders',v:`vlr ${vlr.toFixed(1)}x`,pts:0,max:8}); }
 
-  // Dev wallet age proxy (infer from pair age — older pair = devs held longer)
-  if      (age >= 90*24) { wScore+=6; indicators.push({label:'Dev hold 90d+',ok:true}); }
-  else if (age >= 30*24) { wScore+=4; indicators.push({label:'Dev hold 30d+',ok:true}); }
-  else if (age >= 7*24)  { wScore+=2; indicators.push({label:'Dev hold 7d+',ok:true}); }
+  // [W2] Bundle proxy via avg trade size (7pts)
+  if      (avgTrade < 150  && buys24 >= 20) { wScore+=7; indicators.push({label:'No bundle ✓',ok:true}); debugRows.push({k:'W2 Bundle',v:`$${avgTrade.toFixed(0)}/trade`,pts:7,max:7}); }
+  else if (avgTrade < 500  && buys24 >= 10) { wScore+=5; indicators.push({label:'Bundle low',ok:true});  debugRows.push({k:'W2 Bundle',v:`$${avgTrade.toFixed(0)}/trade`,pts:5,max:7}); }
+  else if (avgTrade < 1500 && buys24 >= 5)  { wScore+=2;                                                 debugRows.push({k:'W2 Bundle',v:`$${avgTrade.toFixed(0)}/trade`,pts:2,max:7}); }
+  else                                       { indicators.push({label:'Bundle?',ok:false});               debugRows.push({k:'W2 Bundle',v:`$${avgTrade.toFixed(0)}/trade`,pts:0,max:7}); }
 
-  // Top10 concentration proxy via vol/liq ratio sustainability
-  // Low vol-liq ratio = holders not dumping = good concentration
-  const vlr = liq>0 ? vol24/liq : 0;
-  if      (vlr <= 5)  { wScore+=6; indicators.push({label:'Holders sains',ok:true}); }
-  else if (vlr <= 12) { wScore+=3; indicators.push({label:'Holders ~',ok:true}); }
-  else                { indicators.push({label:'Holders risk',ok:false}); }
+  // [W3] Smart money buy size (5pts)
+  if      (avgBuySz >= 20  && avgBuySz <= 800) { wScore+=5; indicators.push({label:'Smart $✓',ok:true}); debugRows.push({k:'W3 Smart size',v:`$${avgBuySz.toFixed(0)} avg`,pts:5,max:5}); }
+  else if (avgBuySz >= 5   && avgBuySz < 20)   { wScore+=3;                                               debugRows.push({k:'W3 Smart size',v:`$${avgBuySz.toFixed(0)} avg`,pts:3,max:5}); }
+  else if (avgBuySz > 800  && avgBuySz <= 3000){ wScore+=2;                                               debugRows.push({k:'W3 Smart size',v:`$${avgBuySz.toFixed(0)} avg`,pts:2,max:5}); }
+  else                                          {                                                          debugRows.push({k:'W3 Smart size',v:`$${avgBuySz.toFixed(0)}`,pts:0,max:5}); }
 
-  // Bundle detection proxy: if txns spread across many txns = no bundle
-  const txnSpread = (buys+sells)>0 ? vol24/(buys+sells) : 0;
-  if      (txnSpread < 500 && buys > 50)  { wScore+=6; indicators.push({label:'No bundle ✓',ok:true}); }
-  else if (txnSpread < 2000 && buys > 20) { wScore+=2; indicators.push({label:'Bundle low',ok:true}); }
-  else                                    { indicators.push({label:'Bundle?',ok:false}); }
+  // [W4] Wallet velocity — buys/heure (5pts)
+  const buysPerHour = age>0 ? buys24/Math.min(age,24) : 0;
+  if      (buysPerHour >= 15) { wScore+=5; indicators.push({label:'Wallet vel ✓',ok:true}); debugRows.push({k:'W4 Wallet vel',v:`${buysPerHour.toFixed(0)}/h`,pts:5,max:5}); }
+  else if (buysPerHour >= 5)  { wScore+=3;                                                   debugRows.push({k:'W4 Wallet vel',v:`${buysPerHour.toFixed(0)}/h`,pts:3,max:5}); }
+  else if (buysPerHour >= 2)  { wScore+=1;                                                   debugRows.push({k:'W4 Wallet vel',v:`${buysPerHour.toFixed(0)}/h`,pts:1,max:5}); }
+  else                         {                                                              debugRows.push({k:'W4 Wallet vel',v:`${buysPerHour.toFixed(0)}/h`,pts:0,max:5}); }
 
-  // Smart wallet proxy: large natural buys early (whales in before pump)
-  if      (avgBuySz >= 300 && avgBuySz <= 3000) { wScore+=6; indicators.push({label:'Smart $✓',ok:true}); }
-  else if (avgBuySz >= 100 && avgBuySz < 300)   { wScore+=3; indicators.push({label:'Smart $~',ok:true}); }
-
-  // Early quality proxy: high buy count relative to age = organic growth
-  const buysPerHour = age>0 ? buys/age : 0;
-  if (buysPerHour >= 10) { wScore+=3; indicators.push({label:'Wallet vel ✓',ok:true}); }
-  else if (buysPerHour >= 4) { wScore+=2; }
-
-  breakdown.wallet = Math.min(30, wScore);
+  breakdown.wallet = Math.min(25, wScore);
   score += breakdown.wallet;
 
-  // ── 2. TRADING BEHAVIOR (20 pts) ────────────────────────
+  // ── CAT 2 : TRADING BEHAVIOR (25pts) ─────────────────────
   let tScore = 0;
 
-  // Buy pressure: 60%=+3, 70%=+5
-  if      (buyRatio >= 0.70) { tScore+=5; indicators.push({label:`Buy ${Math.round(buyRatio*100)}% ✓✓`,ok:true}); }
-  else if (buyRatio >= 0.60) { tScore+=3; indicators.push({label:`Buy ${Math.round(buyRatio*100)}% ✓`,ok:true}); }
-  else if (buyRatio >= 0.50) { tScore+=1; indicators.push({label:`Buy ${Math.round(buyRatio*100)}%`,ok:true}); }
-  else                       { indicators.push({label:`Sell pressure`,ok:false}); }
+  // [T1] Buy pressure 24h (8pts)
+  if      (buyRatio24 >= 0.70) { tScore+=8; indicators.push({label:`Buy ${Math.round(buyRatio24*100)}%✓✓`,ok:true}); debugRows.push({k:'T1 Buy 24h',v:`${Math.round(buyRatio24*100)}%`,pts:8,max:8}); }
+  else if (buyRatio24 >= 0.60) { tScore+=5; indicators.push({label:`Buy ${Math.round(buyRatio24*100)}%✓`,ok:true});  debugRows.push({k:'T1 Buy 24h',v:`${Math.round(buyRatio24*100)}%`,pts:5,max:8}); }
+  else if (buyRatio24 >= 0.52) { tScore+=2; indicators.push({label:`Buy ${Math.round(buyRatio24*100)}%`,ok:true});   debugRows.push({k:'T1 Buy 24h',v:`${Math.round(buyRatio24*100)}%`,pts:2,max:8}); }
+  else                          {            indicators.push({label:'Sell pressure',ok:false});                       debugRows.push({k:'T1 Buy 24h',v:`${Math.round(buyRatio24*100)}%`,pts:0,max:8}); }
 
-  // Buy size distribution: natural 0.1–1 SOL range (≈$15–$150 at ~$150/SOL)
-  if (avgBuySz >= 10 && avgBuySz <= 500) { tScore+=4; indicators.push({label:'Buy size nat.',ok:true}); }
-  else if (avgBuySz > 0)                 { tScore+=1; }
+  // [T2] Buy pressure 1h (5pts)
+  if      (buyRatio1h >= 0.65) { tScore+=5; debugRows.push({k:'T2 Buy 1h',v:`${Math.round(buyRatio1h*100)}%`,pts:5,max:5}); }
+  else if (buyRatio1h >= 0.52) { tScore+=3; debugRows.push({k:'T2 Buy 1h',v:`${Math.round(buyRatio1h*100)}%`,pts:3,max:5}); }
+  else if (buyRatio1h >= 0.44) { tScore+=1; debugRows.push({k:'T2 Buy 1h',v:`${Math.round(buyRatio1h*100)}%`,pts:1,max:5}); }
+  else                          {            debugRows.push({k:'T2 Buy 1h',v:`${Math.round(buyRatio1h*100)}%`,pts:0,max:5}); }
 
-  // Increasing trade size pattern (vol1h > vol6h/6 > vol24/24)
-  const avgVol6hPerH = vol6h/6;
-  if (vol1h > avgVol6hPerH && avgVol6hPerH > avgVol1h) {
-    tScore+=4; indicators.push({label:'Staircase vol ✓',ok:true});
-  } else if (vol1h > avgVol1h) {
-    tScore+=2; indicators.push({label:'Vol↑',ok:true});
-  }
+  // [T3] Volume acceleration (7pts)
+  const vAcc = avgVol1h>0 ? vol1h/avgVol1h : 0;
+  if      (vAcc >= 3)   { tScore+=7; indicators.push({label:'Vol 🚀',ok:true}); debugRows.push({k:'T3 Vol accel',v:`${vAcc.toFixed(1)}x`,pts:7,max:7}); }
+  else if (vAcc >= 1.5) { tScore+=5; indicators.push({label:'Vol↑↑',ok:true});  debugRows.push({k:'T3 Vol accel',v:`${vAcc.toFixed(1)}x`,pts:5,max:7}); }
+  else if (vAcc >= 0.7) { tScore+=2; indicators.push({label:'Vol↑',ok:true});   debugRows.push({k:'T3 Vol accel',v:`${vAcc.toFixed(1)}x`,pts:2,max:7}); }
+  else                  {                                                         debugRows.push({k:'T3 Vol accel',v:`${vAcc.toFixed(1)}x`,pts:0,max:7}); }
 
-  // No wash trading proxy: healthy txn count vs volume
-  // Wash = very few wallets doing huge vol. Natural = many small txns
-  const washRisk = vol24>0 && buys>0 ? (vol24/buys) : 0;
-  if (washRisk < 200 && buys > 100) { tScore+=4; indicators.push({label:'No wash ✓',ok:true}); }
-  else if (washRisk < 800)          { tScore+=2; }
-  else                              { indicators.push({label:'Wash?',ok:false}); }
+  // [T4] Txns actifs 1h (5pts)
+  if      (txns1h >= 60)  { tScore+=5; indicators.push({label:'Actif ✓✓',ok:true}); debugRows.push({k:'T4 Txns 1h',v:`${txns1h}`,pts:5,max:5}); }
+  else if (txns1h >= 20)  { tScore+=3; indicators.push({label:'Actif ✓',ok:true});  debugRows.push({k:'T4 Txns 1h',v:`${txns1h}`,pts:3,max:5}); }
+  else if (txns1h >= 6)   { tScore+=1;                                               debugRows.push({k:'T4 Txns 1h',v:`${txns1h}`,pts:1,max:5}); }
+  else                    {                                                            debugRows.push({k:'T4 Txns 1h',v:`${txns1h}`,pts:0,max:5}); }
 
-  // Whale entry: at least one trade > 3 SOL (≈$450) proxy via avg buy size
-  if (avgBuySz >= 450) { tScore+=3; indicators.push({label:'Whale entry',ok:true}); }
-  else if (avgBuySz >= 150) { tScore+=1; }
-
-  breakdown.trading = Math.min(20, tScore);
+  breakdown.trading = Math.min(25, tScore);
   score += breakdown.trading;
 
-  // ── 3. LIQUIDITY STRUCTURE (15 pts) ─────────────────────
+  // ── CAT 3 : LIQUIDITY STRUCTURE (15pts) ──────────────────
   let lScore = 0;
 
-  // Liq/mcap ratio sweet spot 6–18%
-  if      (liqMcap >= 0.06 && liqMcap <= 0.18) { lScore+=5; indicators.push({label:'Liq/MC 6-18%✓',ok:true}); }
-  else if (liqMcap >= 0.03 && liqMcap < 0.06)  { lScore+=2; }
-  else if (liqMcap > 0.18)                      { lScore+=1; }
+  // [L1] Taille liq absolue (6pts)
+  if      (liq >= 25000 && liq <= 300000) { lScore+=6; indicators.push({label:'Liq ✓',ok:true}); debugRows.push({k:'L1 Liq',v:`$${(liq/1000).toFixed(0)}K`,pts:6,max:6}); }
+  else if (liq >= 12000 && liq < 25000)   { lScore+=4;                                            debugRows.push({k:'L1 Liq',v:`$${(liq/1000).toFixed(0)}K`,pts:4,max:6}); }
+  else if (liq >= 8000  && liq < 12000)   { lScore+=2;                                            debugRows.push({k:'L1 Liq',v:`$${(liq/1000).toFixed(0)}K`,pts:2,max:6}); }
+  else if (liq > 300000)                  { lScore+=3;                                            debugRows.push({k:'L1 Liq',v:`$${(liq/1000).toFixed(0)}K`,pts:3,max:6}); }
+  else                                    {                                                        debugRows.push({k:'L1 Liq',v:`$${(liq/1000).toFixed(0)}K`,pts:0,max:6}); }
 
-  // Liquidity size sweet spot $20k–$200k
-  if      (liq >= 20000 && liq <= 200000) { lScore+=4; indicators.push({label:'Liq $20K-200K✓',ok:true}); }
-  else if (liq >= 8000  && liq < 20000)   { lScore+=1; }
-  else if (liq > 200000 && liq <= 500000) { lScore+=2; }
+  // [L2] Liq/McAp ratio (5pts)
+  if      (liqMcap >= 0.04 && liqMcap <= 0.30) { lScore+=5; indicators.push({label:'Liq/MC ✓',ok:true}); debugRows.push({k:'L2 Liq/McAp',v:`${(liqMcap*100).toFixed(1)}%`,pts:5,max:5}); }
+  else if (liqMcap >= 0.02 && liqMcap < 0.04)  { lScore+=2;                                               debugRows.push({k:'L2 Liq/McAp',v:`${(liqMcap*100).toFixed(1)}%`,pts:2,max:5}); }
+  else if (liqMcap > 0.30)                      { lScore+=3;                                               debugRows.push({k:'L2 Liq/McAp',v:`${(liqMcap*100).toFixed(1)}%`,pts:3,max:5}); }
+  else                                           {                                                          debugRows.push({k:'L2 Liq/McAp',v:`${(liqMcap*100).toFixed(1)}%`,pts:0,max:5}); }
 
-  // LP burn/lock proxy: if pair is old enough and still liquid = locked
-  if (age >= 24) { lScore+=4; indicators.push({label:'LP stable ✓',ok:true}); }
-  else if (age >= 6) { lScore+=2; }
-
-  // Liquidity growth proxy: vol1h/liq > 0.1 = still attracting LP
-  if (liq>0 && vol1h/liq >= 0.15) { lScore+=2; indicators.push({label:'LP growth ✓',ok:true}); }
+  // [L3] LP stable dans le temps (4pts)
+  if      (age >= 8  && liq >= 15000) { lScore+=4; indicators.push({label:'LP stable ✓',ok:true}); debugRows.push({k:'L3 LP stable',v:`${age.toFixed(0)}h`,pts:4,max:4}); }
+  else if (age >= 2  && liq >= 8000)  { lScore+=3;                                                  debugRows.push({k:'L3 LP stable',v:`${age.toFixed(0)}h`,pts:3,max:4}); }
+  else if (age >= 0.5)                { lScore+=1;                                                  debugRows.push({k:'L3 LP stable',v:`${age.toFixed(1)}h`,pts:1,max:4}); }
+  else                                {                                                              debugRows.push({k:'L3 LP stable',v:`${(age*60).toFixed(0)}min`,pts:0,max:4}); }
 
   breakdown.liquidity = Math.min(15, lScore);
   score += breakdown.liquidity;
 
-  // ── 4. MOMENTUM STRUCTURE (20 pts) ──────────────────────
+  // ── CAT 4 : MOMENTUM STRUCTURE (20pts) ───────────────────
   let mScore = 0;
 
-  // Multi-TF: 1h AND 6h green = +5
-  if (c1h > 0 && c6h > 0) {
-    mScore += (c1h>5 && c6h>10) ? 5 : 3;
-    indicators.push({label:`1h+6h green ✓`,ok:true});
-  }
+  // [M1] Multi-TF score (8pts)
+  let mtf = 0;
+  if (c1h  > 0)  mtf += c1h  > 8  ? 3 : 1;
+  if (c6h  > 0)  mtf += c6h  > 15 ? 3 : 1;
+  if (c24  > 0)  mtf += c24  > 30 ? 2 : 1;
+  mScore += Math.min(8, mtf);
+  if (mtf >= 6) indicators.push({label:'Multi-TF ✓',ok:true});
+  debugRows.push({k:'M1 Multi-TF',v:`1h:${c1h.toFixed(0)}% 6h:${c6h.toFixed(0)}% 24h:${c24.toFixed(0)}%`,pts:Math.min(8,mtf),max:8});
 
-  // Holder growth velocity proxy: txns1h as new holders signal
-  if      (txns1h >= 100) { mScore+=4; indicators.push({label:'Holder vel ✓✓',ok:true}); }
-  else if (txns1h >= 40)  { mScore+=2; indicators.push({label:'Holder vel ✓',ok:true}); }
+  // [M2] Pump 24h qualitatif (6pts)
+  if      (c24 >= 40  && c24 <= 600)  { mScore+=6; indicators.push({label:'Pump sain ✓',ok:true}); debugRows.push({k:'M2 Pump 24h',v:`+${c24.toFixed(0)}%`,pts:6,max:6}); }
+  else if (c24 >= 15  && c24 < 40)    { mScore+=4;                                                  debugRows.push({k:'M2 Pump 24h',v:`+${c24.toFixed(0)}%`,pts:4,max:6}); }
+  else if (c24 >= 5   && c24 < 15)    { mScore+=2;                                                  debugRows.push({k:'M2 Pump 24h',v:`+${c24.toFixed(0)}%`,pts:2,max:6}); }
+  else if (c24 > 600  && c24 <= 2000) { mScore+=3;                                                  debugRows.push({k:'M2 Pump 24h',v:`+${c24.toFixed(0)}%`,pts:3,max:6}); }
+  else                                {                                                              debugRows.push({k:'M2 Pump 24h',v:`${c24.toFixed(0)}%`,pts:0,max:6}); }
 
-  // Staircase pump: c1h and c6h both positive with 6h > 24h/4
-  if (c1h > 0 && c6h > 0 && c6h > c24/4) {
-    mScore+=5; indicators.push({label:'Staircase ✓',ok:true});
-  }
+  // [M3] Momentum 1h positif (3pts)
+  if      (c1h > 8 && c6h > 0)  { mScore+=3; indicators.push({label:'Momentum ✓',ok:true}); debugRows.push({k:'M3 Momentum 1h',v:`+${c1h.toFixed(0)}%`,pts:3,max:3}); }
+  else if (c1h > 0)              { mScore+=2;                                                  debugRows.push({k:'M3 Momentum 1h',v:`+${c1h.toFixed(0)}%`,pts:2,max:3}); }
+  else                           {                                                             debugRows.push({k:'M3 Momentum 1h',v:`${c1h.toFixed(0)}%`,pts:0,max:3}); }
 
-  // Higher lows proxy: c6h positive while c24 not dump
-  if (c6h > 0 && c24 > 0 && c6h < c24) { mScore+=3; indicators.push({label:'Higher lows ✓',ok:true}); }
-
-  // Retrace < 60%: if c1h positive after c24 run = healthy retrace
-  if (c1h > 0 && c1h < c24*0.6) { mScore+=3; }
-  else if (c1h > 0)              { mScore+=1; }
+  // [M4] Age sweet spot (3pts)
+  if      (age >= 1  && age <= 16) { mScore+=3; indicators.push({label:'Fresh gem ✓',ok:true}); debugRows.push({k:'M4 Age',v:`${age.toFixed(1)}h`,pts:3,max:3}); }
+  else if (age > 16  && age <= 36) { mScore+=2;                                                   debugRows.push({k:'M4 Age',v:`${age.toFixed(1)}h`,pts:2,max:3}); }
+  else if (age > 36  && age <= 72) { mScore+=1;                                                   debugRows.push({k:'M4 Age',v:`${age.toFixed(1)}h`,pts:1,max:3}); }
+  else                             { mScore+=1;                                                    debugRows.push({k:'M4 Age',v:`${(age*60).toFixed(0)}min`,pts:1,max:3}); }
 
   breakdown.momentum = Math.min(20, mScore);
   score += breakdown.momentum;
 
-  // ── 5. SOCIAL / NARRATIVE (15 pts) ──────────────────────
+  // ── CAT 5 : SOCIAL / NARRATIVE (15pts) ───────────────────
   let sScore = 0;
 
-  // Twitter + Telegram + Website = +3
+  // [S1] Présence sociales (4pts)
   const hasTw = socials.find(s=>s.type==='twitter');
   const hasTg = socials.find(s=>s.type==='telegram');
   const hasWb = websites.length > 0;
-  if (hasTw && hasTg && hasWb) { sScore+=3; indicators.push({label:'Socials full ✓',ok:true}); }
-  else if (hasTw || hasTg)     { sScore+=1; indicators.push({label:'Socials part.',ok:true}); }
+  const nSoc  = (hasTw?1:0)+(hasTg?1:0)+(hasWb?1:0);
+  if      (nSoc >= 3) { sScore+=4; indicators.push({label:'Socials ✓',ok:true}); debugRows.push({k:'S1 Socials',v:'TW+TG+WEB',pts:4,max:4}); }
+  else if (nSoc >= 2) { sScore+=2; indicators.push({label:'Socials~',ok:true});  debugRows.push({k:'S1 Socials',v:`${nSoc}/3`,pts:2,max:4}); }
+  else if (nSoc >= 1) { sScore+=1;                                                debugRows.push({k:'S1 Socials',v:`${nSoc}/3`,pts:1,max:4}); }
+  else                {                                                            debugRows.push({k:'S1 Socials',v:'aucun',pts:0,max:4}); }
 
-  // Twitter velocity proxy (high txns + social = active community)
-  if (txns1h >= 50 && hasTw) { sScore+=3; indicators.push({label:'Twitter vel ✓',ok:true}); }
-  else if (txns1h >= 20)     { sScore+=1; }
-
-  // Narrative: meme tokens with recognizable patterns
-  const sym = (p.baseToken?.symbol||'').toUpperCase();
+  // [S2] Narrative meme (3pts)
+  const sym  = (p.baseToken?.symbol||'').toUpperCase();
   const name = (p.baseToken?.name||'').toUpperCase();
-  const MEME_KEYS = ['DOG','CAT','PEPE','FROG','AI','TRUMP','ELON','WIF','CAP','MOON','DOGE','INU','PANDA','BEAR','BULL','APE','SHIB','CHAD','BASED','MAGA','BONK','BABY','MAMA','GIGA'];
-  if (MEME_KEYS.some(k => sym.includes(k)||name.includes(k))) {
-    sScore+=3; indicators.push({label:'Narrative ✓',ok:true});
-  }
+  const MEME_KEYS = ['DOG','CAT','PEPE','FROG','AI','TRUMP','ELON','WIF','CAP','MOON','DOGE','INU','PANDA','BEAR','BULL','APE','SHIB','CHAD','BASED','MAGA','BONK','BABY','MAMA','GIGA','WEN','WOJAK','BRETT','NEIRO','POPCAT','RETARD','GOAT','PNUT','MOODENG','CHILLGUY'];
+  const hasNarrative = MEME_KEYS.some(k=>sym.includes(k)||name.includes(k));
+  if (hasNarrative) { sScore+=3; indicators.push({label:'Narrative ✓',ok:true}); debugRows.push({k:'S2 Narrative',v:sym,pts:3,max:3}); }
+  else              {                                                               debugRows.push({k:'S2 Narrative',v:`${sym} (no)`,pts:0,max:3}); }
 
-  // KOL mentions — applied here in social category (cap at 6)
+  // [S3] Community activity (3pts)
+  if      (txns1h >= 50 && nSoc >= 1) { sScore+=3; indicators.push({label:'Community ✓',ok:true}); debugRows.push({k:'S3 Community',v:`${txns1h}tx/h`,pts:3,max:3}); }
+  else if (txns1h >= 20 && nSoc >= 1) { sScore+=2;                                                  debugRows.push({k:'S3 Community',v:`${txns1h}tx/h`,pts:2,max:3}); }
+  else if (txns1h >= 8)               { sScore+=1;                                                  debugRows.push({k:'S3 Community',v:`${txns1h}tx/h`,pts:1,max:3}); }
+  else                                {                                                              debugRows.push({k:'S3 Community',v:`${txns1h}tx/h`,pts:0,max:3}); }
+
+  // [S4] KOL mentions (5pts)
   const kols = kolCache[p.baseToken?.address]||[];
   const hasMajorKOL = kols.some(k=>k.weight==='major');
   const hasMidKOL   = kols.some(k=>k.weight==='mid');
   if (hasMajorKOL) {
-    sScore+=6;
-    kols.filter(k=>k.weight==='major').forEach(k => {
-      const h=Math.round((Date.now()-k.time)/3600000);
-      indicators.push({label:`🔥${k.name}(${h}h)`,ok:true,isKol:true});
-    });
+    sScore+=5;
+    kols.filter(k=>k.weight==='major').forEach(k=>{const h=Math.round((Date.now()-k.time)/3600000);indicators.push({label:`🔥${k.name}(${h}h)`,ok:true,isKol:true});});
+    debugRows.push({k:'S4 KOL',v:'Major KOL !!!',pts:5,max:5});
   } else if (hasMidKOL) {
     sScore+=3;
-    kols.filter(k=>k.weight==='mid').slice(0,2).forEach(k => {
-      indicators.push({label:`🔥${k.name}`,ok:true,isKol:true});
-    });
+    kols.filter(k=>k.weight==='mid').slice(0,2).forEach(k=>indicators.push({label:`🔥${k.name}`,ok:true,isKol:true}));
+    debugRows.push({k:'S4 KOL',v:'Mid-tier KOL',pts:3,max:5});
+  } else {
+    debugRows.push({k:'S4 KOL',v:'aucun',pts:0,max:5});
   }
 
   breakdown.social = Math.min(15, sScore);
   score += breakdown.social;
 
-  // ── FINAL SCORE ──────────────────────────────────────────
+  // ── FINAL ────────────────────────────────────────────────
   const finalScore = Math.min(100, score);
+  debugRows.push({k:'━━ TOTAL SCORE',v:'',pts:finalScore,max:100});
 
-  // Thresholds — tokens appear only if score ≥ 65
-  if (finalScore < 65) return null;
+  if (finalScore < 55) return null;
 
-  // Label
   let label, labelColor;
   if      (finalScore >= 85) { label='⚡ GOD GEM';        labelColor='#00e676'; }
   else if (finalScore >= 75) { label='🔥 HIGH POTENTIAL'; labelColor='#ffd32a'; }
-  else if (finalScore >= 65) { label='👁 WATCHLIST';       labelColor='#5352ed'; }
+  else if (finalScore >= 65) { label='👁 WATCHLIST';       labelColor='#7b7bff'; }
+  else                       { label='📡 EARLY SIGNAL';   labelColor='#ff6b35'; }
 
-  return {
-    score: finalScore,
-    label,
-    labelColor,
-    indicators,
-    breakdown,
-    hasKOL: hasMajorKOL || hasMidKOL
-  };
+  return { score:finalScore, label, labelColor, indicators, breakdown, debugRows, hasKOL:hasMajorKOL||hasMidKOL };
 }
 
 function enrichKOL(tok) {
@@ -1123,7 +1311,8 @@ function getScoreLabel(score) {
   if (score >= 85) return { text:'⚡ GOD GEM',        color:'#00e676' };
   if (score >= 75) return { text:'🔥 HIGH POTENTIAL', color:'#ffd32a' };
   if (score >= 65) return { text:'👁 WATCHLIST',       color:'#7b7bff' };
-  return { text:'SIGNAL', color:'var(--muted2)' };
+  if (score >= 45) return { text:'📡 EARLY SIGNAL',   color:'#ff6b35' };
+  return { text:'—', color:'var(--muted2)' };
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -1153,34 +1342,111 @@ function getMcapStats(addr, mcap, price) {
 // ═══════════════════════════════════════════════════════════════
 // FETCH & RENDER TOKENS
 // ═══════════════════════════════════════════════════════════════
+// DEMO DATA — affiché en local quand CORS bloque (Vercel = données réelles)
+// ═══════════════════════════════════════════════════════════════
+function getDemoTokens() {
+  const now = Date.now();
+  return [
+    {
+      baseToken:{address:'7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU',symbol:'GOATAI',name:'Goat AI'},
+      priceUsd:'0.000842', marketCap:187000, liquidity:{usd:28400},
+      volume:{h24:312000,h6:98000,h1:41000}, priceChange:{h24:284,h6:67,h1:18},
+      txns:{h24:{buys:1240,sells:380},h6:{buys:410,sells:110},h1:{buys:180,sells:42}},
+      pairCreatedAt: now - 14*3600000,
+      info:{socials:[{type:'twitter'},{type:'telegram'}],websites:['https://goatai.io']}
+    },
+    {
+      baseToken:{address:'DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263',symbol:'BONKWIF',name:'Bonk Wif Hat'},
+      priceUsd:'0.00213', marketCap:94000, liquidity:{usd:52000},
+      volume:{h24:780000,h6:210000,h1:87000}, priceChange:{h24:142,h6:38,h1:12},
+      txns:{h24:{buys:2100,sells:590},h6:{buys:680,sells:170},h1:{buys:310,sells:68}},
+      pairCreatedAt: now - 8*3600000,
+      info:{socials:[{type:'twitter'},{type:'telegram'}],websites:[]}
+    },
+    {
+      baseToken:{address:'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',symbol:'PEPE2024',name:'Pepe 2024'},
+      priceUsd:'0.0000341', marketCap:43000, liquidity:{usd:18500},
+      volume:{h24:196000,h6:72000,h1:28000}, priceChange:{h24:189,h6:44,h1:9},
+      txns:{h24:{buys:890,sells:240},h6:{buys:300,sells:74},h1:{buys:140,sells:31}},
+      pairCreatedAt: now - 5*3600000,
+      info:{socials:[{type:'twitter'}],websites:[]}
+    },
+    {
+      baseToken:{address:'So11111111111111111111111111111111111111112',symbol:'DOGWIFCAT',name:'Dog Wif Cat'},
+      priceUsd:'0.00000892', marketCap:28000, liquidity:{usd:11200},
+      volume:{h24:124000,h6:41000,h1:19000}, priceChange:{h24:312,h6:88,h1:22},
+      txns:{h24:{buys:640,sells:160},h6:{buys:210,sells:48},h1:{buys:98,sells:19}},
+      pairCreatedAt: now - 3*3600000,
+      info:{socials:[{type:'twitter'},{type:'telegram'}],websites:['https://dogwifcat.xyz']}
+    },
+    {
+      baseToken:{address:'mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So',symbol:'AIPEPE',name:'AI Pepe'},
+      priceUsd:'0.000158', marketCap:71000, liquidity:{usd:34000},
+      volume:{h24:445000,h6:142000,h1:58000}, priceChange:{h24:220,h6:52,h1:14},
+      txns:{h24:{buys:1580,sells:410},h6:{buys:520,sells:120},h1:{buys:240,sells:52}},
+      pairCreatedAt: now - 18*3600000,
+      info:{socials:[{type:'twitter'},{type:'telegram'}],websites:['https://aipepe.lol']}
+    }
+  ];
+}
+
 async function fetchTokens() {
   const loadEl = document.getElementById('scanner-loading');
   const rowsEl = document.getElementById('token-rows');
   try {
-    // Fetch trending Solana pairs
     let pairs = [];
-    const r1 = await fetch('https://api.dexscreener.com/token-profiles/latest/v1',{headers:{Accept:'application/json'}});
-    if(r1.ok) {
-      const d1 = await r1.json();
-      const solToks = (Array.isArray(d1)?d1:[]).filter(t=>t.chainId==='solana').slice(0,20);
-      if(solToks.length>0) {
-        const addrs = solToks.map(t=>t.tokenAddress).join(',');
-        const r2 = await fetch(`https://api.dexscreener.com/tokens/v1/solana/${addrs}`);
-        if(r2.ok) pairs = await r2.json();
-      }
-    }
-    if(pairs.length===0) {
-      const rb = await fetch('https://api.dexscreener.com/token-boosts/top/v1');
-      if(rb.ok) {
-        const db = await rb.json();
-        const sb = (Array.isArray(db)?db:[]).filter(t=>t.chainId==='solana').slice(0,12);
-        if(sb.length>0) {
-          const ab = sb.map(t=>t.tokenAddress).join(',');
-          const rp = await fetch(`https://api.dexscreener.com/tokens/v1/solana/${ab}`);
-          if(rp.ok) pairs = await rp.json();
+    let isDemo = false;
+
+    // Essai 1 — DexScreener direct
+    try {
+      const r1 = await fetch('https://api.dexscreener.com/token-profiles/latest/v1',{headers:{Accept:'application/json'}});
+      if(r1.ok) {
+        const d1 = await r1.json();
+        const solToks = (Array.isArray(d1)?d1:[]).filter(t=>t.chainId==='solana').slice(0,25);
+        if(solToks.length>0) {
+          const addrs = solToks.map(t=>t.tokenAddress).join(',');
+          const r2 = await fetch(`https://api.dexscreener.com/tokens/v1/solana/${addrs}`);
+          if(r2.ok) pairs = await r2.json();
         }
       }
+    } catch(e) {}
+
+    // Essai 2 — Top boosts fallback
+    if(!pairs.length) {
+      try {
+        const rb = await fetch('https://api.dexscreener.com/token-boosts/top/v1');
+        if(rb.ok) {
+          const db = await rb.json();
+          const sb = (Array.isArray(db)?db:[]).filter(t=>t.chainId==='solana').slice(0,15);
+          if(sb.length>0) {
+            const ab = sb.map(t=>t.tokenAddress).join(',');
+            const rp = await fetch(`https://api.dexscreener.com/tokens/v1/solana/${ab}`);
+            if(rp.ok) pairs = await rp.json();
+          }
+        }
+      } catch(e) {}
     }
+
+    // Essai 3 — Proxy allorigins (contourne CORS en local)
+    if(!pairs.length) {
+      try {
+        const proxy = 'https://api.allorigins.win/raw?url=';
+        const url = encodeURIComponent('https://api.dexscreener.com/token-boosts/top/v1');
+        const rp = await fetch(proxy+url);
+        if(rp.ok) {
+          const dp = await rp.json();
+          const sp = (Array.isArray(dp)?dp:[]).filter(t=>t.chainId==='solana').slice(0,12);
+          if(sp.length>0) {
+            const ap = sp.map(t=>t.tokenAddress).join(',');
+            const rr = await fetch(proxy+encodeURIComponent(`https://api.dexscreener.com/tokens/v1/solana/${ap}`));
+            if(rr.ok) pairs = await rr.json();
+          }
+        }
+      } catch(e) {}
+    }
+
+    // Fallback — si tout échoue (CORS local)
+    // Pas de démo, on affiche juste un message d'attente
 
     const addrs = (Array.isArray(pairs)?pairs:[]).filter(p=>p?.baseToken).map(p=>p.baseToken.address);
     await fetchKOLMentions(addrs);
@@ -1190,7 +1456,7 @@ async function fetchTokens() {
       .map(p => {
         const res = scoreToken(p);
         if(!res) return null;
-        return enrichKOL({...p, score:res.score, label:res.label, labelColor:res.labelColor, indicators:res.indicators, breakdown:res.breakdown, hasKOL:res.hasKOL});
+        return enrichKOL({...p, score:res.score, label:res.label, labelColor:res.labelColor, indicators:res.indicators, breakdown:res.breakdown, debugRows:res.debugRows, hasKOL:res.hasKOL, isDemo});
       })
       .filter(Boolean)
       .sort((a,b) => {
@@ -1203,9 +1469,15 @@ async function fetchTokens() {
     loadEl.style.display='none';
 
     if(!scored.length) {
-      rowsEl.innerHTML=`<div style="padding:44px;text-align:center;font-family:Space Mono,monospace;font-size:11px;color:var(--muted2);">⟳ Aucun token de qualité détecté — actualisation dans 30s<br><span style="color:var(--green);font-size:9px;margin-top:6px;display:block;">Le scanner surveille en continu…</span></div>`;
+      rowsEl.innerHTML=`<div style="padding:60px 20px;text-align:center;">
+        <div style="font-family:Space Mono,monospace;font-size:13px;color:var(--muted2);letter-spacing:.05em;">AUCUN TOKEN QUALIFIÉ DÉTECTÉ</div>
+        <div style="font-family:Space Mono,monospace;font-size:10px;color:var(--muted);margin-top:10px;">Le scanner surveille en continu — actualisation dans 30s</div>
+      </div>`;
       return;
     }
+
+    // Supprimer l'éventuel ancien banner démo
+    document.getElementById('demo-banner')?.remove();
 
     // Update KOL badge
     const kolCount = Object.values(kolCache).reduce((s,a)=>s+a.length,0);
@@ -1214,10 +1486,22 @@ async function fetchTokens() {
 
     // Update ticker
     updateTicker(scored);
+    renderTokenRows(scored);
 
-    rowsEl.innerHTML = scored.map((p,i) => {
+  } catch(err) {
+    const loadEl2 = document.getElementById('scanner-loading');
+    if(loadEl2) loadEl2.innerHTML=`<div style="font-family:Space Mono,monospace;font-size:10px;color:var(--muted2);padding:32px;text-align:center;">⚠ Erreur de chargement.<br><span style="color:var(--green);margin-top:6px;display:block;">Actualisation dans 30s…</span></div>`;
+  }
+}
+
+function renderTokenRows(scored) {
+  const rowsEl = document.getElementById('token-rows');
+  if(!rowsEl) return;
+  lastScored = scored; // sauvegarde pour debug panel
+
+  rowsEl.innerHTML = scored.map((p,i) => {
       const sc   = p.score;
-      const cls  = sc>=85?'hi':sc>=75?'hi':'md';
+      const cls  = sc>=75?'hi':'md';
       const lbl  = getScoreLabel(sc);
       const c24  = p.priceChange?.h24||0;
       const c1h  = p.priceChange?.h1 ||0;
@@ -1229,7 +1513,6 @@ async function fetchTokens() {
       const price = fmtPrice(parseFloat(p.priceUsd)||0);
       const buys  = p.txns?.h24?.buys ||0;
       const sells = p.txns?.h24?.sells||0;
-      const brat  = (buys+sells)>0 ? Math.round(buys/(buys+sells)*100) : 0;
       const stats = getMcapStats(ca, mcap, parseFloat(p.priceUsd)||0);
       const bd    = p.breakdown||{};
 
@@ -1244,25 +1527,28 @@ async function fetchTokens() {
         indHtml += `<span class="ind ${t}">${ind.label}</span>`;
       });
 
-      // Breakdown mini-bars
-      const bdHtml = `<div style="display:flex;gap:3px;margin-top:5px;align-items:center;">
+      // Breakdown mini W·T·L·M·S
+      const bdHtml = `<div style="display:flex;gap:4px;margin-top:5px;align-items:center;">
         ${[['W',bd.wallet,30],['T',bd.trading,20],['L',bd.liquidity,15],['M',bd.momentum,20],['S',bd.social,15]].map(([k,v,max])=>{
           const pct = max>0?Math.round((v||0)/max*100):0;
           const col = pct>=70?'var(--green)':pct>=40?'var(--yellow)':'var(--red)';
-          return `<span style="font-family:Space Mono,monospace;font-size:7px;color:var(--muted2);" title="${k}:${v||0}/${max}">${k}<span style="color:${col}">${v||0}</span></span>`;
+          return `<span style="font-family:Space Mono,monospace;font-size:7px;color:var(--muted2);">${k}<span style="color:${col}">${v||0}</span></span>`;
         }).join('<span style="color:var(--border);margin:0 1px">·</span>')}
       </div>`;
 
       const rowStyle = locked ? ' style="filter:blur(5px);pointer-events:none"' : '';
       const rowAttr  = locked ? ' data-locked="1"' : '';
+      const demoTag  = p.isDemo ? '<span style="font-family:Space Mono,monospace;font-size:7px;color:var(--orange);border:1px solid rgba(255,165,2,.3);padding:1px 4px;border-radius:2px;margin-left:4px;">DEMO</span>' : '';
 
       return `<div class="token-row"${rowStyle}${rowAttr}>
         <div class="tok-info">
           <div class="tok-icon">${emoji}</div>
           <div style="flex:1">
-            <div style="display:flex;align-items:center;gap:7px;">
+            <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
               <div class="tok-name">${sym}</div>
+              ${demoTag}
               <button class="btn-ca" onclick="cpCA('${ca}',this)">CA</button>
+              ${isAdminMode?`<button class="btn-ca" style="background:rgba(255,165,2,.15);border-color:rgba(255,165,2,.4);color:#ffa502;" onclick="showDebug(${i})">DEBUG</button>`:''}
             </div>
             <div class="ind-row">${indHtml}</div>
             ${bdHtml}
@@ -1285,21 +1571,9 @@ async function fetchTokens() {
         </div>
         <div>
           <div class="cell-mono" style="font-size:9px;line-height:1.9;">
-            <div>
-              <span style="color:var(--muted2);">📍 Call&nbsp;</span>
-              <span style="color:var(--text);font-weight:600;">${fmtMcap(stats.callMcap)}</span>
-              <span style="color:var(--muted);font-size:8px;">&nbsp;${stats.tLabel}</span>
-            </div>
-            <div>
-              <span style="color:var(--muted2);">⬆ Now&nbsp;&nbsp;</span>
-              <span style="color:${xNowC};font-weight:600;">${fmtMcap(mcap)}</span>
-              <span style="color:${xNowC};font-size:8px;">&nbsp;(${stats.xNow.toFixed(2)}x)</span>
-            </div>
-            <div>
-              <span style="color:var(--muted2);">🏆 ATH&nbsp;&nbsp;</span>
-              <span style="color:${xAthC};font-weight:600;">${fmtMcap(stats.athMcap)}</span>
-              <span style="color:${xAthC};font-size:8px;">&nbsp;(${stats.xAth.toFixed(2)}x)</span>
-            </div>
+            <div><span style="color:var(--muted2);">📍 Call </span><span style="color:var(--text);font-weight:600;">${fmtMcap(stats.callMcap)}</span><span style="color:var(--muted);font-size:8px;"> ${stats.tLabel}</span></div>
+            <div><span style="color:var(--muted2);">⬆ Now  </span><span style="color:${xNowC};font-weight:600;">${fmtMcap(mcap)}</span><span style="color:${xNowC};font-size:8px;"> (${stats.xNow.toFixed(2)}x)</span></div>
+            <div><span style="color:var(--muted2);">🏆 ATH  </span><span style="color:${xAthC};font-weight:600;">${fmtMcap(stats.athMcap)}</span><span style="color:${xAthC};font-size:8px;"> (${stats.xAth.toFixed(2)}x)</span></div>
           </div>
         </div>
         <div>
@@ -1308,16 +1582,12 @@ async function fetchTokens() {
       </div>`;
     }).join('');
 
-    // Animate score bars
-    setTimeout(() => {
-      rowsEl.querySelectorAll('.score-fill').forEach(el => {
-        el.style.transition='width .8s ease'; el.style.width=el.dataset.w;
-      });
-    },100);
-
-  } catch(err) {
-    loadEl.innerHTML=`<div style="font-family:Space Mono,monospace;font-size:10px;color:var(--muted2);padding:32px;text-align:center;">⚠ Données non disponibles en local (CORS).<br><span style="color:var(--green);margin-top:6px;display:block;">✓ Fonctionnera correctement sur Vercel.</span></div>`;
-  }
+  // Animate score bars
+  setTimeout(() => {
+    rowsEl.querySelectorAll('.score-fill').forEach(el => {
+      el.style.transition='width .8s ease'; el.style.width=el.dataset.w;
+    });
+  },100);
 }
 
 function updateTicker(pairs) {
