@@ -727,13 +727,14 @@ function closeAdmin() {
 function checkPw() {
   const v = document.getElementById('adminPwInp').value;
   if (v === getAdminPw()) {
+    // Afficher le contenu admin (codes, gestion)
     document.getElementById('adminPwScreen').style.display = 'none';
     document.getElementById('adminContent').style.display = 'block';
     renderCodes();
-    // Activer mode debug — boutons DEBUG apparaissent sur chaque token
+    // Activer mode debug en arrière-plan
     isAdminMode = true;
-    closeAdmin();
-    renderTokenRows(lastScored); // re-render avec boutons debug
+    renderTokenRows(lastScored);
+    // NE PAS fermer le panel — l'utilisateur doit pouvoir gérer les codes
   } else {
     document.getElementById('pwErr').style.display = 'block';
     document.getElementById('adminPwInp').value = '';
@@ -1492,9 +1493,12 @@ async function fetchTokens() {
     clearTimeout(timeout);
     if(loadEl) loadEl.style.display = 'none';
 
+    // Filtrer les paires valides (Solana, avec baseToken et liq minimale)
+    const validPairs = (Array.isArray(pairs)?pairs:[])
+      .filter(p => p && p.baseToken && (p.liquidity?.usd||0) >= 5000);
+
     // Scorer tous les tokens qui passent les hard filters
-    const allScored = (Array.isArray(pairs)?pairs:[])
-      .filter(p=>p&&p.baseToken)
+    const allScored = validPairs
       .map(p => {
         const res = scoreToken(p);
         if(!res) return null;
@@ -1503,20 +1507,67 @@ async function fetchTokens() {
       .filter(Boolean)
       .sort((a,b) => { if(a.hasKOL&&!b.hasKOL) return -1; if(!a.hasKOL&&b.hasKOL) return 1; return b.score-a.score; });
 
-    // Tokens qualifiés ≥ 60pts
-    let scored = allScored.filter(t=>t.score>=60).slice(0,10);
+    // Tokens qualifiés ≥ 55pts
+    let scored = allScored.filter(t=>t.score>=55).slice(0,10);
     let isFallback = false;
 
-    // Fallback top-5 si aucun token ≥ 60
+    // Fallback niveau 1: top-5 des tokens scorés même sous 55pts
     if(!scored.length && allScored.length>0) {
       scored = allScored.slice(0,5);
       isFallback = true;
     }
 
+    // Fallback niveau 2: si TOUS rejetés par hard filters,
+    // scorer en mode permissif (ignore les filtres fees/range) les top tokens par volume
+    if(!scored.length && validPairs.length>0) {
+      const permissive = validPairs
+        .filter(p => {
+          const liq = p.liquidity?.usd||0;
+          const age = (Date.now()-(p.pairCreatedAt||Date.now()))/3600000;
+          const c1h = p.priceChange?.h1||0;
+          const s1h = (p.txns?.h1?.sells||0)/Math.max((p.txns?.h1?.buys||0)+(p.txns?.h1?.sells||0),1);
+          // Garder seulement les filtres de sécurité absolus
+          return liq>=5000 && age<=72 && c1h>-50 && s1h<0.85;
+        })
+        .sort((a,b)=>(b.volume?.h24||0)-(a.volume?.h24||0))
+        .slice(0,5)
+        .map(p => {
+          // Score simplifié sans hard filters
+          const vol24=p.volume?.h24||0, liq=p.liquidity?.usd||0;
+          const c1h=p.priceChange?.h1||0, c24=p.priceChange?.h24||0;
+          const br=(p.txns?.h24?.buys||0)/Math.max((p.txns?.h24?.buys||0)+(p.txns?.h24?.sells||0),1);
+          const simScore = Math.min(59,
+            (liq>=20000?15:liq>=10000?8:3) +
+            (c24>50?15:c24>10?8:2) +
+            (br>0.6?12:br>0.5?6:2) +
+            (c1h>0?8:0) +
+            (estimateFeesSol(vol24)>0.5?9:3)
+          );
+          const ind=[{label:`Vol $${(vol24/1000).toFixed(0)}K`,ok:true},{label:`Liq $${(liq/1000).toFixed(0)}K`,ok:true}];
+          const bd={wallet:0,trading:0,liquidity:0,momentum:0,fees:0,social:0};
+          const dbg=[{k:'Mode permissif',v:'hard filters ignorés',pts:simScore,max:59,cat:'TOTAL'}];
+          return {...p, score:simScore, label:'📡 EARLY SIGNAL', labelColor:'#ff6b35', indicators:ind, breakdown:bd, debugRows:dbg, hasKOL:false, isDemo};
+        });
+      if(permissive.length) { scored = permissive; isFallback = true; }
+    }
+
     if(!scored.length) {
-      rowsEl.innerHTML=`<div style="padding:60px 20px;text-align:center;">
-        <div style="font-family:Space Mono,monospace;font-size:13px;color:var(--muted2);letter-spacing:.05em;">AUCUN TOKEN QUALIFIÉ DÉTECTÉ</div>
-        <div style="font-family:Space Mono,monospace;font-size:10px;color:var(--muted);margin-top:10px;">Le scanner surveille en continu — actualisation dans 30s</div>
+      // Diagnostic : compter ce qui s'est passé
+      const rawCount = pairs.filter(p=>p?.baseToken).length;
+      const rejections = {};
+      pairs.filter(p=>p?.baseToken).forEach(p=>{
+        const r = hardFilter(p);
+        if(r) rejections[r] = (rejections[r]||0)+1;
+      });
+      const topRej = Object.entries(rejections).sort((a,b)=>b[1]-a[1]).slice(0,4).map(([k,v])=>`${k}(×${v})`).join(' · ');
+
+      rowsEl.innerHTML=`<div style="padding:40px 20px;text-align:center;">
+        <div style="font-family:Space Mono,monospace;font-size:13px;color:var(--muted2);letter-spacing:.05em;">AUCUN TOKEN QUALIFIÉ</div>
+        <div style="font-family:Space Mono,monospace;font-size:9px;color:#333;margin-top:12px;line-height:1.8;">
+          ${rawCount} tokens reçus · ${rawCount - Object.values(rejections).reduce((a,b)=>a+b,0)} ont passé les filtres · ${allScored.length} scorés<br>
+          ${topRej ? 'Rejets: '+topRej : 'Aucune donnée reçue — CORS ou API indisponible'}
+        </div>
+        <div style="font-family:Space Mono,monospace;font-size:10px;color:var(--green);margin-top:10px;">actualisation dans 30s</div>
       </div>`;
       return;
     }
