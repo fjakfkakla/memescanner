@@ -845,165 +845,167 @@ function timeAgo(ts) { const d=Math.floor((Date.now()-ts)/1000); if(d<60)return 
 function fmtTime(ts) { const d=new Date(ts); return d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0'); }
 
 // ============================================================
-// HARD FILTER v10 — ultra-strict anti-rug
+// HARD FILTER v11 — low mcap 25K-250K strict anti-rug
 // ============================================================
 function hardFilter(p) {
   const ageH = (Date.now() - (p.pairCreatedAt||0)) / 3600000;
-  const liq = p.liquidity?.usd || 0;
-  const mcap = p.marketCap || p.fdv || 0;
-  const fdv = p.fdv || mcap;
+  const liq   = p.liquidity?.usd || 0;
+  const mcap  = p.marketCap || p.fdv || 0;
+  const fdv   = p.fdv || mcap;
   const buys1 = p.txns?.h1?.buys || 0;
-  const sells1 = p.txns?.h1?.sells || 0;
-  const total1 = buys1 + sells1 || 1;
+  const sells1= p.txns?.h1?.sells || 0;
+  const total1= buys1 + sells1 || 1;
   const sellRatio = sells1 / total1;
-  const vol1 = p.volume?.h1 || 0;
-  const vol6 = p.volume?.h6 || 0;
+  const vol1  = p.volume?.h1 || 0;
+  const vol6  = p.volume?.h6 || 0;
   const vol24 = p.volume?.h24 || 0;
-  const c1h = p.priceChange?.h1 || 0;
-  const c24h = p.priceChange?.h24 || 0;
-  const m5 = p.priceChange?.m5 || 0;
+  const c1h   = p.priceChange?.h1 || 0;
+  const c24h  = p.priceChange?.h24 || 0;
+  const m5    = p.priceChange?.m5 || 0;
   const txns1 = buys1 + sells1;
   const avgTrade = txns1 > 0 ? vol1/txns1 : 9999;
 
-  // F1 Liquidité
-  if (liq < 15000) return { pass:false, reason:`liq $${fmtNum(liq)} < $15K` };
-  // F2 Age
-  if (ageH < 0.8) return { pass:false, reason:`age ${ageH.toFixed(1)}h < 0.8h (bundle)` };
-  if (ageH > 36) return { pass:false, reason:`age ${ageH.toFixed(1)}h > 36h (stale)` };
-  // F3 Dump actif
-  if (sellRatio > 0.60) return { pass:false, reason:`sell ratio ${(sellRatio*100).toFixed(0)}% > 60%` };
-  // F4 Crash 1h
-  if (c1h < -18) return { pass:false, reason:`crash 1h: ${c1h.toFixed(1)}%` };
-  // F5 Pump bot m5
-  if (m5 > 380) return { pass:false, reason:`pump bot m5 +${m5.toFixed(0)}%` };
-  // F6 Activité organique
-  if (liq > 0 && vol1 < liq * 10) return { pass:false, reason:`vol1h/liq ${(vol1/liq).toFixed(1)}x < 10x` };
-  // F7 FDV/liq
-  if (liq > 0 && fdv/liq > 7) return { pass:false, reason:`fdv/liq ${(fdv/liq).toFixed(1)}x > 7x` };
-  // F8 Wash trading
-  if (txns1 > 100 && avgTrade < 100) return { pass:false, reason:`wash: ${txns1} txns avg $${avgTrade.toFixed(0)}` };
-  // F9 Shill payant
-  if ((p.boosts?.active||0) >= 2) return { pass:false, reason:`boosts ${p.boosts.active} >= 2` };
-  // F10 Staircase dump
-  if (c24h > 400 && c1h < 6) return { pass:false, reason:`staircase: c24h +${c24h.toFixed(0)}% c1h ${c1h.toFixed(1)}%` };
-  // F11 P&D classique
-  if (c24h > 500 && c1h < -10) return { pass:false, reason:`P&D: c24h +${c24h.toFixed(0)}% c1h ${c1h.toFixed(1)}%` };
-  // F12 Flash crash m5
-  if (m5 < -25) return { pass:false, reason:`flash crash m5 ${m5.toFixed(1)}%` };
-  // F13 FDV dilution
-  if (mcap > 0 && fdv/mcap > 10) return { pass:false, reason:`fdv/mcap ${(fdv/mcap).toFixed(1)}x` };
-  // F14 LP/mcap
-  if (mcap > 0 && liq/mcap < 0.02) return { pass:false, reason:`liq/mcap ${(liq/mcap*100).toFixed(1)}% < 2%` };
-  // F15 FEES — clé principale anti-rug (ex: Dogchain 2.6 SOL → ratio ~1% → reject)
-  const volForFees = ageH > 6 ? vol24 : vol6;
+  // F1 — Focus low mcap uniquement 25K-250K
+  if (mcap < 25000)  return { pass:false, reason:`mcap $${fmtNum(mcap)} < $25K` };
+  if (mcap > 250000) return { pass:false, reason:`mcap $${fmtNum(mcap)} > $250K` };
+  // F2 — Liquidité min
+  if (liq < 9000)    return { pass:false, reason:`liq $${fmtNum(liq)} < $9K` };
+  // F3 — Age sweet spot
+  if (ageH < 0.6)    return { pass:false, reason:`age ${ageH.toFixed(1)}h < 0.6h (bundle)` };
+  if (ageH > 24)     return { pass:false, reason:`age ${ageH.toFixed(1)}h > 24h` };
+  // F4 — Dump actif
+  if (sellRatio > 0.58) return { pass:false, reason:`sell ratio ${(sellRatio*100).toFixed(0)}% > 58%` };
+  // F5 — Crash 1h
+  if (c1h < -12)     return { pass:false, reason:`crash 1h ${c1h.toFixed(1)}%` };
+  // F6 — Pump bot m5
+  if (m5 > 280)      return { pass:false, reason:`pump bot m5 +${m5.toFixed(0)}%` };
+  // F7 — Activité organique vol/liq (réduit si token très early)
+  const volLiqMin = ageH < 2 ? 5 : 9;
+  if (liq > 0 && vol1 < liq * volLiqMin) return { pass:false, reason:`vol1h/liq ${(vol1/liq).toFixed(1)}x < ${volLiqMin}x` };
+  // F8 — FDV/liq
+  if (liq > 0 && fdv/liq > 5.5) return { pass:false, reason:`fdv/liq ${(fdv/liq).toFixed(1)}x > 5.5x` };
+  // F9 — Wash trading (seulement si +80 txns ET avg trade < $80)
+  if (txns1 > 80 && avgTrade < 80) return { pass:false, reason:`wash avg $${avgTrade.toFixed(0)} < $80` };
+  // F10 — Staircase dump
+  if (c24h > 350 && c1h < 8)  return { pass:false, reason:`staircase c24h +${c24h.toFixed(0)}% c1h ${c1h.toFixed(1)}%` };
+  // F11 — Flash crash m5
+  if (m5 < -22)      return { pass:false, reason:`flash crash m5 ${m5.toFixed(1)}%` };
+  // F12 — FDV dilution
+  if (mcap > 0 && fdv/mcap > 8) return { pass:false, reason:`fdv/mcap ${(fdv/mcap).toFixed(1)}x` };
+  // F13 — FEES anti-rug (clé principale)
+  // Utilise le meilleur volume disponible selon l'âge du token
+  let volForFees, feesWindow;
+  if (ageH >= 6 && vol24 > vol6) { volForFees = vol24; feesWindow = 24; }
+  else if (ageH >= 3 && vol6 > vol1 * 2) { volForFees = vol6; feesWindow = 6; }
+  else if (vol1 > 0) { volForFees = vol1 * Math.min(ageH, 6); feesWindow = Math.min(ageH, 6); } // extrapolation
+  else { volForFees = vol6 || vol24; feesWindow = 6; }
+
   const feesSOL = (volForFees * 0.003) / 180;
-  let feesMin = 4;
-  if (mcap >= 700000) feesMin = 40;
-  else if (mcap >= 300000) feesMin = 28;
-  else if (mcap >= 150000) feesMin = 18;
-  else if (mcap >= 50000) feesMin = 10;
-  else if (mcap >= 10000) feesMin = 4;
-  if (feesMin > 0 && feesSOL < feesMin) return { pass:false, reason:`fees ~${feesSOL.toFixed(1)} SOL < ${feesMin} SOL` };
-  const feesRatio = mcap > 0 ? feesSOL/(mcap/100000) : 0;
-  if (feesRatio < 0.05 && mcap > 30000) return { pass:false, reason:`fees ratio ${(feesRatio*100).toFixed(1)}% < 5%` };
+  const feesMin = mcap >= 100000 ? 9 : (mcap >= 60000 ? 5 : 3);  // Adapté au mcap réel
+  if (feesSOL < feesMin) return { pass:false, reason:`fees ~${feesSOL.toFixed(1)} SOL < ${feesMin} SOL (vol=${fmtNum(volForFees)})` };
+  const feesRatio = mcap > 0 ? feesSOL / (mcap / 100000) : 0;
+  // Pour tokens très early (<2h), ratio minimum réduit car vol encore petit
+  const minRatio = ageH < 2 ? 0.05 : 0.08;
+  if (feesRatio < minRatio) return { pass:false, reason:`fees/mcap ${(feesRatio*100).toFixed(1)}% < ${(minRatio*100).toFixed(0)}%` };
 
   return { pass:true, feesSOL, feesMin, feesRatio, ageH, sellRatio };
 }
 
 // ============================================================
-// SCORING ENGINE v10
+// SCORING ENGINE v11 — low mcap early gems
 // ============================================================
 function scoreToken(p) {
   const ageH = (Date.now() - (p.pairCreatedAt||0)) / 3600000;
-  const liq = p.liquidity?.usd || 0;
-  const mcap = p.marketCap || p.fdv || 0;
-  const fdv = p.fdv || mcap;
+  const liq   = p.liquidity?.usd || 0;
+  const mcap  = p.marketCap || p.fdv || 0;
+  const fdv   = p.fdv || mcap;
   const buys1 = p.txns?.h1?.buys || 0;
-  const sells1 = p.txns?.h1?.sells || 0;
-  const total1 = buys1 + sells1 || 1;
+  const sells1= p.txns?.h1?.sells || 0;
+  const total1= buys1 + sells1 || 1;
   const buyRatio = buys1 / total1;
-  const vol1 = p.volume?.h1 || 0;
-  const vol6 = p.volume?.h6 || 0;
+  const vol1  = p.volume?.h1 || 0;
+  const vol6  = p.volume?.h6 || 0;
   const vol24 = p.volume?.h24 || 0;
-  const c1h = p.priceChange?.h1 || 0;
-  const c6h = p.priceChange?.h6 || 0;
-  const c24h = p.priceChange?.h24 || 0;
-  const m5 = p.priceChange?.m5 || 0;
+  const c1h   = p.priceChange?.h1 || 0;
+  const c6h   = p.priceChange?.h6 || 0;
+  const c24h  = p.priceChange?.h24 || 0;
+  const m5    = p.priceChange?.m5 || 0;
   const hasSocials = !!(p.info?.socials?.length || p.info?.websites?.length);
   const volAvgH = vol6/6 || 1;
   const volAccel = vol1/volAvgH;
-  const volForFees = ageH > 6 ? vol24 : vol6;
+  // Fees — même logique que hardFilter
+  let volForFees;
+  if (ageH >= 6 && vol24 > vol6) volForFees = vol24;
+  else if (ageH >= 3 && vol6 > vol1 * 2) volForFees = vol6;
+  else if (vol1 > 0) volForFees = vol1 * Math.min(ageH, 6);
+  else volForFees = vol6 || vol24;
   const feesSOL = (volForFees * 0.003) / 180;
-  let feesMin = 4;
-  if (mcap >= 700000) feesMin = 40;
-  else if (mcap >= 300000) feesMin = 28;
-  else if (mcap >= 150000) feesMin = 18;
-  else if (mcap >= 50000) feesMin = 10;
-  else if (mcap >= 10000) feesMin = 4;
-  const feesRatio = mcap > 0 ? feesSOL/(mcap/100000) : 0;
-  const staircase = c24h > 400 && c1h < 6;
+  const feesMin = mcap >= 100000 ? 9 : (mcap >= 60000 ? 5 : 3);
+  const feesRatio = mcap > 0 ? feesSOL / (mcap / 100000) : 0;
+  const staircase = c24h > 350 && c1h < 8;
 
   let score = 0;
 
-  // 1. Buy Pressure (25 pts)
+  // 1. Buy Pressure (30 pts)
   let buyScore = 0;
-  if (buyRatio > 0.75) buyScore = 25;
-  else if (buyRatio > 0.65) buyScore = 15;
-  else if (buyRatio < 0.58) buyScore = -30;
+  if (buyRatio > 0.75) buyScore = 30;
+  else if (buyRatio > 0.65) buyScore = 18;
+  else if (buyRatio > 0.58) buyScore = 8;
+  else buyScore = -35;
   score += buyScore;
 
-  // 2. Vol Accélération (22 pts)
+  // 2. Vol Accélération (28 pts)
   let volScore = 0;
-  if (volAccel > 3) volScore = 22;
-  else if (volAccel > 2) volScore = 16;
-  else if (volAccel > 1.2) volScore = 10;
-  else if (volAccel < 0.3) volScore = -35;
+  if (volAccel > 3) volScore = 28;
+  else if (volAccel > 2) volScore = 20;
+  else if (volAccel > 1.2) volScore = 12;
+  else if (volAccel < 0.4) volScore = -30;
   score += volScore;
 
-  // 3. Momentum (35 pts)
+  // 3. Momentum (25+22 pts)
   let momentumScore = 0;
-  if (c1h > 15 && c1h < 200) momentumScore += 22;
-  else if (c1h > 5 && c1h < 300) momentumScore += 12;
-  if (c6h > 30) momentumScore += 18;
-  else if (c6h > 10) momentumScore += 8;
+  if (c1h > 20 && c1h < 140) momentumScore += 25;
+  else if (c1h > 8 && c1h < 200) momentumScore += 14;
+  if (c6h > 35) momentumScore += 22;
+  else if (c6h > 12) momentumScore += 10;
   if (staircase) momentumScore -= 50;
   score += momentumScore;
 
-  // 4. Age (18 pts)
+  // 4. Age sweet spot (25 pts)
   let ageScore = 0;
-  if (ageH >= 1 && ageH <= 24) ageScore = 18;
-  else if (ageH < 1) ageScore = 5;
-  else ageScore = 10;
+  if (ageH >= 0.8 && ageH <= 12) ageScore = 25;
+  else if (ageH > 12 && ageH <= 24) ageScore = 14;
+  else if (ageH < 0.8) ageScore = 4;
   score += ageScore;
 
-  // 5. McAp asymétrie (20 pts)
+  // 5. McAp asymétrie max (32 pts)
   let mcapScore = 0;
-  if (mcap >= 20000 && mcap <= 120000) mcapScore = 20;
-  else if (mcap < 20000 && mcap > 10000) mcapScore = 12;
-  else if (mcap <= 300000) mcapScore = 10;
+  if (mcap >= 30000 && mcap <= 150000) mcapScore = 32;
+  else if (mcap > 150000 && mcap <= 250000) mcapScore = 18;
+  else if (mcap < 30000) mcapScore = 10;
   score += mcapScore;
 
-  // 6. Socials (15 pts)
-  let socialScore = hasSocials ? 15 : 0;
+  // 6. Socials (20 pts)
+  let socialScore = hasSocials ? 20 : 0;
   score += socialScore;
 
-  // 7. Fees bonus/malus (28 pts) — clé du winrate
+  // 7. Fees ratio — clé du winrate (35 pts)
   let feesScore = 0;
-  if (feesSOL > feesMin * 1.8) feesScore = 28;
-  else if (feesSOL > feesMin * 1.2) feesScore = 18;
-  else if (feesSOL > feesMin) feesScore = 10;
-  else if (feesSOL < feesMin * 0.6) feesScore = -40;
+  if (feesRatio > 0.12) feesScore = 35;
+  else if (feesRatio > 0.10) feesScore = 26;
+  else if (feesRatio > 0.08) feesScore = 16;
+  else feesScore = -40;
   score += feesScore;
 
-  // Rug risk badge
+  // Rug risk
   let rugPoints = 0;
   if (buyRatio < 0.6) rugPoints += 2;
-  if (feesRatio < 0.06) rugPoints += 2;
+  if (feesRatio < 0.09) rugPoints += 2;
   if (volAccel < 0.8) rugPoints++;
   if (c1h < 0) rugPoints++;
   if (!hasSocials) rugPoints++;
-  if (liq < 25000) rugPoints++;
-  if (ageH < 2) rugPoints++;
+  if (liq < 12000) rugPoints++;
+  if (ageH < 1) rugPoints++;
   let rugRisk = rugPoints >= 4 ? 'HIGH' : rugPoints >= 2 ? 'MEDIUM' : 'LOW';
 
   const emoji = EMOJIS[Math.floor(Math.random()*EMOJIS.length)];
@@ -1011,7 +1013,7 @@ function scoreToken(p) {
   const addr = p.baseToken?.address || '';
 
   return {
-    score: Math.max(0, Math.min(110, Math.round(score))),
+    score: Math.max(0, Math.min(120, Math.round(score))),
     symbol: sym, emoji, addr, mcap, liq,
     socials: hasSocials, rugRisk,
     pairUrl: p.url || `https://dexscreener.com/solana/${addr}`,
@@ -1037,34 +1039,101 @@ async function fetchTokens() {
   if (loadEl) loadEl.style.display = 'block';
   document.getElementById('scanDot').style.background = 'var(--gold)';
 
-  const endpoints = [
-    'https://api.dexscreener.com/latest/dex/search?q=solana',
-    'https://api.allorigins.win/get?url='+encodeURIComponent('https://api.dexscreener.com/latest/dex/search?q=solana'),
-    'https://api.dexscreener.com/token-boosts/latest/v1'
-  ];
-
-  let pairs = [];
-  for (const ep of endpoints) {
+  // ── Helper fetch one endpoint ──────────────────────────────
+  async function fetchPairs(url) {
     try {
-      const resp = await fetch(ep, { signal: AbortSignal.timeout(9000) });
+      const resp = await fetch(url, { signal: AbortSignal.timeout(9000) });
       const data = await resp.json();
       let raw = data;
       if (data.contents) { try { raw = JSON.parse(data.contents); } catch(e) {} }
-      if (Array.isArray(raw)) { pairs = raw; break; }
-      if (raw.pairs && Array.isArray(raw.pairs)) { pairs = raw.pairs; break; }
-      if (raw.data && Array.isArray(raw.data)) { pairs = raw.data; break; }
-      if (raw.tokenAddresses) {
-        const addrs = (raw.tokenAddresses||[]).slice(0,20).join(',');
+      if (raw.pairs && Array.isArray(raw.pairs)) return raw.pairs;
+      if (Array.isArray(raw)) return raw;
+      if (raw.data && Array.isArray(raw.data)) return raw.data;
+      // token-boosts → resolve addresses
+      if (raw.tokenAddresses || (Array.isArray(raw) && raw[0]?.tokenAddress)) {
+        const addrs = (raw.tokenAddresses || raw.map(x=>x.tokenAddress)).slice(0,30).join(',');
         if (addrs) {
-          const r2 = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${addrs}`).then(x=>x.json()).catch(()=>({}));
-          if (r2.pairs) { pairs = r2.pairs; break; }
+          const r2 = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${addrs}`,{signal:AbortSignal.timeout(9000)}).then(x=>x.json()).catch(()=>({}));
+          return r2.pairs || [];
         }
       }
     } catch(e) {}
-    if (pairs.length) break;
+    return [];
   }
 
-  pairs = pairs.filter(p => !p.chainId || p.chainId === 'solana');
+  // ── Fetch ALL endpoints in parallel ───────────────────────
+  const ENDPOINTS = [
+    // 1. Search meme solana — good low cap results
+    'https://api.dexscreener.com/latest/dex/search?q=solana%20meme',
+    // 2. Search pump fun tokens (most low mcap launches)
+    'https://api.dexscreener.com/latest/dex/search?q=pump.fun',
+    // 3. General solana search
+    'https://api.dexscreener.com/latest/dex/search?q=solana',
+    // 4. Boosted tokens (community hyped)
+    'https://api.dexscreener.com/token-boosts/latest/v1',
+    // 5. Token profiles latest
+    'https://api.dexscreener.com/token-profiles/latest/v1',
+    // 6. GeckoTerminal new pools Solana
+    'https://api.geckoterminal.com/api/v2/networks/solana/new_pools?page=1',
+    'https://api.geckoterminal.com/api/v2/networks/solana/new_pools?page=2',
+    'https://api.geckoterminal.com/api/v2/networks/solana/trending_pools?page=1',
+    'https://api.geckoterminal.com/api/v2/networks/solana/trending_pools?page=2',
+    // 7. CORS proxy fallback
+    'https://api.allorigins.win/get?url='+encodeURIComponent('https://api.dexscreener.com/latest/dex/search?q=solana'),
+  ];
+
+  const results = await Promise.allSettled(ENDPOINTS.map(fetchPairs));
+
+  // ── GeckoTerminal converter ────────────────────────────────
+  function geckoToDex(pool) {
+    try {
+      const a = pool.attributes;
+      if (!a) return null;
+      const mcap = parseFloat(a.market_cap_usd||a.fdv_usd||0);
+      const liq  = parseFloat(a.reserve_in_usd||0);
+      const created = a.pool_created_at ? new Date(a.pool_created_at).getTime() : Date.now()-3600000;
+      const vol24= parseFloat(a.volume_usd?.h24||0);
+      const vol6 = parseFloat(a.volume_usd?.h6||0);
+      const vol1 = parseFloat(a.volume_usd?.h1||0);
+      const c1h  = parseFloat(a.price_change_percentage?.h1||0);
+      const c6h  = parseFloat(a.price_change_percentage?.h6||0);
+      const c24h = parseFloat(a.price_change_percentage?.h24||0);
+      const m5   = parseFloat(a.price_change_percentage?.m5||0);
+      const buys1 = parseInt(a.transactions?.h1?.buys||0);
+      const sells1= parseInt(a.transactions?.h1?.sells||0);
+      const addr = pool.relationships?.base_token?.data?.id?.split('_')[1] || '';
+      return {
+        chainId:'solana', pairCreatedAt: created,
+        baseToken:{ symbol: a.name?.split('/')[0]||'UNK', address: addr },
+        liquidity:{ usd: liq }, marketCap: mcap, fdv: mcap,
+        volume:{ h1:vol1, h6:vol6, h24:vol24 },
+        priceChange:{ m5, h1:c1h, h6:c6h, h24:c24h },
+        txns:{ h1:{ buys:buys1, sells:sells1 } },
+        info:{ socials: a.websites?[{url:a.websites[0]}]:[], websites:[] },
+        url: `https://dexscreener.com/solana/${addr}`
+      };
+    } catch(e) { return null; }
+  }
+
+  // ── Merge, deduplicate ─────────────────────────────────────
+  const seen = new Set();
+  let pairs = [];
+  for (const r of results) {
+    if (r.status !== 'fulfilled') continue;
+    const batch = r.value;
+    for (const p of batch) {
+      // GeckoTerminal pools have .attributes
+      const converted = p.attributes ? geckoToDex(p) : p;
+      if (!converted) continue;
+      if (!converted.chainId || converted.chainId !== 'solana') continue;
+      const mcapPre = converted.marketCap || converted.fdv || 0;
+      if (mcapPre > 0 && (mcapPre < 15000 || mcapPre > 350000)) continue; // Pre-filter large caps
+      const addr = converted.baseToken?.address || converted.pairAddress || Math.random().toString();
+      if (seen.has(addr)) continue;
+      seen.add(addr);
+      pairs.push(converted);
+    }
+  }
 
   const rejected = {};
   const passed = [];
@@ -1094,8 +1163,8 @@ async function fetchTokens() {
     content.innerHTML = `
       <div class="empty-state">
         <div class="empty-icon">🔍</div>
-        <div class="empty-title">Aucun bon signal qualifié (anti-rug fees + momentum strict)</div>
-        <div class="empty-sub">Marché calme ou rugs filtrés. Refresh auto 30s.</div>
+        <div class="empty-title">Aucun early gem qualifié (low mcap 30-200K strict anti-rug)</div>
+        <div class="empty-sub">Marché calme ou rugs filtrés. Refresh auto 20s.</div>
         ${topRej ? `<div class="empty-sub" style="margin-top:.6rem;font-size:.7rem;opacity:.6">Top rejets: ${topRej}</div>` : ''}
         <div class="empty-sub" style="margin-top:.4rem;opacity:.5">${pairs.length} analysés · ${passed.length} passent filtres · ${scored.length} scorés ≥82</div>
       </div>`;
@@ -1104,7 +1173,7 @@ async function fetchTokens() {
   }
 
   if (refreshTimer) clearTimeout(refreshTimer);
-  refreshTimer = setTimeout(fetchTokens, 30000);
+  refreshTimer = setTimeout(fetchTokens, 20000);
 }
 
 // ============================================================
