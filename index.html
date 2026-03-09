@@ -27,13 +27,13 @@
 *{margin:0;padding:0;box-sizing:border-box;}
 body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh;overflow-x:hidden;}
 body::before{content:'';position:fixed;top:0;left:0;right:0;bottom:0;background:radial-gradient(ellipse at 20% 20%,rgba(0,255,136,.04) 0%,transparent 50%),radial-gradient(ellipse at 80% 80%,rgba(68,136,255,.03) 0%,transparent 50%);pointer-events:none;z-index:0;}
-nav{position:sticky;top:0;z-index:100;background:rgba(5,5,8,.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:0 2rem;display:flex;align-items:center;gap:1.5rem;height:60px;}
-.nav-logo{display:flex;align-items:center;gap:.7rem;font-family:var(--font-head);font-size:1.1rem;font-weight:800;color:var(--text);cursor:pointer;text-decoration:none;margin-right:auto;}
-.nav-logo svg{width:36px;height:36px;flex-shrink:0;filter:drop-shadow(0 0 8px rgba(0,255,136,.5));}
-.logo-text{line-height:1.1;}
+nav{position:sticky;top:0;z-index:100;background:rgba(5,5,8,.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:0 1.5rem;display:flex;align-items:center;gap:1rem;height:60px;}
+.nav-logo{display:flex;align-items:center;gap:.55rem;cursor:pointer;text-decoration:none;flex-shrink:0;}
+.nav-logo svg{width:34px;height:34px;flex-shrink:0;filter:drop-shadow(0 0 6px rgba(0,255,136,.45));}
+.logo-text{font-family:'Syne',sans-serif;font-size:1rem;font-weight:800;color:var(--text);line-height:1.1;}
 .logo-text span{color:var(--green);}
-.logo-tagline{font-family:'Space Mono',monospace;font-size:7px;color:var(--muted);letter-spacing:1px;margin-top:1px;}
-.nav-links{display:flex;gap:1.2rem;}
+.logo-tagline{font-family:'Space Mono',monospace;font-size:7px;color:var(--muted);letter-spacing:.08em;margin-top:1px;}
+.nav-links{display:flex;gap:1.2rem;margin-left:2rem;margin-right:auto;}
 .nav-links a{color:var(--muted);font-size:.85rem;text-decoration:none;transition:.2s;font-weight:500;}
 .nav-links a:hover{color:var(--green);}
 .nav-btn{padding:.4rem 1rem;border-radius:6px;font-size:.82rem;font-weight:600;cursor:pointer;border:none;transition:.2s;font-family:var(--font);}
@@ -292,7 +292,7 @@ section{scroll-margin-top:70px;}
   <button class="lang-switch" onclick="toggleLang()">🇫🇷 FR</button>
   <button class="nav-btn btn-outline" onclick="openCode()">Se connecter</button>
   <button class="nav-btn btn-primary" onclick="document.getElementById('pricing').scrollIntoView()">S'inscrire</button>
-  <button class="nav-btn btn-outline" onclick="openAdmin()" id="adminBtn" style="display:none">⚙ Admin</button>
+  <button class="nav-btn btn-outline" onclick="openAdmin()" id="adminBtn">⚙ Admin</button>
 </nav>
 
 <section id="hero">
@@ -655,7 +655,6 @@ function submitCode() {
   onUnlock(found.plan);
 }
 function onUnlock(plan) {
-  document.getElementById('adminBtn').style.display = 'inline-block';
   loadReviews();
   fetchTokens();
 }
