@@ -974,9 +974,26 @@ async function fetchKOLMentions(addrs) {
   }
 }
 
-// ── FEES ESTIMÉS ─────────────────────────────────────────────
-function estimateFeesSol(volUsd) {
-  return (volUsd * 0.0025) / 150; // 0.25% AMM fee ÷ $150/SOL
+// ── FEES ESTIMÉS — Pump.fun 0.3% fee rate, SOL~$180 ─────────
+// Si age > 6h → utilise vol24, sinon vol6h (plus représentatif)
+function estimateFeesSol(volUsd, volH6, ageHours) {
+  const useVol = (ageHours !== undefined && ageHours > 6) ? volUsd : (volH6 || volUsd);
+  return (useVol * 0.003) / 180;
+}
+
+// Seuil fees minimum selon mcap bracket
+function feesMinSol(mcap) {
+  if (mcap >= 500000) return 3.5;
+  if (mcap >= 150000) return 1.5;
+  if (mcap >=  50000) return 0.8;
+  if (mcap >=  10000) return 0.3;
+  return 0.1;
+}
+
+// Ratio fees normalisé (pour 100K mcap)
+function feesRatioMcap(feesSOL, mcap) {
+  if (!mcap) return 0;
+  return feesSOL / (mcap / 100000);
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -1020,9 +1037,20 @@ function hardFilter(p) {
   // ── F2. TOKEN AGE < 2 MINUTES ────────────────────────────
   if (ageMin < 2)    return 'age<2min (trop récent)';
 
-  // ── F3. FEES MINIMAUX — activité réelle ──────────────────
-  const feesSOL = estimateFeesSol(vol24);
-  if (feesSOL < 0.3 && ageMin > 10) return `fees<0.3SOL — inactif`;
+  // ── F3. FEES/MCAP — HARD FILTER PRINCIPAL ANTI-RUG ─────────
+  // Formule : (vol6h * 0.003) / 180 — si >6h, utilise vol24
+  const vol6h_hf = p.volume?.h6 || 0;
+  const feesSOL  = estimateFeesSol(vol24, vol6h_hf, age);
+  const feesMin  = feesMinSol(mcap);
+  const feesRat  = feesRatioMcap(feesSOL, mcap); // normalisé 100K mcap
+
+  // Rejet 1 : fees absolus sous seuil bracket
+  if (mcap >= 10000 && feesSOL < feesMin)
+    return `fees<${feesMin}SOL (${feesSOL.toFixed(1)}SOL pour mcap ${(mcap/1000).toFixed(0)}K)`;
+
+  // Rejet 2 : ratio fees/mcap < 4% → volume fake
+  if (feesRat < 0.04 && ageMin > 10)
+    return `fees/mcap ratio ${(feesRat*100).toFixed(2)}% < 4% (fake vol)`;
 
   // ── F4. TOP 10 HOLDERS > 40% (proxy) ─────────────────────
   // DexScreener ne donne pas top10 direct.
@@ -1285,28 +1313,49 @@ function scoreToken(p) {
   score += smS;
 
   // ══════════════════════════════════════════════════════════
-  // 5. FEES PAID / ACTIVITY (15pts)
-  // fees_paid / marketcap ratio — mesure activité réelle
-  // fees estimés = vol24 × 0.25% / 150 (SOL)
-  // fees_ratio = feesSOL / (mcap / 150)  ← normalisé en SOL
+  // 5. FEES PAID / ACTIVITY (15pts + malus/bonus)
+  // Fees estimés Pump.fun : (vol6h * 0.003) / 180
+  // Ratio normalisé 100K mcap — plus c'est haut, plus c'est réel
   // ══════════════════════════════════════════════════════════
   let fS = 0;
-  const fees24   = estimateFeesSol(vol24);
-  const feesMcap = mcap > 0 ? (vol24 * 0.0025) / mcap : 0; // ratio fees$/mcap$
+  const vol6h_s   = p.volume?.h6 || 0;
+  const fees_s    = estimateFeesSol(vol24, vol6h_s, age); // fees SOL estimés
+  const feesMin_s = feesMinSol(mcap);                      // seuil bracket
+  const feesRat_s = feesRatioMcap(fees_s, mcap);           // ratio 100K mcap
+  const feesRatPct = (feesRat_s * 100).toFixed(2);
 
-  if      (feesMcap >= 0.001)  { fS = 15; ind.push({label:'Fees✓✓ actif',ok:true}); }
-  else if (feesMcap >= 0.0003) { fS = 8;  ind.push({label:'Fees✓',ok:true});        }
-  else                         { fS = 0;  ind.push({label:'Fees faibles',ok:false}); }
+  // Score de base via ratio fees/mcap
+  if      (feesRat_s >= 0.20) { fS = 15; }
+  else if (feesRat_s >= 0.10) { fS = 11; }
+  else if (feesRat_s >= 0.06) { fS = 7;  }
+  else if (feesRat_s >= 0.04) { fS = 3;  }
+  else                        { fS = 0;  } // ratio < 4% = déjà rejeté normalement
 
-  // Bonus : fees en accélération (1h > moyenne)
-  const fees1h       = estimateFeesSol(vol1h);
-  const feesVelRatio = fees24 > 0 ? (fees1h * 24) / fees24 : 0;
+  // Malus si fees < 60% du seuil bracket (signal fort de fake vol)
+  if (fees_s < feesMin_s * 0.6) {
+    fS = Math.max(0, fS - 35);
+    ind.push({label:`⚠ Fees ${fees_s.toFixed(1)}SOL bas`,ok:false});
+  }
+  // Bonus si fees > 160% du seuil bracket (activité authentique prouvée)
+  else if (fees_s >= feesMin_s * 1.6) {
+    fS = Math.min(15, fS + 25); // plafonné à 15
+    ind.push({label:`Fees ${fees_s.toFixed(1)}SOL ✓✓`,ok:true});
+  } else {
+    ind.push({label:`Fees ${fees_s.toFixed(1)}SOL ✓`,ok:true});
+  }
+
+  // Bonus accélération 1h
+  const fees1h_s     = estimateFeesSol(vol1h, vol1h, 0);
+  const feesVelRatio = fees_s > 0 ? (fees1h_s * 24) / fees_s : 0;
   if (fS > 0 && feesVelRatio >= 1.5) {
-    fS = Math.min(15, fS + 3);
+    fS = Math.min(15, fS + 2);
     ind.push({label:'Fees accel ↑',ok:true});
   }
 
-  dbg.push({k:'FEE — fees/mcap ratio',v:`${(feesMcap*10000).toFixed(2)}‱ | ${fees24.toFixed(2)} SOL/24h`,pts:fS,max:15,cat:'F'});
+  const feesColor = feesRat_s >= 0.10 ? '#00e676' : feesRat_s >= 0.04 ? '#ffd32a' : '#ff4757';
+  dbg.push({k:'FEE — fees/mcap ratio',
+    v:`~${fees_s.toFixed(1)} SOL (ratio ${feesRatPct}% / seuil ${feesMin_s}SOL) — ${feesRat_s>=0.10?'élevé=bon':feesRat_s>=0.04?'moyen':'⚠ faible'}`,
+    pts:fS,max:15,cat:'F',color:feesColor});
   bd.fees = fS;
   score += fS;
 
@@ -1768,39 +1817,9 @@ async function fetchTokens() {
       isFallback = true;
     }
 
-    // Fallback niveau 2: si TOUS rejetés par hard filters,
-    // scorer en mode permissif (ignore les filtres fees/range) les top tokens par volume
-    if(!scored.length && validPairs.length>0) {
-      const permissive = validPairs
-        .filter(p => {
-          const liq = p.liquidity?.usd||0;
-          const age = (Date.now()-(p.pairCreatedAt||Date.now()))/3600000;
-          const c1h = p.priceChange?.h1||0;
-          const s1h = (p.txns?.h1?.sells||0)/Math.max((p.txns?.h1?.buys||0)+(p.txns?.h1?.sells||0),1);
-          // Garder seulement les filtres de sécurité absolus
-          return liq>=5000 && age<=72 && c1h>-50 && s1h<0.85;
-        })
-        .sort((a,b)=>(b.volume?.h24||0)-(a.volume?.h24||0))
-        .slice(0,5)
-        .map(p => {
-          // Score simplifié sans hard filters
-          const vol24=p.volume?.h24||0, liq=p.liquidity?.usd||0;
-          const c1h=p.priceChange?.h1||0, c24=p.priceChange?.h24||0;
-          const br=(p.txns?.h24?.buys||0)/Math.max((p.txns?.h24?.buys||0)+(p.txns?.h24?.sells||0),1);
-          const simScore = Math.min(59,
-            (liq>=20000?15:liq>=10000?8:3) +
-            (c24>50?15:c24>10?8:2) +
-            (br>0.6?12:br>0.5?6:2) +
-            (c1h>0?8:0) +
-            (estimateFeesSol(vol24)>0.5?9:3)
-          );
-          const ind=[{label:`Vol $${(vol24/1000).toFixed(0)}K`,ok:true},{label:`Liq $${(liq/1000).toFixed(0)}K`,ok:true}];
-          const bd={wallet:0,trading:0,liquidity:0,momentum:0,fees:0,social:0};
-          const dbg=[{k:'Mode permissif',v:'hard filters ignorés',pts:simScore,max:59,cat:'TOTAL'}];
-          return {...p, score:simScore, label:'📡 EARLY SIGNAL', labelColor:'#ff6b35', indicators:ind, breakdown:bd, debugRows:dbg, hasKOL:false, isDemo};
-        });
-      if(permissive.length) { scored = permissive; isFallback = true; }
-    }
+    // Fallback niveau 2 : SUPPRIMÉ — le filtre fees/mcap est intentionnellement strict.
+    // Afficher des tokens avec fake volume serait contre-productif.
+    // Si aucun token ne passe → message clair ci-dessous.
 
     if(!scored.length) {
       // Diagnostic : compter ce qui s'est passé
@@ -1813,10 +1832,11 @@ async function fetchTokens() {
       const topRej = Object.entries(rejections).sort((a,b)=>b[1]-a[1]).slice(0,4).map(([k,v])=>`${k}(×${v})`).join(' · ');
 
       rowsEl.innerHTML=`<div style="padding:40px 20px;text-align:center;">
-        <div style="font-family:Space Mono,monospace;font-size:13px;color:var(--muted2);letter-spacing:.05em;">AUCUN TOKEN QUALIFIÉ</div>
-        <div style="font-family:Space Mono,monospace;font-size:9px;color:#333;margin-top:12px;line-height:1.8;">
-          ${rawCount} tokens reçus · ${rawCount - Object.values(rejections).reduce((a,b)=>a+b,0)} ont passé les filtres · ${allScored.length} scorés<br>
-          ${topRej ? 'Rejets: '+topRej : 'Aucune donnée reçue — CORS ou API indisponible'}
+        <div style="font-family:Space Mono,monospace;font-size:13px;color:var(--muted2);letter-spacing:.05em;">Pas de signal qualifié (anti-rug fees strict)</div>
+        <div style="font-family:Space Mono,monospace;font-size:9px;color:#555;margin-top:12px;line-height:1.8;">
+          ${rawCount} tokens reçus · ${allScored.length} scorés · aucun ≥60pts<br>
+          Le filtre fees/mcap a éliminé les tokens à volume artificiel.<br>
+          ${topRej ? '<span style="color:#ff6b35;">Top rejets: '+topRej+'</span>' : 'Aucune donnée reçue — CORS ou API indisponible'}
         </div>
         <div style="font-family:Space Mono,monospace;font-size:10px;color:var(--green);margin-top:10px;">actualisation dans 30s</div>
       </div>`;
@@ -1898,6 +1918,16 @@ async function renderTokenRows(scored) {
       const xNowC = stats.xNow>=2?'var(--green)':stats.xNow>=1.2?'var(--yellow)':'var(--muted2)';
       const xAthC = stats.xAth>=3?'var(--green)':stats.xAth>=1.5?'var(--yellow)':'var(--muted2)';
 
+      // Calcul fees pour affichage dans la row
+      const _vol24r = p.volume?.h24||0, _vol6hr = p.volume?.h6||0;
+      const _ager   = (Date.now()-(p.pairCreatedAt||Date.now()))/3600000;
+      const _feesr  = estimateFeesSol(_vol24r, _vol6hr, _ager);
+      const _mcapr  = p.marketCap||0;
+      const _fratr  = feesRatioMcap(_feesr, _mcapr);
+      const _fminr  = feesMinSol(_mcapr);
+      const _fcolr  = _fratr >= 0.10 ? '#00e676' : _fratr >= 0.04 ? '#ffd32a' : '#ff4757';
+      const feesTag = `<span style="font-family:Space Mono,monospace;font-size:7px;padding:1px 5px;border-radius:2px;border:1px solid ${_fcolr}40;color:${_fcolr};background:${_fcolr}12;" title="Fees estimés Pump.fun · seuil: ${_fminr}SOL · ratio: ${(_fratr*100).toFixed(2)}% (élevé=bon)">⛽ ~${_feesr.toFixed(1)} SOL · ${(_fratr*100).toFixed(1)}%</span>`;
+
       let indHtml = '';
       (p.indicators||[]).slice(0,5).forEach(ind => {
         const t = ind.isKol?'kol':ind.ok?'ok':'bad';
@@ -1927,7 +1957,7 @@ async function renderTokenRows(scored) {
               <button class="btn-ca" onclick="cpCA('${ca}',this)">CA</button>
               ${isAdminMode?`<button class="btn-ca" style="background:rgba(255,165,2,.15);border-color:rgba(255,165,2,.4);color:#ffa502;" onclick="showDebug(${i})">DEBUG</button>`:''}
             </div>
-            <div class="ind-row">${indHtml}</div>
+            <div class="ind-row">${indHtml} ${feesTag}</div>
             ${bdHtml}
           </div>
         </div>
