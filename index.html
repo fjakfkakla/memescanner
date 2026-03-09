@@ -3,2469 +3,1100 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Memecoin Pump — Solana Alpha Caller</title>
+<title>MemeScanner — Solana Alpha</title>
 <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
 :root {
-  --bg:      #050508;
-  --bg2:     #0a0a10;
-  --bg3:     #0f0f18;
-  --card:    #0c0c14;
-  --border:  rgba(255,255,255,0.06);
-  --border2: rgba(255,255,255,0.12);
-  --green:   #00ff88;
-  --green-d: rgba(0,255,136,0.08);
-  --green-g: rgba(0,255,136,0.3);
-  --red:     #ff2d55;
-  --orange:  #ff8c00;
-  --yellow:  #ffd700;
-  --gold:    #ffd700;
-  --blue:    #00bfff;
-  --purple:  #a855f7;
-  --text:    #f0f0ff;
-  --muted:   #3a3a5c;
-  --muted2:  #6b6b9a;
-  --radius:  12px;
-  --radius2: 8px;
+  --bg: #050508;
+  --bg2: #0a0a10;
+  --bg3: #0f0f18;
+  --card: #111118;
+  --border: #1e1e2e;
+  --green: #00ff88;
+  --green2: #00cc6a;
+  --gold: #ffd700;
+  --red: #ff4466;
+  --blue: #4488ff;
+  --purple: #8855ff;
+  --text: #e0e0f0;
+  --muted: #6666aa;
+  --font-head: 'Syne', sans-serif;
+  --font-mono: 'Space Mono', monospace;
+  --font: 'Inter', sans-serif;
 }
 *{margin:0;padding:0;box-sizing:border-box;}
-body{background:var(--bg);color:var(--text);font-family:'Syne',sans-serif;min-height:100vh;overflow-x:hidden;}
-
-/* ── ANIMATED BACKGROUND ── */
-body::before{
-  content:'';position:fixed;inset:0;
-  background:
-    radial-gradient(ellipse 80% 50% at 20% 10%, rgba(0,255,136,0.04) 0%, transparent 60%),
-    radial-gradient(ellipse 60% 40% at 80% 80%, rgba(0,191,255,0.03) 0%, transparent 60%),
-    radial-gradient(ellipse 40% 30% at 50% 50%, rgba(168,85,247,0.02) 0%, transparent 70%);
-  pointer-events:none;z-index:0;
-}
-body::after{
-  content:'';position:fixed;inset:0;
-  background-image:
-    linear-gradient(rgba(0,255,136,0.025) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0,255,136,0.025) 1px, transparent 1px);
-  background-size:60px 60px;
-  pointer-events:none;z-index:0;
-  mask-image:radial-gradient(ellipse at center, black 0%, transparent 75%);
-}
-
-/* ── NAV ── */
-nav{
-  position:fixed;top:0;left:0;right:0;z-index:200;height:64px;
-  padding:0 32px;display:flex;align-items:center;justify-content:space-between;
-  background:rgba(5,5,8,0.85);backdrop-filter:blur(24px);
-  border-bottom:1px solid rgba(0,255,136,0.08);
-}
-.logo{
-  display:flex;align-items:center;gap:10px;cursor:pointer;
-  text-decoration:none;
-}
-.logo-svg{width:38px;height:38px;flex-shrink:0;filter:drop-shadow(0 0 10px rgba(0,255,136,0.5));}
-.logo-text{
-  font-family:'Syne',sans-serif;font-size:17px;font-weight:800;
-  color:var(--text);letter-spacing:-.3px;line-height:1;
-}
-.logo-text span{color:var(--green);}
-.logo-tagline{font-family:'Space Mono',monospace;font-size:8px;color:var(--muted2);letter-spacing:1px;margin-top:1px;}
-
-.nav-links{display:flex;align-items:center;gap:6px;}
-.nav-link{
-  font-family:'Space Mono',monospace;font-size:10px;letter-spacing:1px;
-  padding:6px 14px;border-radius:20px;cursor:pointer;
-  color:var(--muted2);transition:all .2s;border:1px solid transparent;
-  background:transparent;
-}
-.nav-link:hover,.nav-link.active{color:var(--green);border-color:rgba(0,255,136,0.2);background:var(--green-d);}
-
-.nav-right{display:flex;align-items:center;gap:8px;}
-.nav-pill{font-family:'Space Mono',monospace;font-size:9px;padding:5px 11px;border:1px solid var(--border2);border-radius:20px;color:var(--muted2);cursor:pointer;transition:all .2s;background:transparent;}
-.nav-pill:hover{border-color:var(--green);color:var(--green);}
-.nav-pill.live{border-color:rgba(0,255,136,.3);color:var(--green);background:var(--green-d);}
-
-.lang-switch{
-  display:flex;align-items:center;gap:2px;
-  background:rgba(255,255,255,.04);border:1px solid var(--border);
-  border-radius:20px;padding:3px;
-}
-.lang-btn{
-  font-family:'Space Mono',monospace;font-size:9px;padding:3px 8px;
-  border-radius:16px;cursor:pointer;border:none;background:transparent;
-  color:var(--muted2);transition:all .2s;
-}
-.lang-btn.active{background:var(--green);color:#000;font-weight:700;}
-
-.btn-nav-outline{
-  background:transparent;color:var(--green);
-  border:1px solid rgba(0,255,136,.4);
-  padding:8px 16px;font-family:'Space Mono',monospace;font-size:10px;font-weight:700;
-  border-radius:var(--radius2);cursor:pointer;transition:all .2s;letter-spacing:.5px;
-}
-.btn-nav-outline:hover{background:var(--green-d);}
-.btn-nav{
-  background:var(--green);color:#000;border:none;
-  padding:8px 18px;font-family:'Space Mono',monospace;font-size:10px;font-weight:700;
-  border-radius:var(--radius2);cursor:pointer;transition:all .2s;letter-spacing:.5px;
-}
-.btn-nav:hover{background:#fff;box-shadow:0 0 24px var(--green-g);}
-
-/* ── TICKER ── */
-.ticker{
-  background:rgba(0,255,136,0.03);
-  border-top:1px solid rgba(0,255,136,0.08);
-  border-bottom:1px solid rgba(0,255,136,0.08);
-  padding:8px 0;overflow:hidden;position:relative;z-index:1;margin-top:64px;
-}
-.ticker-inner{display:flex;gap:40px;animation:ticker 30s linear infinite;white-space:nowrap;}
-@keyframes ticker{from{transform:translateX(0)}to{transform:translateX(-50%)}}
-.ticker-item{font-family:'Space Mono',monospace;font-size:10px;color:var(--muted2);display:flex;align-items:center;gap:8px;}
-.ticker-item .up{color:var(--green);}
-.ticker-item .dn{color:var(--red);}
-.ticker-sep{color:var(--muted);opacity:.3;}
-
-/* ── HERO ── */
-.hero{
-  position:relative;z-index:1;
-  padding:80px 40px 90px;max-width:1200px;margin:0 auto;
-  display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center;
-}
-@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
-@keyframes pulse-dot{0%,100%{box-shadow:0 0 0 0 rgba(0,255,136,0.4);}50%{box-shadow:0 0 0 8px rgba(0,255,136,0);}}
-
-.hero-left{}
-.hero-eyebrow{
-  display:inline-flex;align-items:center;gap:8px;
-  font-family:'Space Mono',monospace;font-size:9px;
-  color:var(--green);text-transform:uppercase;letter-spacing:2px;
-  margin-bottom:24px;background:var(--green-d);
-  border:1px solid rgba(0,255,136,.2);padding:5px 14px;border-radius:20px;
-}
-.hero-eyebrow .dot{width:5px;height:5px;background:var(--green);border-radius:50%;animation:blink 1s infinite;}
-.hero h1{
-  font-family:'Syne',sans-serif;font-size:clamp(46px,5.5vw,82px);
-  font-weight:800;line-height:.92;letter-spacing:-3px;margin-bottom:22px;
-}
-.hero h1 .g{
-  color:var(--green);
-  text-shadow:0 0 60px rgba(0,255,136,0.4);
-}
-.hero h1 .d{color:var(--muted2);}
-.hero h1 .gold{
-  color:var(--gold);
-  text-shadow:0 0 60px rgba(255,215,0,0.4);
-}
-.hero-sub{
-  font-family:'Inter',sans-serif;
-  font-size:15px;color:var(--muted2);max-width:440px;line-height:1.75;margin-bottom:36px;
-}
-.hero-sub strong{color:var(--text);}
-.hero-stats{display:flex;gap:36px;margin-bottom:36px;flex-wrap:wrap;}
-.stat-val{font-family:'Syne',sans-serif;font-size:38px;font-weight:800;color:var(--green);line-height:1;text-shadow:0 0 30px rgba(0,255,136,0.3);}
-.stat-lbl{font-family:'Space Mono',monospace;font-size:9px;color:var(--muted2);text-transform:uppercase;letter-spacing:1px;margin-top:3px;}
-.hero-btns{display:flex;gap:12px;flex-wrap:wrap;}
-.btn-primary{
-  background:var(--green);color:#000;border:none;
-  padding:14px 30px;font-family:'Space Mono',monospace;font-size:11px;font-weight:700;
-  border-radius:var(--radius2);cursor:pointer;transition:all .25s;letter-spacing:1px;
-}
-.btn-primary:hover{background:#fff;box-shadow:0 0 48px var(--green-g);transform:translateY(-2px);}
-.btn-secondary{
-  background:transparent;color:var(--text);
-  border:1px solid var(--border2);padding:14px 30px;
-  font-family:'Space Mono',monospace;font-size:11px;
-  border-radius:var(--radius2);cursor:pointer;transition:all .25s;letter-spacing:1px;
-}
-.btn-secondary:hover{border-color:var(--green);color:var(--green);}
-
-/* Hero right — mini chart démo */
-.hero-right{position:relative;}
-.hero-demo-card{
-  background:rgba(12,12,20,0.9);
-  border:1px solid rgba(0,255,136,0.15);
-  border-radius:16px;padding:20px;
-  box-shadow:0 0 80px rgba(0,255,136,0.06), inset 0 0 60px rgba(0,0,0,0.2);
-}
-.hero-demo-header{
-  display:flex;align-items:center;justify-content:space-between;
-  margin-bottom:14px;
-}
-.hd-live{
-  display:flex;align-items:center;gap:6px;
-  font-family:'Space Mono',monospace;font-size:9px;color:var(--green);
-}
-.hd-dot{width:6px;height:6px;background:var(--green);border-radius:50%;animation:blink 1s infinite;}
-.hd-score{
-  font-family:'Space Mono',monospace;font-size:11px;font-weight:700;
-  color:var(--green);background:var(--green-d);
-  border:1px solid rgba(0,255,136,.3);padding:3px 10px;border-radius:6px;
-}
-.demo-token-rows{display:flex;flex-direction:column;gap:6px;}
-.demo-tok{
-  display:flex;align-items:center;justify-content:space-between;
-  background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,.04);
-  border-radius:8px;padding:10px 14px;
-  animation:slide-in .5s ease forwards;opacity:0;
-}
-.demo-tok:nth-child(1){animation-delay:.1s;}
-.demo-tok:nth-child(2){animation-delay:.3s;}
-.demo-tok:nth-child(3){animation-delay:.5s;}
-.demo-tok:nth-child(4){animation-delay:.7s;}
-@keyframes slide-in{from{opacity:0;transform:translateX(10px);}to{opacity:1;transform:none;}}
-.demo-tok-name{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;}
-.demo-tok-sc{font-family:'Space Mono',monospace;font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px;}
-.demo-tok-sc.hi{color:var(--green);background:rgba(0,255,136,.1);border:1px solid rgba(0,255,136,.25);}
-.demo-tok-sc.md{color:var(--yellow);background:rgba(255,215,0,.08);border:1px solid rgba(255,215,0,.25);}
-.demo-tok-ch{font-family:'Space Mono',monospace;font-size:10px;}
-.demo-tok-ch.up{color:var(--green);}
-.demo-tok-ch.dn{color:var(--red);}
-.demo-rug{display:flex;align-items:center;gap:5px;font-family:'Space Mono',monospace;font-size:8px;}
-.rug-low{color:var(--green);}
-.rug-med{color:var(--yellow);}
-
-/* floating meme emojis hero */
-.floater{position:absolute;font-size:28px;opacity:.07;pointer-events:none;animation:float 8s ease-in-out infinite;}
-.floater:nth-child(1){top:5%;left:-8%;animation-delay:0s;}
-.floater:nth-child(2){top:60%;right:-6%;animation-delay:2s;font-size:22px;}
-.floater:nth-child(3){bottom:10%;left:-5%;animation-delay:4s;font-size:20px;}
-@keyframes float{0%,100%{transform:translateY(0px) rotate(0deg);}50%{transform:translateY(-18px) rotate(6deg);}}
-
-/* ── MAIN ── */
-.main{position:relative;z-index:1;max-width:1200px;margin:0 auto;padding:0 40px 100px;}
-
-.section-eyebrow{
-  font-family:'Space Mono',monospace;font-size:9px;color:var(--green);
-  text-transform:uppercase;letter-spacing:3px;margin-bottom:8px;
-  display:flex;align-items:center;gap:8px;
-}
-.section-eyebrow::before{content:'';width:20px;height:1px;background:var(--green);}
-.section-title{
-  font-family:'Syne',sans-serif;font-size:clamp(28px,4vw,48px);
-  font-weight:800;letter-spacing:-1.5px;margin-bottom:40px;
-  line-height:1;
-}
-.section-title .g{color:var(--green);}
-.section-title .gold{color:var(--gold);}
-
-/* ── SCANNER ── */
-.scanner-wrap{
-  background:var(--card);border:1px solid rgba(0,255,136,0.1);
-  border-radius:16px;overflow:hidden;margin-bottom:80px;
-  position:relative;
-  box-shadow:0 0 60px rgba(0,255,136,0.03);
-}
-.scanner-head{
-  padding:14px 22px;border-bottom:1px solid rgba(0,255,136,0.08);
-  display:flex;align-items:center;justify-content:space-between;
-  background:rgba(0,0,0,.2);
-}
-.scanner-title-bar{font-family:'Space Mono',monospace;font-size:11px;color:var(--green);display:flex;align-items:center;gap:8px;}
-.live-dot{width:7px;height:7px;background:var(--green);border-radius:50%;animation:blink 1s infinite;box-shadow:0 0 6px var(--green);}
-.filter-chips{display:flex;gap:6px;}
-.chip{
-  font-family:'Space Mono',monospace;font-size:9px;padding:4px 12px;
-  border:1px solid var(--border);border-radius:20px;color:var(--muted2);
-  cursor:pointer;transition:all .2s;
-}
-.chip.active,.chip:hover{border-color:var(--green);color:var(--green);background:var(--green-d);}
-
-/* TOKEN TABLE */
-.token-row{
-  display:grid;grid-template-columns:2.2fr 1fr 1fr 1fr 1.1fr 110px;
-  padding:13px 22px;border-bottom:1px solid rgba(255,255,255,0.04);
-  align-items:center;transition:background .15s;position:relative;
-}
-.token-row:hover{background:rgba(0,255,136,.02);}
-.token-row.header{
-  font-family:'Space Mono',monospace;font-size:9px;color:var(--muted);
-  text-transform:uppercase;letter-spacing:1px;background:rgba(0,0,0,.15);
-}
-.tok-info{display:flex;align-items:center;gap:10px;}
-.tok-icon{
-  width:36px;height:36px;border-radius:50%;
-  background:linear-gradient(135deg,#1a1a2e,#0d0d1a);
-  border:1px solid rgba(0,255,136,.1);
-  display:flex;align-items:center;justify-content:center;
-  font-size:16px;flex-shrink:0;
-}
-.tok-name{font-weight:700;font-size:13px;font-family:'Syne',sans-serif;}
-.tok-addr{font-family:'Space Mono',monospace;font-size:9px;color:var(--muted2);margin-top:2px;}
-.ind-row{display:flex;gap:3px;flex-wrap:wrap;margin-top:5px;}
-.ind{font-family:'Space Mono',monospace;font-size:7px;padding:2px 5px;border-radius:3px;border:1px solid;}
-.ind.ok{border-color:rgba(0,255,136,.3);color:var(--green);background:rgba(0,255,136,.04);}
-.ind.bad{border-color:rgba(255,45,85,.2);color:var(--muted2);background:transparent;}
-.ind.kol{border-color:rgba(255,140,0,.4);color:var(--orange);background:rgba(255,140,0,.06);}
-.score-wrap{display:flex;align-items:center;gap:7px;}
-.score-num{font-family:'Space Mono',monospace;font-size:13px;font-weight:700;min-width:32px;}
-.score-num.hi{color:var(--green);text-shadow:0 0 12px rgba(0,255,136,0.4);}
-.score-num.md{color:var(--yellow);}
-.score-bar{flex:1;height:3px;background:rgba(255,255,255,.06);border-radius:2px;overflow:hidden;}
-.score-fill{height:100%;border-radius:2px;}
-.score-fill.hi{background:linear-gradient(90deg,var(--green),#00ffcc);}
-.score-fill.md{background:var(--yellow);}
-.cell-mono{font-family:'Space Mono',monospace;font-size:11px;}
-.cell-sub{font-family:'Space Mono',monospace;font-size:9px;color:var(--muted2);margin-top:2px;}
-.up{color:var(--green);}
-.dn{color:var(--red);}
-.sig-badge{display:inline-flex;align-items:center;gap:4px;font-family:'Space Mono',monospace;font-size:9px;padding:4px 9px;border-radius:4px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;}
-.sig-badge.buy{background:var(--green-d);border:1px solid rgba(0,255,136,.3);color:var(--green);}
-.sig-badge.kol-call{background:rgba(255,140,0,.1);border:1px solid rgba(255,140,0,.4);color:var(--orange);}
-.sig-badge.early{background:rgba(168,85,247,.1);border:1px solid rgba(168,85,247,.3);color:var(--purple);}
-.btn-ca{background:rgba(0,255,136,.07);border:1px solid rgba(0,255,136,.2);color:var(--green);font-family:'Space Mono',monospace;font-size:8px;padding:2px 6px;border-radius:3px;cursor:pointer;transition:all .15s;}
-.btn-ca:hover{background:rgba(0,255,136,.18);}
-
-/* LOCK */
-.lock-overlay{position:absolute;inset:0;background:linear-gradient(to bottom,transparent 0%,rgba(5,5,8,.8) 35%,rgba(5,5,8,.98) 60%,var(--bg) 100%);display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding-bottom:56px;z-index:10;}
-.lock-box{text-align:center;padding:36px;background:rgba(12,12,20,0.95);border:1px solid rgba(0,255,136,.15);border-radius:var(--radius);max-width:380px;width:100%;position:relative;}
-.lock-box::before{content:'';position:absolute;inset:-1px;border-radius:var(--radius);background:linear-gradient(135deg,var(--green),transparent,transparent);z-index:-1;opacity:.2;}
-.lock-icon{font-size:38px;margin-bottom:12px;}
-.lock-title{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;margin-bottom:6px;}
-.lock-sub{font-family:'Inter',sans-serif;font-size:12px;color:var(--muted2);margin-bottom:20px;line-height:1.6;}
-.code-wrap{display:flex;gap:8px;margin-bottom:10px;}
-.code-inp{flex:1;background:rgba(0,0,0,.4);border:1px solid rgba(0,255,136,.2);border-radius:var(--radius2);padding:11px 14px;font-family:'Space Mono',monospace;font-size:13px;color:var(--green);text-transform:uppercase;letter-spacing:2px;outline:none;transition:border .2s;}
-.code-inp:focus{border-color:var(--green);box-shadow:0 0 12px rgba(0,255,136,.15);}
-.code-inp::placeholder{color:var(--muted);font-size:11px;letter-spacing:1px;}
-.btn-unlock{background:var(--green);color:#000;border:none;padding:11px 18px;font-family:'Space Mono',monospace;font-size:11px;font-weight:700;border-radius:var(--radius2);cursor:pointer;transition:all .2s;white-space:nowrap;}
-.btn-unlock:hover{background:#fff;box-shadow:0 0 20px var(--green-g);}
-.err-msg{font-family:'Space Mono',monospace;font-size:10px;color:var(--red);margin-top:6px;display:none;}
-.ok-msg{font-family:'Space Mono',monospace;font-size:10px;color:var(--green);margin-top:6px;display:none;}
-.discord-hint{font-family:'Space Mono',monospace;font-size:10px;color:var(--muted2);margin-top:10px;}
-.discord-hint a{color:#7289da;text-decoration:none;}
-
-/* ── OUTILS CARDS (2×2 grid) ── */
-.tools-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:80px;}
-.tool-card{
-  background:var(--card);border:1px solid rgba(255,255,255,.06);
-  border-radius:16px;padding:28px;position:relative;overflow:hidden;
-  transition:all .3s;cursor:default;
-}
-.tool-card:hover{border-color:rgba(0,255,136,.2);transform:translateY(-3px);box-shadow:0 16px 48px rgba(0,0,0,.4), 0 0 30px rgba(0,255,136,.04);}
-.tool-card::before{
-  content:'';position:absolute;top:0;right:0;width:180px;height:180px;
-  border-radius:50%;
-  opacity:.04;transition:opacity .3s;pointer-events:none;
-}
-.tool-card:nth-child(1)::before{background:var(--green);}
-.tool-card:nth-child(2)::before{background:var(--red);}
-.tool-card:nth-child(3)::before{background:var(--yellow);}
-.tool-card:nth-child(4)::before{background:var(--blue);}
-.tool-card:hover::before{opacity:.08;}
-.tool-badge{
-  position:absolute;top:14px;right:14px;
-  font-family:'Space Mono',monospace;font-size:7px;
-  padding:3px 8px;border-radius:3px;
-  background:rgba(255,255,255,.05);border:1px solid var(--border);
-  color:var(--muted2);
-}
-.tool-icon{font-size:40px;margin-bottom:16px;display:block;}
-.tool-name{
-  font-family:'Syne',sans-serif;font-size:20px;font-weight:800;
-  margin-bottom:8px;letter-spacing:-.5px;
-}
-.tool-desc{
-  font-family:'Inter',sans-serif;
-  font-size:12px;color:var(--muted2);line-height:1.7;margin-bottom:16px;
-}
-.tool-tags{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:16px;}
-.tool-tag{
-  font-family:'Space Mono',monospace;font-size:8px;
-  padding:3px 8px;border-radius:4px;
-  border:1px solid rgba(255,255,255,.08);color:var(--muted2);
-}
-/* Animated mini-demo inside each tool card */
-.tool-demo{
-  background:rgba(0,0,0,.3);border-radius:8px;padding:12px;
-  border:1px solid rgba(255,255,255,.04);
-  filter:blur(2px);pointer-events:none;
-  transition:filter .3s;
-}
-.tool-card:hover .tool-demo{filter:blur(0);}
-.tool-demo-row{
-  display:flex;justify-content:space-between;
-  font-family:'Space Mono',monospace;font-size:9px;
-  color:var(--muted2);padding:3px 0;
-  border-bottom:1px solid rgba(255,255,255,.03);
-}
-.tool-demo-row:last-child{border:none;}
-.tv{color:var(--green);}
-.tr{color:var(--red);}
-.to{color:var(--orange);}
-.ty{color:var(--yellow);}
-
-/* ── FEATURES GRID ── */
-.feat-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:80px;}
-.feat-card{
-  background:var(--card);border:1px solid rgba(255,255,255,.06);
-  border-radius:16px;padding:28px;position:relative;overflow:hidden;
-  transition:all .3s;
-}
-.feat-card:hover{border-color:rgba(0,255,136,.15);box-shadow:0 0 30px rgba(0,255,136,.04);}
-.lock-badge{position:absolute;top:12px;right:12px;font-size:14px;opacity:.5;}
-.feat-icon{font-size:32px;display:block;margin-bottom:14px;}
-.feat-name{font-family:'Syne',sans-serif;font-size:18px;font-weight:800;margin-bottom:8px;letter-spacing:-.3px;}
-.feat-desc{font-family:'Inter',sans-serif;font-size:12px;color:var(--muted2);line-height:1.7;margin-bottom:14px;}
-.feat-tags{display:flex;flex-wrap:wrap;gap:5px;}
-.feat-tag{font-family:'Space Mono',monospace;font-size:8px;padding:3px 8px;border:1px solid rgba(0,255,136,.15);border-radius:4px;color:var(--green);background:var(--green-d);}
-
-/* ── PRICING ── */
-.price-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;margin-bottom:80px;}
-.price-card{
-  background:var(--card);border:1px solid rgba(255,255,255,.07);
-  border-radius:16px;padding:30px;
-  display:flex;flex-direction:column;position:relative;overflow:hidden;
-  transition:all .3s;
-}
-.price-card:hover{transform:translateY(-4px);box-shadow:0 20px 60px rgba(0,0,0,.5);}
-.price-card.featured{border-color:var(--green);box-shadow:0 0 50px rgba(0,255,136,.07);}
-.price-card.featured::before{
-  content:'★ POPULAIRE';position:absolute;top:-11px;left:50%;transform:translateX(-50%);
-  background:var(--green);color:#000;font-family:'Space Mono',monospace;
-  font-size:9px;font-weight:700;padding:3px 14px;border-radius:20px;letter-spacing:1px;white-space:nowrap;
-}
-.price-plan{
-  font-family:'Space Mono',monospace;font-size:11px;
-  color:var(--green);letter-spacing:2px;text-transform:uppercase;margin-bottom:6px;
-}
-.price-tagline{font-family:'Space Mono',monospace;font-size:9px;color:var(--muted2);margin-bottom:18px;letter-spacing:.5px;}
-.price-amount{font-family:'Syne',sans-serif;font-size:52px;font-weight:800;line-height:1;margin-bottom:4px;}
-.price-amount span{font-size:22px;color:var(--muted2);}
-.price-period{font-family:'Space Mono',monospace;font-size:9px;color:var(--muted2);margin-bottom:24px;}
-.price-list{list-style:none;flex:1;margin-bottom:24px;}
-.price-list li{
-  font-family:'Inter',sans-serif;font-size:12px;color:var(--muted2);
-  padding:7px 0;border-bottom:1px solid rgba(255,255,255,.04);
-  display:flex;align-items:center;gap:8px;
-}
-.price-list li::before{content:'✓';color:var(--green);font-weight:700;font-size:11px;font-family:'Space Mono',monospace;}
-.price-list li.no{color:var(--muted);}
-.price-list li.no::before{content:'—';color:var(--muted);}
-.btn-price{
-  width:100%;padding:13px;background:transparent;
-  border:1px solid rgba(0,255,136,.4);color:var(--green);
-  font-family:'Space Mono',monospace;font-size:11px;font-weight:700;
-  border-radius:var(--radius2);cursor:pointer;transition:all .25s;letter-spacing:1px;
-}
-.btn-price:hover,.price-card.featured .btn-price{
-  background:var(--green);color:#000;box-shadow:0 0 24px var(--green-g);
-}
-
-/* ── SNIPING ── */
-.snipe-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:80px;}
-.snipe-card{background:var(--card);border:1px solid rgba(255,255,255,.06);border-radius:16px;padding:26px;position:relative;overflow:hidden;}
-.snipe-card:hover{border-color:rgba(0,255,136,.12);}
-.snipe-card-badge{position:absolute;top:12px;right:12px;font-family:'Space Mono',monospace;font-size:7px;color:var(--muted);background:rgba(0,0,0,.4);padding:3px 7px;border-radius:3px;border:1px solid var(--border);}
-.snipe-title{font-family:'Syne',sans-serif;font-size:18px;font-weight:800;margin-bottom:6px;display:flex;align-items:center;gap:8px;letter-spacing:-.3px;}
-.snipe-desc{font-family:'Inter',sans-serif;font-size:12px;color:var(--muted2);line-height:1.6;margin-bottom:14px;}
-.snipe-tags{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:14px;}
-.snipe-tag{font-family:'Space Mono',monospace;font-size:8px;padding:2px 7px;border:1px solid rgba(0,255,136,.12);border-radius:3px;color:var(--green);background:var(--green-d);}
-.snipe-preview{background:rgba(0,0,0,.25);border-radius:8px;padding:12px;filter:blur(3px);pointer-events:none;user-select:none;}
-.snipe-row{display:flex;justify-content:space-between;font-family:'Space Mono',monospace;font-size:10px;color:var(--muted2);padding:4px 0;border-bottom:1px solid rgba(255,255,255,.03);}
-.snipe-row:last-child{border:none;}
-.snipe-row .v{color:var(--green);}
-.snipe-row .r{color:var(--red);}
-.snipe-row .o{color:var(--orange);}
-
-/* ── REVIEWS ── */
-.reviews-section{margin-bottom:80px;}
-.reviews-header{display:flex;align-items:center;gap:16px;margin-bottom:32px;}
-.reviews-avg{
-  display:flex;align-items:center;gap:10px;
-  background:var(--card);border:1px solid rgba(255,215,0,.2);
-  border-radius:12px;padding:12px 20px;
-}
-.avg-val{font-family:'Syne',sans-serif;font-size:32px;font-weight:800;color:var(--gold);}
-.avg-stars{font-size:18px;letter-spacing:2px;}
-.avg-count{font-family:'Space Mono',monospace;font-size:9px;color:var(--muted2);}
-.reviews-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:24px;}
-.review-card{
-  background:var(--card);border:1px solid rgba(255,255,255,.06);
-  border-radius:12px;padding:18px;transition:all .2s;
-}
-.review-card:hover{border-color:rgba(255,215,0,.15);}
-.review-stars{font-size:13px;margin-bottom:8px;letter-spacing:2px;}
-.review-text{font-family:'Inter',sans-serif;font-size:12px;color:var(--muted2);line-height:1.6;margin-bottom:10px;}
-.review-meta{display:flex;align-items:center;gap:8px;}
-.review-avatar{width:24px;height:24px;border-radius:50%;background:linear-gradient(135deg,var(--green),var(--blue));font-size:11px;display:flex;align-items:center;justify-content:center;font-weight:700;color:#000;}
-.review-author{font-family:'Space Mono',monospace;font-size:9px;color:var(--muted2);}
-.review-form{
-  background:var(--card);border:1px solid rgba(0,255,136,.12);
-  border-radius:12px;padding:24px;max-width:560px;
-}
-.review-form-title{font-family:'Syne',sans-serif;font-size:16px;font-weight:800;margin-bottom:16px;}
-.star-select{display:flex;gap:4px;margin-bottom:12px;}
-.star-btn{font-size:22px;cursor:pointer;opacity:.3;transition:opacity .15s;}
-.star-btn.active,.star-btn:hover{opacity:1;}
-.review-textarea{
-  width:100%;background:rgba(0,0,0,.3);border:1px solid rgba(0,255,136,.15);
-  border-radius:8px;padding:12px;font-family:'Inter',sans-serif;font-size:12px;
-  color:var(--text);resize:vertical;min-height:80px;outline:none;
-  transition:border .2s;
-}
-.review-textarea:focus{border-color:var(--green);}
-.review-locked-msg{
-  font-family:'Space Mono',monospace;font-size:10px;color:var(--muted2);
-  text-align:center;padding:16px;background:rgba(0,0,0,.2);border-radius:8px;
-  border:1px solid var(--border);
-}
-
-/* ── MODAL ── */
-.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:1000;align-items:center;justify-content:center;backdrop-filter:blur(8px);}
-.modal-overlay.open{display:flex;}
-.modal{
-  background:rgba(10,10,16,0.98);border:1px solid rgba(0,255,136,.15);
-  border-radius:16px;padding:44px;max-width:440px;width:90%;
-  position:relative;text-align:center;
-  box-shadow:0 0 100px rgba(0,255,136,.08);
-}
-.modal::before{content:'';position:absolute;inset:-1px;border-radius:16px;background:linear-gradient(135deg,var(--green),transparent,transparent);z-index:-1;opacity:.2;}
-.modal-close{position:absolute;top:14px;right:14px;background:none;border:none;color:var(--muted2);font-size:18px;cursor:pointer;padding:4px;line-height:1;}
+body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh;overflow-x:hidden;}
+body::before{content:'';position:fixed;top:0;left:0;right:0;bottom:0;background:radial-gradient(ellipse at 20% 20%,rgba(0,255,136,.04) 0%,transparent 50%),radial-gradient(ellipse at 80% 80%,rgba(68,136,255,.03) 0%,transparent 50%);pointer-events:none;z-index:0;}
+nav{position:sticky;top:0;z-index:100;background:rgba(5,5,8,.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:0 2rem;display:flex;align-items:center;gap:1.5rem;height:60px;}
+.nav-logo{display:flex;align-items:center;gap:.6rem;font-family:var(--font-head);font-size:1.1rem;color:var(--green);cursor:pointer;text-decoration:none;margin-right:auto;}
+.nav-links{display:flex;gap:1.2rem;}
+.nav-links a{color:var(--muted);font-size:.85rem;text-decoration:none;transition:.2s;font-weight:500;}
+.nav-links a:hover{color:var(--green);}
+.nav-btn{padding:.4rem 1rem;border-radius:6px;font-size:.82rem;font-weight:600;cursor:pointer;border:none;transition:.2s;font-family:var(--font);}
+.btn-outline{background:transparent;border:1px solid var(--border);color:var(--text);}
+.btn-outline:hover{border-color:var(--green);color:var(--green);}
+.btn-primary{background:var(--green);color:#000;}
+.btn-primary:hover{background:var(--green2);}
+.lang-switch{background:transparent;border:1px solid var(--border);color:var(--muted);padding:.35rem .7rem;border-radius:6px;cursor:pointer;font-size:.78rem;font-family:var(--font);}
+.hero{display:grid;grid-template-columns:1fr 1fr;gap:3rem;align-items:center;padding:5rem 4rem 4rem;max-width:1200px;margin:0 auto;position:relative;z-index:1;}
+.hero-title{font-family:var(--font-head);font-size:3.2rem;line-height:1.1;margin-bottom:1rem;}
+.hero-title span{color:var(--green);}
+.hero-subtitle{color:var(--muted);font-size:1rem;line-height:1.6;margin-bottom:2rem;}
+.hero-stats{display:flex;gap:2rem;margin-bottom:2rem;}
+.stat-item{text-align:center;}
+.stat-num{font-family:var(--font-mono);font-size:1.4rem;color:var(--green);font-weight:700;}
+.stat-label{font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;}
+.hero-cta{display:flex;gap:1rem;}
+.cta-big{padding:.8rem 2rem;border-radius:8px;font-size:.95rem;font-weight:700;cursor:pointer;border:none;font-family:var(--font);transition:.2s;}
+.cta-green{background:var(--green);color:#000;}
+.cta-green:hover{background:var(--green2);transform:translateY(-1px);}
+.cta-ghost{background:transparent;border:1px solid var(--border);color:var(--text);}
+.cta-ghost:hover{border-color:var(--green);color:var(--green);}
+.hero-demo{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:1.2rem;position:relative;overflow:hidden;}
+.hero-demo::before{content:'LIVE DEMO';position:absolute;top:10px;right:10px;font-size:.65rem;color:var(--green);background:rgba(0,255,136,.1);padding:.2rem .5rem;border-radius:4px;font-family:var(--font-mono);}
+.demo-header{font-size:.7rem;color:var(--muted);font-family:var(--font-mono);margin-bottom:.8rem;text-transform:uppercase;letter-spacing:.08em;}
+.demo-token{display:flex;align-items:center;justify-content:space-between;padding:.6rem .8rem;background:var(--bg3);border-radius:8px;margin-bottom:.5rem;border:1px solid var(--border);}
+.demo-token.rug{opacity:.5;border-color:rgba(255,68,102,.3);text-decoration:line-through;}
+.demo-tok-name{font-family:var(--font-mono);font-size:.8rem;color:var(--text);}
+.demo-score{font-size:.72rem;font-weight:700;padding:.2rem .5rem;border-radius:4px;}
+.score-god{background:rgba(255,215,0,.15);color:var(--gold);}
+.score-high{background:rgba(0,255,136,.12);color:var(--green);}
+.demo-reject{font-size:.65rem;color:var(--red);}
+.tools-section{padding:4rem;max-width:1200px;margin:0 auto;position:relative;z-index:1;}
+.section-title{font-family:var(--font-head);font-size:1.8rem;margin-bottom:.5rem;}
+.section-sub{color:var(--muted);font-size:.9rem;margin-bottom:2.5rem;}
+.tools-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1.5rem;}
+.tool-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:1.8rem;cursor:pointer;transition:.3s;position:relative;overflow:hidden;}
+.tool-card:hover{border-color:var(--green);transform:translateY(-3px);box-shadow:0 8px 30px rgba(0,255,136,.08);}
+.tool-icon{font-size:2rem;margin-bottom:.8rem;}
+.tool-name{font-family:var(--font-head);font-size:1.1rem;margin-bottom:.4rem;}
+.tool-desc{color:var(--muted);font-size:.85rem;line-height:1.5;}
+.tool-badge{position:absolute;top:1rem;right:1rem;font-size:.65rem;padding:.2rem .5rem;border-radius:4px;font-family:var(--font-mono);background:rgba(0,255,136,.1);color:var(--green);}
+.scanner-section{padding:4rem;max-width:1400px;margin:0 auto;position:relative;z-index:1;}
+.scanner-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;flex-wrap:wrap;gap:1rem;}
+.scanner-title{font-family:var(--font-head);font-size:1.6rem;}
+.scanner-controls{display:flex;gap:.8rem;align-items:center;}
+.scan-btn{padding:.5rem 1.2rem;border-radius:8px;font-size:.82rem;font-weight:600;cursor:pointer;border:none;font-family:var(--font);transition:.2s;}
+.scan-btn-green{background:var(--green);color:#000;}
+.scan-btn-green:hover{background:var(--green2);}
+.scan-btn-outline{background:transparent;border:1px solid var(--border);color:var(--muted);}
+.scan-btn-outline:hover{border-color:var(--green);color:var(--green);}
+.status-dot{width:8px;height:8px;border-radius:50%;background:var(--green);animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.token-table{width:100%;border-collapse:collapse;}
+.token-table th{font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;padding:.8rem 1rem;text-align:left;border-bottom:1px solid var(--border);font-weight:500;}
+.token-table td{padding:.9rem 1rem;border-bottom:1px solid rgba(30,30,46,.6);vertical-align:middle;}
+.token-table tr:hover td{background:rgba(255,255,255,.02);}
+.tok-name-cell{display:flex;align-items:center;gap:.6rem;}
+.tok-emoji{font-size:1.1rem;}
+.tok-sym{font-family:var(--font-mono);font-size:.9rem;font-weight:700;}
+.tok-addr{font-size:.65rem;color:var(--muted);}
+.score-badge{display:inline-flex;align-items:center;gap:.3rem;padding:.3rem .7rem;border-radius:6px;font-size:.78rem;font-weight:700;font-family:var(--font-mono);}
+.score-god-gem{background:rgba(255,215,0,.12);color:var(--gold);border:1px solid rgba(255,215,0,.2);}
+.score-high-pot{background:rgba(0,255,136,.1);color:var(--green);border:1px solid rgba(0,255,136,.15);}
+.score-solid{background:rgba(68,136,255,.1);color:var(--blue);border:1px solid rgba(68,136,255,.15);}
+.mcap-cell{font-family:var(--font-mono);font-size:.8rem;}
+.mcap-call{color:var(--muted);font-size:.72rem;}
+.mcap-now{color:var(--text);font-weight:600;}
+.mcap-mult{font-size:.7rem;}
+.mcap-mult.up{color:var(--green);}
+.mcap-mult.down{color:var(--red);}
+.ath-val{font-family:var(--font-mono);font-size:.78rem;color:var(--gold);}
+.fees-cell{font-family:var(--font-mono);font-size:.78rem;}
+.rug-badge{padding:.25rem .6rem;border-radius:5px;font-size:.68rem;font-weight:700;font-family:var(--font-mono);letter-spacing:.03em;}
+.rug-low{background:rgba(0,255,136,.1);color:var(--green);border:1px solid rgba(0,255,136,.15);}
+.rug-med{background:rgba(255,170,0,.1);color:#ffaa00;border:1px solid rgba(255,170,0,.2);}
+.rug-high{background:rgba(255,68,102,.1);color:var(--red);border:1px solid rgba(255,68,102,.15);}
+.breakdown-mini{display:flex;gap:.3rem;margin-top:.3rem;flex-wrap:wrap;}
+.bk-chip{font-size:.6rem;color:var(--muted);background:var(--bg3);padding:.1rem .35rem;border-radius:3px;font-family:var(--font-mono);}
+.time-ago{font-size:.7rem;color:var(--muted);font-family:var(--font-mono);}
+.empty-state{text-align:center;padding:4rem 2rem;}
+.empty-icon{font-size:3rem;margin-bottom:1rem;opacity:.5;}
+.empty-title{font-family:var(--font-mono);font-size:.9rem;color:var(--muted);}
+.empty-sub{font-size:.78rem;color:var(--muted);opacity:.7;margin-top:.4rem;}
+.loading-state{text-align:center;padding:4rem 2rem;}
+.spinner{width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--green);border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 1rem;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.pricing-section{padding:4rem;max-width:1100px;margin:0 auto;position:relative;z-index:1;}
+.pricing-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;margin-top:2.5rem;}
+.plan-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:2rem;position:relative;transition:.3s;}
+.plan-card:hover{transform:translateY(-4px);}
+.plan-card.featured{border-color:var(--green);box-shadow:0 0 30px rgba(0,255,136,.08);}
+.plan-card.dubai{border-color:var(--gold);box-shadow:0 0 30px rgba(255,215,0,.08);}
+.plan-badge{position:absolute;top:-12px;left:50%;transform:translateX(-50%);padding:.3rem 1rem;border-radius:20px;font-size:.7rem;font-weight:700;white-space:nowrap;}
+.badge-pop{background:var(--green);color:#000;}
+.badge-top{background:var(--gold);color:#000;}
+.plan-name{font-family:var(--font-head);font-size:1.3rem;margin-bottom:.2rem;}
+.plan-tagline{font-size:.78rem;color:var(--muted);margin-bottom:1.2rem;}
+.plan-price{font-family:var(--font-mono);font-size:2.2rem;font-weight:700;margin-bottom:1.5rem;}
+.plan-price span{font-size:.9rem;color:var(--muted);font-weight:400;}
+.plan-features{list-style:none;display:flex;flex-direction:column;gap:.7rem;margin-bottom:1.8rem;}
+.plan-features li{font-size:.84rem;display:flex;align-items:center;gap:.5rem;}
+.feat-yes{color:var(--green);}
+.feat-no{color:var(--muted);opacity:.5;}
+.plan-btn{width:100%;padding:.8rem;border-radius:8px;font-size:.88rem;font-weight:700;cursor:pointer;border:none;font-family:var(--font);transition:.2s;}
+.plan-btn-green{background:var(--green);color:#000;}
+.plan-btn-green:hover{background:var(--green2);}
+.plan-btn-gold{background:var(--gold);color:#000;}
+.plan-btn-gold:hover{filter:brightness(.9);}
+.plan-btn-ghost{background:transparent;border:1px solid var(--border);color:var(--text);}
+.plan-btn-ghost:hover{border-color:var(--green);color:var(--green);}
+.reviews-section{padding:4rem;max-width:1100px;margin:0 auto;position:relative;z-index:1;}
+.reviews-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.2rem;margin-top:2rem;}
+.review-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.4rem;}
+.review-stars{color:var(--gold);font-size:.9rem;margin-bottom:.6rem;}
+.review-text{font-size:.84rem;color:var(--muted);line-height:1.5;margin-bottom:.8rem;font-style:italic;}
+.review-author{font-size:.75rem;font-family:var(--font-mono);color:var(--text);}
+.review-form{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.4rem;margin-top:1.2rem;}
+.review-form h3{font-size:.9rem;font-family:var(--font-head);margin-bottom:.8rem;}
+.star-picker{display:flex;gap:.3rem;font-size:1.4rem;cursor:pointer;margin-bottom:.8rem;}
+.star-picker span{opacity:.4;transition:.1s;}
+.star-picker span.active{opacity:1;}
+.rev-input{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:.7rem;color:var(--text);font-family:var(--font);font-size:.84rem;resize:vertical;min-height:80px;margin-bottom:.8rem;}
+.rev-input:focus{outline:none;border-color:var(--green);}
+.rev-submit{padding:.5rem 1.2rem;background:var(--green);color:#000;border:none;border-radius:6px;font-weight:700;cursor:pointer;font-family:var(--font);font-size:.82rem;}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.8);backdrop-filter:blur(6px);z-index:200;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:.3s;}
+.modal-overlay.open{opacity:1;pointer-events:all;}
+.modal-box{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:2.5rem;width:90%;max-width:440px;position:relative;transform:scale(.96);transition:.3s;}
+.modal-overlay.open .modal-box{transform:scale(1);}
+.modal-close{position:absolute;top:1rem;right:1rem;background:none;border:none;color:var(--muted);cursor:pointer;font-size:1.2rem;}
 .modal-close:hover{color:var(--text);}
-.modal-icon{font-size:44px;margin-bottom:14px;}
-.modal-title{font-family:'Syne',sans-serif;font-size:28px;font-weight:800;margin-bottom:8px;}
-.modal-sub{font-family:'Inter',sans-serif;font-size:13px;color:var(--muted2);margin-bottom:28px;line-height:1.6;}
-
-/* ── ADMIN ── */
-.admin-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:2000;align-items:center;justify-content:center;backdrop-filter:blur(10px);}
-.admin-overlay.open{display:flex;}
-.admin-panel{background:#080810;border:1px solid rgba(0,255,136,.15);border-radius:16px;padding:36px;max-width:580px;width:92%;max-height:88vh;overflow-y:auto;position:relative;}
-.admin-panel::-webkit-scrollbar{width:3px;}
-.admin-panel::-webkit-scrollbar-thumb{background:var(--green);border-radius:2px;}
-.admin-title{font-family:'Syne',sans-serif;font-size:26px;font-weight:800;color:var(--green);letter-spacing:-1px;margin-bottom:3px;}
-.admin-sub{font-family:'Space Mono',monospace;font-size:9px;color:var(--muted2);margin-bottom:28px;}
-.admin-section{margin-bottom:24px;}
-.admin-section-title{font-family:'Space Mono',monospace;font-size:9px;color:var(--green);text-transform:uppercase;letter-spacing:2px;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--border);}
-.admin-row{display:flex;gap:8px;align-items:center;margin-bottom:8px;}
-.admin-inp{flex:1;background:rgba(0,0,0,.4);border:1px solid var(--border2);border-radius:var(--radius2);padding:9px 12px;font-family:'Space Mono',monospace;font-size:11px;color:var(--green);outline:none;transition:border .2s;}
-.admin-inp:focus{border-color:var(--green);}
-.btn-admin{background:var(--green);color:#000;border:none;padding:9px 16px;font-family:'Space Mono',monospace;font-size:10px;font-weight:700;border-radius:var(--radius2);cursor:pointer;transition:all .2s;white-space:nowrap;}
-.btn-admin:hover{background:#fff;}
-.btn-admin.red{background:var(--red);color:#fff;}
-.btn-admin.red:hover{background:#ff6b78;}
-.btn-admin.ghost{background:transparent;border:1px solid var(--border2);color:var(--muted2);}
-.btn-admin.ghost:hover{border-color:var(--green);color:var(--green);background:transparent;}
-.codes-list{display:flex;flex-direction:column;gap:5px;max-height:200px;overflow-y:auto;}
-.codes-list::-webkit-scrollbar{width:2px;}
-.codes-list::-webkit-scrollbar-thumb{background:var(--green);}
-.code-item{display:flex;align-items:center;justify-content:space-between;background:rgba(0,255,136,.04);border:1px solid rgba(0,255,136,.1);border-radius:var(--radius2);padding:8px 12px;}
-.code-item.used{background:rgba(255,45,85,.04);border-color:rgba(255,45,85,.15);}
-.code-val{font-family:'Space Mono',monospace;font-size:11px;color:var(--green);letter-spacing:1px;}
-.code-item.used .code-val{color:var(--muted2);}
-.code-meta{font-family:'Space Mono',monospace;font-size:8px;color:var(--muted);margin-top:2px;}
-.code-meta.u{color:var(--red);}
-.code-actions{display:flex;gap:5px;}
-.btn-cc,.btn-del{background:transparent;border:1px solid var(--border);color:var(--muted2);font-family:'Space Mono',monospace;font-size:8px;padding:3px 7px;border-radius:3px;cursor:pointer;transition:all .15s;}
-.btn-cc:hover{border-color:var(--green);color:var(--green);}
-.btn-del:hover{border-color:var(--red);color:var(--red);}
-.admin-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
-.admin-stat{background:var(--green-d);border:1px solid rgba(0,255,136,.15);border-radius:var(--radius2);padding:12px;text-align:center;}
-.admin-stat-val{font-family:'Syne',sans-serif;font-size:26px;font-weight:800;color:var(--green);}
-.admin-stat-lbl{font-family:'Space Mono',monospace;font-size:8px;color:var(--muted2);margin-top:2px;}
-.admin-msg{font-family:'Space Mono',monospace;font-size:9px;margin-top:6px;display:none;}
-.admin-msg.ok{color:var(--green);}
-.admin-msg.err{color:var(--red);}
-
-/* ── FOOTER ── */
-footer{
-  position:relative;z-index:1;
-  border-top:1px solid rgba(255,255,255,.04);
-  padding:36px 40px;
-  display:flex;align-items:center;justify-content:space-between;
-  flex-wrap:wrap;gap:16px;
-}
-.footer-logo{
-  font-family:'Syne',sans-serif;font-size:16px;font-weight:800;
-  display:flex;align-items:center;gap:8px;
-}
-.footer-logo span{color:var(--green);}
-.footer-links{display:flex;gap:20px;font-family:'Space Mono',monospace;font-size:9px;color:var(--muted2);}
-.footer-right{font-family:'Space Mono',monospace;font-size:9px;color:var(--muted);text-align:right;}
-
-/* ── RESPONSIVE ── */
+.modal-title{font-family:var(--font-head);font-size:1.4rem;margin-bottom:.4rem;}
+.modal-sub{color:var(--muted);font-size:.84rem;margin-bottom:1.5rem;}
+.code-input{width:100%;background:var(--bg3);border:2px solid var(--border);border-radius:10px;padding:.9rem 1.2rem;color:var(--text);font-family:var(--font-mono);font-size:1.1rem;letter-spacing:.1em;text-align:center;text-transform:uppercase;}
+.code-input:focus{outline:none;border-color:var(--green);}
+.code-input.err{border-color:var(--red);}
+.code-err{color:var(--red);font-size:.78rem;margin:.6rem 0;text-align:center;}
+.code-submit{width:100%;padding:.8rem;background:var(--green);color:#000;border:none;border-radius:8px;font-weight:700;font-size:.95rem;cursor:pointer;font-family:var(--font);transition:.2s;margin-top:.6rem;}
+.code-submit:hover{background:var(--green2);}
+.admin-overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);backdrop-filter:blur(6px);z-index:200;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:.3s;}
+.admin-overlay.open{opacity:1;pointer-events:all;}
+.admin-box{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:2rem;width:90%;max-width:640px;max-height:85vh;overflow-y:auto;transform:scale(.96);transition:.3s;position:relative;}
+.admin-overlay.open .admin-box{transform:scale(1);}
+.admin-title{font-family:var(--font-head);font-size:1.3rem;margin-bottom:1.2rem;display:flex;align-items:center;gap:.6rem;}
+.admin-section{margin-bottom:1.5rem;}
+.admin-section h3{font-size:.8rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:.8rem;font-weight:500;}
+.code-gen-row{display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;}
+.plan-select{background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:.5rem .8rem;font-family:var(--font);font-size:.84rem;cursor:pointer;}
+.admin-btn{padding:.5rem 1rem;border-radius:6px;font-size:.82rem;font-weight:600;cursor:pointer;border:none;font-family:var(--font);transition:.2s;}
+.admin-btn-green{background:var(--green);color:#000;}
+.admin-btn-red{background:var(--red);color:#fff;}
+.admin-btn-blue{background:var(--blue);color:#fff;}
+.admin-btn-ghost{background:transparent;border:1px solid var(--border);color:var(--muted);}
+.admin-btn-ghost:hover{border-color:var(--green);color:var(--green);}
+.codes-list{display:flex;flex-direction:column;gap:.4rem;max-height:280px;overflow-y:auto;}
+.code-item{display:flex;align-items:center;gap:.6rem;background:var(--bg3);border-radius:8px;padding:.5rem .8rem;font-family:var(--font-mono);font-size:.78rem;}
+.code-val{flex:1;}
+.code-plan-badge{font-size:.65rem;padding:.15rem .4rem;border-radius:4px;}
+.code-used{opacity:.45;text-decoration:line-through;}
+.plan-base{background:rgba(68,136,255,.15);color:var(--blue);}
+.plan-alpha{background:rgba(0,255,136,.12);color:var(--green);}
+.plan-dubai{background:rgba(255,215,0,.12);color:var(--gold);}
+.pw-input{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:.6rem .9rem;color:var(--text);font-family:var(--font);font-size:.9rem;margin-bottom:.8rem;}
+.pw-input:focus{outline:none;border-color:var(--green);}
+.admin-pw-err{color:var(--red);font-size:.78rem;margin-bottom:.6rem;}
+.debug-overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);backdrop-filter:blur(6px);z-index:300;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:.3s;}
+.debug-overlay.open{opacity:1;pointer-events:all;}
+.debug-box{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:2rem;width:90%;max-width:620px;max-height:85vh;overflow-y:auto;position:relative;}
+.debug-title{font-family:var(--font-mono);font-size:.9rem;color:var(--green);margin-bottom:1.2rem;}
+.debug-score-big{font-family:var(--font-head);font-size:3rem;text-align:center;margin-bottom:1.2rem;}
+.debug-bars{display:flex;flex-direction:column;gap:.8rem;margin-bottom:1.5rem;}
+.debug-bar-row{display:flex;align-items:center;gap:.8rem;}
+.debug-bar-label{font-family:var(--font-mono);font-size:.72rem;color:var(--muted);width:80px;}
+.debug-bar-track{flex:1;background:var(--bg3);border-radius:4px;height:6px;overflow:hidden;}
+.debug-bar-fill{height:100%;border-radius:4px;background:var(--green);transition:.5s;}
+.debug-bar-val{font-family:var(--font-mono);font-size:.72rem;color:var(--text);width:50px;text-align:right;}
+.debug-details{font-size:.75rem;font-family:var(--font-mono);color:var(--muted);background:var(--bg3);padding:1rem;border-radius:8px;line-height:1.8;white-space:pre-wrap;}
+.debug-raw{font-size:.7rem;color:var(--muted);background:var(--bg3);padding:.8rem;border-radius:6px;line-height:1.6;max-height:200px;overflow-y:auto;white-space:pre-wrap;margin-top:1rem;}
+.debug-raw summary{color:var(--muted);cursor:pointer;font-family:var(--font-mono);font-size:.72rem;margin-bottom:.4rem;}
+footer{border-top:1px solid var(--border);padding:2rem 4rem;display:flex;align-items:center;justify-content:space-between;position:relative;z-index:1;}
+.footer-left{font-size:.78rem;color:var(--muted);}
+.footer-links{display:flex;gap:1.5rem;}
+.footer-links a{font-size:.78rem;color:var(--muted);text-decoration:none;transition:.2s;}
+.footer-links a:hover{color:var(--green);}
+.floater{position:fixed;pointer-events:none;font-size:1.5rem;opacity:.04;animation:float linear infinite;z-index:0;}
+@keyframes float{0%{transform:translateY(100vh) rotate(0deg)}100%{transform:translateY(-100px) rotate(360deg)}}
+html{scroll-behavior:smooth;}
+section{scroll-margin-top:70px;}
 @media(max-width:900px){
-  .hero{grid-template-columns:1fr;gap:40px;padding:80px 24px 60px;}
-  .hero-right{display:none;}
-  .main{padding:0 24px 60px;}
-  .tools-grid,.feat-grid,.snipe-grid{grid-template-columns:1fr;}
-  .price-grid{grid-template-columns:1fr;}
-  .reviews-grid{grid-template-columns:1fr;}
-  .token-row{grid-template-columns:2fr 1fr 80px;}
-  .token-row>*:nth-child(3),.token-row>*:nth-child(4),.token-row>*:nth-child(5){display:none;}
-  nav{padding:0 16px;}
+  .hero{grid-template-columns:1fr;padding:3rem 1.5rem 2rem;}
+  .hero-demo{display:none;}
+  .tools-grid,.pricing-grid,.reviews-grid{grid-template-columns:1fr;}
+  .scanner-section,.tools-section,.pricing-section,.reviews-section{padding:2rem 1.5rem;}
+  footer{padding:1.5rem;flex-direction:column;gap:1rem;text-align:center;}
+  nav{padding:0 1rem;}
   .nav-links{display:none;}
-  footer{flex-direction:column;align-items:flex-start;padding:24px;}
 }
-@keyframes count-up{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
-.fade-in{animation:count-up .6s ease forwards;opacity:0;}
-.fade-in:nth-child(1){animation-delay:.05s;}
-.fade-in:nth-child(2){animation-delay:.15s;}
-.fade-in:nth-child(3){animation-delay:.25s;}
-.fade-in:nth-child(4){animation-delay:.35s;}
 </style>
 </head>
 <body>
 
-<!-- NAV -->
+<div class="floater" style="left:5%;animation-duration:18s;animation-delay:0s">🐸</div>
+<div class="floater" style="left:20%;animation-duration:24s;animation-delay:5s">🚀</div>
+<div class="floater" style="left:45%;animation-duration:20s;animation-delay:10s">💎</div>
+<div class="floater" style="left:70%;animation-duration:22s;animation-delay:2s">🌙</div>
+<div class="floater" style="left:85%;animation-duration:16s;animation-delay:7s">🔥</div>
+<div class="floater" style="left:60%;animation-duration:28s;animation-delay:14s">⚡</div>
+
 <nav>
-  <a class="logo" href="#" onclick="scrollTo({top:0,behavior:'smooth'});return false;">
-    <!-- SVG logo frog pump coin -->
-    <svg class="logo-svg" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="30" cy="30" r="29" fill="#050508" stroke="#00ff88" stroke-width="1.5"/>
-      <circle cx="30" cy="30" r="24" fill="#0a0a14"/>
-      <!-- frog body -->
-      <ellipse cx="30" cy="34" rx="13" ry="11" fill="#00cc66"/>
-      <ellipse cx="30" cy="33" rx="11" ry="9" fill="#00e87a"/>
-      <!-- frog eyes -->
-      <circle cx="23" cy="24" r="4" fill="#00ff88"/>
-      <circle cx="37" cy="24" r="4" fill="#00ff88"/>
-      <circle cx="23" cy="24" r="2" fill="#050508"/>
-      <circle cx="37" cy="24" r="2" fill="#050508"/>
-      <circle cx="24" cy="23" r=".8" fill="white"/>
-      <circle cx="38" cy="23" r=".8" fill="white"/>
-      <!-- smile -->
-      <path d="M 24 38 Q 30 43 36 38" stroke="#00a352" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-      <!-- pump arms -->
-      <path d="M 18 32 Q 13 28 15 22" stroke="#00cc66" stroke-width="3" stroke-linecap="round" fill="none"/>
-      <circle cx="15" cy="20" r="3" fill="#ffd700"/>
-      <path d="M 42 32 Q 47 28 45 22" stroke="#00cc66" stroke-width="3" stroke-linecap="round" fill="none"/>
-      <circle cx="45" cy="20" r="3" fill="#ffd700"/>
-      <!-- glow ring -->
-      <circle cx="30" cy="30" r="28" stroke="#00ff88" stroke-width=".5" opacity=".3"/>
+  <a class="nav-logo" href="#hero">
+    <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+      <circle cx="16" cy="16" r="15" fill="#0a0a10" stroke="#00ff88" stroke-width="1.5"/>
+      <ellipse cx="16" cy="19" rx="8" ry="6" fill="#1a3a2a"/>
+      <circle cx="11" cy="13" r="3" fill="#00ff88" opacity=".9"/>
+      <circle cx="21" cy="13" r="3" fill="#00ff88" opacity=".9"/>
+      <circle cx="11" cy="13" r="1.5" fill="#050508"/>
+      <circle cx="21" cy="13" r="1.5" fill="#050508"/>
+      <path d="M12 21 Q16 24 20 21" stroke="#00ff88" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+      <circle cx="10" cy="7" r="1.5" fill="#ffd700" opacity=".8"/>
+      <circle cx="22" cy="7" r="1.5" fill="#ffd700" opacity=".8"/>
     </svg>
-    <div>
-      <div class="logo-text">Memecoin<span>Pump</span></div>
-      <div class="logo-tagline">Solana Alpha Caller</div>
-    </div>
+    MemeScanner
   </a>
-
   <div class="nav-links">
-    <button class="nav-link active" onclick="scrollToSection('home')">ACCUEIL</button>
-    <button class="nav-link" onclick="scrollToSection('outils')">OUTILS</button>
-    <button class="nav-link" onclick="scrollToSection('plans')">PLANS</button>
-    <button class="nav-link" onclick="scrollToSection('avis')">AVIS</button>
+    <a href="#hero">Accueil</a>
+    <a href="#tools">Outils</a>
+    <a href="#scanner">Scanner</a>
+    <a href="#pricing">Plans</a>
+    <a href="#reviews">Avis</a>
   </div>
-
-  <div class="nav-right">
-    <div class="lang-switch">
-      <button class="lang-btn active" id="lang-fr" onclick="setLang('fr')">🇫🇷 FR</button>
-      <button class="lang-btn" id="lang-en" onclick="setLang('en')">🇬🇧 EN</button>
-    </div>
-    <div class="nav-pill live" id="live-pill">● SOLANA LIVE</div>
-    <div class="nav-pill" id="kol-pill">KOL: —</div>
-    <button class="nav-pill" id="btn-admin-open" onclick="openAdmin()">⚙ ADMIN</button>
-    <button class="btn-nav-outline" onclick="document.getElementById('plans').scrollIntoView({behavior:'smooth'})">S'INSCRIRE</button>
-    <button class="btn-nav" onclick="openModal()">SE CONNECTER</button>
-  </div>
+  <button class="lang-switch" onclick="toggleLang()">🇫🇷 FR</button>
+  <button class="nav-btn btn-outline" onclick="openCode()">Se connecter</button>
+  <button class="nav-btn btn-primary" onclick="document.getElementById('pricing').scrollIntoView()">S'inscrire</button>
+  <button class="nav-btn btn-outline" onclick="openAdmin()" id="adminBtn" style="display:none">⚙ Admin</button>
 </nav>
 
-<!-- TICKER -->
-<div class="ticker">
-  <div class="ticker-inner" id="ticker-inner">
-    <span class="ticker-item">🐸 PEPE <span class="up">+340%</span></span><span class="ticker-sep">·</span>
-    <span class="ticker-item">🐶 BONK <span class="up">+142%</span></span><span class="ticker-sep">·</span>
-    <span class="ticker-item">🧢 WIF <span class="up">+89%</span></span><span class="ticker-sep">·</span>
-    <span class="ticker-item">🐱 POPCAT <span class="dn">-12%</span></span><span class="ticker-sep">·</span>
-    <span class="ticker-item">💨 FARTCOIN <span class="up">+890%</span></span><span class="ticker-sep">·</span>
-    <span class="ticker-item">🌙 MOG <span class="up">+23%</span></span><span class="ticker-sep">·</span>
-    <span class="ticker-item">😴 SLERF <span class="up">+445%</span></span><span class="ticker-sep">·</span>
-    <span class="ticker-item">📚 BOME <span class="up">+120%</span></span><span class="ticker-sep">·</span>
-    <span class="ticker-item">🐸 PEPE <span class="up">+340%</span></span><span class="ticker-sep">·</span>
-    <span class="ticker-item">🐶 BONK <span class="up">+142%</span></span><span class="ticker-sep">·</span>
-    <span class="ticker-item">🧢 WIF <span class="up">+89%</span></span><span class="ticker-sep">·</span>
-    <span class="ticker-item">🐱 POPCAT <span class="dn">-12%</span></span><span class="ticker-sep">·</span>
-    <span class="ticker-item">💨 FARTCOIN <span class="up">+890%</span></span><span class="ticker-sep">·</span>
-    <span class="ticker-item">🌙 MOG <span class="up">+23%</span></span><span class="ticker-sep">·</span>
-    <span class="ticker-item">😴 SLERF <span class="up">+445%</span></span><span class="ticker-sep">·</span>
-    <span class="ticker-item">📚 BOME <span class="up">+120%</span></span><span class="ticker-sep">·</span>
+<section id="hero">
+<div class="hero">
+  <div>
+    <div class="hero-title" id="h-title">Trouve les <span>next 100x</span> avant tout le monde 🚀</div>
+    <div class="hero-subtitle" id="h-sub">Scanner Solana ultra-strict. Anti-rug, anti-bundle, anti-staircase. Seulement les tokens avec fees élevées, buy pressure fort et momentum réel.</div>
+    <div class="hero-stats">
+      <div class="stat-item"><div class="stat-num">95%</div><div class="stat-label">Rugs filtrés</div></div>
+      <div class="stat-item"><div class="stat-num">82+</div><div class="stat-label">Score minimum</div></div>
+      <div class="stat-item"><div class="stat-num">30s</div><div class="stat-label">Refresh auto</div></div>
+    </div>
+    <div class="hero-cta">
+      <button class="cta-big cta-green" onclick="document.getElementById('scanner').scrollIntoView()">🔍 Voir les calls</button>
+      <button class="cta-big cta-ghost" onclick="document.getElementById('pricing').scrollIntoView()">Voir les plans</button>
+    </div>
+  </div>
+  <div class="hero-demo">
+    <div class="demo-header">Pipeline Anti-Rug v10</div>
+    <div class="demo-token">
+      <span style="font-family:var(--font-mono);font-size:.8rem">🐸 PEPE2</span>
+      <span class="demo-score score-god">⚡ GOD GEM 94</span>
+    </div>
+    <div class="demo-token">
+      <span style="font-family:var(--font-mono);font-size:.8rem">🚀 MOONSHOT</span>
+      <span class="demo-score score-high">🔥 HIGH POT 87</span>
+    </div>
+    <div class="demo-token rug">
+      <span style="font-family:var(--font-mono);font-size:.8rem">💀 DOGCHAIN</span>
+      <span class="demo-reject">✗ fees 2.6 SOL / ratio 1%</span>
+    </div>
+    <div class="demo-token rug">
+      <span style="font-family:var(--font-mono);font-size:.8rem">🎰 IRANCOIN</span>
+      <span class="demo-reject">✗ staircase: c24h +480% c1h +2%</span>
+    </div>
+    <div style="text-align:center;margin-top:.8rem;font-size:.65rem;color:var(--muted);font-family:var(--font-mono)">2 qualifiés · 15 hard filters · score min 82</div>
   </div>
 </div>
-
-<!-- HERO -->
-<section class="hero" id="home">
-  <div class="hero-left">
-    <div class="hero-eyebrow"><span class="dot"></span><span data-i18n="hero_eyebrow">Solana Alpha Intelligence</span></div>
-    <h1>
-      <span data-i18n="hero_line1">CHASSE</span><br>
-      <span class="g" data-i18n="hero_line2">LE PROCHAIN</span><br>
-      <span class="gold" data-i18n="hero_line3">100X. 🚀</span>
-    </h1>
-    <p class="hero-sub">
-      <span data-i18n="hero_sub">Memecoin Pump : l'outil ultime pour chasser les prochains 100x sur Solana.</span><br>
-      <strong>🧠 Algo · 🛡️ Anti-rug · 🐋 Whales · 📡 KOLs</strong><br>
-      <span data-i18n="hero_sub2">Qualité > Quantité. Un bon call vaut 10 flops.</span>
-    </p>
-    <div class="hero-stats">
-      <div class="fade-in"><div class="stat-val">16</div><div class="stat-lbl" data-i18n="stat1">filtres anti-rug</div></div>
-      <div class="fade-in"><div class="stat-val">24/7</div><div class="stat-lbl" data-i18n="stat2">scan live</div></div>
-      <div class="fade-in"><div class="stat-val">SOL</div><div class="stat-lbl" data-i18n="stat3">chain ciblée</div></div>
-    </div>
-    <div class="hero-btns">
-      <button class="btn-primary" onclick="openModal()" data-i18n="btn_connect">🔑 Entrer mon code</button>
-      <button class="btn-secondary" onclick="scrollToSection('outils')" data-i18n="btn_tools">Voir les outils →</button>
-    </div>
-  </div>
-
-  <div class="hero-right">
-    <span class="floater">🐸</span>
-    <span class="floater">💎</span>
-    <span class="floater">🌙</span>
-    <div class="hero-demo-card">
-      <div class="hero-demo-header">
-        <div class="hd-live"><div class="hd-dot"></div>SCANNER LIVE</div>
-        <div class="hd-score">ANTI-RUG ✓</div>
-      </div>
-      <div class="demo-token-rows">
-        <div class="demo-tok">
-          <div>
-            <div class="demo-tok-name">🐸 PEPEXSOLANA</div>
-            <div style="font-family:'Space Mono',monospace;font-size:8px;color:var(--muted2);">McAp: $68K · Fees: 1.2 SOL</div>
-          </div>
-          <div style="text-align:right;">
-            <div class="demo-tok-sc hi">87 / 100</div>
-            <div class="demo-rug"><span class="rug-low">🟢 LOW RISK</span></div>
-          </div>
-          <div class="demo-tok-ch up">+180% 🔥</div>
-        </div>
-        <div class="demo-tok">
-          <div>
-            <div class="demo-tok-name">🚀 MOONBONK</div>
-            <div style="font-family:'Space Mono',monospace;font-size:8px;color:var(--muted2);">McAp: $155K · Fees: 7 SOL</div>
-          </div>
-          <div style="text-align:right;">
-            <div class="demo-tok-sc hi">74 / 100</div>
-            <div class="demo-rug"><span class="rug-low">🟢 LOW RISK</span></div>
-          </div>
-          <div class="demo-tok-ch up">+88% 📈</div>
-        </div>
-        <div class="demo-tok" style="opacity:.6;">
-          <div>
-            <div class="demo-tok-name">💀 RUGFAKE</div>
-            <div style="font-family:'Space Mono',monospace;font-size:8px;color:var(--red);">Fees: 0.1 SOL — REJETÉ</div>
-          </div>
-          <div style="text-align:right;">
-            <div class="demo-tok-sc md" style="color:var(--red);border-color:rgba(255,45,85,.3);background:rgba(255,45,85,.08);">FILTRÉ</div>
-            <div class="demo-rug"><span style="color:var(--red);">🔴 RUG</span></div>
-          </div>
-          <div class="demo-tok-ch dn">-92% ☠️</div>
-        </div>
-        <div class="demo-tok">
-          <div>
-            <div class="demo-tok-name">🐶 GIGACHAD</div>
-            <div style="font-family:'Space Mono',monospace;font-size:8px;color:var(--muted2);">McAp: $520K · Fees: 16 SOL</div>
-          </div>
-          <div style="text-align:right;">
-            <div class="demo-tok-sc hi">80 / 100</div>
-            <div class="demo-rug"><span class="rug-low">🟢 LOW RISK</span></div>
-          </div>
-          <div class="demo-tok-ch up">+72% 💎</div>
-        </div>
-      </div>
-    </div>
-  </div>
 </section>
 
-<!-- MAIN -->
-<main class="main">
-
-  <!-- SCANNER -->
-  <div id="scanner-section"></div>
-  <div class="section-eyebrow">Token Scanner</div>
-  <div class="section-title">ALPHA <span class="g">QUALITÉ</span> — SOLANA</div>
-
-  <div class="scanner-wrap">
-    <div class="scanner-head">
-      <div class="scanner-title-bar"><div class="live-dot"></div>QUALITY SCANNER + KOL — SOLANA</div>
-      <div class="filter-chips">
-        <div class="chip active">Tous</div>
-        <div class="chip">Score 80+</div>
-        <div class="chip">KOL Call</div>
-        <div class="chip">Early Gem</div>
-      </div>
+<section id="tools">
+<div class="tools-section">
+  <div class="section-title">🧰 Les outils</div>
+  <div class="section-sub">Tout ce qu'il faut pour print dans les memecoins.</div>
+  <div class="tools-grid">
+    <div class="tool-card" onclick="document.getElementById('scanner').scrollIntoView()">
+      <div class="tool-badge">LIVE</div>
+      <div class="tool-icon">🤖</div>
+      <div class="tool-name">Algo Tracker</div>
+      <div class="tool-desc">Scanner Solana temps réel. 15 hard filters + scoring 100pts. Score min 82. Anti-rug fees/mcap, anti-staircase, anti-wash. Seulement les vrais gems.</div>
     </div>
-    <div>
-      <div class="token-row header">
-        <div>Token + Indicateurs</div><div>Score</div><div>Prix / 1h</div><div>24h / McAp actuel</div><div>📍 Call → Actuel → ATH</div><div>Rug Risk</div>
-      </div>
-      <div id="scanner-loading" style="padding:40px;text-align:center;font-family:'Space Mono',monospace;font-size:11px;color:var(--green);animation:blink 1s infinite;">⟳ &nbsp;Chargement des tokens Solana...</div>
-      <div id="token-rows"></div>
-    </div>
-
-    <!-- LOCK OVERLAY -->
-    <div class="lock-overlay" id="lockOverlay">
-      <div class="lock-box">
-        <div class="lock-icon">🔒</div>
-        <div class="lock-title">Accès Restreint</div>
-        <p class="lock-sub">Entre ton code d'accès pour débloquer le scanner live et tous les signaux.</p>
-        <div class="code-wrap">
-          <input class="code-inp" type="text" placeholder="XXXX-XXXX-XXXX" id="inlineCode" maxlength="14" autocomplete="off" spellcheck="false" oninput="fmtCode(this)" onkeydown="if(event.key==='Enter')tryUnlock('inline')">
-          <button class="btn-unlock" onclick="tryUnlock('inline')">GO</button>
-        </div>
-        <div class="err-msg" id="inlineErr">Code invalide. Rejoins le Discord pour en obtenir un.</div>
-        <p class="discord-hint">Pas de code ? <a href="https://discord.gg/gvuf2GZP" target="_blank">Discord →</a></p>
-      </div>
-    </div>
-  </div>
-
-  <!-- FEATURES -->
-  <div id="outils"></div>
-  <div class="section-eyebrow">Fonctionnalités</div>
-  <div class="section-title">LES OUTILS <span class="g">PUMP</span> 🧰</div>
-  <div class="tools-grid fade-in">
-    <!-- Outil 1 : Algo Tracker -->
     <div class="tool-card">
-      <span class="tool-badge">🔒 MEMBRES</span>
-      <span class="tool-icon">🤖</span>
-      <div class="tool-name">Memecoin Algo Tracker</div>
-      <p class="tool-desc">Algorithme de scoring temps réel sur 16 critères. Detect les prochains 100x avant tout le monde — smart money, volume momentum, fees/mcap ratio.</p>
-      <div class="tool-tags">
-        <span class="tool-tag">Smart money</span>
-        <span class="tool-tag">Buy pressure</span>
-        <span class="tool-tag">Fees/McAp</span>
-        <span class="tool-tag">Vol accélère</span>
-      </div>
-      <div class="tool-demo">
-        <div class="tool-demo-row"><span>🐸 PEPEXSOL</span><span class="tv">Score 87 ⚡</span></div>
-        <div class="tool-demo-row"><span>🚀 MOONBONK</span><span class="tv">Score 74 🔥</span></div>
-        <div class="tool-demo-row"><span>Fees ratio</span><span class="tv">176% ✓</span></div>
-        <div class="tool-demo-row"><span>Signal</span><span class="tv">BUY ✅</span></div>
-      </div>
+      <div class="tool-badge" style="background:rgba(255,68,102,.1);color:var(--red)">ALPHA</div>
+      <div class="tool-icon">🛡️</div>
+      <div class="tool-name">Rug Sniping</div>
+      <div class="tool-desc">Copy wallet sur les tokens qui pump. Suit les meilleures wallets Solana en temps réel. Alertes immédiates dès qu'un smart money entre.</div>
     </div>
-
-    <!-- Outil 2 : Rug Sniping -->
     <div class="tool-card">
-      <span class="tool-badge">🔒 MEMBRES</span>
-      <span class="tool-icon">🛡️</span>
-      <div class="tool-name">Rug Sniping ⚡</div>
-      <p class="tool-desc">16 filtres anti-rug avant tout call. LP lock, dev wallet, bundle detection, fake volume, sniper ratio — on filtre les rugs avant qu'ils te coûtent cher.</p>
-      <div class="tool-tags">
-        <span class="tool-tag">LP lock check</span>
-        <span class="tool-tag">Dev wallet</span>
-        <span class="tool-tag">Bundle detect</span>
-        <span class="tool-tag">Fake vol</span>
-      </div>
-      <div class="tool-demo">
-        <div class="tool-demo-row"><span>💀 RUGTOKEN</span><span class="tr">REJETÉ ❌</span></div>
-        <div class="tool-demo-row"><span>Fees 0.1 SOL</span><span class="tr">< seuil</span></div>
-        <div class="tool-demo-row"><span>Dev wallet</span><span class="to">68% supply</span></div>
-        <div class="tool-demo-row"><span>LP unlocked</span><span class="tr">DANGER ☠️</span></div>
-      </div>
+      <div class="tool-badge" style="background:rgba(255,68,102,.1);color:var(--red)">ALPHA</div>
+      <div class="tool-icon">🧑‍💻</div>
+      <div class="tool-name">Dev Token Tracker</div>
+      <div class="tool-desc">Track les devs qui ont déjà lancé des x10+. Quand ils relancent un token, tu es le premier à savoir.</div>
     </div>
-
-    <!-- Outil 3 : Dev Token -->
     <div class="tool-card">
-      <span class="tool-badge">🔒 ALPHA+</span>
-      <span class="tool-icon">🧑‍💻</span>
-      <div class="tool-name">Dev Token Tracker 📊</div>
-      <p class="tool-desc">Track les wallets des devs connus sur Solana. Quand un dev serial winner lance un nouveau token, tu le sais en premier. Copy les winners, AVOID les serial ruggers.</p>
-      <div class="tool-tags">
-        <span class="tool-tag">Dev history</span>
-        <span class="tool-tag">Serial winners</span>
-        <span class="tool-tag">Wallet link</span>
-        <span class="tool-tag">First alert</span>
-      </div>
-      <div class="tool-demo">
-        <div class="tool-demo-row"><span>Dev 0xAb...f42</span><span class="ty">4 wins / 1 rug</span></div>
-        <div class="tool-demo-row"><span>New launch</span><span class="tv">MOONCAT2 ✓</span></div>
-        <div class="tool-demo-row"><span>McAp at call</span><span class="tv">$28K</span></div>
-        <div class="tool-demo-row"><span>Now</span><span class="tv">$340K +1100% 🚀</span></div>
-      </div>
-    </div>
-
-    <!-- Outil 4 : Wallet & Whales -->
-    <div class="tool-card">
-      <span class="tool-badge">🔒 DUBAI ONLY</span>
-      <span class="tool-icon">🐋</span>
+      <div class="tool-badge" style="background:rgba(255,215,0,.1);color:var(--gold)">DUBAI</div>
+      <div class="tool-icon">🐋</div>
       <div class="tool-name">Wallet & Whales 🐋</div>
-      <p class="tool-desc">Colle les wallets des top traders et whales Solana. Chaque buy détecté en temps réel — adresse, montant, PnL historique du wallet. Smart money flows live.</p>
-      <div class="tool-tags">
-        <span class="tool-tag">Whale wallets</span>
-        <span class="tool-tag">Smart money</span>
-        <span class="tool-tag">PnL live</span>
-        <span class="tool-tag">Copy alerts</span>
-      </div>
-      <div class="tool-demo">
-        <div class="tool-demo-row"><span>🐋 0xAns...em42</span><span class="tv">BUY $4,200</span></div>
-        <div class="tool-demo-row"><span>BONKWIF</span><span class="tv">2 min ago 🔥</span></div>
-        <div class="tool-demo-row"><span>🐋 0xBlk...z06f</span><span class="tv">BUY $11,500</span></div>
-        <div class="tool-demo-row"><span>Win rate</span><span class="tv">73% 📈</span></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- PRICING -->
-  <div id="plans"></div>
-  <div class="section-eyebrow">Abonnements</div>
-  <div class="section-title">CHOISIS TON <span class="gold">PLAN 💎</span></div>
-  <div class="price-grid">
-
-    <!-- BASE -->
-    <div class="price-card">
-      <div class="price-plan">BASE</div>
-      <div style="font-family:'Space Mono',monospace;font-size:10px;color:var(--muted2);letter-spacing:1px;margin-bottom:14px;">pour commencer à print</div>
-      <div class="price-amount"><span>$</span>19</div>
-      <div class="price-period">/ mois — 30 jours d'accès</div>
-      <ul class="price-list">
-        <li>🤖 Algo Tracker (top 5 tokens)</li>
-        <li>📊 Scoring anti-rug 16 critères</li>
-        <li>🟢 Signaux BUY / 🔴 AVOID</li>
-        <li class="no">🛡️ Rug Sniping avancé</li>
-        <li class="no">🧑‍💻 Dev Token tracker</li>
-        <li class="no">🐋 Wallet &amp; Whales tracker</li>
-        <li class="no">📡 KOL Call tracker</li>
-      </ul>
-      <button class="btn-price" onclick="openModal()">Rejoindre Discord →</button>
-    </div>
-
-    <!-- ALPHA -->
-    <div class="price-card featured">
-      <div class="price-plan">ALPHA</div>
-      <div style="font-family:'Space Mono',monospace;font-size:10px;color:var(--muted2);letter-spacing:1px;margin-bottom:14px;">tu vois ce que les autres voient pas</div>
-      <div class="price-amount"><span>$</span>49</div>
-      <div class="price-period">/ mois — 30 jours d'accès</div>
-      <ul class="price-list">
-        <li>🤖 Algo Tracker (illimité)</li>
-        <li>📊 Scoring anti-rug 16 critères</li>
-        <li>🟢 Signaux BUY / 🔴 AVOID</li>
-        <li>🛡️ Rug Sniping avancé</li>
-        <li>🧑‍💻 Dev Token tracker</li>
-        <li class="no">🐋 Wallet &amp; Whales tracker</li>
-        <li class="no">📡 KOL Call tracker</li>
-      </ul>
-      <button class="btn-price" onclick="openModal()">Rejoindre Discord →</button>
-    </div>
-
-    <!-- DUBAI MODE -->
-    <div class="price-card" style="border-color:rgba(255,215,0,.35);background:linear-gradient(160deg,#111419 60%,rgba(255,190,0,.04) 100%);">
-      <div class="price-plan" style="color:#ffd700;text-shadow:0 0 18px rgba(255,215,0,.5);">DUBAI MODE 🇦🇪</div>
-      <div style="font-family:'Space Mono',monospace;font-size:10px;color:var(--muted2);letter-spacing:1px;margin-bottom:14px;">full send, no limits, ngmi les autres</div>
-      <div class="price-amount" style="color:#ffd700;text-shadow:0 0 24px rgba(255,215,0,.4);"><span style="color:#ffd700;">$</span>99</div>
-      <div class="price-period">/ mois — accès illimité</div>
-      <ul class="price-list">
-        <li>🤖 Algo Tracker (illimité + priorité)</li>
-        <li>📊 Scoring anti-rug 16 critères</li>
-        <li>🟢 Signaux BUY / 🔴 AVOID</li>
-        <li>🛡️ Rug Sniping avancé</li>
-        <li>🧑‍💻 Dev Token tracker</li>
-        <li>🐋 Wallet &amp; Whales (illimité)</li>
-        <li>📡 KOL Call tracker (tous KOLs)</li>
-      </ul>
-      <button class="btn-price" style="background:#ffd700;color:#000;border-color:#ffd700;box-shadow:0 0 20px rgba(255,215,0,.3);" onclick="openModal()">Rejoindre Discord →</button>
-    </div>
-
-  </div>
-
-  <!-- SNIPING -->
-  <div class="section-eyebrow">Outils Avancés</div>
-  <div class="section-title">SNIPING & <span class="g">COPY WALLET</span> ⚡</div>
-  <div class="snipe-grid">
-    <div class="snipe-card">
-      <div class="snipe-card-badge">🔒 MEMBRES</div>
-      <div class="snipe-title">⚡ Rug Sniper</div>
-      <p class="snipe-desc">Analyse en temps réel les red flags critiques avant d'entrer sur un token. Concentration holders, dev wallet, LP lock status et mint authority en un coup d'œil.</p>
-      <div class="snipe-tags"><span class="snipe-tag">LP lock check</span><span class="snipe-tag">Dev wallet</span><span class="snipe-tag">Top 10 holders</span><span class="snipe-tag">Mint auth</span></div>
-      <div class="snipe-preview">
-        <div class="snipe-row"><span>RUGTOKEN</span><span class="r">⚠ RUG 92%</span></div>
-        <div class="snipe-row"><span>LP unlocked</span><span class="r">DANGER</span></div>
-        <div class="snipe-row"><span>Top 1 holder</span><span class="o">67% supply</span></div>
-        <div class="snipe-row"><span>Dev sold</span><span class="r">3 min ago</span></div>
-      </div>
-    </div>
-    <div class="snipe-card">
-      <div class="snipe-card-badge">🔒 MEMBRES</div>
-      <div class="snipe-title">👁️ Copy Wallet</div>
-      <p class="snipe-desc">Colle les wallets des top traders Solana. Détecte chaque achat en temps réel avec l'adresse du token, le montant, et le profil PnL du wallet.</p>
-      <div class="snipe-tags"><span class="snipe-tag">Whale wallets</span><span class="snipe-tag">Smart money</span><span class="snipe-tag">Alertes Discord</span><span class="snipe-tag">TX history</span></div>
-      <div class="snipe-preview">
-        <div class="snipe-row"><span>0xAns...em42</span><span class="v">BUY $4,200</span></div>
-        <div class="snipe-row"><span>BONKWIF</span><span class="v">2 min ago</span></div>
-        <div class="snipe-row"><span>0xBlk...z06f</span><span class="v">BUY $11,500</span></div>
-        <div class="snipe-row"><span>MOONCAT</span><span class="v">5 min ago</span></div>
-      </div>
-    </div>
-    <div class="snipe-card">
-      <div class="snipe-card-badge">🔒 MEMBRES</div>
-      <div class="snipe-title">🔥 KOL Radar</div>
-      <p class="snipe-desc">Scanne les tweets des plus grands KOLs Solana et extrait automatiquement les contract addresses mentionnés. Reçois l'alerte avant que le token pump.</p>
-      <div class="snipe-tags"><span class="snipe-tag">Ansem</span><span class="snipe-tag">Blknoiz</span><span class="snipe-tag">Cobie</span><span class="snipe-tag">Murad</span><span class="snipe-tag">+6 KOLs</span></div>
-      <div class="snipe-preview">
-        <div class="snipe-row"><span>🔥 Ansem called</span><span class="o">2 min ago</span></div>
-        <div class="snipe-row"><span>CA: 7xK2...mP9</span><span class="v">COPY</span></div>
-        <div class="snipe-row"><span>McAp at call</span><span class="v">$42K</span></div>
-        <div class="snipe-row"><span>Now</span><span class="v">+340% 🚀</span></div>
-      </div>
-    </div>
-    <div class="snipe-card">
-      <div class="snipe-card-badge">🔒 MEMBRES</div>
-      <div class="snipe-title">📊 Dashboard</div>
-      <p class="snipe-desc">Vue centralisée de tous tes signaux actifs. Historique performances, win rate live, PnL estimé et filtres avancés par plan / KOL / score.</p>
-      <div class="snipe-tags"><span class="snipe-tag">Win rate live</span><span class="snipe-tag">Historique 30j</span><span class="snipe-tag">Export CSV</span><span class="snipe-tag">PnL estimé</span></div>
-      <div class="snipe-preview">
-        <div class="snipe-row"><span>Win rate</span><span class="v">73%</span></div>
-        <div class="snipe-row"><span>Best call</span><span class="v">+1,240%</span></div>
-        <div class="snipe-row"><span>Avg x</span><span class="v">4.2x</span></div>
-        <div class="snipe-row"><span>Signals 30j</span><span class="v">87</span></div>
-      </div>
-    </div>
-  </div>
-
-</main>
-
-<!-- REVIEWS SECTION -->
-<div id="avis" class="main reviews-section" style="padding-top:0;">
-  <div class="section-eyebrow">Communauté</div>
-  <div class="section-title">AVIS DE LA <span class="g">CREW</span> ⭐</div>
-  <div class="reviews-header">
-    <div class="reviews-avg">
-      <div class="avg-val" id="avg-val">4.8</div>
-      <div>
-        <div class="avg-stars" id="avg-stars">⭐⭐⭐⭐⭐</div>
-        <div class="avg-count" id="avg-count">basé sur 3 avis</div>
-      </div>
-    </div>
-  </div>
-  <div class="reviews-grid" id="reviews-grid">
-    <!-- reviews injectées par JS -->
-  </div>
-  <div id="review-form-wrap">
-    <div class="review-locked-msg" id="review-locked">
-      🔒 <span data-i18n="review_locked">Connecte-toi pour laisser un avis</span> —
-      <button onclick="openModal()" style="background:none;border:none;color:var(--green);cursor:pointer;font-family:'Space Mono',monospace;font-size:10px;">SE CONNECTER →</button>
-    </div>
-    <div class="review-form" id="review-form" style="display:none;">
-      <div class="review-form-title">✍️ Ton avis</div>
-      <div class="star-select" id="star-select">
-        <span class="star-btn" data-star="1" onclick="setReviewStar(1)">⭐</span>
-        <span class="star-btn" data-star="2" onclick="setReviewStar(2)">⭐</span>
-        <span class="star-btn" data-star="3" onclick="setReviewStar(3)">⭐</span>
-        <span class="star-btn" data-star="4" onclick="setReviewStar(4)">⭐</span>
-        <span class="star-btn" data-star="5" onclick="setReviewStar(5)">⭐</span>
-      </div>
-      <textarea class="review-textarea" id="review-text" placeholder="Ton expérience avec Memecoin Pump..."></textarea>
-      <button class="btn-price" style="margin-top:12px;" onclick="submitReview()">POSTER MON AVIS →</button>
-      <div id="review-ok" style="display:none;font-family:'Space Mono',monospace;font-size:10px;color:var(--green);margin-top:8px;">✓ Avis publié !</div>
+      <div class="tool-desc">Surveille les mouvements des plus grosses wallets Solana. Quand les whales entrent, tu le sais avant tout le monde.</div>
     </div>
   </div>
 </div>
+</section>
+
+<section id="scanner">
+<div class="scanner-section">
+  <div class="scanner-header">
+    <div style="display:flex;align-items:center;gap:.8rem">
+      <div class="status-dot" id="scanDot"></div>
+      <div class="scanner-title">🔍 Scanner Live</div>
+    </div>
+    <div class="scanner-controls">
+      <span style="font-size:.75rem;color:var(--muted);font-family:var(--font-mono)" id="lastUpdate"></span>
+      <button class="scan-btn scan-btn-outline" onclick="toggleDebugMode()" id="debugToggleBtn" style="display:none">🟠 Debug OFF</button>
+      <button class="scan-btn scan-btn-green" onclick="fetchTokens()">↻ Refresh</button>
+    </div>
+  </div>
+  <div id="scannerContent">
+    <div class="loading-state" id="loadingEl">
+      <div class="spinner"></div>
+      <div style="font-family:var(--font-mono);font-size:.85rem;color:var(--muted)">Analyse en cours...</div>
+    </div>
+  </div>
+</div>
+</section>
+
+<section id="pricing">
+<div class="pricing-section">
+  <div class="section-title">💰 Les plans</div>
+  <div class="section-sub">Choisis ton niveau. Plus tu paies, plus tu print.</div>
+  <div class="pricing-grid">
+    <div class="plan-card">
+      <div class="plan-name">BASE 🔰</div>
+      <div class="plan-tagline">pour commencer à print</div>
+      <div class="plan-price">$19<span>/mois</span></div>
+      <ul class="plan-features">
+        <li><span class="feat-yes">✓</span> Algo Tracker (top 5)</li>
+        <li><span class="feat-yes">✓</span> Scoring BUY/AVOID</li>
+        <li><span class="feat-yes">✓</span> Refresh 60s</li>
+        <li><span class="feat-no">✗</span> Rug Sniping</li>
+        <li><span class="feat-no">✗</span> Dev Token Tracker</li>
+        <li><span class="feat-no">✗</span> Wallet & Whales</li>
+      </ul>
+      <button class="plan-btn plan-btn-ghost" onclick="openCode()">Commencer</button>
+    </div>
+    <div class="plan-card featured">
+      <div class="plan-badge badge-pop">⭐ POPULAIRE</div>
+      <div class="plan-name">ALPHA ⚡</div>
+      <div class="plan-tagline">tu vois ce que les autres voient pas</div>
+      <div class="plan-price">$49<span>/mois</span></div>
+      <ul class="plan-features">
+        <li><span class="feat-yes">✓</span> Algo Tracker illimité</li>
+        <li><span class="feat-yes">✓</span> Scoring complet + debug</li>
+        <li><span class="feat-yes">✓</span> Refresh 30s</li>
+        <li><span class="feat-yes">✓</span> 🛡️ Rug Sniping</li>
+        <li><span class="feat-yes">✓</span> 🧑‍💻 Dev Token Tracker</li>
+        <li><span class="feat-no">✗</span> Wallet & Whales</li>
+      </ul>
+      <button class="plan-btn plan-btn-green" onclick="openCode()">Prendre ALPHA</button>
+    </div>
+    <div class="plan-card dubai">
+      <div class="plan-badge badge-top">🏆 FULL SEND</div>
+      <div class="plan-name" style="color:var(--gold)">DUBAI MODE 🇦🇪</div>
+      <div class="plan-tagline">full send, no limits, ngmi les autres</div>
+      <div class="plan-price" style="color:var(--gold)">$99<span>/mois</span></div>
+      <ul class="plan-features">
+        <li><span class="feat-yes">✓</span> Tout ALPHA inclus</li>
+        <li><span class="feat-yes">✓</span> 🐋 Wallet & Whales</li>
+        <li><span class="feat-yes">✓</span> KOL Tracker complet</li>
+        <li><span class="feat-yes">✓</span> Alertes prioritaires</li>
+        <li><span class="feat-yes">✓</span> Refresh 15s</li>
+        <li><span class="feat-yes">✓</span> Support Discord VIP</li>
+      </ul>
+      <button class="plan-btn plan-btn-gold" onclick="openCode()">DUBAI MODE 🚀</button>
+    </div>
+  </div>
+</div>
+</section>
+
+<section id="reviews">
+<div class="reviews-section">
+  <div class="section-title">⭐ Ce qu'ils disent</div>
+  <div class="reviews-grid" id="reviewsGrid"></div>
+  <div id="reviewFormWrap"></div>
+</div>
+</section>
 
 <footer>
-  <div class="footer-logo">
-    <svg width="28" height="28" viewBox="0 0 60 60" fill="none"><circle cx="30" cy="30" r="29" fill="#050508" stroke="#00ff88" stroke-width="1.5"/><ellipse cx="30" cy="34" rx="13" ry="11" fill="#00cc66"/><ellipse cx="30" cy="33" rx="11" ry="9" fill="#00e87a"/><circle cx="23" cy="24" r="4" fill="#00ff88"/><circle cx="37" cy="24" r="4" fill="#00ff88"/><circle cx="23" cy="24" r="2" fill="#050508"/><circle cx="37" cy="24" r="2" fill="#050508"/></svg>
-    Memecoin<span>Pump</span>
-  </div>
+  <div class="footer-left">© 2025 MemeScanner · Solana Alpha · DYOR, NFA 🐸</div>
   <div class="footer-links">
-    <span>ACCUEIL</span><span>OUTILS</span><span>PLANS</span><span>AVIS</span>
-  </div>
-  <div class="footer-right">
-    <div>© 2025 MemecoiPump — Solana Alpha</div>
-    <div style="margin-top:4px;opacity:.5;">DYOR. Pas de conseil financier.</div>
+    <a href="#">Discord</a>
+    <a href="#">Twitter</a>
+    <a href="#">Docs</a>
+    <a href="#" onclick="openAdmin();return false;">Admin</a>
   </div>
 </footer>
 
-<!-- MODAL MEMBRE -->
-<div class="modal-overlay" id="memberModal">
-  <div class="modal">
-    <button class="modal-close" onclick="closeModal()">✕</button>
-    <div class="modal-icon">🔑</div>
-    <div class="modal-title">ACCÈS MEMBRE</div>
-    <p class="modal-sub">Entre ton code d'accès unique pour débloquer la plateforme.</p>
-    <div class="code-wrap" style="margin-bottom:8px;">
-      <input class="code-inp" type="text" placeholder="XXXX-XXXX-XXXX" id="modalCode" maxlength="14" autocomplete="off" spellcheck="false" style="text-align:center;" oninput="fmtCode(this)" onkeydown="if(event.key==='Enter')tryUnlock('modal')">
-    </div>
-    <button class="btn-unlock" style="width:100%;padding:13px;" onclick="tryUnlock('modal')">DÉVERROUILLER</button>
-    <div class="err-msg" id="modalErr">Code invalide. Rejoins le Discord pour en obtenir un.</div>
-    <div class="ok-msg" id="modalOk">✓ Code valide ! Connexion...</div>
-    <p class="discord-hint" style="margin-top:14px;">Pas encore membre ? <a href="https://discord.gg/gvuf2GZP" target="_blank">Rejoins notre Discord</a></p>
+<!-- CODE MODAL -->
+<div class="modal-overlay" id="codeModal">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeCode()">✕</button>
+    <div class="modal-title">🔐 Code d'accès</div>
+    <div class="modal-sub" id="cm-sub">Entre ton code pour accéder au scanner.</div>
+    <input type="text" class="code-input" id="codeInput" placeholder="XXXX-XXXX-XXXX" maxlength="19" oninput="formatCode(this)" onkeydown="if(event.key==='Enter')submitCode()">
+    <div class="code-err" id="codeErr" style="display:none"></div>
+    <button class="code-submit" onclick="submitCode()">Accéder →</button>
   </div>
 </div>
 
-<!-- ADMIN PANEL -->
+<!-- ADMIN OVERLAY -->
 <div class="admin-overlay" id="adminOverlay">
-  <div class="admin-panel">
-    <button class="modal-close" onclick="closeAdmin()" style="position:absolute;top:14px;right:14px;background:none;border:none;color:var(--muted2);font-size:18px;cursor:pointer;">✕</button>
+  <div class="admin-box">
+    <button class="modal-close" onclick="closeAdmin()">✕</button>
+    <div id="adminContent"></div>
+  </div>
+</div>
 
-    <!-- PW Screen -->
-    <div id="adminPwScreen">
-      <div class="admin-title">ADMIN</div>
-      <p class="admin-sub">Accès réservé — entre le mot de passe admin</p>
-      <div class="admin-row" style="max-width:320px;">
-        <input class="admin-inp" type="password" id="adminPwInp" placeholder="Mot de passe..." onkeydown="if(event.key==='Enter')checkPw()">
-        <button class="btn-admin" onclick="checkPw()">ENTRER</button>
-      </div>
-      <div class="admin-msg err" id="pwErr">Mot de passe incorrect.</div>
-    </div>
-
-    <!-- Content -->
-    <div id="adminContent" style="display:none;">
-      <div class="admin-title">ADMIN PANEL</div>
-      <p class="admin-sub">Gérer les codes d'accès MemeScanner</p>
-
-      <!-- Change PW -->
-      <div class="admin-section">
-        <div class="admin-section-title">⚙ Changer mot de passe admin</div>
-        <div class="admin-row">
-          <input class="admin-inp" type="password" id="newPwInp" placeholder="Nouveau mot de passe (min 4 car.)...">
-          <button class="btn-admin" onclick="changePw()">CHANGER</button>
-        </div>
-        <div class="admin-msg ok" id="pwOkMsg">✓ Mot de passe modifié</div>
-      </div>
-
-      <!-- Générer -->
-      <div class="admin-section">
-        <div class="admin-section-title">🔑 Générer des codes</div>
-        <div class="admin-row">
-          <select class="admin-inp" id="planSel" style="flex:.8;">
-            <option value="BASE">BASE ($19)</option>
-            <option value="ALPH">ALPHA ($49)</option>
-            <option value="DGNP">DUBAI MODE ($99)</option>
-          </select>
-          <input class="admin-inp" type="number" id="genCount" value="1" min="1" max="50" style="flex:.35;text-align:center;">
-          <button class="btn-admin" onclick="genCodes()">GÉNÉRER</button>
-        </div>
-        <div class="admin-msg ok" id="genOkMsg"></div>
-      </div>
-
-      <!-- Liste codes -->
-      <div class="admin-section">
-        <div class="admin-section-title" style="display:flex;justify-content:space-between;align-items:center;">
-          <span>📋 Codes (<span id="codeCount">0</span>)</span>
-          <div style="display:flex;gap:6px;">
-            <button class="btn-admin ghost" onclick="exportCodes()" style="font-size:8px;padding:4px 10px;">EXPORT CSV</button>
-            <button class="btn-admin red" onclick="clearUsed()" style="font-size:8px;padding:4px 10px;">SUPPR. UTILISÉS</button>
-          </div>
-        </div>
-        <div class="codes-list" id="codesList"></div>
-      </div>
-
-      <!-- Stats -->
-      <div class="admin-section">
-        <div class="admin-section-title">📊 Stats</div>
-        <div class="admin-stats">
-          <div class="admin-stat"><div class="admin-stat-val" id="stTotal">0</div><div class="admin-stat-lbl">TOTAL</div></div>
-          <div class="admin-stat" style="background:rgba(255,71,87,.06);border-color:rgba(255,71,87,.2);"><div class="admin-stat-val" id="stUsed" style="color:var(--red);">0</div><div class="admin-stat-lbl">UTILISÉS</div></div>
-          <div class="admin-stat"><div class="admin-stat-val" id="stFree">0</div><div class="admin-stat-lbl">DISPO</div></div>
-        </div>
-      </div>
-    </div>
+<!-- DEBUG OVERLAY -->
+<div class="debug-overlay" id="debugOverlay">
+  <div class="debug-box">
+    <button class="modal-close" onclick="closeDebug()">✕</button>
+    <div id="debugContent"></div>
   </div>
 </div>
 
 <script>
-// ═══════════════════════════════════════════════════════════════
-// STORAGE & SESSION SYSTEM
-// ═══════════════════════════════════════════════════════════════
-const SK = 'ms_codes_v2';
-const PK = 'ms_admin_pw';
-const SESSION_KEY = 'ms_session';
-
-function loadCodes() {
-  try {
-    const r = localStorage.getItem(SK);
-    if (r) return JSON.parse(r);
-  } catch(e) {}
-  // Default demo codes
-  return [
-    { code:'DEMO-BASE-0001', plan:'BASE', used:false, ts:Date.now() },
-    { code:'ALPH-TEST-0001', plan:'ALPH', used:false, ts:Date.now() },
-    { code:'DGNP-FREE-0001', plan:'DGNP', used:false, ts:Date.now() }
-  ];
-}
-function saveCodes(c) { try { localStorage.setItem(SK, JSON.stringify(c)); } catch(e) {} }
-function getAdminPw() { try { return localStorage.getItem(PK) || 'admin1234'; } catch(e) { return 'admin1234'; } }
-function setAdminPw(p) { try { localStorage.setItem(PK, p); } catch(e) {} }
-
-let DB = loadCodes();
-
-// SESSION PERSISTANTE
-function hasSession() {
-  try {
-    const s = localStorage.getItem(SESSION_KEY);
-    if (!s) return false;
-    const { code, exp } = JSON.parse(s);
-    if (Date.now() > exp) { localStorage.removeItem(SESSION_KEY); return false; }
-    // Vérif que le code est toujours dans la DB
-    return DB.some(c => c.code === code && c.used);
-  } catch(e) { return false; }
-}
-function createSession(code) {
-  try {
-    const exp = Date.now() + 30 * 24 * 60 * 60 * 1000; // 30 jours
-    localStorage.setItem(SESSION_KEY, JSON.stringify({ code, exp }));
-  } catch(e) {}
-}
+// ============================================================
+// CONFIG
+// ============================================================
+let ADMIN_PW = 'admin1234';
+const FB_URL = 'https://memescanner-calls-default-rtdb.firebaseio.com';
+const STORAGE_KEY = 'ms_calls_v1';
+const CODE_KEY = 'ms_codes_v1';
+const SESSION_KEY = 'ms_session_v1';
+const REVIEWS_KEY = 'ms_reviews_v1';
 
 let isUnlocked = false;
 let isAdminMode = false;
-let lastScored = []; // pour le debug panel
-
-// ═══════════════════════════════════════════════════════════════
-// MODAL / UNLOCK
-// ═══════════════════════════════════════════════════════════════
-function openModal() { document.getElementById('memberModal').classList.add('open'); setTimeout(()=>document.getElementById('modalCode').focus(),80); }
-function closeModal() { document.getElementById('memberModal').classList.remove('open'); }
-
-function fmtCode(inp) {
-  let v = inp.value.toUpperCase().replace(/[^A-Z0-9]/g,'');
-  let parts = [];
-  for(let i=0;i<v.length;i+=4) parts.push(v.slice(i,i+4));
-  inp.value = parts.join('-');
-}
-
-function tryUnlock(src) {
-  const inp = document.getElementById(src==='modal'?'modalCode':'inlineCode');
-  const err = document.getElementById(src==='modal'?'modalErr':'inlineErr');
-  const code = inp.value.trim().toUpperCase();
-
-  err.style.display = 'none';
-
-  const match = DB.find(c => c.code === code && !c.used);
-  if (match) {
-    match.used = true;
-    saveCodes(DB);
-    createSession(code);
-    isUnlocked = true;
-    if (src === 'modal') {
-      document.getElementById('modalOk').style.display = 'block';
-      setTimeout(() => { closeModal(); unlockScanner(); }, 700);
-    } else {
-      unlockScanner();
-    }
-  } else {
-    err.style.display = 'block';
-    inp.style.borderColor = 'var(--red)';
-    setTimeout(() => { inp.style.borderColor = ''; }, 2000);
-  }
-}
-
-function unlockScanner() {
-  const overlay = document.getElementById('lockOverlay');
-  if (overlay) overlay.remove();
-  document.querySelectorAll('[data-locked]').forEach(r => {
-    r.style.filter = '';
-    r.style.pointerEvents = '';
-    r.removeAttribute('data-locked');
-  });
-  const b = document.createElement('div');
-  b.style.cssText = 'position:fixed;top:70px;left:50%;transform:translateX(-50%);background:var(--green);color:#000;font-family:Space Mono,monospace;font-size:12px;font-weight:700;padding:10px 28px;border-radius:6px;z-index:9999;letter-spacing:1px;box-shadow:0 4px 24px rgba(0,230,118,.4)';
-  b.textContent = '✓ ACCÈS DÉBLOQUÉ — SCANNER LIVE ACTIF';
-  document.body.appendChild(b);
-  setTimeout(() => b.remove(), 3000);
-  fetchTokens();
-}
-
-window.addEventListener('click', e => {
-  if (e.target === document.getElementById('memberModal')) closeModal();
-  if (e.target === document.getElementById('adminOverlay')) closeAdmin();
-});
-
-// ═══════════════════════════════════════════════════════════════
-// ADMIN PANEL
-// ═══════════════════════════════════════════════════════════════
-function openAdmin() {
-  document.getElementById('adminOverlay').classList.add('open');
-  document.getElementById('adminPwScreen').style.display = 'block';
-  document.getElementById('adminContent').style.display = 'none';
-  document.getElementById('pwErr').style.display = 'none';
-  setTimeout(() => document.getElementById('adminPwInp').focus(), 80);
-}
-function closeAdmin() {
-  document.getElementById('adminOverlay').classList.remove('open');
-  document.getElementById('adminPwInp').value = '';
-}
-async function checkPw() {
-  const v = document.getElementById('adminPwInp').value;
-  if (v === getAdminPw()) {
-    // Afficher le contenu admin (codes, gestion)
-    document.getElementById('adminPwScreen').style.display = 'none';
-    document.getElementById('adminContent').style.display = 'block';
-    renderCodes();
-    // Activer mode debug en arrière-plan
-    isAdminMode = true;
-    await renderTokenRows(lastScored);
-    // NE PAS fermer le panel — l'utilisateur doit pouvoir gérer les codes
-  } else {
-    document.getElementById('pwErr').style.display = 'block';
-    document.getElementById('adminPwInp').value = '';
-  }
-}
-
-// ── DEBUG PANEL (admin only) ──────────────────────────────
-function showDebug(idx) {
-  const tok = lastScored[idx];
-  if (!tok) return;
-  const rows = tok.debugRows || [];
-  const bd = tok.breakdown || {};
-  let html = `
-    <div id="debug-overlay" onclick="if(event.target===this)closeDebug()" style="
-      position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:9999;
-      display:flex;align-items:center;justify-content:center;padding:20px;">
-      <div style="background:#0f1117;border:1px solid #2a2d3a;border-radius:12px;
-        width:min(540px,100%);max-height:85vh;overflow-y:auto;padding:24px;position:relative;">
-        <button onclick="closeDebug()" style="position:absolute;top:14px;right:14px;
-          background:none;border:none;color:#666;font-size:18px;cursor:pointer;">✕</button>
-        <div style="font-family:Syne,sans-serif;font-size:16px;font-weight:700;
-          color:#fff;margin-bottom:4px;">${tok.baseToken?.symbol} — Score Debug</div>
-        <div style="font-family:Space Mono,monospace;font-size:10px;color:#666;margin-bottom:16px;">
-          ${tok.baseToken?.address?.slice(0,20)}…</div>
-
-        <!-- Breakdown categories v7 -->
-        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:12px;">
-          ${[['L','LIQ',bd.liquidity,15,'#ffd32a'],['V','VOL',bd.trading,20,'#00e676'],['H','HOLD',bd.holders,15,'#7b7bff'],['S','SMART',bd.smart,20,'#ff4f9a']].map(([k,label,v,max,col])=>`
-            <div style="background:rgba(255,255,255,.04);border-radius:8px;padding:8px 6px;text-align:center;">
-              <div style="font-family:Space Mono,monospace;font-size:7px;color:#555;margin-bottom:4px;letter-spacing:.05em;">${label}</div>
-              <div style="font-size:18px;font-weight:700;color:${col};font-family:Syne,sans-serif;">${v||0}</div>
-              <div style="font-family:Space Mono,monospace;font-size:7px;color:#333;">/${max}</div>
-              <div style="height:3px;background:#1a1d27;border-radius:2px;margin-top:5px;">
-                <div style="height:100%;width:${Math.round((v||0)/max*100)}%;background:${col};border-radius:2px;transition:width .4s ease;"></div>
-              </div>
-            </div>`).join('')}
-        </div>
-        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:20px;">
-          ${[['F','FEES',bd.fees,15,'#00d2ff'],['D','DIST',bd.distribution,10,'#ff6b35'],['A','AGE',bd.age,5,'#a0aec0'],['⚡','BONUS',bd.bonus||0,10,'#00e676']].map(([k,label,v,max,col])=>`
-            <div style="background:rgba(255,255,255,.04);border-radius:8px;padding:8px 6px;text-align:center;">
-              <div style="font-family:Space Mono,monospace;font-size:7px;color:#555;margin-bottom:4px;letter-spacing:.05em;">${label}</div>
-              <div style="font-size:18px;font-weight:700;color:${v>0?col:'#333'};font-family:Syne,sans-serif;">${v||0}</div>
-              <div style="font-family:Space Mono,monospace;font-size:7px;color:#333;">/${max}</div>
-              <div style="height:3px;background:#1a1d27;border-radius:2px;margin-top:5px;">
-                <div style="height:100%;width:${Math.round((v||0)/max*100)}%;background:${col};border-radius:2px;transition:width .4s ease;"></div>
-              </div>
-            </div>`).join('')}
-        </div>
-
-        <!-- Score total -->
-        <div style="background:rgba(0,230,118,.06);border:1px solid rgba(0,230,118,.2);
-          border-radius:8px;padding:12px;text-align:center;margin-bottom:16px;">
-          <span style="font-family:Syne,sans-serif;font-size:28px;font-weight:800;color:#00e676;">${tok.score}</span>
-          <span style="font-family:Space Mono,monospace;font-size:12px;color:#666;">/100 — ${tok.label}</span>
-        </div>
-
-        <!-- Détail critères -->
-        <div style="font-family:Space Mono,monospace;font-size:9px;color:#666;
-          text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;">Détail par critère</div>
-        <div style="border:1px solid #1e2130;border-radius:8px;overflow:hidden;">
-          ${rows.map((r,i)=>{
-            const isTot = r.k.includes('TOTAL');
-            const pct   = r.max>0 ? r.pts/r.max : 0;
-            const col   = isTot ? '#00e676' : pct>=0.7?'#00e676':pct>=0.4?'#ffd32a':'#ff4757';
-            return `<div style="display:grid;grid-template-columns:1fr auto auto;gap:8px;
-              padding:7px 12px;${i%2===0?'background:rgba(255,255,255,.02)':''}
-              ${isTot?'border-top:1px solid #2a2d3a;background:rgba(0,230,118,.04);':''}">
-              <div style="color:${isTot?'#fff':'#ccc'};font-size:${isTot?'10':'9'}px;
-                font-weight:${isTot?'600':'400'}">${r.k}</div>
-              <div style="color:#555;font-size:8px;text-align:right;margin-top:1px;">${r.v}</div>
-              <div style="color:${col};font-weight:600;font-size:10px;text-align:right;min-width:32px;">
-                ${r.pts}${r.max?'<span style="color:#333">/${r.max}</span>':''}</div>
-            </div>`;
-          }).join('')}
-        </div>
-
-        <!-- Raw data -->
-        <details style="margin-top:12px;">
-          <summary style="font-family:Space Mono,monospace;font-size:9px;color:#555;cursor:pointer;">
-            ▶ Données brutes DexScreener</summary>
-          <pre style="font-family:Space Mono,monospace;font-size:8px;color:#444;margin-top:8px;
-            white-space:pre-wrap;word-break:break-all;">${JSON.stringify({
-              liq: tok.liquidity?.usd,
-              vol24: tok.volume?.h24, vol6h: tok.volume?.h6, vol1h: tok.volume?.h1,
-              c24: tok.priceChange?.h24, c6h: tok.priceChange?.h6, c1h: tok.priceChange?.h1,
-              mcap: tok.marketCap,
-              buys24: tok.txns?.h24?.buys, sells24: tok.txns?.h24?.sells,
-              buys1h: tok.txns?.h1?.buys, sells1h: tok.txns?.h1?.sells,
-              pairAge: `${((Date.now()-(tok.pairCreatedAt||Date.now()))/3600000).toFixed(1)}h`,
-              socials: tok.info?.socials?.length, websites: tok.info?.websites?.length
-            }, null, 2)}</pre>
-        </details>
-      </div>
-    </div>`;
-  const div = document.createElement('div');
-  div.id = 'debug-modal-wrap';
-  div.innerHTML = html;
-  document.body.appendChild(div);
-}
-function closeDebug() {
-  document.getElementById('debug-modal-wrap')?.remove();
-}
-function changePw() {
-  const v = document.getElementById('newPwInp').value.trim();
-  if (v.length < 4) return;
-  setAdminPw(v);
-  document.getElementById('newPwInp').value = '';
-  const m = document.getElementById('pwOkMsg');
-  m.style.display = 'block';
-  setTimeout(() => m.style.display = 'none', 2500);
-}
-
-function genCode(plan) {
-  const c = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  const s = (n) => Array.from({length:n},()=>c[Math.floor(Math.random()*c.length)]).join('');
-  return plan + '-' + s(4) + '-' + s(4);
-}
-function genCodes() {
-  const plan = document.getElementById('planSel').value;
-  const n = Math.min(parseInt(document.getElementById('genCount').value)||1, 50);
-  const created = [];
-  for(let i=0;i<n;i++) {
-    const code = genCode(plan);
-    DB.push({ code, plan, used:false, ts:Date.now() });
-    created.push(code);
-  }
-  saveCodes(DB);
-  renderCodes();
-  const m = document.getElementById('genOkMsg');
-  m.textContent = '✓ ' + n + ' code(s) généré(s) : ' + (n===1 ? created[0] : '');
-  m.style.display = 'block';
-  setTimeout(() => m.style.display = 'none', 4000);
-}
-
-function renderCodes() {
-  const total = DB.length;
-  const used  = DB.filter(c=>c.used).length;
-  const free  = total - used;
-  document.getElementById('codeCount').textContent = total;
-  document.getElementById('stTotal').textContent = total;
-  document.getElementById('stUsed').textContent = used;
-  document.getElementById('stFree').textContent = free;
-
-  const el = document.getElementById('codesList');
-  if (!total) {
-    el.innerHTML = '<div style="font-family:Space Mono,monospace;font-size:10px;color:var(--muted);padding:14px;text-align:center;">Aucun code — génère en ci-dessus</div>';
-    return;
-  }
-  el.innerHTML = [...DB].reverse().map((c,i) => {
-    const ri = DB.length-1-i;
-    return `<div class="code-item${c.used?' used':''}">
-      <div>
-        <div class="code-val">${c.code}</div>
-        <div class="code-meta${c.used?' u':''}">${c.plan} — ${c.used?'🔴 UTILISÉ':'🟢 DISPONIBLE'} — ${new Date(c.ts).toLocaleDateString('fr-FR')}</div>
-      </div>
-      <div class="code-actions">
-        <button class="btn-cc" onclick="cpCode('${c.code}',this)">COPY</button>
-        <button class="btn-del" onclick="delCode(${ri})">✕</button>
-      </div>
-    </div>`;
-  }).join('');
-}
-
-function cpCode(code, btn) {
-  navigator.clipboard.writeText(code).then(()=>{
-    const o=btn.textContent; btn.textContent='✓'; btn.style.borderColor='var(--green)'; btn.style.color='var(--green)';
-    setTimeout(()=>{btn.textContent=o;btn.style.borderColor='';btn.style.color='';},1200);
-  }).catch(()=>{});
-}
-function delCode(idx) {
-  DB.splice(idx,1); saveCodes(DB); renderCodes();
-}
-function clearUsed() {
-  if(!confirm('Supprimer tous les codes utilisés ?')) return;
-  DB = DB.filter(c=>!c.used); saveCodes(DB); renderCodes();
-}
-function exportCodes() {
-  const rows = ['Code,Plan,Statut,Date'];
-  DB.forEach(c => rows.push([c.code,c.plan,c.used?'UTILISÉ':'DISPO',new Date(c.ts).toLocaleDateString('fr-FR')].join(',')));
-  const url = URL.createObjectURL(new Blob([rows.join('\n')],{type:'text/csv'}));
-  const a = document.createElement('a'); a.href=url; a.download='memescanner_codes.csv'; a.click(); URL.revokeObjectURL(url);
-}
-
-
-// ═══════════════════════════════════════════════════════════════
-// ═══════════════════════════════════════════════════════════════
-// SCORING ENGINE v7
-// LIQ(15) + VOL(20) + HLD(15) + SMT(20) + FEE(15) + DST(10) + AGE(5) = 100pts
-// + Bonus smart money convergence +10
-// Hard filters AVANT scoring
-// Labels : <60 ignoré · 60-70 Early · 70-85 Strong · 85+ High Conviction
-// ═══════════════════════════════════════════════════════════════
-
-// ── KOLs (smart money proxies) ────────────────────────────────
-const KOLS = [
-  { handle:'ansem',          weight:'major', name:'Ansem' },
-  { handle:'blknoiz06',      weight:'major', name:'Blknoiz' },
-  { handle:'cobie',          weight:'major', name:'Cobie' },
-  { handle:'CryptoGodJohn',  weight:'mid',   name:'CryptoGodJohn' },
-  { handle:'inversebrah',    weight:'mid',   name:'inversebrah' },
-  { handle:'solbuckets',     weight:'mid',   name:'solbuckets' },
-  { handle:'Murad_Mahmudov', weight:'mid',   name:'Murad' },
-  { handle:'gainzxbt',       weight:'mid',   name:'GainzXBT' },
-  { handle:'CryptoKaleo',    weight:'mid',   name:'Kaleo' },
-  { handle:'hsaka',          weight:'mid',   name:'Hsaka' }
-];
-const kolCache = {};
-let kolFetchTs = 0;
-
-async function fetchKOLMentions(addrs) {
-  if (Date.now() - kolFetchTs < 120000) return;
-  kolFetchTs = Date.now();
-  addrs.forEach(a => { if(!kolCache[a]) kolCache[a]=[]; });
-  const NITTER = 'https://nitter.poast.org';
-  for (const kol of KOLS.slice(0,5)) {
-    try {
-      const r = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(NITTER+'/'+kol.handle+'/rss')}`);
-      if(!r.ok) continue;
-      const txt = await r.text();
-      const caRx = /[1-9A-HJ-NP-Za-km-z]{32,44}/g;
-      const itemRx = /<item>([\s\S]*?)<\/item>/g;
-      let m;
-      while((m=itemRx.exec(txt))!==null){
-        const it=m[1], dm=/<pubDate>(.*?)<\/pubDate>/.exec(it);
-        if(!dm||Date.now()-new Date(dm[1]).getTime()>12*3600000) continue;
-        const cas=it.match(caRx)||[], tm=/<title>(.*?)<\/title>/.exec(it);
-        const tweet=tm?tm[1].replace(/<[^>]+>/g,''):'';
-        for(const ca of cas){
-          if(addrs.includes(ca)){
-            if(!kolCache[ca]) kolCache[ca]=[];
-            if(!kolCache[ca].find(x=>x.handle===kol.handle))
-              kolCache[ca].push({handle:kol.handle,name:kol.name,weight:kol.weight,time:new Date(dm[1]).getTime(),tweet:tweet.slice(0,80)});
-          }
-        }
-      }
-    } catch(e){}
-  }
-}
-
-
-// ═══════════════════════════════════════════════════════════════
-// ALGO v9 — ULTRA-STRICT  ·  100% DexScreener gratuit
-// ─────────────────────────────────────────────────────────────
-// Pipeline strict :
-//   hardFilter()  → rejette ~90% des rugs (string raison ou null)
-//   calcRugRisk() → badge LOW/MEDIUM/HIGH indépendant
-//   scoreToken()  → scoring 0-100 seulement si passe hardFilter
-//   Seuil call : score ≥ 78
-//   Labels : GOD GEM(90+) · HIGH POTENTIAL(80-89) · WATCHLIST(78-79)
-// ═══════════════════════════════════════════════════════════════
-
-// ── CONSTANTES ────────────────────────────────────────────────
-const SOL_PRICE_USD = 180;   // Prix SOL estimé — à ajuster si besoin
-const PUMP_FEE_RATE = 0.003; // 0.3% Pump.fun
-
-// ── HELPERS FEES ──────────────────────────────────────────────
-// Estime les fees générés (en SOL) via le volume DexScreener
-// Si âge > 6h → utilise vol24 (plus stable), sinon vol6h
-function estimateFeesSol(vol24, vol6h, ageH) {
-  const vol = (ageH > 6) ? (vol24 || vol6h) : (vol6h || vol24);
-  return (vol * PUMP_FEE_RATE) / SOL_PRICE_USD;
-}
-// Seuil fees minimum par bracket mcap (SOL) — anti-fake-volume
-function feesMinSol(mcap) {
-  if (mcap >= 500000) return 22;
-  if (mcap >= 150000) return 15;
-  if (mcap >=  50000) return  8;
-  if (mcap >=  10000) return  3;
-  return 1;
-}
-// Ratio fees/mcap normalisé (indépendant de la taille du mcap)
-function feesRatioMcap(feesSOL, mcap) {
-  return mcap > 0 ? feesSOL / (mcap / 100000) : 0;
-}
-
-// ── HARD FILTERS ──────────────────────────────────────────────
-// Retourne string (raison de rejet) ou null (passe ✅)
-// Ordre optimisé : les rejets les plus fréquents en premier
-function hardFilter(p) {
-  const liq   = p.liquidity?.usd    || 0;
-  const vol24 = p.volume?.h24       || 0;
-  const vol6h = p.volume?.h6        || 0;
-  const vol1h = p.volume?.h1        || 0;
-  const b1h   = p.txns?.h1?.buys    || 0;
-  const s1h   = p.txns?.h1?.sells   || 0;
-  const b24   = p.txns?.h24?.buys   || 0;
-  const s24   = p.txns?.h24?.sells  || 0;
-  const c24   = p.priceChange?.h24  || 0;
-  const c6h   = p.priceChange?.h6   || 0;
-  const c1h   = p.priceChange?.h1   || 0;
-  const c5m   = p.priceChange?.m5   || 0;
-  const mcap  = p.marketCap         || 0;
-  const fdv   = p.fdv               || 0;
-  const boosts = p.boosts?.active   || 0;
-  const age   = (Date.now() - (p.pairCreatedAt || Date.now())) / 3600000;
-  const ageMin = age * 60;
-  const tx1h  = b1h + s1h;
-  const tx24  = b24 + s24;
-
-  // ── F1 : LIQUIDITÉ ──
-  if (liq < 12000)                       return 'liq<$12K';
-  if (liq > 5000000)                     return 'liq>$5M (trop mature)';
-
-  // ── F2 : AGE sweet spot 0.75h – 48h ──
-  if (age < 0.75)                        return 'age<45min (bundle risk)';
-  if (age > 48)                          return 'age>48h (trop vieux)';
-
-  // ── F3 : DUMP ACTIF 1h ──
-  const sr1h = tx1h > 0 ? s1h / tx1h : 0;
-  if (sr1h > 0.62)                       return `dump 1h sell ${(sr1h*100).toFixed(0)}%`;
-
-  // ── F4 : CRASH PRIX 1h ──
-  if (c1h < -22)                         return `crash 1h ${c1h.toFixed(0)}%`;
-
-  // ── F5 : ACTIVITÉ ORGANIQUE vol1h/liq ──
-  // Seulement après la 1ère heure complète
-  if (ageMin > 60 && vol1h < liq * 8)   return `vol/liq ${(vol1h/liq).toFixed(1)}x < 8x`;
-
-  // ── F6 : FDV / LIQ sain ──
-  if (fdv > 0 && liq > 0 && fdv / liq > 8) return `FDV/liq ${(fdv/liq).toFixed(1)}x > 8`;
-
-  // ── F7 : PUMP BOT 5min violent ──
-  if (c5m > 450)                         return `pump bot 5m +${c5m.toFixed(0)}%`;
-
-  // ── F8 : WASH TRADING (txns élevées, volume unitaire trop bas) ──
-  if (tx1h > 80 && vol1h > 0 && vol1h / tx1h < 80) return `wash trade vol/tx ${(vol1h/tx1h).toFixed(0)}<$80`;
-  // Wash trading parfait : buys ≈ sells à 5 près
-  if (tx24 > 200 && Math.abs(b24 - s24) < 5)       return 'wash trading parfait';
-
-  // ── F9 : SHILLING PAYANT excessif ──
-  if (boosts > 2)                        return `boosts ×${boosts} (shill payant)`;
-
-  // ── F10 : STAIRCASE DUMP (pump +24h, plat depuis) ──
-  if (c24 > 350 && c1h < 8 && c6h < 5)  return 'staircase dump (c24>350 c1h flat)';
-
-  // ── F11 : PATTERNS PUMP & DUMP ──
-  if (c24 > 500 && c1h < -10)           return 'pump&dump pattern';
-  if (c6h > 200 && c1h < -20)           return 'reversal post-pump';
-
-  // ── F12 : FDV DILUTION EXTRÊME ──
-  if (fdv > 0 && mcap > 0 && fdv / mcap > 10) return 'FDV/mcap>10x (dilution)';
-
-  // ── F13 : LP TROP FAIBLE vs MCAP ──
-  if (mcap > 0 && liq / mcap < 0.02)    return 'liq/mcap<2% (LP risk)';
-
-  // ── F14 : FLASH CRASH 5min ──
-  if (c5m < -25)                         return `flash crash 5m ${c5m.toFixed(0)}%`;
-
-  // ── F15 : FEES / MCAP (filtre anti-fake-volume clé) ──
-  const fees = estimateFeesSol(vol24, vol6h, age);
-  const fmin = feesMinSol(mcap);
-  const frat = feesRatioMcap(fees, mcap);
-  if (mcap >= 10000 && fees < fmin)      return `fees ${fees.toFixed(1)}SOL < seuil ${fmin}SOL`;
-  if (ageMin > 10 && frat < 0.045)       return `fees/mcap ${(frat*100).toFixed(1)}% < 4.5%`;
-
-  return null; // ✅ passe tous les filtres
-}
-
-// ── RUG RISK BADGE ────────────────────────────────────────────
-// Score indépendant — calculé APRÈS hardFilter (tokens qui passent)
-// Flags additionnels pour informer l'utilisateur
-function calcRugRisk(p) {
-  const liq   = p.liquidity?.usd    || 0;
-  const vol24 = p.volume?.h24       || 0;
-  const b1h   = p.txns?.h1?.buys    || 0;
-  const s1h   = p.txns?.h1?.sells   || 0;
-  const b24   = p.txns?.h24?.buys   || 0;
-  const s24   = p.txns?.h24?.sells  || 0;
-  const c24   = p.priceChange?.h24  || 0;
-  const c1h   = p.priceChange?.h1   || 0;
-  const mcap  = p.marketCap         || 0;
-  const fdv   = p.fdv               || 0;
-  const age   = (Date.now() - (p.pairCreatedAt || Date.now())) / 3600000;
-  const tx1h  = b1h + s1h;
-  const tx24  = b24 + s24;
-  const avgTr = tx24 > 0 ? vol24 / tx24 : 0;
-  const sr1h  = tx1h > 0 ? s1h / tx1h : 0;
-  const liqMc = mcap > 0 ? liq / mcap : 0;
-
-  let rs = 0;
-  const flags = [];
-
-  // Trade size élevé → concentration whale
-  if (avgTr > 1500 && tx24 < 100) { rs += 25; flags.push('Whale ctrl'); }
-  else if (avgTr > 800)           { rs += 10; }
-
-  // LP faible vs mcap
-  if (liqMc < 0.04)               { rs += 20; flags.push('LP faible'); }
-  else if (liqMc < 0.10)         { rs += 8;  }
-
-  // Sell pressure
-  if (sr1h > 0.55)                { rs += 15; flags.push('Sell pression'); }
-  else if (sr1h > 0.45)          { rs += 6;  }
-
-  // Token très récent → encore risqué
-  if (age < 1)                    { rs += 18; flags.push('<1h (très récent)'); }
-  else if (age < 3)               { rs += 10; }
-  else if (age < 6)               { rs += 4;  }
-
-  // FDV élevé → supply non circulante
-  if (fdv > 0 && mcap > 0 && fdv / mcap > 5) { rs += 10; flags.push('FDV élevé'); }
-
-  // Pump sans suite
-  if (c24 > 200 && c1h < 0)      { rs += 8;  flags.push('Pump sans suite'); }
-
-  // Liq très basse
-  if (liq < 15000)                { rs += 8;  flags.push('Liq basse'); }
-
-  let level, color, bg;
-  if      (rs >= 45) { level = 'HIGH';   color = '#ff2d55'; bg = 'rgba(255,45,85,.12)';  }
-  else if (rs >= 20) { level = 'MEDIUM'; color = '#ff8c00'; bg = 'rgba(255,140,0,.10)';  }
-  else               { level = 'LOW';    color = '#00ff88'; bg = 'rgba(0,255,136,.09)';  }
-
-  return { level, color, bg, score: rs, flags };
-}
-
-// ── SCORING ENGINE v9 ─────────────────────────────────────────
-// Distribution : BP(22) + VA(18) + MOM(20) + AGE(15) + MCAP(18) + SOC(12) + FEES(±35) + KOL(+10)
-// Seuil call : score ≥ 78
-function scoreToken(p) {
-  // Passe hardFilter d'abord — null = rejeté
-  const hf = hardFilter(p);
-  if (hf) return null;
-
-  const liq   = p.liquidity?.usd    || 0;
-  const vol24 = p.volume?.h24       || 0;
-  const vol6h = p.volume?.h6        || 0;
-  const vol1h = p.volume?.h1        || 0;
-  const b1h   = p.txns?.h1?.buys    || 0;
-  const s1h   = p.txns?.h1?.sells   || 0;
-  const b6h   = p.txns?.h6?.buys    || 0;
-  const s6h   = p.txns?.h6?.sells   || 0;
-  const c24   = p.priceChange?.h24  || 0;
-  const c6h   = p.priceChange?.h6   || 0;
-  const c1h   = p.priceChange?.h1   || 0;
-  const mcap  = p.marketCap         || 0;
-  const socs  = p.info?.socials     || [];
-  const age   = (Date.now() - (p.pairCreatedAt || Date.now())) / 3600000;
-  const tx1h  = b1h + s1h;
-  const tx6h  = b6h + s6h;
-  const br1h  = tx1h > 0 ? b1h / tx1h : 0;
-
-  const ind = [], dbg = [], bd = {};
-  let score = 0;
-
-  // ── 1. BUY PRESSURE 1h (max +22, min -25) ───────────────────
-  let bpS = 0;
-  if      (br1h >= 0.72) { bpS = 22; ind.push({label:`Buy ${(br1h*100).toFixed(0)}% 💚`,ok:true}); }
-  else if (br1h >= 0.62) { bpS = 12; ind.push({label:`Buy ${(br1h*100).toFixed(0)}%`,ok:true}); }
-  else if (br1h >= 0.55) { bpS = 4;  }
-  else                   { bpS = -25; ind.push({label:`⚠ Sells ${((1-br1h)*100).toFixed(0)}%`,ok:false}); }
-  dbg.push({k:'BUY PRESSURE 1h',v:`${(br1h*100).toFixed(0)}% (b:${b1h} s:${s1h})`,pts:bpS,max:22,cat:'BP'});
-  bd.trading = bpS;
-  score += bpS;
-
-  // ── 2. VOLUME ACCÉLÉRATION (max +18, min -30) ───────────────
-  // Ratio vol1h vs moyenne horaire sur 6h
-  const volH6avg = (tx6h > 0 && vol6h > 0) ? vol6h / 6 : (vol24 > 0 ? vol24 / 24 : 0);
-  const volAccel = volH6avg > 0 ? vol1h / volH6avg : 0;
-  let vaS = 0;
-  if      (volAccel >= 2.8) { vaS = 18; ind.push({label:`Vol ×${volAccel.toFixed(1)} 🚀`,ok:true}); }
-  else if (volAccel >= 1.5) { vaS = 10; ind.push({label:`Vol ×${volAccel.toFixed(1)}`,ok:true}); }
-  else if (volAccel >= 0.8) { vaS = 4;  }
-  else if (volAccel < 0.35) { vaS = -30; ind.push({label:`Vol lent ×${volAccel.toFixed(2)}`,ok:false}); }
-  else                      { vaS = 0;  }
-  dbg.push({k:'VOL ACCÉL (h1/h6÷6)',v:`×${volAccel.toFixed(2)} (h1:$${Math.round(vol1h/1000)}K)`,pts:vaS,max:18,cat:'VA'});
-  bd.momentum = vaS;
-  score += vaS;
-
-  // ── 3. MOMENTUM PRIX (max +20+15=35 cap, min -40) ──────────
-  let prS = 0;
-  if      (c1h > 12 && c1h < 180) { prS += 20; ind.push({label:`+${c1h.toFixed(0)}% 1h 🔥`,ok:true}); }
-  else if (c1h > 4)                { prS += 10; }
-  else if (c1h < -8)               { prS -= 12; }
-
-  if      (c6h > 25)               { prS += 15; ind.push({label:`+${c6h.toFixed(0)}% 6h`,ok:true}); }
-  else if (c6h > 8)                { prS += 6; }
-
-  // Staircase dump : pump ≥ 24h passé mais flat maintenant
-  if (c24 > 350 && c1h < 8 && c6h < 5) { prS -= 40; ind.push({label:'⚠ Staircase dump',ok:false}); }
-
-  prS = Math.max(-40, Math.min(35, prS));
-  dbg.push({k:'MOMENTUM PRIX',v:`c1h:${c1h.toFixed(1)}% c6h:${c6h.toFixed(1)}% c24:${c24.toFixed(1)}%`,pts:prS,max:35,cat:'MOM'});
-  bd.holders = prS;
-  score += prS;
-
-  // ── 4. AGE SWEET SPOT (max +15) ─────────────────────────────
-  let agS = 0;
-  if      (age >= 1  && age <= 36) { agS = 15; ind.push({label:`${age.toFixed(1)}h ✓`,ok:true}); }
-  else if (age > 36  && age <= 48) { agS = 8;  }
-  else if (age < 1)                { agS = 3;  }
-  dbg.push({k:'AGE SWEET SPOT',v:`${age.toFixed(1)}h`,pts:agS,max:15,cat:'AGE'});
-  bd.age = agS;
-  score += agS;
-
-  // ── 5. MCAP EARLY (max +18) ─────────────────────────────────
-  let mcS = 0;
-  if      (mcap >= 15000  && mcap <= 120000) { mcS = 18; ind.push({label:`McAp $${Math.round(mcap/1000)}K 🎯`,ok:true}); }
-  else if (mcap > 120000  && mcap <= 300000) { mcS = 10; }
-  else if (mcap > 300000  && mcap <= 600000) { mcS = 5;  }
-  else if (mcap < 15000)                     { mcS = 2;  }
-  dbg.push({k:'MCAP EARLY',v:`$${Math.round(mcap/1000)}K`,pts:mcS,max:18,cat:'MC'});
-  bd.liquidity = mcS;
-  score += mcS;
-
-  // ── 6. SOCIALS (max +12) ────────────────────────────────────
-  let socS = 0;
-  const hasTw = socs.some(s => s.type === 'twitter');
-  const hasTg = socs.some(s => s.type === 'telegram');
-  if      (hasTw && hasTg) { socS = 12; ind.push({label:'🐦+📢 Socials',ok:true}); }
-  else if (hasTw || hasTg) { socS = 5;  ind.push({label: hasTw ? '🐦 Twitter' : '📢 Telegram',ok:true}); }
-  dbg.push({k:'SOCIALS',v:`tw:${hasTw} tg:${hasTg}`,pts:socS,max:12,cat:'SOC'});
-  bd.smart = socS;
-  score += socS;
-
-  // ── 7. FEES BONUS / MALUS (max +22, min -35) ────────────────
-  // C'est le critère le plus discriminant anti-fake-volume
-  const fees  = estimateFeesSol(vol24, vol6h, age);
-  const fmin  = feesMinSol(mcap);
-  const frat  = feesRatioMcap(fees, mcap);
-  const fratP = (frat * 100).toFixed(1);
-  let fS = 0;
-
-  // Score de base sur ratio fees/mcap
-  if      (frat >= 0.20) fS = 15;
-  else if (frat >= 0.12) fS = 10;
-  else if (frat >= 0.06) fS = 6;
-  else if (frat >= 0.045) fS = 2;
-
-  // Bonus si fees largement au-dessus du seuil
-  if      (fees >= fmin * 1.6) { fS += 22; ind.push({label:`⛽ ${fees.toFixed(1)}SOL ✓✓`,ok:true}); }
-  else if (fees >= fmin)       { ind.push({label:`⛽ ${fees.toFixed(1)}SOL`,ok:true}); }
-  // Malus si fees sous 70% du seuil (mais HardFilter aurait dû bloquer si <100%)
-  else if (fees < fmin * 0.7)  { fS -= 35; ind.push({label:`⚠ Fees ${fees.toFixed(1)}SOL bas`,ok:false}); }
-
-  fS = Math.max(-35, Math.min(22, fS));
-  const fCol = frat >= 0.12 ? '#00ff88' : frat >= 0.045 ? '#ffd700' : '#ff2d55';
-  dbg.push({k:'FEES/MCAP',v:`~${fees.toFixed(1)}SOL · ${fratP}% · seuil:${fmin}SOL`,pts:fS,max:22,cat:'F',color:fCol});
-  bd.fees = fS;
-  score += fS;
-
-  // ── 8. KOL BONUS (max +10) ──────────────────────────────────
-  const kols  = (typeof kolCache !== 'undefined') ? (kolCache[p.baseToken?.address] || []) : [];
-  const majKOL = kols.some(k => k.weight === 'major');
-  const midKOL = kols.some(k => k.weight === 'mid');
-  let kolBonus = 0;
-  if      (majKOL) { kolBonus = 10; ind.push({label:'⭐ KOL Major',ok:true,isKol:true}); }
-  else if (midKOL) { kolBonus = 5;  ind.push({label:'🔥 KOL',ok:true,isKol:true}); }
-  dbg.push({k:'KOL BONUS',v:majKOL?'major':midKOL?'mid':'—',pts:kolBonus,max:10,cat:'K'});
-  bd.bonus = kolBonus;
-  score += kolBonus;
-
-  // Score plancher sensé
-  score = Math.max(0, Math.min(110, score));
-
-  // ── LABEL CALL ──────────────────────────────────────────────
-  let label, labelColor;
-  if      (score >= 90) { label = '💎 GOD GEM';        labelColor = '#ffd700'; }
-  else if (score >= 80) { label = '⚡ HIGH POTENTIAL';  labelColor = '#00ff88'; }
-  else if (score >= 78) { label = '👁 WATCHLIST';       labelColor = '#a855f7'; }
-  else                  { label = '📡 NO SIGNAL';        labelColor = '#6b6b9a'; }
-
-  return {
-    score, label, labelColor,
-    indicators: ind,
-    breakdown : bd,
-    debugRows : dbg,
-    hasKOL    : majKOL || midKOL,
-    rugRisk   : calcRugRisk(p)
-  };
-}
-
-function enrichKOL(tok) { return tok; }
-
-function getScoreLabel(s) {
-  if (s >= 90) return { text: '💎 GOD GEM',        color: '#ffd700' };
-  if (s >= 80) return { text: '⚡ HIGH POTENTIAL',  color: '#00ff88' };
-  if (s >= 78) return { text: '👁 WATCHLIST',       color: '#a855f7' };
-  return             { text: '📡 NO SIGNAL',         color: '#6b6b9a' };
-}
-
-// ═══════════════════════════════════════════════════════════════
-// DEMO DATA
-// ═══════════════════════════════════════════════════════════════
-function getDemoTokens() {
-  // Tokens démo calibrés pour passer hardFilter v9 ET scorer ≥78
-  // Vérif par token :
-  //   liq > 12K ✓ · age 0.75-48h ✓ · sell ratio < 62% ✓
-  //   vol1h > liq×8 ✓ · fdv/liq < 8 ✓ · txns/wash ✓
-  //   fees > seuil(mcap) ✓ · frat > 4.5% ✓
-  const now = Date.now();
-  return [
-    {
-      // GOATAI : mcap 94K → seuil 8SOL → vol6h requis ≥ 8*180/0.003 = 480K ✓
-      // vol1h=74K > liq(38K)×8 = 304K → ⚠ on baisse liq à 8K ou monte vol1h
-      baseToken:{address:'7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU',symbol:'GOATAI',name:'Goat AI'},
-      priceUsd:'0.000942', marketCap:94000, fdv:95000, liquidity:{usd:14000},
-      volume:{h24:820000, h6:310000, h1:135000},
-      priceChange:{h24:284, h6:67, h1:22, m5:3.2},
-      txns:{h24:{buys:2800,sells:580},h6:{buys:920,sells:190},h1:{buys:380,sells:72}},
-      pairCreatedAt:now - 8*3600000, boosts:{active:0},
-      info:{socials:[{type:'twitter'},{type:'telegram'}]}
-    },
-    {
-      // PEPEXSOL : mcap 68K → seuil 8SOL → vol6h requis ≥ 480K ✓
-      // vol1h(120K) > liq(12K)×8=96K ✓ · fees = 480K*0.003/180 = 8SOL ✓
-      baseToken:{address:'DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263',symbol:'PEPEXSOL',name:'Pepe x Solana'},
-      priceUsd:'0.00213', marketCap:68000, fdv:69000, liquidity:{usd:12500},
-      volume:{h24:1440000, h6:520000, h1:120000},
-      priceChange:{h24:189, h6:44, h1:16, m5:1.8},
-      txns:{h24:{buys:2800,sells:580},h6:{buys:920,sells:190},h1:{buys:280,sells:54}},
-      pairCreatedAt:now - 5*3600000, boosts:{active:1},
-      info:{socials:[{type:'twitter'},{type:'telegram'}]}
-    },
-    {
-      // GIGACHAD : mcap 42K → seuil 3SOL → vol6h requis ≥ 180K ✓
-      // vol1h(110K) > liq(13K)×8=104K ✓ · fees = 200K*0.003/180 = 3.3SOL ✓
-      baseToken:{address:'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',symbol:'GIGACHAD',name:'Giga Chad'},
-      priceUsd:'0.0000341', marketCap:42000, fdv:43000, liquidity:{usd:13000},
-      volume:{h24:500000, h6:200000, h1:110000},
-      priceChange:{h24:145, h6:42, h1:14, m5:2.1},
-      txns:{h24:{buys:1400,sells:290},h6:{buys:460,sells:95},h1:{buys:185,sells:36}},
-      pairCreatedAt:now - 3*3600000, boosts:{active:0},
-      info:{socials:[{type:'twitter'}]}
-    },
-    {
-      // MOONCAT : mcap 28K → seuil 3SOL → vol6h requis ≥ 180K ✓
-      // vol1h(115K) > liq(12K)×8=96K ✓ · fees = 200K*0.003/180 = 3.3SOL ✓
-      baseToken:{address:'So11111111111111111111111111111111111111113',symbol:'MOONCAT',name:'Moon Cat'},
-      priceUsd:'0.0000089', marketCap:28000, fdv:29000, liquidity:{usd:12000},
-      volume:{h24:500000, h6:200000, h1:115000},
-      priceChange:{h24:98, h6:32, h1:18, m5:4.1},
-      txns:{h24:{buys:1100,sells:230},h6:{buys:360,sells:75},h1:{buys:148,sells:28}},
-      pairCreatedAt:now - 2*3600000, boosts:{active:0},
-      info:{socials:[{type:'twitter'},{type:'telegram'}]}
-    }
-  ];
-}
-
-// ═══════════════════════════════════════════════════════════════
-// FETCH TOKENS — 3 sources DexScreener + fallback demo
-// ═══════════════════════════════════════════════════════════════
-async function fetchTokens() {
-  const loadEl = document.getElementById('scanner-loading');
-  const rowsEl = document.getElementById('token-rows');
-
-  const timeout = setTimeout(() => {
-    if (loadEl && loadEl.style.display !== 'none') {
-      loadEl.innerHTML = `<div style="font-family:Space Mono,monospace;font-size:10px;color:var(--muted2);padding:20px;text-align:center;">⌛ Connexion lente… actualisation dans 30s</div>`;
-    }
-  }, 15000);
-
-  try {
-    let pairs   = [];
-    let isDemo  = false;
-
-    // ── Source 1 : token-profiles/latest → tokens/v1 ─────────
-    try {
-      const r1 = await fetch('https://api.dexscreener.com/token-profiles/latest/v1',{headers:{Accept:'application/json'}});
-      if (r1.ok) {
-        const d1 = await r1.json();
-        const solToks = (Array.isArray(d1)?d1:[]).filter(t=>t.chainId==='solana').slice(0,40);
-        if (solToks.length) {
-          const addrs = solToks.map(t=>t.tokenAddress).join(',');
-          const r2 = await fetch(`https://api.dexscreener.com/tokens/v1/solana/${addrs}`);
-          if (r2.ok) {
-            const raw = await r2.json();
-            pairs = Array.isArray(raw) ? raw : (raw?.pairs || raw?.data || []);
-          }
-        }
-      }
-    } catch(e) { console.warn('Src1 err:',e.message); }
-
-    // ── Source 2 : token-boosts/top/v1 ───────────────────────
-    if (!pairs.length) {
-      try {
-        const rb = await fetch('https://api.dexscreener.com/token-boosts/top/v1');
-        if (rb.ok) {
-          const db = await rb.json();
-          const sb = (Array.isArray(db)?db:[]).filter(t=>t.chainId==='solana').slice(0,30);
-          if (sb.length) {
-            const ab = sb.map(t=>t.tokenAddress).join(',');
-            const rp = await fetch(`https://api.dexscreener.com/tokens/v1/solana/${ab}`);
-            if (rp.ok) {
-              const rawp = await rp.json();
-              pairs = Array.isArray(rawp) ? rawp : (rawp?.pairs || rawp?.data || []);
-            }
-          }
-        }
-      } catch(e) { console.warn('Src2 err:',e.message); }
-    }
-
-    // ── Source 3 : search trending ───────────────────────────
-    if (!pairs.length) {
-      try {
-        const rs = await fetch('https://api.dexscreener.com/latest/dex/search?q=solana%20meme');
-        if (rs.ok) {
-          const ds = await rs.json();
-          pairs = (ds?.pairs||[]).filter(p=>p.chainId==='solana').slice(0,40);
-        }
-      } catch(e) { console.warn('Src3 err:',e.message); }
-    }
-
-    // ── Source 4 : proxy allorigins ───────────────────────────
-    if (!pairs.length) {
-      try {
-        const prx = 'https://api.allorigins.win/raw?url=';
-        const url = encodeURIComponent('https://api.dexscreener.com/token-boosts/top/v1');
-        const rp  = await fetch(prx+url);
-        if (rp.ok) {
-          const dp = await rp.json();
-          const sp = (Array.isArray(dp)?dp:[]).filter(t=>t.chainId==='solana').slice(0,20);
-          if (sp.length) {
-            const ap  = sp.map(t=>t.tokenAddress).join(',');
-            const rr  = await fetch(prx+encodeURIComponent(`https://api.dexscreener.com/tokens/v1/solana/${ap}`));
-            if (rr.ok) {
-              const rraw = await rr.json();
-              pairs = Array.isArray(rraw) ? rraw : (rraw?.pairs || rraw?.data || []);
-            }
-          }
-        }
-      } catch(e) { console.warn('Src4 err:',e.message); }
-    }
-
-    // ── Fallback DEMO ─────────────────────────────────────────
-    if (!Array.isArray(pairs) || !pairs.length) {
-      pairs  = getDemoTokens();
-      isDemo = true;
-    }
-    if (!Array.isArray(pairs)) pairs = [];
-
-    // ── KOL enrichissement ────────────────────────────────────
-    const addrs = pairs.filter(p=>p?.baseToken).map(p=>p.baseToken.address);
-    if (typeof fetchKOLMentions === 'function') await fetchKOLMentions(addrs);
-
-    clearTimeout(timeout);
-    if (loadEl) loadEl.style.display = 'none';
-
-    // ── SCORING — seuil strict 78 ────────────────────────────
-    const allScored = pairs
-      .filter(p => p?.baseToken)
-      .map(p => {
-        const res = scoreToken(p);
-        if (!res) return null;
-        return enrichKOL({...p,
-          score:res.score, label:res.label, labelColor:res.labelColor,
-          indicators:res.indicators, breakdown:res.breakdown,
-          debugRows:res.debugRows, hasKOL:res.hasKOL,
-          rugRisk:res.rugRisk, isDemo
-        });
-      })
-      .filter(Boolean)
-      .sort((a,b) => { if(a.hasKOL&&!b.hasKOL)return -1; if(!a.hasKOL&&b.hasKOL)return 1; return b.score-a.score; });
-
-    let scored = allScored.filter(t => t.score >= 78).slice(0, 10);
-    let isFallback = false;
-
-    // Fallback léger : pas de tokens ≥78 mais des tokens ≥65 existent
-    if (!scored.length && allScored.filter(t=>t.score>=65).length > 0) {
-      scored    = allScored.filter(t=>t.score>=65).slice(0,5);
-      isFallback = true;
-    }
-
-    // ── Aucun signal ─────────────────────────────────────────
-    if (!scored.length) {
-      const rawCount  = pairs.filter(p=>p?.baseToken).length;
-      const rejections = {};
-      pairs.filter(p=>p?.baseToken).forEach(p => {
-        const r = hardFilter(p);
-        if (r) rejections[r] = (rejections[r]||0)+1;
-      });
-      const topRej = Object.entries(rejections).sort((a,b)=>b[1]-a[1]).slice(0,4)
-        .map(([k,v])=>`<span style="color:var(--red)">${k}</span>(×${v})`).join(' · ');
-
-      rowsEl.innerHTML = `
-        <div style="padding:48px 24px;text-align:center;">
-          <div style="font-size:32px;margin-bottom:12px;">🛡️</div>
-          <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:var(--muted2);margin-bottom:8px;">
-            Pas de bon signal (anti-rug strict)
-          </div>
-          <div style="font-family:'Space Mono',monospace;font-size:9px;color:var(--muted);margin-bottom:6px;">
-            ${rawCount} tokens scannés · ${allScored.length} scorés · 0 ≥ 78 pts
-          </div>
-          <div style="font-family:'Space Mono',monospace;font-size:9px;color:var(--muted);margin-bottom:16px;line-height:1.8;">
-            ${topRej || 'API indisponible ou aucune donnée Solana'}
-          </div>
-          <div style="font-family:'Space Mono',monospace;font-size:9px;color:var(--green);animation:blink 1s infinite;">
-            ↻ Refresh auto dans 30s
-          </div>
-        </div>`;
-      updateTicker([]);
-      return;
-    }
-
-    // ── Banners ───────────────────────────────────────────────
-    document.getElementById('fallback-banner')?.remove();
-    document.getElementById('demo-banner')?.remove();
-
-    if (isFallback) {
-      const fb = document.createElement('div');
-      fb.id = 'fallback-banner';
-      fb.style.cssText = 'background:rgba(168,85,247,.06);border-bottom:1px solid rgba(168,85,247,.2);padding:8px 20px;font-family:Space Mono,monospace;font-size:10px;color:#a855f7;text-align:center;';
-      fb.innerHTML = '📡 Marché calme — aucun token ≥78pts. Top 5 tokens ≥65pts affichés.';
-      document.querySelector('.scanner-head')?.after(fb);
-    }
-    if (isDemo) {
-      const db = document.createElement('div');
-      db.id = 'demo-banner';
-      db.style.cssText = 'background:rgba(255,140,0,.06);border-bottom:1px solid rgba(255,140,0,.2);padding:8px 20px;font-family:Space Mono,monospace;font-size:10px;color:var(--orange);text-align:center;';
-      db.innerHTML = '⚠ Mode DEMO — API DexScreener indisponible (CORS en local). Push sur Vercel pour données réelles.';
-      document.querySelector('.scanner-head')?.after(db);
-    }
-
-    // ── KOL pill update ───────────────────────────────────────
-    if (typeof kolCache !== 'undefined') {
-      const kolCount = Object.values(kolCache).reduce((s,a)=>s+a.length,0);
-      const kp = document.getElementById('kol-pill');
-      if (kp) kp.textContent = kolCount > 0 ? `🔥 KOL: ${kolCount}` : 'KOL: scan...';
-    }
-
-    updateTicker(scored);
-    await renderTokenRows(scored);
-
-  } catch(err) {
-    clearTimeout(timeout);
-    const le = document.getElementById('scanner-loading');
-    if (le) le.innerHTML = `<div style="font-family:Space Mono,monospace;font-size:10px;color:var(--muted2);padding:32px;text-align:center;">⚠ ${err.message||err}<br><span style="color:var(--green);margin-top:6px;display:block;">↻ Refresh dans 30s</span></div>`;
-    console.error('fetchTokens:', err);
-  }
-}
-
-// ═══════════════════════════════════════════════════════════════
-// RENDER TOKEN ROWS
-// ═══════════════════════════════════════════════════════════════
-async function renderTokenRows(scored) {
-  const rowsEl = document.getElementById('token-rows');
-  if (!rowsEl) return;
-  lastScored = scored;
-
-  // Précharger tous les calls stats
-  const statsMap = {};
-  await Promise.all(scored.map(async p => {
-    const ca    = p.baseToken?.address;
-    const mcap  = p.marketCap || 0;
-    const price = parseFloat(p.priceUsd) || 0;
-    const sym   = p.baseToken?.symbol || '';
-    if (ca) {
-      try { statsMap[ca] = await getMcapStats(ca, mcap, price, sym, p.score||0); }
-      catch(e) { statsMap[ca] = {callMcap:mcap,athMcap:mcap,callTime:Date.now(),callClock:'--:--',tLabel:'now',xNow:1,xAth:1}; }
-    }
-  }));
-
-  rowsEl.innerHTML = scored.map((p, i) => {
-    const sc   = p.score;
-    const lbl  = getScoreLabel(sc);
-    const cls  = sc >= 90 ? 'gold-score' : sc >= 78 ? 'hi' : 'md';
-    const c24  = p.priceChange?.h24 || 0;
-    const c1h  = p.priceChange?.h1  || 0;
-    const locked = !isUnlocked && i >= 2;
-    const emoji  = getRandEmoji(p.baseToken.address);
-    const ca     = p.baseToken.address;
-    const sym    = p.baseToken.symbol || '—';
-    const mcap   = p.marketCap || 0;
-    const price  = fmtPrice(parseFloat(p.priceUsd)||0);
-    const stats  = statsMap[ca] || {callMcap:mcap,athMcap:mcap,callClock:'--:--',tLabel:'now',xNow:1,xAth:1};
-    const bd     = p.breakdown || {};
-    const rug    = p.rugRisk || calcRugRisk(p);
-
-    const c24c  = c24 >= 0 ? 'var(--green)' : 'var(--red)';
-    const c1hc  = c1h >= 0 ? 'var(--green)' : 'var(--red)';
-    const xNowC = stats.xNow >= 2 ? 'var(--green)' : stats.xNow >= 1.2 ? 'var(--yellow)' : 'var(--muted2)';
-    const xAthC = stats.xAth >= 3 ? 'var(--green)' : stats.xAth >= 1.5 ? 'var(--yellow)' : 'var(--muted2)';
-
-    // Fees tag
-    const vol24r = p.volume?.h24||0, vol6hr = p.volume?.h6||0;
-    const ager   = (Date.now()-(p.pairCreatedAt||Date.now()))/3600000;
-    const feesr  = estimateFeesSol(vol24r, vol6hr, ager);
-    const fratr  = feesRatioMcap(feesr, mcap);
-    const fminr  = feesMinSol(mcap);
-    const fcolr  = fratr >= 0.12 ? 'var(--green)' : fratr >= 0.045 ? 'var(--yellow)' : 'var(--red)';
-    const feesTag = `<span style="font-family:Space Mono,monospace;font-size:7px;padding:1px 6px;border-radius:3px;border:1px solid ${fcolr}40;color:${fcolr};background:${fcolr}12;" title="Fees Pump.fun estimés · seuil: ${fminr}SOL · ratio: ${(fratr*100).toFixed(1)}%">⛽ ${feesr.toFixed(1)}SOL · ${(fratr*100).toFixed(1)}%</span>`;
-
-    // Indicators
-    let indHtml = '';
-    (p.indicators||[]).slice(0,5).forEach(ind => {
-      const t = ind.isKol?'kol':ind.ok?'ok':'bad';
-      indHtml += `<span class="ind ${t}">${ind.label}</span>`;
-    });
-
-    // Breakdown bars
-    const bdItems = [
-      ['B', bd.trading,  22, 'Buy'],
-      ['V', bd.momentum, 18, 'Vol'],
-      ['M', bd.holders,  35, 'Momentum'],
-      ['A', bd.age,      15, 'Age'],
-      ['MC',bd.liquidity,18, 'McAp'],
-      ['F', bd.fees,     22, 'Fees'],
-    ];
-    const bdHtml = `<div style="display:flex;gap:3px;margin-top:5px;align-items:center;flex-wrap:wrap;">
-      ${bdItems.map(([k,v,max])=>{
-        const val = v||0; const pct = max>0?Math.round(val/max*100):0;
-        const col = pct>=70?'var(--green)':pct>=40?'var(--yellow)':'var(--red)';
-        return `<span style="font-family:Space Mono,monospace;font-size:7px;color:var(--muted2);">${k}<span style="color:${col}">${val}</span></span>`;
-      }).join('<span style="color:var(--border);margin:0 1px">·</span>')}
-      ${bd.bonus>0?`<span style="font-family:Space Mono,monospace;font-size:7px;color:var(--yellow);margin-left:2px;">⭐+${bd.bonus}</span>`:''}
-    </div>`;
-
-    // Score color spécial pour GOD GEM
-    const scoreStyle = sc >= 90
-      ? `color:#ffd700;text-shadow:0 0 12px rgba(255,215,0,0.5);`
-      : sc >= 78 ? `color:var(--green);text-shadow:0 0 10px rgba(0,255,136,0.4);` : `color:var(--yellow);`;
-    const barStyle = sc >= 90 ? 'background:linear-gradient(90deg,#ffd700,#ffaa00);' : sc >= 78 ? 'background:linear-gradient(90deg,var(--green),#00ffcc);' : 'background:var(--yellow);';
-
-    const rowStyle = locked ? ' style="filter:blur(5px);pointer-events:none"' : '';
-    const rowAttr  = locked ? ' data-locked="1"' : '';
-    const demoTag  = p.isDemo ? '<span style="font-family:Space Mono,monospace;font-size:7px;color:var(--orange);border:1px solid rgba(255,140,0,.3);padding:1px 4px;border-radius:2px;margin-left:4px;">DEMO</span>' : '';
-
-    return `<div class="token-row"${rowStyle}${rowAttr}>
-      <div class="tok-info">
-        <div class="tok-icon">${emoji}</div>
-        <div style="flex:1">
-          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
-            <div class="tok-name">${sym}</div>
-            ${demoTag}
-            <button class="btn-ca" onclick="cpCA('${ca}',this)">CA</button>
-            ${isAdminMode?`<button class="btn-ca" style="background:rgba(255,140,0,.15);border-color:rgba(255,140,0,.4);color:var(--orange);" onclick="showDebug(${i})">DBG</button>`:''}
-          </div>
-          <div class="ind-row">${indHtml} ${feesTag}</div>
-          ${bdHtml}
-        </div>
-      </div>
-      <div>
-        <div class="score-wrap">
-          <div class="score-num" style="${scoreStyle}font-family:Space Mono,monospace;font-size:14px;font-weight:700;min-width:32px;">${sc}</div>
-          <div class="score-bar"><div class="score-fill" style="${barStyle}height:100%;border-radius:2px;width:0%" data-w="${Math.min(sc,100)}%"></div></div>
-        </div>
-        <div style="font-family:Space Mono,monospace;font-size:9px;color:${lbl.color};margin-top:4px;white-space:nowrap;">${lbl.text}</div>
-      </div>
-      <div>
-        <div class="cell-mono">${price}</div>
-        <div class="cell-sub">1h: <span style="color:${c1hc}">${c1h>=0?'+':''}${c1h.toFixed(1)}%</span></div>
-      </div>
-      <div>
-        <div class="cell-mono" style="color:${c24c}">${c24>=0?'+':''}${c24.toFixed(1)}%</div>
-        <div class="cell-sub">McAp: ${fmtMcap(mcap)}</div>
-      </div>
-      <div>
-        <div class="cell-mono" style="font-size:9px;line-height:1.9;">
-          <div><span style="color:var(--muted2);">📍</span><span style="font-weight:600;"> ${fmtMcap(stats.callMcap)}</span><span style="color:var(--muted);font-size:8px;"> ${stats.callClock} · ${stats.tLabel}</span></div>
-          <div><span style="color:var(--muted2);">⬆</span><span style="color:${xNowC};font-weight:600;"> ${fmtMcap(mcap)}</span><span style="color:${xNowC};font-size:8px;"> ${stats.xNow.toFixed(2)}x</span></div>
-          <div><span style="color:var(--muted2);">🏆</span><span style="color:${xAthC};font-weight:600;"> ${fmtMcap(stats.athMcap)}</span><span style="color:${xAthC};font-size:8px;"> ${stats.xAth.toFixed(2)}x</span></div>
-        </div>
-      </div>
-      <div>
-        <div style="display:inline-flex;flex-direction:column;align-items:center;gap:5px;">
-          <span style="font-family:Space Mono,monospace;font-size:10px;font-weight:700;padding:5px 12px;border-radius:6px;letter-spacing:.5px;background:${rug.bg};border:1px solid ${rug.color}50;color:${rug.color};">
-            ${rug.level==='LOW'?'🟢':rug.level==='MEDIUM'?'🟡':'🔴'} ${rug.level}
-          </span>
-          <span style="font-family:Space Mono,monospace;font-size:7px;color:var(--muted2);text-align:center;">${lbl.text}</span>
-          ${rug.flags.length?`<span style="font-family:Space Mono,monospace;font-size:7px;color:${rug.color};opacity:.7;">${rug.flags[0]}</span>`:''}
-        </div>
-      </div>
-    </div>`;
-  }).join('');
-
-  // Animate score bars
-  setTimeout(() => {
-    rowsEl.querySelectorAll('.score-fill').forEach(el => {
-      el.style.transition = 'width .8s ease';
-      el.style.width = el.dataset.w;
-    });
-  }, 100);
-}
-
-function updateTicker(pairs) {
-  const el = document.getElementById('ticker-inner');
-  if(!el||!pairs.length) return;
-  const MEMES = ['🐸','🚀','💎','🌙','🔥','🐶','🦊','⚡','🎯','🐯'];
-  function em(s){let h=0;for(let c of s)h=(h*31+c.charCodeAt(0))&0xffffffff;return MEMES[Math.abs(h)%MEMES.length];}
-  const items = pairs.map(p => {
-    const c = p.priceChange?.h24||0;
-    const cl = c>=0?'up':'dn';
-    return `<span class="ticker-item">${em(p.baseToken?.address||'')} ${p.baseToken?.symbol||'?'} <span class="${cl}">${c>=0?'+':''}${c.toFixed(1)}%</span></span><span class="ticker-sep">·</span>`;
-  });
-  el.innerHTML = [...items,...items].join('');
-}
-
-// ═══════════════════════════════════════════════════════════════
-// UTILS
-// ═══════════════════════════════════════════════════════════════
-function cpCA(addr, btn) {
-  navigator.clipboard.writeText(addr).then(()=>{
-    const o=btn.textContent; btn.textContent='✓'; btn.style.background='rgba(0,230,118,.3)';
-    setTimeout(()=>{btn.textContent=o;btn.style.background='';},1500);
-  }).catch(()=>{});
-}
-function fmtPrice(p){
-  if(!p) return '$—';
-  if(p<0.000001) return '$'+p.toExponential(2);
-  if(p<0.01)     return '$'+p.toFixed(6);
-  if(p<1)        return '$'+p.toFixed(4);
-  return '$'+p.toFixed(2);
-}
-function fmtLiq(v){
-  if(!v) return '—';
-  if(v>=1e6) return '$'+(v/1e6).toFixed(1)+'M';
-  if(v>=1e3) return '$'+Math.round(v/1e3)+'K';
-  return '$'+Math.round(v);
-}
-function fmtMcap(v){
-  if(!v||v===0) return '—';
-  if(v>=1e6) return '$'+(v/1e6).toFixed(2)+'M';
-  if(v>=1e3) return '$'+Math.round(v/1e3)+'K';
-  return '$'+Math.round(v);
-}
-const EMOJIS=['🐸','🚀','💎','⚡','🌙','🔥','🐶','🦊','🌊','🎯','🦁','🐯','🌱','💀','🎪'];
-function getRandEmoji(s){let h=0;for(let c of s)h=(h*31+c.charCodeAt(0))&0xffffffff;return EMOJIS[Math.abs(h)%EMOJIS.length];}
-
-// ═══════════════════════════════════════════════════════════════
-// INIT
-// ═══════════════════════════════════════════════════════════════
-window.addEventListener('load', () => {
-  // Vérif session persistante
-  if (hasSession()) {
-    isUnlocked = true;
-    const overlay = document.getElementById('lockOverlay');
-    if (overlay) overlay.remove();
-  }
-  fetchTokens();
-  setInterval(fetchTokens, 30000);
-});
-
-
-// ═══════════════════════════════════════════════════════════════
-// I18N — FR / EN
-// ═══════════════════════════════════════════════════════════════
-const LANG = {
-  fr: {
-    hero_eyebrow: 'Solana Alpha Intelligence',
-    hero_line1: 'CHASSE',
-    hero_line2: 'LE PROCHAIN',
-    hero_line3: '100X. 🚀',
-    hero_sub: "Memecoin Pump : l'outil ultime pour chasser les prochains 100x sur Solana.",
-    hero_sub2: 'Qualité > Quantité. Un bon call vaut 10 flops.',
-    stat1: 'filtres anti-rug',
-    stat2: 'scan live',
-    stat3: 'chain ciblée',
-    btn_connect: '🔑 Entrer mon code',
-    btn_tools: 'Voir les outils →',
-    review_locked: 'Connecte-toi pour laisser un avis',
-  },
-  en: {
-    hero_eyebrow: 'Solana Alpha Intelligence',
-    hero_line1: 'HUNT',
-    hero_line2: 'THE NEXT',
-    hero_line3: '100X. 🚀',
-    hero_sub: 'Memecoin Pump: the ultimate tool to hunt the next 100x on Solana.',
-    hero_sub2: 'Quality > Quantity. One good call beats 10 flops.',
-    stat1: 'anti-rug filters',
-    stat2: 'live scan',
-    stat3: 'target chain',
-    btn_connect: '🔑 Enter my code',
-    btn_tools: 'See the tools →',
-    review_locked: 'Log in to leave a review',
-  }
-};
+let debugModeOn = false;
+let lastScored = [];
+let refreshTimer = null;
 let currentLang = 'fr';
-function setLang(lang) {
-  currentLang = lang;
-  document.querySelectorAll('[data-i18n]').forEach(el => {
-    const key = el.getAttribute('data-i18n');
-    if (LANG[lang][key]) el.textContent = LANG[lang][key];
-  });
-  document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
-  const btn = document.getElementById('lang-' + lang);
-  if (btn) btn.classList.add('active');
-}
 
-// ═══════════════════════════════════════════════════════════════
-// SCROLL SECTION NAV
-// ═══════════════════════════════════════════════════════════════
-function scrollToSection(id) {
-  const el = document.getElementById(id);
-  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  document.querySelectorAll('.nav-link').forEach(b => b.classList.remove('active'));
-  const map = {home:'ACCUEIL', outils:'OUTILS', plans:'PLANS', avis:'AVIS'};
-  document.querySelectorAll('.nav-link').forEach(b => {
-    if (b.textContent.trim() === (map[id]||'')) b.classList.add('active');
-  });
-}
+const EMOJIS = ['🐸','🚀','💎','🌙','🔥','⚡','🦊','🐶','🐱','🎰','🍌','🧸','🦍','🐻','🎯'];
 
-// ═══════════════════════════════════════════════════════════════
-// REVIEWS SYSTEM (localStorage)
-// ═══════════════════════════════════════════════════════════════
-const DEFAULT_REVIEWS = [
-  { stars:5, text:"Premier call PEPEXSOL à $42K, maintenant à $580K. L'algo a détecté avant tout le monde. WAGMI 🚀", author:"Degen_0x4F", date:"2025-01-12" },
-  { stars:5, text:"Rug Sniping m'a sauvé 3x en une semaine. Token rejeté que j'allais ape en full. 10/10 obligatoire.", author:"CryptoAnon", date:"2025-01-18" },
-  { stars:4, text:"Dubai Mode = full send. Wallet tracker sur les whales c'est le game changer. Worth every $.", author:"SolanaChad", date:"2025-01-22" }
+// ============================================================
+// REVIEWS
+// ============================================================
+const defaultReviews = [
+  { stars:5, text:'Algo ultra précis, j\'ai catch un token à 45K mcap grâce au scanner. x12 en 3h. NGMI sans ça.', author:'degen_sol 🐸' },
+  { stars:5, text:'Les filtres anti-rug sont vraiment efficaces. Plus jamais pris dans un staircase dump depuis que j\'utilise ça.', author:'cryptochad_69 ⚡' },
+  { stars:4, text:'Le Dubai Mode vaut chaque centime. Les alertes whales m\'ont sauvé plusieurs fois. WAGMI.', author:'whale_watcher 🐋' }
 ];
-let reviewStarSelected = 5;
 
 function loadReviews() {
   let reviews = [];
-  try { reviews = JSON.parse(localStorage.getItem('mp_reviews_v1') || '[]'); } catch(e){}
-  if (!reviews.length) reviews = DEFAULT_REVIEWS;
-  return reviews;
+  try { reviews = JSON.parse(localStorage.getItem(REVIEWS_KEY)) || []; } catch(e) {}
+  if (!reviews.length) reviews = defaultReviews;
+  const grid = document.getElementById('reviewsGrid');
+  grid.innerHTML = reviews.map(r => `
+    <div class="review-card">
+      <div class="review-stars">${'⭐'.repeat(r.stars)}</div>
+      <div class="review-text">"${r.text}"</div>
+      <div class="review-author">${r.author}</div>
+    </div>`).join('');
+  const wrap = document.getElementById('reviewFormWrap');
+  if (isUnlocked) {
+    wrap.innerHTML = `
+      <div class="review-form">
+        <h3>Laisse ton avis</h3>
+        <div class="star-picker" id="starPicker">
+          <span onclick="setStar(1)">⭐</span><span onclick="setStar(2)">⭐</span>
+          <span onclick="setStar(3)">⭐</span><span onclick="setStar(4)">⭐</span><span onclick="setStar(5)">⭐</span>
+        </div>
+        <textarea class="rev-input" id="revText" placeholder="Ton retour d'expérience..."></textarea>
+        <button class="rev-submit" onclick="submitReview()">Publier</button>
+      </div>`;
+  }
 }
 
-function renderReviews() {
-  const reviews = loadReviews();
-  const grid = document.getElementById('reviews-grid');
-  if (!grid) return;
-  const avatarColors = ['#00ff88','#00bfff','#ffd700','#a855f7','#ff2d55'];
-  grid.innerHTML = reviews.map((r, i) => `
-    <div class="review-card fade-in">
-      <div class="review-stars">${'⭐'.repeat(r.stars)}</div>
-      <p class="review-text">"${r.text}"</p>
-      <div class="review-meta">
-        <div class="review-avatar" style="background:${avatarColors[i%avatarColors.length]};">${r.author[0].toUpperCase()}</div>
-        <div>
-          <div class="review-author">${r.author}</div>
-          <div style="font-family:'Space Mono',monospace;font-size:8px;color:var(--muted);">${r.date}</div>
-        </div>
+let selectedStars = 5;
+function setStar(n) {
+  selectedStars = n;
+  document.querySelectorAll('#starPicker span').forEach((s,i) => s.classList.toggle('active', i < n));
+}
+function submitReview() {
+  const text = document.getElementById('revText').value.trim();
+  if (!text) return;
+  let reviews = [];
+  try { reviews = JSON.parse(localStorage.getItem(REVIEWS_KEY)) || defaultReviews; } catch(e) { reviews = [...defaultReviews]; }
+  reviews.unshift({ stars: selectedStars, text, author: 'Membre vérifié ✓' });
+  localStorage.setItem(REVIEWS_KEY, JSON.stringify(reviews));
+  loadReviews();
+}
+
+// ============================================================
+// CODES / SESSION
+// ============================================================
+function loadCodes() {
+  try { return JSON.parse(localStorage.getItem(CODE_KEY)) || getDefaultCodes(); } catch(e) { return getDefaultCodes(); }
+}
+function saveCodes(c) { localStorage.setItem(CODE_KEY, JSON.stringify(c)); }
+function getDefaultCodes() {
+  return [
+    { code:'CODE-DEMO-1234', plan:'alpha', used:false },
+    { code:'BASE-TEST-0001', plan:'base', used:false },
+    { code:'DUBA-MODE-9999', plan:'dubai', used:false }
+  ];
+}
+function checkSession() {
+  try {
+    const s = JSON.parse(localStorage.getItem(SESSION_KEY));
+    if (s && s.expires > Date.now()) { isUnlocked = true; onUnlock(s.plan); }
+  } catch(e) {}
+}
+function submitCode() {
+  const val = document.getElementById('codeInput').value.trim().toUpperCase();
+  const err = document.getElementById('codeErr');
+  const codes = loadCodes();
+  const found = codes.find(c => c.code === val && !c.used);
+  if (!found) {
+    err.textContent = 'Code invalide ou déjà utilisé.';
+    err.style.display = 'block';
+    document.getElementById('codeInput').classList.add('err');
+    return;
+  }
+  found.used = true;
+  saveCodes(codes);
+  localStorage.setItem(SESSION_KEY, JSON.stringify({ plan: found.plan, expires: Date.now() + 30*24*60*60*1000 }));
+  isUnlocked = true;
+  closeCode();
+  onUnlock(found.plan);
+}
+function onUnlock(plan) {
+  document.getElementById('adminBtn').style.display = 'inline-block';
+  loadReviews();
+  fetchTokens();
+}
+function formatCode(input) {
+  let v = input.value.replace(/[^A-Za-z0-9]/g,'').toUpperCase();
+  let out = '';
+  for (let i = 0; i < v.length && i < 12; i++) {
+    if (i > 0 && i % 4 === 0) out += '-';
+    out += v[i];
+  }
+  input.value = out;
+}
+
+// ============================================================
+// MODALS
+// ============================================================
+function openCode() { document.getElementById('codeModal').classList.add('open'); setTimeout(()=>document.getElementById('codeInput').focus(),100); }
+function closeCode() { document.getElementById('codeModal').classList.remove('open'); document.getElementById('codeErr').style.display='none'; document.getElementById('codeInput').classList.remove('err'); }
+function openAdmin() { document.getElementById('adminOverlay').classList.add('open'); document.getElementById('adminContent').innerHTML=`<div class="admin-title">⚙️ Panneau Admin</div><div class="admin-section"><h3>Mot de passe</h3><input type="password" class="pw-input" id="adminPw" placeholder="Mot de passe admin" onkeydown="if(event.key==='Enter')checkAdmin()"><div class="admin-pw-err" id="adminErr" style="display:none">Mot de passe incorrect.</div><button class="admin-btn admin-btn-green" onclick="checkAdmin()">Entrer</button></div>`; }
+function closeAdmin() { document.getElementById('adminOverlay').classList.remove('open'); }
+function closeDebug() { document.getElementById('debugOverlay').classList.remove('open'); }
+
+function checkAdmin() {
+  const pw = document.getElementById('adminPw').value;
+  if (pw !== ADMIN_PW) { document.getElementById('adminErr').style.display='block'; return; }
+  isAdminMode = true;
+  showAdminPanel();
+}
+function showAdminPanel() {
+  const codes = loadCodes();
+  document.getElementById('adminContent').innerHTML = `
+    <div class="admin-title">⚙️ Admin <span style="font-size:.7rem;color:var(--green);font-family:var(--font-mono)">✓ Connecté</span></div>
+    <div class="admin-section">
+      <h3>Générer un code</h3>
+      <div class="code-gen-row">
+        <select class="plan-select" id="genPlan"><option value="base">BASE</option><option value="alpha">ALPHA</option><option value="dubai">DUBAI MODE</option></select>
+        <button class="admin-btn admin-btn-green" onclick="generateCode()">+ Générer</button>
+        <button class="admin-btn admin-btn-blue" onclick="exportCodes()">⬇ Export CSV</button>
       </div>
     </div>
-  `).join('');
-
-  // Update avg
-  const avg = (reviews.reduce((a,b)=>a+b.stars,0)/reviews.length).toFixed(1);
-  const avgEl = document.getElementById('avg-val');
-  const avgStars = document.getElementById('avg-stars');
-  const avgCount = document.getElementById('avg-count');
-  if(avgEl) avgEl.textContent = avg;
-  if(avgStars) avgStars.textContent = '⭐'.repeat(Math.round(parseFloat(avg)));
-  if(avgCount) avgCount.textContent = `basé sur ${reviews.length} avis`;
+    <div class="admin-section">
+      <h3>Codes (${codes.length})</h3>
+      <div class="codes-list" id="codesList">${renderCodes(codes)}</div>
+    </div>
+    <div class="admin-section">
+      <h3>Debug mode scanner</h3>
+      <button class="admin-btn ${debugModeOn?'admin-btn-red':'admin-btn-blue'}" onclick="toggleDebugMode();showAdminPanel()">${debugModeOn?'🟠 Debug ON → désactiver':'🔵 Activer Debug Mode'}</button>
+    </div>
+    <div class="admin-section">
+      <h3>Changer mot de passe</h3>
+      <div style="display:flex;gap:.6rem"><input type="password" class="pw-input" id="newPw" placeholder="Nouveau mot de passe" style="margin:0"><button class="admin-btn admin-btn-ghost" onclick="changePw()">Sauvegarder</button></div>
+    </div>`;
+}
+function renderCodes(codes) {
+  return codes.map((c,i) => `
+    <div class="code-item ${c.used?'code-used':''}">
+      <span class="code-val">${c.code}</span>
+      <span class="code-plan-badge plan-${c.plan}">${c.plan.toUpperCase()}</span>
+      <span style="font-size:.65rem;color:${c.used?'var(--red)':'var(--green)'}">${c.used?'UTILISÉ':'ACTIF'}</span>
+      <button class="admin-btn admin-btn-ghost" style="padding:.2rem .5rem;font-size:.65rem" onclick="copyCode('${c.code}')">Copy</button>
+      <button class="admin-btn admin-btn-red" style="padding:.2rem .5rem;font-size:.65rem" onclick="deleteCode(${i})">✕</button>
+    </div>`).join('');
+}
+function generateCode() {
+  const plan = document.getElementById('genPlan').value;
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let code = '';
+  for (let g=0;g<3;g++) { if(g>0)code+='-'; for(let i=0;i<4;i++)code+=chars[Math.floor(Math.random()*chars.length)]; }
+  const codes = loadCodes();
+  codes.push({ code, plan, used:false });
+  saveCodes(codes);
+  document.getElementById('codesList').innerHTML = renderCodes(codes);
+}
+function deleteCode(idx) { const codes=loadCodes(); codes.splice(idx,1); saveCodes(codes); document.getElementById('codesList').innerHTML=renderCodes(codes); }
+function copyCode(code) { navigator.clipboard.writeText(code).catch(()=>{}); }
+function exportCodes() {
+  const codes = loadCodes();
+  const csv = 'Code,Plan,Statut\n'+codes.map(c=>`${c.code},${c.plan},${c.used?'Utilisé':'Actif'}`).join('\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  a.download = 'memescanner_codes.csv';
+  a.click();
+}
+function changePw() { const v=document.getElementById('newPw').value.trim(); if(v.length>=6){ADMIN_PW=v;alert('Mot de passe changé pour cette session !');} }
+function toggleDebugMode() {
+  debugModeOn = !debugModeOn;
+  const btn = document.getElementById('debugToggleBtn');
+  if (btn) btn.textContent = debugModeOn ? '🟠 Debug ON' : '🟠 Debug OFF';
+  if (lastScored.length) renderTokenTable(lastScored);
 }
 
-function setReviewStar(n) {
-  reviewStarSelected = n;
-  document.querySelectorAll('.star-btn').forEach((b,i) => {
-    b.classList.toggle('active', i < n);
-  });
+// ============================================================
+// DEBUG MODAL
+// ============================================================
+function showDebug(idx) {
+  const t = lastScored[idx];
+  if (!t) return;
+  document.getElementById('debugOverlay').classList.add('open');
+  const cats = [
+    { label:'BUY PRESS', val:t.debug.buyScore, max:25 },
+    { label:'VOL ACCEL', val:t.debug.volScore, max:22 },
+    { label:'MOMENTUM', val:t.debug.momentumScore, max:35 },
+    { label:'AGE', val:t.debug.ageScore, max:18 },
+    { label:'MCAP', val:t.debug.mcapScore, max:20 },
+    { label:'SOCIAL', val:t.debug.socialScore, max:15 },
+    { label:'FEES', val:t.debug.feesScore, max:28 },
+  ];
+  const bars = cats.map(c => {
+    const pct = Math.max(0, Math.min(100, (Math.max(0,c.val)/c.max)*100));
+    const color = c.val < 0 ? 'var(--red)' : c.val > c.max*.7 ? 'var(--green)' : '#ffaa00';
+    return `<div class="debug-bar-row"><div class="debug-bar-label">${c.label}</div><div class="debug-bar-track"><div class="debug-bar-fill" style="width:${pct}%;background:${color}"></div></div><div class="debug-bar-val">${c.val>0?'+':''}${c.val}/${c.max}</div></div>`;
+  }).join('');
+  const scoreColor = t.score >= 92 ? 'var(--gold)' : t.score >= 85 ? 'var(--green)' : 'var(--blue)';
+  const d = t.debug;
+  const details = `BUY RATIO h1   : ${(d.buyRatio*100).toFixed(1)}%  (>75%=+25, >65%=+15, <58%=-30)
+VOL ACCEL      : ${d.volAccel.toFixed(2)}x  (>3x=+22, <0.3x=-35)
+PRICE h1       : ${d.c1h.toFixed(1)}%
+PRICE h6       : ${d.c6h.toFixed(1)}%
+PRICE h24      : ${d.c24h.toFixed(1)}%
+PRICE m5       : ${d.m5.toFixed(1)}%
+AGE            : ${d.ageH.toFixed(1)}h
+MCAP           : $${fmtNum(t.mcap)}
+FEES ESTIMÉS   : ~${d.feesSOL.toFixed(2)} SOL
+FEES SEUIL     : ${d.feesMin.toFixed(1)} SOL
+FEES RATIO     : ${(d.feesRatio*100).toFixed(1)}% (seuil >5%)
+STAIRCASE      : ${d.staircase ? '⚠️ DÉTECTÉ -50pts' : '✓ non détecté'}
+SOCIALS        : ${t.socials ? '✓ présents' : '✗ absents'}
+RUG RISK       : ${t.rugRisk}`;
+  document.getElementById('debugContent').innerHTML = `
+    <div class="debug-title">🔬 DEBUG — ${t.symbol}</div>
+    <div class="debug-score-big" style="color:${scoreColor}">${t.score}<span style="font-size:1rem;color:var(--muted)"> /100</span></div>
+    <div class="debug-bars">${bars}</div>
+    <div class="debug-details">${details}</div>
+    <details class="debug-raw"><summary>▶ Données brutes DexScreener</summary><pre>${JSON.stringify(t.raw||{},null,2)}</pre></details>`;
 }
 
-function submitReview() {
-  const text = document.getElementById('review-text')?.value?.trim();
-  if (!text || text.length < 10) return;
-  let reviews = [];
-  try { reviews = JSON.parse(localStorage.getItem('mp_reviews_v1') || '[]'); } catch(e){}
-  if (!reviews.length) reviews = [...DEFAULT_REVIEWS];
-  const today = new Date().toISOString().split('T')[0];
-  reviews.unshift({ stars: reviewStarSelected, text, author: 'Membre', date: today });
-  localStorage.setItem('mp_reviews_v1', JSON.stringify(reviews.slice(0,20)));
-  document.getElementById('review-text').value = '';
-  document.getElementById('review-ok').style.display = 'block';
-  setTimeout(() => { document.getElementById('review-ok').style.display = 'none'; }, 3000);
-  renderReviews();
+// ============================================================
+// PERSISTENT CALLS
+// ============================================================
+async function saveCall(addr, callMcap, callTime) {
+  const entry = { callMcap, callTime, athMcap: callMcap };
+  try { const all=JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}'); if(!all[addr]){all[addr]=entry;localStorage.setItem(STORAGE_KEY,JSON.stringify(all));} } catch(e) {}
+  try { const key=addr.replace(/[.#$\/\[\]]/g,'_'); const ex=await fetch(`${FB_URL}/calls/${key}.json`).then(r=>r.json()).catch(()=>null); if(!ex) await fetch(`${FB_URL}/calls/${key}.json`,{method:'PUT',body:JSON.stringify(entry)}); } catch(e) {}
+}
+async function updateAth(addr, currentMcap) {
+  try { const all=JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}'); if(all[addr]&&currentMcap>(all[addr].athMcap||0)){all[addr].athMcap=currentMcap;localStorage.setItem(STORAGE_KEY,JSON.stringify(all));} } catch(e) {}
+  try { const key=addr.replace(/[.#$\/\[\]]/g,'_'); const ex=await fetch(`${FB_URL}/calls/${key}.json`).then(r=>r.json()).catch(()=>null); if(ex&&currentMcap>(ex.athMcap||0)) await fetch(`${FB_URL}/calls/${key}.json`,{method:'PATCH',body:JSON.stringify({athMcap:currentMcap})}); } catch(e) {}
+}
+async function getCallData(addr) {
+  try { const key=addr.replace(/[.#$\/\[\]]/g,'_'); const data=await fetch(`${FB_URL}/calls/${key}.json`).then(r=>r.json()); if(data&&data.callTime)return data; } catch(e) {}
+  try { const all=JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}'); if(all[addr])return all[addr]; } catch(e) {}
+  return null;
 }
 
-function updateReviewUI(isLoggedIn) {
-  const locked = document.getElementById('review-locked');
-  const form   = document.getElementById('review-form');
-  if(locked) locked.style.display = isLoggedIn ? 'none' : 'block';
-  if(form)   form.style.display   = isLoggedIn ? 'block' : 'none';
+// ============================================================
+// HELPERS
+// ============================================================
+function fmtNum(n) { if(!n||isNaN(n))return'?'; if(n>=1e6)return(n/1e6).toFixed(1)+'M'; if(n>=1e3)return(n/1e3).toFixed(1)+'K'; return n.toFixed(0); }
+function timeAgo(ts) { const d=Math.floor((Date.now()-ts)/1000); if(d<60)return d+'s ago'; if(d<3600)return Math.floor(d/60)+'m ago'; return Math.floor(d/3600)+'h ago'; }
+function fmtTime(ts) { const d=new Date(ts); return d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0'); }
+
+// ============================================================
+// HARD FILTER v10 — ultra-strict anti-rug
+// ============================================================
+function hardFilter(p) {
+  const ageH = (Date.now() - (p.pairCreatedAt||0)) / 3600000;
+  const liq = p.liquidity?.usd || 0;
+  const mcap = p.marketCap || p.fdv || 0;
+  const fdv = p.fdv || mcap;
+  const buys1 = p.txns?.h1?.buys || 0;
+  const sells1 = p.txns?.h1?.sells || 0;
+  const total1 = buys1 + sells1 || 1;
+  const sellRatio = sells1 / total1;
+  const vol1 = p.volume?.h1 || 0;
+  const vol6 = p.volume?.h6 || 0;
+  const vol24 = p.volume?.h24 || 0;
+  const c1h = p.priceChange?.h1 || 0;
+  const c24h = p.priceChange?.h24 || 0;
+  const m5 = p.priceChange?.m5 || 0;
+  const txns1 = buys1 + sells1;
+  const avgTrade = txns1 > 0 ? vol1/txns1 : 9999;
+
+  // F1 Liquidité
+  if (liq < 15000) return { pass:false, reason:`liq $${fmtNum(liq)} < $15K` };
+  // F2 Age
+  if (ageH < 0.8) return { pass:false, reason:`age ${ageH.toFixed(1)}h < 0.8h (bundle)` };
+  if (ageH > 36) return { pass:false, reason:`age ${ageH.toFixed(1)}h > 36h (stale)` };
+  // F3 Dump actif
+  if (sellRatio > 0.60) return { pass:false, reason:`sell ratio ${(sellRatio*100).toFixed(0)}% > 60%` };
+  // F4 Crash 1h
+  if (c1h < -18) return { pass:false, reason:`crash 1h: ${c1h.toFixed(1)}%` };
+  // F5 Pump bot m5
+  if (m5 > 380) return { pass:false, reason:`pump bot m5 +${m5.toFixed(0)}%` };
+  // F6 Activité organique
+  if (liq > 0 && vol1 < liq * 10) return { pass:false, reason:`vol1h/liq ${(vol1/liq).toFixed(1)}x < 10x` };
+  // F7 FDV/liq
+  if (liq > 0 && fdv/liq > 7) return { pass:false, reason:`fdv/liq ${(fdv/liq).toFixed(1)}x > 7x` };
+  // F8 Wash trading
+  if (txns1 > 100 && avgTrade < 100) return { pass:false, reason:`wash: ${txns1} txns avg $${avgTrade.toFixed(0)}` };
+  // F9 Shill payant
+  if ((p.boosts?.active||0) >= 2) return { pass:false, reason:`boosts ${p.boosts.active} >= 2` };
+  // F10 Staircase dump
+  if (c24h > 400 && c1h < 6) return { pass:false, reason:`staircase: c24h +${c24h.toFixed(0)}% c1h ${c1h.toFixed(1)}%` };
+  // F11 P&D classique
+  if (c24h > 500 && c1h < -10) return { pass:false, reason:`P&D: c24h +${c24h.toFixed(0)}% c1h ${c1h.toFixed(1)}%` };
+  // F12 Flash crash m5
+  if (m5 < -25) return { pass:false, reason:`flash crash m5 ${m5.toFixed(1)}%` };
+  // F13 FDV dilution
+  if (mcap > 0 && fdv/mcap > 10) return { pass:false, reason:`fdv/mcap ${(fdv/mcap).toFixed(1)}x` };
+  // F14 LP/mcap
+  if (mcap > 0 && liq/mcap < 0.02) return { pass:false, reason:`liq/mcap ${(liq/mcap*100).toFixed(1)}% < 2%` };
+  // F15 FEES — clé principale anti-rug (ex: Dogchain 2.6 SOL → ratio ~1% → reject)
+  const volForFees = ageH > 6 ? vol24 : vol6;
+  const feesSOL = (volForFees * 0.003) / 180;
+  let feesMin = 4;
+  if (mcap >= 700000) feesMin = 40;
+  else if (mcap >= 300000) feesMin = 28;
+  else if (mcap >= 150000) feesMin = 18;
+  else if (mcap >= 50000) feesMin = 10;
+  else if (mcap >= 10000) feesMin = 4;
+  if (feesMin > 0 && feesSOL < feesMin) return { pass:false, reason:`fees ~${feesSOL.toFixed(1)} SOL < ${feesMin} SOL` };
+  const feesRatio = mcap > 0 ? feesSOL/(mcap/100000) : 0;
+  if (feesRatio < 0.05 && mcap > 30000) return { pass:false, reason:`fees ratio ${(feesRatio*100).toFixed(1)}% < 5%` };
+
+  return { pass:true, feesSOL, feesMin, feesRatio, ageH, sellRatio };
 }
 
-// Hook dans la logique unlock existante
-const _origUnlockSuccess = window.onUnlockSuccess;
-document.addEventListener('DOMContentLoaded', () => {
-  renderReviews();
-  // patch tryUnlock pour aussi update reviews
-  const origTryUnlock = window.tryUnlock;
-  if (typeof origTryUnlock === 'function') {
-    window.tryUnlock = function(src) {
-      origTryUnlock(src);
-      setTimeout(() => {
-        const isLogged = !!sessionStorage.getItem('ms_session') || !!localStorage.getItem('ms_session');
-        updateReviewUI(isLogged);
-      }, 500);
-    };
+// ============================================================
+// SCORING ENGINE v10
+// ============================================================
+function scoreToken(p) {
+  const ageH = (Date.now() - (p.pairCreatedAt||0)) / 3600000;
+  const liq = p.liquidity?.usd || 0;
+  const mcap = p.marketCap || p.fdv || 0;
+  const fdv = p.fdv || mcap;
+  const buys1 = p.txns?.h1?.buys || 0;
+  const sells1 = p.txns?.h1?.sells || 0;
+  const total1 = buys1 + sells1 || 1;
+  const buyRatio = buys1 / total1;
+  const vol1 = p.volume?.h1 || 0;
+  const vol6 = p.volume?.h6 || 0;
+  const vol24 = p.volume?.h24 || 0;
+  const c1h = p.priceChange?.h1 || 0;
+  const c6h = p.priceChange?.h6 || 0;
+  const c24h = p.priceChange?.h24 || 0;
+  const m5 = p.priceChange?.m5 || 0;
+  const hasSocials = !!(p.info?.socials?.length || p.info?.websites?.length);
+  const volAvgH = vol6/6 || 1;
+  const volAccel = vol1/volAvgH;
+  const volForFees = ageH > 6 ? vol24 : vol6;
+  const feesSOL = (volForFees * 0.003) / 180;
+  let feesMin = 4;
+  if (mcap >= 700000) feesMin = 40;
+  else if (mcap >= 300000) feesMin = 28;
+  else if (mcap >= 150000) feesMin = 18;
+  else if (mcap >= 50000) feesMin = 10;
+  else if (mcap >= 10000) feesMin = 4;
+  const feesRatio = mcap > 0 ? feesSOL/(mcap/100000) : 0;
+  const staircase = c24h > 400 && c1h < 6;
+
+  let score = 0;
+
+  // 1. Buy Pressure (25 pts)
+  let buyScore = 0;
+  if (buyRatio > 0.75) buyScore = 25;
+  else if (buyRatio > 0.65) buyScore = 15;
+  else if (buyRatio < 0.58) buyScore = -30;
+  score += buyScore;
+
+  // 2. Vol Accélération (22 pts)
+  let volScore = 0;
+  if (volAccel > 3) volScore = 22;
+  else if (volAccel > 2) volScore = 16;
+  else if (volAccel > 1.2) volScore = 10;
+  else if (volAccel < 0.3) volScore = -35;
+  score += volScore;
+
+  // 3. Momentum (35 pts)
+  let momentumScore = 0;
+  if (c1h > 15 && c1h < 200) momentumScore += 22;
+  else if (c1h > 5 && c1h < 300) momentumScore += 12;
+  if (c6h > 30) momentumScore += 18;
+  else if (c6h > 10) momentumScore += 8;
+  if (staircase) momentumScore -= 50;
+  score += momentumScore;
+
+  // 4. Age (18 pts)
+  let ageScore = 0;
+  if (ageH >= 1 && ageH <= 24) ageScore = 18;
+  else if (ageH < 1) ageScore = 5;
+  else ageScore = 10;
+  score += ageScore;
+
+  // 5. McAp asymétrie (20 pts)
+  let mcapScore = 0;
+  if (mcap >= 20000 && mcap <= 120000) mcapScore = 20;
+  else if (mcap < 20000 && mcap > 10000) mcapScore = 12;
+  else if (mcap <= 300000) mcapScore = 10;
+  score += mcapScore;
+
+  // 6. Socials (15 pts)
+  let socialScore = hasSocials ? 15 : 0;
+  score += socialScore;
+
+  // 7. Fees bonus/malus (28 pts) — clé du winrate
+  let feesScore = 0;
+  if (feesSOL > feesMin * 1.8) feesScore = 28;
+  else if (feesSOL > feesMin * 1.2) feesScore = 18;
+  else if (feesSOL > feesMin) feesScore = 10;
+  else if (feesSOL < feesMin * 0.6) feesScore = -40;
+  score += feesScore;
+
+  // Rug risk badge
+  let rugPoints = 0;
+  if (buyRatio < 0.6) rugPoints += 2;
+  if (feesRatio < 0.06) rugPoints += 2;
+  if (volAccel < 0.8) rugPoints++;
+  if (c1h < 0) rugPoints++;
+  if (!hasSocials) rugPoints++;
+  if (liq < 25000) rugPoints++;
+  if (ageH < 2) rugPoints++;
+  let rugRisk = rugPoints >= 4 ? 'HIGH' : rugPoints >= 2 ? 'MEDIUM' : 'LOW';
+
+  const emoji = EMOJIS[Math.floor(Math.random()*EMOJIS.length)];
+  const sym = (p.baseToken?.symbol||'UNKNOWN').toUpperCase().slice(0,12);
+  const addr = p.baseToken?.address || '';
+
+  return {
+    score: Math.max(0, Math.min(110, Math.round(score))),
+    symbol: sym, emoji, addr, mcap, liq,
+    socials: hasSocials, rugRisk,
+    pairUrl: p.url || `https://dexscreener.com/solana/${addr}`,
+    raw: p,
+    debug: { buyScore, volScore, momentumScore, ageScore, mcapScore, socialScore, feesScore,
+             buyRatio, volAccel, c1h, c6h, c24h, m5, ageH, feesSOL, feesMin, feesRatio, staircase }
+  };
+}
+
+function getLabel(score) {
+  if (score >= 92) return { text:'⚡ GOD GEM', cls:'score-god-gem' };
+  if (score >= 85) return { text:'🔥 HIGH POTENTIAL', cls:'score-high-pot' };
+  if (score >= 82) return { text:'💎 SOLID CALL', cls:'score-solid' };
+  return null;
+}
+
+// ============================================================
+// FETCH TOKENS
+// ============================================================
+async function fetchTokens() {
+  const loadEl = document.getElementById('loadingEl');
+  const content = document.getElementById('scannerContent');
+  if (loadEl) loadEl.style.display = 'block';
+  document.getElementById('scanDot').style.background = 'var(--gold)';
+
+  const endpoints = [
+    'https://api.dexscreener.com/latest/dex/search?q=solana',
+    'https://api.allorigins.win/get?url='+encodeURIComponent('https://api.dexscreener.com/latest/dex/search?q=solana'),
+    'https://api.dexscreener.com/token-boosts/latest/v1'
+  ];
+
+  let pairs = [];
+  for (const ep of endpoints) {
+    try {
+      const resp = await fetch(ep, { signal: AbortSignal.timeout(9000) });
+      const data = await resp.json();
+      let raw = data;
+      if (data.contents) { try { raw = JSON.parse(data.contents); } catch(e) {} }
+      if (Array.isArray(raw)) { pairs = raw; break; }
+      if (raw.pairs && Array.isArray(raw.pairs)) { pairs = raw.pairs; break; }
+      if (raw.data && Array.isArray(raw.data)) { pairs = raw.data; break; }
+      if (raw.tokenAddresses) {
+        const addrs = (raw.tokenAddresses||[]).slice(0,20).join(',');
+        if (addrs) {
+          const r2 = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${addrs}`).then(x=>x.json()).catch(()=>({}));
+          if (r2.pairs) { pairs = r2.pairs; break; }
+        }
+      }
+    } catch(e) {}
+    if (pairs.length) break;
   }
-  // Check si déjà connecté
-  const sess = localStorage.getItem('ms_session');
-  if (sess) { try { if(JSON.parse(sess).valid) updateReviewUI(true); } catch(e){} }
-});
 
+  pairs = pairs.filter(p => !p.chainId || p.chainId === 'solana');
+
+  const rejected = {};
+  const passed = [];
+  for (const p of pairs) {
+    const f = hardFilter(p);
+    if (f.pass) passed.push(p);
+    else { const r = f.reason.split(':')[0].trim(); rejected[r] = (rejected[r]||0)+1; }
+  }
+
+  const scored = passed.map(p => scoreToken(p)).filter(t => t.score >= 82);
+  scored.sort((a,b) => b.score - a.score);
+
+  for (const t of scored) {
+    const existing = await getCallData(t.addr);
+    if (!existing) await saveCall(t.addr, t.mcap, Date.now());
+    else if (t.mcap > (existing.athMcap||0)) await updateAth(t.addr, t.mcap);
+  }
+
+  lastScored = scored;
+  if (loadEl) loadEl.style.display = 'none';
+  document.getElementById('scanDot').style.background = 'var(--green)';
+  document.getElementById('lastUpdate').textContent = 'Updated '+new Date().toLocaleTimeString();
+  document.getElementById('debugToggleBtn').style.display = isAdminMode ? 'inline-block' : 'none';
+
+  if (scored.length === 0) {
+    const topRej = Object.entries(rejected).sort((a,b)=>b[1]-a[1]).slice(0,4).map(([r,n])=>`${r} (×${n})`).join(' · ');
+    content.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">🔍</div>
+        <div class="empty-title">Aucun bon signal qualifié (anti-rug fees + momentum strict)</div>
+        <div class="empty-sub">Marché calme ou rugs filtrés. Refresh auto 30s.</div>
+        ${topRej ? `<div class="empty-sub" style="margin-top:.6rem;font-size:.7rem;opacity:.6">Top rejets: ${topRej}</div>` : ''}
+        <div class="empty-sub" style="margin-top:.4rem;opacity:.5">${pairs.length} analysés · ${passed.length} passent filtres · ${scored.length} scorés ≥82</div>
+      </div>`;
+  } else {
+    await renderTokenTable(scored);
+  }
+
+  if (refreshTimer) clearTimeout(refreshTimer);
+  refreshTimer = setTimeout(fetchTokens, 30000);
+}
+
+// ============================================================
+// RENDER
+// ============================================================
+async function renderTokenTable(tokens) {
+  const content = document.getElementById('scannerContent');
+  let rows = '';
+
+  for (let i = 0; i < tokens.length; i++) {
+    const t = tokens[i];
+    const label = getLabel(t.score);
+    if (!label) continue;
+
+    const callData = await getCallData(t.addr);
+    const callMcap = callData?.callMcap || t.mcap;
+    const callTime = callData?.callTime || Date.now();
+    const athMcap = callData?.athMcap || t.mcap;
+    const mult = callMcap > 0 ? t.mcap/callMcap : 1;
+    const athMult = callMcap > 0 ? athMcap/callMcap : 1;
+    const multColor = mult >= 2 ? 'var(--green)' : mult >= 1.2 ? '#ffaa00' : mult < 0.9 ? 'var(--red)' : 'var(--muted)';
+
+    const d = t.debug;
+    const feesColor = d.feesRatio > 0.08 ? 'var(--green)' : d.feesRatio > 0.05 ? '#ffaa00' : 'var(--red)';
+    const rugBadge = t.rugRisk === 'LOW' ? 'rug-low' : t.rugRisk === 'MEDIUM' ? 'rug-med' : 'rug-high';
+
+    const bkChips = [
+      ['BP', d.buyScore], ['VA', d.volScore], ['MM', d.momentumScore],
+      ['AG', d.ageScore], ['MC', d.mcapScore], ['SC', d.socialScore], ['FE', d.feesScore]
+    ].map(([l,v]) => `<span class="bk-chip" style="color:${v<0?'var(--red)':v>0?'var(--green)':'var(--muted)'}">${l}:${v>0?'+':''}${v}</span>`).join('');
+
+    const debugBtn = debugModeOn ? `<button onclick="showDebug(${i})" style="margin-left:.4rem;padding:.15rem .4rem;background:rgba(255,170,0,.15);border:1px solid rgba(255,170,0,.3);color:#ffaa00;border-radius:4px;font-size:.6rem;cursor:pointer;font-family:var(--font-mono)">DEBUG</button>` : '';
+
+    rows += `<tr>
+      <td>
+        <div class="tok-name-cell">
+          <span class="tok-emoji">${t.emoji}</span>
+          <div>
+            <div class="tok-sym"><a href="${t.pairUrl}" target="_blank" style="color:inherit;text-decoration:none">${t.symbol}</a>${debugBtn}</div>
+            <div class="tok-addr">${t.addr.slice(0,8)}...${t.addr.slice(-4)}</div>
+          </div>
+        </div>
+      </td>
+      <td>
+        <span class="score-badge ${label.cls}">${label.text} ${t.score}</span>
+        <div class="breakdown-mini">${bkChips}</div>
+      </td>
+      <td class="mcap-cell">
+        <div class="mcap-call">📍 Call $${fmtNum(callMcap)} · ${fmtTime(callTime)} · ${timeAgo(callTime)}</div>
+        <div class="mcap-now">⬆ Now $${fmtNum(t.mcap)} <span class="mcap-mult ${mult>=1?'up':'down'}">(${mult.toFixed(2)}x)</span></div>
+        <div style="font-size:.7rem">🏆 ATH $${fmtNum(athMcap)} <span class="ath-val">(${athMult.toFixed(2)}x)</span></div>
+      </td>
+      <td>
+        <div class="fees-cell" style="color:${feesColor}">⛽ ~${d.feesSOL.toFixed(1)} SOL</div>
+        <div style="font-size:.65rem;color:${feesColor}">${(d.feesRatio*100).toFixed(1)}% mcap — élevé=organique</div>
+      </td>
+      <td><span class="rug-badge ${rugBadge}">${t.rugRisk}</span></td>
+    </tr>`;
+  }
+
+  if (!rows) {
+    content.innerHTML = `<div class="empty-state"><div class="empty-icon">📡</div><div class="empty-title">Aucun signal ≥82 actuellement</div><div class="empty-sub">Refresh auto dans 30s</div></div>`;
+    return;
+  }
+
+  content.innerHTML = `<table class="token-table">
+    <thead><tr>
+      <th>Token</th><th>Score</th><th>McAp Call / Now / ATH</th><th>⛽ Fees Estimés</th><th>Rug Risk</th>
+    </tr></thead>
+    <tbody>${rows}</tbody>
+  </table>`;
+}
+
+// ============================================================
+// LANG TOGGLE
+// ============================================================
+function toggleLang() {
+  currentLang = currentLang === 'fr' ? 'en' : 'fr';
+  document.querySelector('.lang-switch').textContent = currentLang === 'fr' ? '🇫🇷 FR' : '🇬🇧 EN';
+  if (currentLang === 'en') {
+    document.getElementById('h-title').innerHTML = 'Find the <span style="color:var(--green)">next 100x</span> before everyone 🚀';
+    document.getElementById('h-sub').textContent = 'Ultra-strict Solana scanner. Anti-rug, anti-bundle, anti-staircase. Only tokens with high fees, strong buy pressure and real momentum.';
+  } else {
+    document.getElementById('h-title').innerHTML = 'Trouve les <span style="color:var(--green)">next 100x</span> avant tout le monde 🚀';
+    document.getElementById('h-sub').textContent = 'Scanner Solana ultra-strict. Anti-rug, anti-bundle, anti-staircase. Seulement les tokens avec fees élevées, buy pressure fort et momentum réel.';
+  }
+}
+
+// ============================================================
+// INIT
+// ============================================================
+window.addEventListener('DOMContentLoaded', () => {
+  checkSession();
+  loadReviews();
+  if (!isUnlocked) {
+    document.getElementById('loadingEl').style.display = 'none';
+    document.getElementById('scannerContent').innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">🔐</div>
+        <div class="empty-title">Accès réservé aux membres</div>
+        <div class="empty-sub" style="margin-top:1rem"><button onclick="openCode()" style="background:var(--green);color:#000;border:none;padding:.6rem 1.5rem;border-radius:8px;font-weight:700;cursor:pointer;font-family:var(--font);font-size:.88rem">Entrer mon code d'accès</button></div>
+      </div>`;
+  }
+  document.getElementById('codeModal').addEventListener('click', e => { if(e.target.id==='codeModal') closeCode(); });
+  document.getElementById('adminOverlay').addEventListener('click', e => { if(e.target.id==='adminOverlay') closeAdmin(); });
+  document.getElementById('debugOverlay').addEventListener('click', e => { if(e.target.id==='debugOverlay') closeDebug(); });
+});
 </script>
 </body>
 </html>
