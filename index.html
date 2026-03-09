@@ -1334,29 +1334,94 @@ function getScoreLabel(s) {
 }
 
 
+
 // ═══════════════════════════════════════════════════════════════
-// TOKEN HISTORY (Call McAp tracking)
+// TOKEN CALL HISTORY — persistant via localStorage
+// Les calls sont sauvegardés sur l'appareil et survivent aux refreshs.
+// Clé: 'ms_calls_v1' → { [addr]: { callMcap, callPrice, callTime, athMcap, athPrice } }
 // ═══════════════════════════════════════════════════════════════
-const tokHist = {};
-function trackToken(addr, mcap, price) {
-  const now = Date.now();
-  if(!tokHist[addr]) {
-    tokHist[addr]={callMcap:mcap,callPrice:price,callTime:now,athMcap:mcap,athPrice:price,athTime:now};
-  } else {
-    if(mcap>tokHist[addr].athMcap){ tokHist[addr].athMcap=mcap; tokHist[addr].athPrice=price; tokHist[addr].athTime=now; }
-  }
-  return tokHist[addr];
+const CALLS_KEY = 'ms_calls_v1';
+
+function loadCalls() {
+  try { return JSON.parse(localStorage.getItem(CALLS_KEY) || '{}'); }
+  catch(e) { return {}; }
 }
+function saveCalls(db) {
+  try { localStorage.setItem(CALLS_KEY, JSON.stringify(db)); }
+  catch(e) {}
+}
+
+function trackToken(addr, mcap, price) {
+  const db  = loadCalls();
+  const now = Date.now();
+
+  if (!db[addr]) {
+    // Premier call : on enregistre les données initiales
+    db[addr] = {
+      callMcap  : mcap,
+      callPrice : price,
+      callTime  : now,
+      athMcap   : mcap,
+      athPrice  : price,
+      athTime   : now
+    };
+    saveCalls(db);
+  } else {
+    // Mise à jour ATH si nouveau plus haut
+    let changed = false;
+    if (mcap > db[addr].athMcap) {
+      db[addr].athMcap  = mcap;
+      db[addr].athPrice = price;
+      db[addr].athTime  = now;
+      changed = true;
+    }
+    if (changed) saveCalls(db);
+  }
+  return db[addr];
+}
+
 function getMcapStats(addr, mcap, price) {
-  const h = trackToken(addr,mcap,price);
-  const mins = Math.round((Date.now()-h.callTime)/60000);
+  const h = trackToken(addr, mcap, price);
+
+  // Heure exacte du call (ex: "14:32")
+  const callDate  = new Date(h.callTime);
+  const callHour  = callDate.getHours().toString().padStart(2,'0');
+  const callMin   = callDate.getMinutes().toString().padStart(2,'0');
+  const callClock = `${callHour}:${callMin}`;
+
+  // Délai depuis le call
+  const mins = Math.round((Date.now() - h.callTime) / 60000);
+  const tLabel = mins < 60
+    ? `${mins}m ago`
+    : mins < 1440
+      ? `${Math.floor(mins/60)}h${mins%60 > 0 ? (mins%60)+'m' : ''} ago`
+      : `${Math.floor(mins/1440)}j ago`;
+
   return {
-    callMcap:h.callMcap, athMcap:h.athMcap,
-    xNow: h.callMcap>0 ? mcap/h.callMcap : 1,
-    xAth: h.callMcap>0 ? h.athMcap/h.callMcap : 1,
-    tLabel: mins<60 ? mins+'m ago' : Math.round(mins/60)+'h ago'
+    callMcap  : h.callMcap,
+    callPrice : h.callPrice,
+    athMcap   : h.athMcap,
+    callTime  : h.callTime,
+    callClock,
+    tLabel,
+    xNow : h.callMcap > 0 ? mcap / h.callMcap : 1,
+    xAth : h.callMcap > 0 ? h.athMcap / h.callMcap : 1
   };
 }
+
+// Nettoyer les calls trop vieux (> 7 jours) pour ne pas surcharger le localStorage
+function purgeStaleCalls() {
+  const db  = loadCalls();
+  const cutoff = Date.now() - 7 * 24 * 3600 * 1000;
+  let changed = false;
+  Object.keys(db).forEach(addr => {
+    if (db[addr].callTime < cutoff) { delete db[addr]; changed = true; }
+  });
+  if (changed) saveCalls(db);
+}
+purgeStaleCalls();
+
+
 
 // ═══════════════════════════════════════════════════════════════
 // FETCH & RENDER TOKENS
@@ -1679,7 +1744,7 @@ function renderTokenRows(scored) {
         </div>
         <div>
           <div class="cell-mono" style="font-size:9px;line-height:1.9;">
-            <div><span style="color:var(--muted2);">📍 Call </span><span style="color:var(--text);font-weight:600;">${fmtMcap(stats.callMcap)}</span><span style="color:var(--muted);font-size:8px;"> ${stats.tLabel}</span></div>
+            <div><span style="color:var(--muted2);">📍 Call </span><span style="color:var(--text);font-weight:600;">${fmtMcap(stats.callMcap)}</span><span style="color:var(--muted);font-size:8px;"> ${stats.callClock} · ${stats.tLabel}</span></div>
             <div><span style="color:var(--muted2);">⬆ Now  </span><span style="color:${xNowC};font-weight:600;">${fmtMcap(mcap)}</span><span style="color:${xNowC};font-size:8px;"> (${stats.xNow.toFixed(2)}x)</span></div>
             <div><span style="color:var(--muted2);">🏆 ATH  </span><span style="color:${xAthC};font-weight:600;">${fmtMcap(stats.athMcap)}</span><span style="color:${xAthC};font-size:8px;"> (${stats.xAth.toFixed(2)}x)</span></div>
           </div>
