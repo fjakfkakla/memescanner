@@ -724,7 +724,7 @@ function closeAdmin() {
   document.getElementById('adminOverlay').classList.remove('open');
   document.getElementById('adminPwInp').value = '';
 }
-function checkPw() {
+async function checkPw() {
   const v = document.getElementById('adminPwInp').value;
   if (v === getAdminPw()) {
     // Afficher le contenu admin (codes, gestion)
@@ -733,7 +733,7 @@ function checkPw() {
     renderCodes();
     // Activer mode debug en arrière-plan
     isAdminMode = true;
-    renderTokenRows(lastScored);
+    await renderTokenRows(lastScored);
     // NE PAS fermer le panel — l'utilisateur doit pouvoir gérer les codes
   } else {
     document.getElementById('pwErr').style.display = 'block';
@@ -1335,67 +1335,165 @@ function getScoreLabel(s) {
 
 
 
-// ═══════════════════════════════════════════════════════════════
-// TOKEN CALL HISTORY — persistant via localStorage
-// Les calls sont sauvegardés sur l'appareil et survivent aux refreshs.
-// Clé: 'ms_calls_v1' → { [addr]: { callMcap, callPrice, callTime, athMcap, athPrice } }
-// ═══════════════════════════════════════════════════════════════
-const CALLS_KEY = 'ms_calls_v1';
 
-function loadCalls() {
-  try { return JSON.parse(localStorage.getItem(CALLS_KEY) || '{}'); }
+
+// ═══════════════════════════════════════════════════════════════
+// TOKEN CALL HISTORY — partagé entre tous les utilisateurs
+// Backend : Firebase Realtime Database (plan gratuit Spark, suffisant)
+// Fallback : localStorage si Firebase indisponible
+// Format : calls/{addr} → { callMcap, callPrice, callTime, athMcap, athPrice, symbol, score }
+// ═══════════════════════════════════════════════════════════════
+
+// ── CONFIGURATION FIREBASE ─────────────────────────────────────
+// Base de données publique en lecture/écriture restreinte
+// URL format : https://{project-id}-default-rtdb.firebaseio.com
+const FB_URL = 'https://memescanner-calls-default-rtdb.firebaseio.com';
+// Note : remplace FB_URL par ton URL Firebase si tu crées un projet perso
+// ─────────────────────────────────────────────────────────────
+
+const _callsCache = {};          // cache mémoire session
+let   _callsCacheLoaded = false; // chargé une seule fois au démarrage
+const CALLS_LS_KEY = 'ms_calls_v2'; // clé localStorage fallback
+
+// ── STORAGE ABSTRACTION ─────────────────────────────────────────
+// Essaie Firebase → fallback localStorage
+
+async function fbGet(addr) {
+  try {
+    const r = await fetch(`${FB_URL}/calls/${addr}.json`, { cache: 'no-cache' });
+    if (!r.ok) return null;
+    const d = await r.json();
+    return d; // null si non trouvé, objet sinon
+  } catch(e) { return null; }
+}
+
+async function fbSet(addr, data) {
+  try {
+    await fetch(`${FB_URL}/calls/${addr}.json`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    return true;
+  } catch(e) { return false; }
+}
+
+async function fbListAll() {
+  try {
+    const r = await fetch(`${FB_URL}/calls.json?shallow=true`, { cache: 'no-cache' });
+    if (!r.ok) return {};
+    const d = await r.json();
+    return d || {}; // { addr: true, ... }
+  } catch(e) { return {}; }
+}
+
+async function fbDelete(addr) {
+  try {
+    await fetch(`${FB_URL}/calls/${addr}.json`, { method: 'DELETE' });
+  } catch(e) {}
+}
+
+// ── LOCAL STORAGE HELPERS ────────────────────────────────────────
+function lsLoadCalls() {
+  try { return JSON.parse(localStorage.getItem(CALLS_LS_KEY) || '{}'); }
   catch(e) { return {}; }
 }
-function saveCalls(db) {
-  try { localStorage.setItem(CALLS_KEY, JSON.stringify(db)); }
+function lsSaveCalls(db) {
+  try { localStorage.setItem(CALLS_LS_KEY, JSON.stringify(db)); }
   catch(e) {}
 }
+function lsSaveOne(addr, data) {
+  const db = lsLoadCalls();
+  db[addr] = data;
+  lsSaveCalls(db);
+}
 
-function trackToken(addr, mcap, price) {
-  const db  = loadCalls();
+// ── CHARGEMENT INITIAL ─────────────────────────────────────────
+async function loadAllCalls() {
+  if (_callsCacheLoaded) return _callsCache;
+
+  // 1. Charger depuis localStorage immédiatement (sync, pas d'attente)
+  const lsData = lsLoadCalls();
+  Object.assign(_callsCache, lsData);
+
+  // 2. Essayer Firebase pour avoir les données partagées
+  try {
+    const keys = await fbListAll(); // { addr: true, ... }
+    const addrs = Object.keys(keys || {});
+    if (addrs.length > 0) {
+      // Charger en parallèle (max 20 à la fois pour ne pas flood)
+      const chunks = [];
+      for (let i = 0; i < addrs.length; i += 20) chunks.push(addrs.slice(i, i+20));
+      for (const chunk of chunks) {
+        await Promise.all(chunk.map(async addr => {
+          try {
+            const d = await fbGet(addr);
+            if (d && d.callTime) {
+              _callsCache[addr] = d;
+              lsSaveOne(addr, d); // sync vers localStorage
+            }
+          } catch(e) {}
+        }));
+      }
+    }
+  } catch(e) {
+    // Firebase indispo — on reste sur localStorage seul
+    console.warn('Firebase indispo, mode localStorage');
+  }
+
+  _callsCacheLoaded = true;
+  return _callsCache;
+}
+
+// ── SAUVEGARDE ────────────────────────────────────────────────
+async function saveCall(addr, data) {
+  // Toujours sauver en localStorage (sync, fiable)
+  lsSaveOne(addr, data);
+  // Essayer Firebase (async, best-effort)
+  fbSet(addr, data).catch(() => {});
+}
+
+// ── TRACK TOKEN ───────────────────────────────────────────────
+async function trackToken(addr, mcap, price, symbol, score) {
+  await loadAllCalls();
   const now = Date.now();
 
-  if (!db[addr]) {
-    // Premier call : on enregistre les données initiales
-    db[addr] = {
+  if (!_callsCache[addr]) {
+    const entry = {
       callMcap  : mcap,
       callPrice : price,
       callTime  : now,
       athMcap   : mcap,
       athPrice  : price,
-      athTime   : now
+      athTime   : now,
+      symbol    : symbol || '',
+      score     : score  || 0
     };
-    saveCalls(db);
+    _callsCache[addr] = entry;
+    await saveCall(addr, entry);
   } else {
-    // Mise à jour ATH si nouveau plus haut
-    let changed = false;
-    if (mcap > db[addr].athMcap) {
-      db[addr].athMcap  = mcap;
-      db[addr].athPrice = price;
-      db[addr].athTime  = now;
-      changed = true;
+    if (mcap > (_callsCache[addr].athMcap || 0)) {
+      _callsCache[addr].athMcap  = mcap;
+      _callsCache[addr].athPrice = price;
+      _callsCache[addr].athTime  = now;
+      await saveCall(addr, _callsCache[addr]);
     }
-    if (changed) saveCalls(db);
   }
-  return db[addr];
+  return _callsCache[addr];
 }
 
-function getMcapStats(addr, mcap, price) {
-  const h = trackToken(addr, mcap, price);
+// ── GET STATS ─────────────────────────────────────────────────
+async function getMcapStats(addr, mcap, price, symbol, score) {
+  const h = await trackToken(addr, mcap, price, symbol, score);
 
-  // Heure exacte du call (ex: "14:32")
   const callDate  = new Date(h.callTime);
-  const callHour  = callDate.getHours().toString().padStart(2,'0');
-  const callMin   = callDate.getMinutes().toString().padStart(2,'0');
-  const callClock = `${callHour}:${callMin}`;
+  const callClock = callDate.getHours().toString().padStart(2,'0') + ':' + callDate.getMinutes().toString().padStart(2,'0');
 
-  // Délai depuis le call
   const mins = Math.round((Date.now() - h.callTime) / 60000);
-  const tLabel = mins < 60
-    ? `${mins}m ago`
-    : mins < 1440
-      ? `${Math.floor(mins/60)}h${mins%60 > 0 ? (mins%60)+'m' : ''} ago`
-      : `${Math.floor(mins/1440)}j ago`;
+  const tLabel = mins < 1    ? 'now'
+    : mins < 60  ? `${mins}m ago`
+    : mins < 1440 ? `${Math.floor(mins/60)}h${mins%60>0?(mins%60)+'m':''} ago`
+    : `${Math.floor(mins/1440)}j ago`;
 
   return {
     callMcap  : h.callMcap,
@@ -1409,17 +1507,29 @@ function getMcapStats(addr, mcap, price) {
   };
 }
 
-// Nettoyer les calls trop vieux (> 7 jours) pour ne pas surcharger le localStorage
-function purgeStaleCalls() {
-  const db  = loadCalls();
+// ── PURGE CALLS VIEUX (>7j) ───────────────────────────────────
+async function purgeStaleCalls() {
   const cutoff = Date.now() - 7 * 24 * 3600 * 1000;
+  const toDelete = Object.keys(_callsCache).filter(a => (_callsCache[a]?.callTime||0) < cutoff);
+  for (const addr of toDelete) {
+    delete _callsCache[addr];
+    fbDelete(addr).catch(()=>{});
+  }
+  // Purger aussi localStorage
+  const lsDb = lsLoadCalls();
   let changed = false;
-  Object.keys(db).forEach(addr => {
-    if (db[addr].callTime < cutoff) { delete db[addr]; changed = true; }
+  Object.keys(lsDb).forEach(addr => {
+    if ((lsDb[addr]?.callTime||0) < cutoff) { delete lsDb[addr]; changed = true; }
   });
-  if (changed) saveCalls(db);
+  if (changed) lsSaveCalls(lsDb);
 }
-purgeStaleCalls();
+
+// Initialisation
+loadAllCalls().then(() => purgeStaleCalls());
+
+
+
+
 
 
 
@@ -1657,7 +1767,7 @@ async function fetchTokens() {
 
     // Update ticker
     updateTicker(scored);
-    renderTokenRows(scored);
+    await renderTokenRows(scored);
 
   } catch(err) {
     clearTimeout(timeout);
@@ -1667,10 +1777,28 @@ async function fetchTokens() {
   }
 }
 
-function renderTokenRows(scored) {
+async function renderTokenRows(scored) {
   const rowsEl = document.getElementById('token-rows');
   if(!rowsEl) return;
-  lastScored = scored; // sauvegarde pour debug panel
+  lastScored = scored;
+
+  // Pré-charger tous les calls depuis window.storage (shared) AVANT le render
+  // On fait ça en parallèle pour tous les tokens d'un coup
+  const statsMap = {};
+  await Promise.all(scored.map(async (p) => {
+    const ca   = p.baseToken?.address;
+    const mcap = p.marketCap || 0;
+    const price = parseFloat(p.priceUsd) || 0;
+    const sym   = p.baseToken?.symbol || '';
+    if (ca) {
+      try {
+        statsMap[ca] = await getMcapStats(ca, mcap, price, sym, p.score||0);
+      } catch(e) {
+        // Fallback si storage indispo
+        statsMap[ca] = { callMcap:mcap, athMcap:mcap, callTime:Date.now(), callClock:'--:--', tLabel:'now', xNow:1, xAth:1 };
+      }
+    }
+  }));
 
   rowsEl.innerHTML = scored.map((p,i) => {
       const sc   = p.score;
@@ -1684,9 +1812,7 @@ function renderTokenRows(scored) {
       const sym   = p.baseToken.symbol||'—';
       const mcap  = p.marketCap||0;
       const price = fmtPrice(parseFloat(p.priceUsd)||0);
-      const buys  = p.txns?.h24?.buys ||0;
-      const sells = p.txns?.h24?.sells||0;
-      const stats = getMcapStats(ca, mcap, parseFloat(p.priceUsd)||0);
+      const stats = statsMap[ca] || { callMcap:mcap, athMcap:mcap, callClock:'--:--', tLabel:'now', xNow:1, xAth:1 };
       const bd    = p.breakdown||{};
 
       const c24c  = c24>=0?'var(--green)':'var(--red)';
@@ -1700,7 +1826,6 @@ function renderTokenRows(scored) {
         indHtml += `<span class="ind ${t}">${ind.label}</span>`;
       });
 
-      // Breakdown mini W·T·L·M·S
       const bdHtml = `<div style="display:flex;gap:4px;margin-top:5px;align-items:center;">
         ${[['W',bd.wallet,20],['T',bd.trading,25],['L',bd.liquidity,15],['M',bd.momentum,20],['F',bd.fees,10],['S',bd.social,10]].map(([k,v,max])=>{
           const pct = max>0?Math.round((v||0)/max*100):0;
