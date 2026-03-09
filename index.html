@@ -1519,474 +1519,331 @@ async function fetchKOLMentions(addrs) {
   }
 }
 
-// ── FEES ESTIMÉS — Pump.fun 0.3% fee rate, SOL~$180 ─────────
-// Si age > 6h → utilise vol24, sinon vol6h (plus représentatif)
-function estimateFeesSol(volUsd, volH6, ageHours) {
-  const useVol = (ageHours !== undefined && ageHours > 6) ? volUsd : (volH6 || volUsd);
-  return (useVol * 0.003) / 180;
-}
 
-// Seuil fees minimum selon mcap bracket
+// ═══════════════════════════════════════════════════════════════
+// ALGO v9 — ULTRA-STRICT  ·  100% DexScreener gratuit
+// ─────────────────────────────────────────────────────────────
+// Pipeline strict :
+//   hardFilter()  → rejette ~90% des rugs (string raison ou null)
+//   calcRugRisk() → badge LOW/MEDIUM/HIGH indépendant
+//   scoreToken()  → scoring 0-100 seulement si passe hardFilter
+//   Seuil call : score ≥ 78
+//   Labels : GOD GEM(90+) · HIGH POTENTIAL(80-89) · WATCHLIST(78-79)
+// ═══════════════════════════════════════════════════════════════
+
+// ── CONSTANTES ────────────────────────────────────────────────
+const SOL_PRICE_USD = 180;   // Prix SOL estimé — à ajuster si besoin
+const PUMP_FEE_RATE = 0.003; // 0.3% Pump.fun
+
+// ── HELPERS FEES ──────────────────────────────────────────────
+// Estime les fees générés (en SOL) via le volume DexScreener
+// Si âge > 6h → utilise vol24 (plus stable), sinon vol6h
+function estimateFeesSol(vol24, vol6h, ageH) {
+  const vol = (ageH > 6) ? (vol24 || vol6h) : (vol6h || vol24);
+  return (vol * PUMP_FEE_RATE) / SOL_PRICE_USD;
+}
+// Seuil fees minimum par bracket mcap (SOL) — anti-fake-volume
 function feesMinSol(mcap) {
-  if (mcap >= 500000) return 3.5;
-  if (mcap >= 150000) return 1.5;
-  if (mcap >=  50000) return 0.8;
-  if (mcap >=  10000) return 0.3;
-  return 0.1;
+  if (mcap >= 500000) return 22;
+  if (mcap >= 150000) return 15;
+  if (mcap >=  50000) return  8;
+  if (mcap >=  10000) return  3;
+  return 1;
 }
-
-// Ratio fees normalisé (pour 100K mcap)
+// Ratio fees/mcap normalisé (indépendant de la taille du mcap)
 function feesRatioMcap(feesSOL, mcap) {
-  if (!mcap) return 0;
-  return feesSOL / (mcap / 100000);
+  return mcap > 0 ? feesSOL / (mcap / 100000) : 0;
 }
 
-// ═══════════════════════════════════════════════════════════════
-// PIPELINE : hardFilter → rugRisk → scoreToken
-// Aucun token ne passe au scoring sans passer ces filtres.
-// ═══════════════════════════════════════════════════════════════
-
-// ─────────────────────────────────────────────────────────────
-// HARD FILTERS — rejet immédiat, token jamais affiché
-// Basé sur données DexScreener (proxy quand données manquantes)
-// ─────────────────────────────────────────────────────────────
+// ── HARD FILTERS ──────────────────────────────────────────────
+// Retourne string (raison de rejet) ou null (passe ✅)
+// Ordre optimisé : les rejets les plus fréquents en premier
 function hardFilter(p) {
-  const liq    = p.liquidity?.usd   || 0;
-  const vol24  = p.volume?.h24      || 0;
-  const vol1h  = p.volume?.h1       || 0;
-  const vol5m  = p.volume?.m5       || 0;
-  const b24    = p.txns?.h24?.buys  || 0;
-  const s24    = p.txns?.h24?.sells || 0;
-  const b1h    = p.txns?.h1?.buys   || 0;
-  const s1h    = p.txns?.h1?.sells  || 0;
-  const b5m    = p.txns?.m5?.buys   || 0;
-  const s5m    = p.txns?.m5?.sells  || 0;
-  const c24    = p.priceChange?.h24 || 0;
-  const c6h    = p.priceChange?.h6  || 0;
-  const c1h    = p.priceChange?.h1  || 0;
-  const c5m    = p.priceChange?.m5  || 0;
-  const mcap   = p.marketCap        || 0;
-  const fdv    = p.fdv               || 0;
-  const age    = (Date.now() - (p.pairCreatedAt || Date.now())) / 3600000;
-  const ageMin = age * 60;
-  const totalTx5m  = b5m + s5m;
-  const totalTx1h  = b1h + s1h;
-  const totalTx24  = b24 + s24;
-  const avgTrade   = totalTx24 > 0 ? vol24 / totalTx24 : 9999;
-
-  // ── F1. LIQUIDITÉ MINIMALE ────────────────────────────────
-  if (liq < 5000)    return 'liq<$5K';
-  if (liq > 5000000) return 'liq>$5M';
-  if (age > 72)      return '>72h';
-
-  // ── F2. TOKEN AGE < 2 MINUTES ────────────────────────────
-  if (ageMin < 2)    return 'age<2min (trop récent)';
-
-  // ── F3. FEES/MCAP — HARD FILTER PRINCIPAL ANTI-RUG ─────────
-  // Formule : (vol6h * 0.003) / 180 — si >6h, utilise vol24
-  const vol6h_hf = p.volume?.h6 || 0;
-  const feesSOL  = estimateFeesSol(vol24, vol6h_hf, age);
-  const feesMin  = feesMinSol(mcap);
-  const feesRat  = feesRatioMcap(feesSOL, mcap); // normalisé 100K mcap
-
-  // Rejet 1 : fees absolus sous seuil bracket
-  if (mcap >= 10000 && feesSOL < feesMin)
-    return `fees<${feesMin}SOL (${feesSOL.toFixed(1)}SOL pour mcap ${(mcap/1000).toFixed(0)}K)`;
-
-  // Rejet 2 : ratio fees/mcap < 4% → volume fake
-  if (feesRat < 0.04 && ageMin > 10)
-    return `fees/mcap ratio ${(feesRat*100).toFixed(2)}% < 4% (fake vol)`;
-
-  // ── F4. TOP 10 HOLDERS > 40% (proxy) ─────────────────────
-  // DexScreener ne donne pas top10 direct.
-  // Proxy fort : avg trade très élevé + peu de wallets = concentration
-  if (avgTrade > 3000 && totalTx24 < 50) return 'top10>40% estimé (whale ctrl)';
-
-  // ── F5. DEV WALLET > 10% (proxy) ─────────────────────────
-  // Proxy : gros volume concentré sur 5m vs total sur token récent
-  if (ageMin < 60 && vol5m > vol24 * 0.65) return 'dev wallet >10% (dump actif)';
-
-  // ── F6. BUY RATIO > 90% (bot pump) ───────────────────────
-  // Ratio achat pur à >90% = bots ou manipulation — pas des humains
-  const br5m = totalTx5m > 5  ? b5m / totalTx5m : 0;
-  const br1h = totalTx1h > 0  ? b1h / totalTx1h : 0;
-  if (br5m > 0.90 && ageMin < 30)  return 'buy ratio>90% (bot pump)';
-  if (br1h > 0.92 && totalTx1h > 20) return 'buy ratio 1h>92% (manipulation)';
-
-  // ── F7. UNIQUE WALLETS < 10 sur 5 min (proxy) ────────────
-  // Proxy : txns 5m < 10 = moins de 10 wallets actifs = trop concentré
-  if (totalTx5m < 10 && ageMin > 5 && ageMin < 60) return 'wallets<10 sur 5m (trop concentré)';
-
-  // ── F8. SNIPER RATIO > 0.4 ───────────────────────────────
-  // sniper_ratio proxy : si tx 5m / tx 1h > 0.7 sur token < 10min = snipers
-  const sniperRatio = totalTx1h > 0 ? totalTx5m / totalTx1h : 0;
-  if (sniperRatio > 0.7 && ageMin < 10) return 'sniper ratio>0.4 (launch snipé)';
-
-  // ── F9. BUNDLE WALLET > 25% ──────────────────────────────
-  // bundle proxy : vol5m représente > 40% du vol1h sur token < 15min
-  const bundleRatio = vol1h > 0 ? vol5m / vol1h : 0;
-  if (bundleRatio > 0.40 && ageMin < 15 && b5m < 8) return 'bundle>25% (quelques wallets groupés)';
-
-  // ── F10. FAKE VOLUME (vol/wallet > $1500) ─────────────────
-  // volume_per_wallet proxy : vol5m / txns5m = taille avg par trade 5m
-  const volPerWallet5m = totalTx5m > 0 ? vol5m / totalTx5m : 0;
-  if (volPerWallet5m > 1500 && totalTx5m < 20) return `fake vol (${volPerWallet5m.toFixed(0)}$/wallet>1500)`;
-
-  // ── F11. DUMP EN COURS ────────────────────────────────────
-  const sr1h = totalTx1h > 0 ? s1h / totalTx1h : 0;
-  const sr5m = totalTx5m > 5 ? s5m / totalTx5m : 0;
-  if (sr1h > 0.65) return 'dump 1h (sells>65%)';
-  if (sr5m > 0.80) return 'dump 5m actif';
-  if (c1h < -40)   return 'crash -40% en 1h';
-  if (c5m < -25)   return 'flash crash 5m';
-
-  // ── F12. PUMP & DUMP PATTERNS ────────────────────────────
-  if (c24 > 500 && c1h < -10)                      return 'pump&dump';
-  if (c6h > 200 && c1h < -20)                      return 'reversal post-pump';
-  if (age < 6 && c24 > 400 && Math.abs(c1h) < 5)  return 'bundle hold (flat post-pump)';
-  if (c24 > 300 && c6h < 15 && c6h >= 0)           return 'pump mort (no continuation)';
-
-  // ── F13. WASH TRADING ────────────────────────────────────
-  const sr24 = totalTx24 > 0 ? s24 / totalTx24 : 0;
-  if (sr24 > 0.65)                                  return 'sells>65% 24h';
-  if (totalTx24 > 200 && Math.abs(b24 - s24) < 5)  return 'wash trading';
-  if (liq > 0 && vol24 / liq > 80)                 return 'vol/liq>80x (wash)';
-
-  // ── F14. FDV / LP LOCK PROXY ─────────────────────────────
-  if (fdv > 0 && mcap > 0 && fdv / mcap > 10)      return 'FDV/McAp>10x (dilution)';
-  // LP not locked proxy : liq/mcap < 2% = liquidity retirable facilement
-  if (mcap > 0 && liq / mcap < 0.02)               return 'LP non locked (liq/mcap<2%)';
-
-  // ── F15. BOT LAUNCH ──────────────────────────────────────
-  if (age < 0.5 && vol1h > 500000) return 'bundle launch (<30min, vol>$500K)';
-  if (age < 1   && c5m > 200)      return 'pump bots (<1h)';
-
-  // ── F16. MCAP/LIQ DANGEREUX ──────────────────────────────
-  if (mcap > 800000 && liq < 20000) return 'mcap/liq dangereux';
-
-  return null; // ✅ Token passe — éligible au scoring
-}
-
-// ─────────────────────────────────────────────────────────────
-// RUG RISK SCORE — calculé après hardFilter
-// Retourne { level: 'LOW'|'MEDIUM'|'HIGH', score: 0-100, flags: [] }
-// Plus le rugScore est bas, plus le token est sûr
-// ─────────────────────────────────────────────────────────────
-function calcRugRisk(p) {
-  const liq    = p.liquidity?.usd   || 0;
-  const vol24  = p.volume?.h24      || 0;
-  const vol5m  = p.volume?.m5       || 0;
-  const b24    = p.txns?.h24?.buys  || 0;
-  const s24    = p.txns?.h24?.sells || 0;
-  const b1h    = p.txns?.h1?.buys   || 0;
-  const s1h    = p.txns?.h1?.sells  || 0;
-  const b5m    = p.txns?.m5?.buys   || 0;
-  const s5m    = p.txns?.m5?.sells  || 0;
-  const c24    = p.priceChange?.h24 || 0;
-  const c1h    = p.priceChange?.h1  || 0;
-  const mcap   = p.marketCap        || 0;
-  const fdv    = p.fdv               || 0;
-  const age    = (Date.now() - (p.pairCreatedAt || Date.now())) / 3600000;
-  const ageMin = age * 60;
-  const totalTx24 = b24 + s24;
-  const totalTx5m = b5m + s5m;
-  const totalTx1h = b1h + s1h;
-  const avgTrade  = totalTx24 > 0 ? vol24 / totalTx24 : 0;
-  const sr1h      = totalTx1h > 0 ? s1h / totalTx1h : 0;
-  const liqMc     = mcap > 0 ? liq / mcap : 0;
-  const volPerW   = totalTx5m > 0 ? vol5m / totalTx5m : 0;
-
-  let rugScore = 0;
-  const flags  = [];
-
-  // Concentration holders (estimée)
-  if (avgTrade > 1500 && totalTx24 < 100) { rugScore += 25; flags.push('Whale concentration'); }
-  else if (avgTrade > 800)                { rugScore += 12; }
-
-  // LP safety
-  if (liqMc < 0.04)      { rugScore += 20; flags.push('LP faible vs McAp'); }
-  else if (liqMc < 0.10) { rugScore += 8;  }
-
-  // Sell pressure
-  if (sr1h > 0.55)       { rugScore += 15; flags.push('Sell pressure élevée'); }
-  else if (sr1h > 0.45)  { rugScore += 6;  }
-
-  // Age (tokens récents = plus risqués)
-  if (ageMin < 10)       { rugScore += 15; flags.push('Très récent (<10min)'); }
-  else if (ageMin < 30)  { rugScore += 8;  }
-  else if (ageMin < 120) { rugScore += 3;  }
-
-  // FDV
-  if (fdv > 0 && mcap > 0 && fdv / mcap > 5) { rugScore += 10; flags.push('FDV élevé'); }
-
-  // Volume/wallet anormal
-  if (volPerW > 800 && totalTx5m < 15) { rugScore += 10; flags.push('Volume concentré'); }
-
-  // Liq absolue faible
-  if (liq < 10000)       { rugScore += 10; flags.push('Liq basse'); }
-  else if (liq < 20000)  { rugScore += 4;  }
-
-  // Pump excessif sans continuation
-  if (c24 > 200 && c1h < 0) { rugScore += 8; flags.push('Pump sans continuation'); }
-
-  // Déterminer le niveau
-  let level, color, bg;
-  if      (rugScore >= 45) { level = 'HIGH';   color = '#ff4757'; bg = 'rgba(255,71,87,.12)';  }
-  else if (rugScore >= 20) { level = 'MEDIUM'; color = '#ffa502'; bg = 'rgba(255,165,2,.10)';  }
-  else                     { level = 'LOW';    color = '#00e676'; bg = 'rgba(0,230,118,.10)';  }
-
-  return { level, color, bg, score: rugScore, flags };
-}
-
-// ─────────────────────────────────────────────────────────────
-// SCORING MODEL v7 — 7 catégories + bonus
-// ─────────────────────────────────────────────────────────────
-function scoreToken(p) {
-  if (hardFilter(p)) return null;
-
-  const liq   = p.liquidity?.usd   || 0;
-  const vol24 = p.volume?.h24      || 0;
-  const vol6h = p.volume?.h6       || 0;
-  const vol1h = p.volume?.h1       || 0;
-  const vol5m = p.volume?.m5       || 0;
-  const b24   = p.txns?.h24?.buys  || 0;
-  const s24   = p.txns?.h24?.sells || 0;
-  const b1h   = p.txns?.h1?.buys   || 0;
-  const s1h   = p.txns?.h1?.sells  || 0;
-  const b5m   = p.txns?.m5?.buys   || 0;
-  const s5m   = p.txns?.m5?.sells  || 0;
-  const c24   = p.priceChange?.h24 || 0;
-  const c6h   = p.priceChange?.h6  || 0;
-  const c1h   = p.priceChange?.h1  || 0;
-  const mcap  = p.marketCap        || 0;
-  const socs  = p.info?.socials    || [];
-  const webs  = p.info?.websites   || [];
+  const liq   = p.liquidity?.usd    || 0;
+  const vol24 = p.volume?.h24       || 0;
+  const vol6h = p.volume?.h6        || 0;
+  const vol1h = p.volume?.h1        || 0;
+  const b1h   = p.txns?.h1?.buys    || 0;
+  const s1h   = p.txns?.h1?.sells   || 0;
+  const b24   = p.txns?.h24?.buys   || 0;
+  const s24   = p.txns?.h24?.sells  || 0;
+  const c24   = p.priceChange?.h24  || 0;
+  const c6h   = p.priceChange?.h6   || 0;
+  const c1h   = p.priceChange?.h1   || 0;
+  const c5m   = p.priceChange?.m5   || 0;
+  const mcap  = p.marketCap         || 0;
+  const fdv   = p.fdv               || 0;
+  const boosts = p.boosts?.active   || 0;
   const age   = (Date.now() - (p.pairCreatedAt || Date.now())) / 3600000;
   const ageMin = age * 60;
-  const txns1h = b1h + s1h;
-  const sym   = (p.baseToken?.symbol || '').toUpperCase();
-  const name  = (p.baseToken?.name   || '').toUpperCase();
+  const tx1h  = b1h + s1h;
+  const tx24  = b24 + s24;
 
-  const ind = [];
-  const dbg = [];
-  const bd  = {};
+  // ── F1 : LIQUIDITÉ ──
+  if (liq < 12000)                       return 'liq<$12K';
+  if (liq > 5000000)                     return 'liq>$5M (trop mature)';
+
+  // ── F2 : AGE sweet spot 0.75h – 48h ──
+  if (age < 0.75)                        return 'age<45min (bundle risk)';
+  if (age > 48)                          return 'age>48h (trop vieux)';
+
+  // ── F3 : DUMP ACTIF 1h ──
+  const sr1h = tx1h > 0 ? s1h / tx1h : 0;
+  if (sr1h > 0.62)                       return `dump 1h sell ${(sr1h*100).toFixed(0)}%`;
+
+  // ── F4 : CRASH PRIX 1h ──
+  if (c1h < -22)                         return `crash 1h ${c1h.toFixed(0)}%`;
+
+  // ── F5 : ACTIVITÉ ORGANIQUE vol1h/liq ──
+  // Seulement après la 1ère heure complète
+  if (ageMin > 60 && vol1h < liq * 8)   return `vol/liq ${(vol1h/liq).toFixed(1)}x < 8x`;
+
+  // ── F6 : FDV / LIQ sain ──
+  if (fdv > 0 && liq > 0 && fdv / liq > 8) return `FDV/liq ${(fdv/liq).toFixed(1)}x > 8`;
+
+  // ── F7 : PUMP BOT 5min violent ──
+  if (c5m > 450)                         return `pump bot 5m +${c5m.toFixed(0)}%`;
+
+  // ── F8 : WASH TRADING (txns élevées, volume unitaire trop bas) ──
+  if (tx1h > 80 && vol1h > 0 && vol1h / tx1h < 80) return `wash trade vol/tx ${(vol1h/tx1h).toFixed(0)}<$80`;
+  // Wash trading parfait : buys ≈ sells à 5 près
+  if (tx24 > 200 && Math.abs(b24 - s24) < 5)       return 'wash trading parfait';
+
+  // ── F9 : SHILLING PAYANT excessif ──
+  if (boosts > 2)                        return `boosts ×${boosts} (shill payant)`;
+
+  // ── F10 : STAIRCASE DUMP (pump +24h, plat depuis) ──
+  if (c24 > 350 && c1h < 8 && c6h < 5)  return 'staircase dump (c24>350 c1h flat)';
+
+  // ── F11 : PATTERNS PUMP & DUMP ──
+  if (c24 > 500 && c1h < -10)           return 'pump&dump pattern';
+  if (c6h > 200 && c1h < -20)           return 'reversal post-pump';
+
+  // ── F12 : FDV DILUTION EXTRÊME ──
+  if (fdv > 0 && mcap > 0 && fdv / mcap > 10) return 'FDV/mcap>10x (dilution)';
+
+  // ── F13 : LP TROP FAIBLE vs MCAP ──
+  if (mcap > 0 && liq / mcap < 0.02)    return 'liq/mcap<2% (LP risk)';
+
+  // ── F14 : FLASH CRASH 5min ──
+  if (c5m < -25)                         return `flash crash 5m ${c5m.toFixed(0)}%`;
+
+  // ── F15 : FEES / MCAP (filtre anti-fake-volume clé) ──
+  const fees = estimateFeesSol(vol24, vol6h, age);
+  const fmin = feesMinSol(mcap);
+  const frat = feesRatioMcap(fees, mcap);
+  if (mcap >= 10000 && fees < fmin)      return `fees ${fees.toFixed(1)}SOL < seuil ${fmin}SOL`;
+  if (ageMin > 10 && frat < 0.045)       return `fees/mcap ${(frat*100).toFixed(1)}% < 4.5%`;
+
+  return null; // ✅ passe tous les filtres
+}
+
+// ── RUG RISK BADGE ────────────────────────────────────────────
+// Score indépendant — calculé APRÈS hardFilter (tokens qui passent)
+// Flags additionnels pour informer l'utilisateur
+function calcRugRisk(p) {
+  const liq   = p.liquidity?.usd    || 0;
+  const vol24 = p.volume?.h24       || 0;
+  const b1h   = p.txns?.h1?.buys    || 0;
+  const s1h   = p.txns?.h1?.sells   || 0;
+  const b24   = p.txns?.h24?.buys   || 0;
+  const s24   = p.txns?.h24?.sells  || 0;
+  const c24   = p.priceChange?.h24  || 0;
+  const c1h   = p.priceChange?.h1   || 0;
+  const mcap  = p.marketCap         || 0;
+  const fdv   = p.fdv               || 0;
+  const age   = (Date.now() - (p.pairCreatedAt || Date.now())) / 3600000;
+  const tx1h  = b1h + s1h;
+  const tx24  = b24 + s24;
+  const avgTr = tx24 > 0 ? vol24 / tx24 : 0;
+  const sr1h  = tx1h > 0 ? s1h / tx1h : 0;
+  const liqMc = mcap > 0 ? liq / mcap : 0;
+
+  let rs = 0;
+  const flags = [];
+
+  // Trade size élevé → concentration whale
+  if (avgTr > 1500 && tx24 < 100) { rs += 25; flags.push('Whale ctrl'); }
+  else if (avgTr > 800)           { rs += 10; }
+
+  // LP faible vs mcap
+  if (liqMc < 0.04)               { rs += 20; flags.push('LP faible'); }
+  else if (liqMc < 0.10)         { rs += 8;  }
+
+  // Sell pressure
+  if (sr1h > 0.55)                { rs += 15; flags.push('Sell pression'); }
+  else if (sr1h > 0.45)          { rs += 6;  }
+
+  // Token très récent → encore risqué
+  if (age < 1)                    { rs += 18; flags.push('<1h (très récent)'); }
+  else if (age < 3)               { rs += 10; }
+  else if (age < 6)               { rs += 4;  }
+
+  // FDV élevé → supply non circulante
+  if (fdv > 0 && mcap > 0 && fdv / mcap > 5) { rs += 10; flags.push('FDV élevé'); }
+
+  // Pump sans suite
+  if (c24 > 200 && c1h < 0)      { rs += 8;  flags.push('Pump sans suite'); }
+
+  // Liq très basse
+  if (liq < 15000)                { rs += 8;  flags.push('Liq basse'); }
+
+  let level, color, bg;
+  if      (rs >= 45) { level = 'HIGH';   color = '#ff2d55'; bg = 'rgba(255,45,85,.12)';  }
+  else if (rs >= 20) { level = 'MEDIUM'; color = '#ff8c00'; bg = 'rgba(255,140,0,.10)';  }
+  else               { level = 'LOW';    color = '#00ff88'; bg = 'rgba(0,255,136,.09)';  }
+
+  return { level, color, bg, score: rs, flags };
+}
+
+// ── SCORING ENGINE v9 ─────────────────────────────────────────
+// Distribution : BP(22) + VA(18) + MOM(20) + AGE(15) + MCAP(18) + SOC(12) + FEES(±35) + KOL(+10)
+// Seuil call : score ≥ 78
+function scoreToken(p) {
+  // Passe hardFilter d'abord — null = rejeté
+  const hf = hardFilter(p);
+  if (hf) return null;
+
+  const liq   = p.liquidity?.usd    || 0;
+  const vol24 = p.volume?.h24       || 0;
+  const vol6h = p.volume?.h6        || 0;
+  const vol1h = p.volume?.h1        || 0;
+  const b1h   = p.txns?.h1?.buys    || 0;
+  const s1h   = p.txns?.h1?.sells   || 0;
+  const b6h   = p.txns?.h6?.buys    || 0;
+  const s6h   = p.txns?.h6?.sells   || 0;
+  const c24   = p.priceChange?.h24  || 0;
+  const c6h   = p.priceChange?.h6   || 0;
+  const c1h   = p.priceChange?.h1   || 0;
+  const mcap  = p.marketCap         || 0;
+  const socs  = p.info?.socials     || [];
+  const age   = (Date.now() - (p.pairCreatedAt || Date.now())) / 3600000;
+  const tx1h  = b1h + s1h;
+  const tx6h  = b6h + s6h;
+  const br1h  = tx1h > 0 ? b1h / tx1h : 0;
+
+  const ind = [], dbg = [], bd = {};
   let score = 0;
 
-  // ══════════════════════════════════════════════════════════
-  // 1. LIQUIDITY SCORE (15pts)
-  // Objectif : pools saines, ni trop faibles ni manipulables
-  // ══════════════════════════════════════════════════════════
-  let lS = 0;
-  if      (liq >= 50000)             { lS = 15; ind.push({label:'Liq $'+Math.round(liq/1000)+'K ✓✓',ok:true}); }
-  else if (liq >= 20000)             { lS = 10; ind.push({label:'Liq $'+Math.round(liq/1000)+'K ✓',ok:true});  }
-  else if (liq >= 5000)              { lS = 5;                                                                   }
-  dbg.push({k:'LIQ — Liquidité pool',v:`$${(liq/1000).toFixed(1)}K`,pts:lS,max:15,cat:'L'});
-  bd.liquidity = lS;
-  score += lS;
+  // ── 1. BUY PRESSURE 1h (max +22, min -25) ───────────────────
+  let bpS = 0;
+  if      (br1h >= 0.72) { bpS = 22; ind.push({label:`Buy ${(br1h*100).toFixed(0)}% 💚`,ok:true}); }
+  else if (br1h >= 0.62) { bpS = 12; ind.push({label:`Buy ${(br1h*100).toFixed(0)}%`,ok:true}); }
+  else if (br1h >= 0.55) { bpS = 4;  }
+  else                   { bpS = -25; ind.push({label:`⚠ Sells ${((1-br1h)*100).toFixed(0)}%`,ok:false}); }
+  dbg.push({k:'BUY PRESSURE 1h',v:`${(br1h*100).toFixed(0)}% (b:${b1h} s:${s1h})`,pts:bpS,max:22,cat:'BP'});
+  bd.trading = bpS;
+  score += bpS;
 
-  // ══════════════════════════════════════════════════════════
-  // 2. VOLUME MOMENTUM (20pts)
-  // Détecte les débuts de pumps : vol5m vs moyenne 5m sur 1h
-  // ratio = vol5m / (vol1h / 12)
-  // ══════════════════════════════════════════════════════════
-  let vS = 0;
-  const vol1h_avg5m = vol1h > 0 ? vol1h / 12 : 1; // moyenne par tranche 5min
-  const volRatio    = vol1h_avg5m > 0 ? vol5m / vol1h_avg5m : 0;
+  // ── 2. VOLUME ACCÉLÉRATION (max +18, min -30) ───────────────
+  // Ratio vol1h vs moyenne horaire sur 6h
+  const volH6avg = (tx6h > 0 && vol6h > 0) ? vol6h / 6 : (vol24 > 0 ? vol24 / 24 : 0);
+  const volAccel = volH6avg > 0 ? vol1h / volH6avg : 0;
+  let vaS = 0;
+  if      (volAccel >= 2.8) { vaS = 18; ind.push({label:`Vol ×${volAccel.toFixed(1)} 🚀`,ok:true}); }
+  else if (volAccel >= 1.5) { vaS = 10; ind.push({label:`Vol ×${volAccel.toFixed(1)}`,ok:true}); }
+  else if (volAccel >= 0.8) { vaS = 4;  }
+  else if (volAccel < 0.35) { vaS = -30; ind.push({label:`Vol lent ×${volAccel.toFixed(2)}`,ok:false}); }
+  else                      { vaS = 0;  }
+  dbg.push({k:'VOL ACCÉL (h1/h6÷6)',v:`×${volAccel.toFixed(2)} (h1:$${Math.round(vol1h/1000)}K)`,pts:vaS,max:18,cat:'VA'});
+  bd.momentum = vaS;
+  score += vaS;
 
-  if      (volRatio >= 4) { vS = 20; ind.push({label:`Vol x${volRatio.toFixed(1)} 🚀`,ok:true}); }
-  else if (volRatio >= 2) { vS = 14; ind.push({label:`Vol x${volRatio.toFixed(1)} ↑↑`,ok:true}); }
-  else if (volRatio >= 1) { vS = 8;  ind.push({label:`Vol x${volRatio.toFixed(1)} ↑`,ok:true});  }
-  else                    { vS = 0;                                                                }
-  dbg.push({k:'VOL — Momentum 5m/avg',v:`ratio ${volRatio.toFixed(2)}x (5m:$${(vol5m/1000).toFixed(1)}K)`,pts:vS,max:20,cat:'V'});
-  bd.trading = vS;
-  score += vS;
+  // ── 3. MOMENTUM PRIX (max +20+15=35 cap, min -40) ──────────
+  let prS = 0;
+  if      (c1h > 12 && c1h < 180) { prS += 20; ind.push({label:`+${c1h.toFixed(0)}% 1h 🔥`,ok:true}); }
+  else if (c1h > 4)                { prS += 10; }
+  else if (c1h < -8)               { prS -= 12; }
 
-  // ══════════════════════════════════════════════════════════
-  // 3. HOLDERS GROWTH (15pts)
-  // Proxy : nouvelles txns buys sur 5m vs baseline
-  // DexScreener ne donne pas le nombre de holders directement.
-  // On utilise : b5m (buys 5min) comme proxy nouveaux holders
-  // ══════════════════════════════════════════════════════════
-  let hS = 0;
-  // Nouveaux holders estimés = buys 5m (chaque buy = potentiel nouveau holder)
-  const newHolders5m = b5m; // proxy
+  if      (c6h > 25)               { prS += 15; ind.push({label:`+${c6h.toFixed(0)}% 6h`,ok:true}); }
+  else if (c6h > 8)                { prS += 6; }
 
-  if      (newHolders5m >= 30) { hS = 15; ind.push({label:`+${newHolders5m} holders ✓✓`,ok:true}); }
-  else if (newHolders5m >= 15) { hS = 10; ind.push({label:`+${newHolders5m} holders ✓`,ok:true});  }
-  else if (newHolders5m >= 5)  { hS = 6;  ind.push({label:`+${newHolders5m} holders`,ok:true});    }
-  else                         { hS = 0;                                                             }
-  dbg.push({k:'HLD — Holders growth (buys 5m)',v:`${newHolders5m} nouveaux`,pts:hS,max:15,cat:'H'});
-  bd.holders = hS;
-  score += hS;
+  // Staircase dump : pump ≥ 24h passé mais flat maintenant
+  if (c24 > 350 && c1h < 8 && c6h < 5) { prS -= 40; ind.push({label:'⚠ Staircase dump',ok:false}); }
 
-  // ══════════════════════════════════════════════════════════
-  // 4. SMART MONEY (20pts)
-  // KOL calls + buy pressure qualitative (smart wallet proxy)
-  // smart_wallet_buys estimé via : buys 5m × buy ratio 1h
-  // ══════════════════════════════════════════════════════════
-  let smS = 0;
-  const br1h = (b1h + s1h) > 0 ? b1h / (b1h + s1h) : 0.5;
-  const br5m = (b5m + s5m) > 0 ? b5m / (b5m + s5m) : 0.5;
+  prS = Math.max(-40, Math.min(35, prS));
+  dbg.push({k:'MOMENTUM PRIX',v:`c1h:${c1h.toFixed(1)}% c6h:${c6h.toFixed(1)}% c24:${c24.toFixed(1)}%`,pts:prS,max:35,cat:'MOM'});
+  bd.holders = prS;
+  score += prS;
 
-  // Smart wallet buys proxy : buys 5m pondérés par buy ratio 1h
-  const smartBuys = Math.round(b5m * br1h);
+  // ── 4. AGE SWEET SPOT (max +15) ─────────────────────────────
+  let agS = 0;
+  if      (age >= 1  && age <= 36) { agS = 15; ind.push({label:`${age.toFixed(1)}h ✓`,ok:true}); }
+  else if (age > 36  && age <= 48) { agS = 8;  }
+  else if (age < 1)                { agS = 3;  }
+  dbg.push({k:'AGE SWEET SPOT',v:`${age.toFixed(1)}h`,pts:agS,max:15,cat:'AGE'});
+  bd.age = agS;
+  score += agS;
 
-  if      (smartBuys >= 4) { smS = 20; ind.push({label:'Smart $✓✓',ok:true}); }
-  else if (smartBuys >= 2) { smS = 12; ind.push({label:'Smart $✓',ok:true});  }
-  else if (smartBuys >= 1) { smS = 6;                                          }
-  else                     { smS = 0;  ind.push({label:'No smart $',ok:false});}
+  // ── 5. MCAP EARLY (max +18) ─────────────────────────────────
+  let mcS = 0;
+  if      (mcap >= 15000  && mcap <= 120000) { mcS = 18; ind.push({label:`McAp $${Math.round(mcap/1000)}K 🎯`,ok:true}); }
+  else if (mcap > 120000  && mcap <= 300000) { mcS = 10; }
+  else if (mcap > 300000  && mcap <= 600000) { mcS = 5;  }
+  else if (mcap < 15000)                     { mcS = 2;  }
+  dbg.push({k:'MCAP EARLY',v:`$${Math.round(mcap/1000)}K`,pts:mcS,max:18,cat:'MC'});
+  bd.liquidity = mcS;
+  score += mcS;
 
-  // KOL boost intégré ici
-  const kols    = kolCache[p.baseToken?.address] || [];
-  const majKOL  = kols.some(k => k.weight === 'major');
-  const midKOL  = kols.some(k => k.weight === 'mid');
-  if (majKOL) {
-    smS = Math.min(20, smS + 8);
-    kols.filter(k=>k.weight==='major').forEach(k=>{
-      const h = Math.round((Date.now()-k.time)/3600000);
-      ind.push({label:`🔥${k.name}(${h}h)`,ok:true,isKol:true});
-    });
-    dbg.push({k:'SMT — KOL Major',v:'CALL DÉTECTÉ',pts:8,max:8,cat:'S'});
-  } else if (midKOL) {
-    smS = Math.min(20, smS + 4);
-    kols.filter(k=>k.weight==='mid').slice(0,2).forEach(k=>ind.push({label:`🔥${k.name}`,ok:true,isKol:true}));
-    dbg.push({k:'SMT — KOL Mid',v:'call détecté',pts:4,max:4,cat:'S'});
-  }
+  // ── 6. SOCIALS (max +12) ────────────────────────────────────
+  let socS = 0;
+  const hasTw = socs.some(s => s.type === 'twitter');
+  const hasTg = socs.some(s => s.type === 'telegram');
+  if      (hasTw && hasTg) { socS = 12; ind.push({label:'🐦+📢 Socials',ok:true}); }
+  else if (hasTw || hasTg) { socS = 5;  ind.push({label: hasTw ? '🐦 Twitter' : '📢 Telegram',ok:true}); }
+  dbg.push({k:'SOCIALS',v:`tw:${hasTw} tg:${hasTg}`,pts:socS,max:12,cat:'SOC'});
+  bd.smart = socS;
+  score += socS;
 
-  dbg.push({k:'SMT — Smart wallets (proxy)',v:`smartBuys≈${smartBuys} | br1h:${(br1h*100).toFixed(0)}%`,pts:smS,max:20,cat:'S'});
-  bd.smart = smS;
-  score += smS;
-
-  // ══════════════════════════════════════════════════════════
-  // 5. FEES PAID / ACTIVITY (15pts + malus/bonus)
-  // Fees estimés Pump.fun : (vol6h * 0.003) / 180
-  // Ratio normalisé 100K mcap — plus c'est haut, plus c'est réel
-  // ══════════════════════════════════════════════════════════
+  // ── 7. FEES BONUS / MALUS (max +22, min -35) ────────────────
+  // C'est le critère le plus discriminant anti-fake-volume
+  const fees  = estimateFeesSol(vol24, vol6h, age);
+  const fmin  = feesMinSol(mcap);
+  const frat  = feesRatioMcap(fees, mcap);
+  const fratP = (frat * 100).toFixed(1);
   let fS = 0;
-  const vol6h_s   = p.volume?.h6 || 0;
-  const fees_s    = estimateFeesSol(vol24, vol6h_s, age); // fees SOL estimés
-  const feesMin_s = feesMinSol(mcap);                      // seuil bracket
-  const feesRat_s = feesRatioMcap(fees_s, mcap);           // ratio 100K mcap
-  const feesRatPct = (feesRat_s * 100).toFixed(2);
 
-  // Score de base via ratio fees/mcap
-  if      (feesRat_s >= 0.20) { fS = 15; }
-  else if (feesRat_s >= 0.10) { fS = 11; }
-  else if (feesRat_s >= 0.06) { fS = 7;  }
-  else if (feesRat_s >= 0.04) { fS = 3;  }
-  else                        { fS = 0;  } // ratio < 4% = déjà rejeté normalement
+  // Score de base sur ratio fees/mcap
+  if      (frat >= 0.20) fS = 15;
+  else if (frat >= 0.12) fS = 10;
+  else if (frat >= 0.06) fS = 6;
+  else if (frat >= 0.045) fS = 2;
 
-  // Malus si fees < 60% du seuil bracket (signal fort de fake vol)
-  if (fees_s < feesMin_s * 0.6) {
-    fS = Math.max(0, fS - 35);
-    ind.push({label:`⚠ Fees ${fees_s.toFixed(1)}SOL bas`,ok:false});
-  }
-  // Bonus si fees > 160% du seuil bracket (activité authentique prouvée)
-  else if (fees_s >= feesMin_s * 1.6) {
-    fS = Math.min(15, fS + 25); // plafonné à 15
-    ind.push({label:`Fees ${fees_s.toFixed(1)}SOL ✓✓`,ok:true});
-  } else {
-    ind.push({label:`Fees ${fees_s.toFixed(1)}SOL ✓`,ok:true});
-  }
+  // Bonus si fees largement au-dessus du seuil
+  if      (fees >= fmin * 1.6) { fS += 22; ind.push({label:`⛽ ${fees.toFixed(1)}SOL ✓✓`,ok:true}); }
+  else if (fees >= fmin)       { ind.push({label:`⛽ ${fees.toFixed(1)}SOL`,ok:true}); }
+  // Malus si fees sous 70% du seuil (mais HardFilter aurait dû bloquer si <100%)
+  else if (fees < fmin * 0.7)  { fS -= 35; ind.push({label:`⚠ Fees ${fees.toFixed(1)}SOL bas`,ok:false}); }
 
-  // Bonus accélération 1h
-  const fees1h_s     = estimateFeesSol(vol1h, vol1h, 0);
-  const feesVelRatio = fees_s > 0 ? (fees1h_s * 24) / fees_s : 0;
-  if (fS > 0 && feesVelRatio >= 1.5) {
-    fS = Math.min(15, fS + 2);
-    ind.push({label:'Fees accel ↑',ok:true});
-  }
-
-  const feesColor = feesRat_s >= 0.10 ? '#00e676' : feesRat_s >= 0.04 ? '#ffd32a' : '#ff4757';
-  dbg.push({k:'FEE — fees/mcap ratio',
-    v:`~${fees_s.toFixed(1)} SOL (ratio ${feesRatPct}% / seuil ${feesMin_s}SOL) — ${feesRat_s>=0.10?'élevé=bon':feesRat_s>=0.04?'moyen':'⚠ faible'}`,
-    pts:fS,max:15,cat:'F',color:feesColor});
+  fS = Math.max(-35, Math.min(22, fS));
+  const fCol = frat >= 0.12 ? '#00ff88' : frat >= 0.045 ? '#ffd700' : '#ff2d55';
+  dbg.push({k:'FEES/MCAP',v:`~${fees.toFixed(1)}SOL · ${fratP}% · seuil:${fmin}SOL`,pts:fS,max:22,cat:'F',color:fCol});
   bd.fees = fS;
   score += fS;
 
-  // ══════════════════════════════════════════════════════════
-  // 6. DISTRIBUTION SAFETY (10pts)
-  // top10_holders_percent proxy via concentration des trades
-  // Si trades très concentrés → top10 élevé → risque rug
-  // ══════════════════════════════════════════════════════════
-  let dS = 0;
-  const avgTrade    = (b24 + s24) > 0 ? vol24 / (b24 + s24) : 9999;
-  const top10proxy  = avgTrade > 2000 ? 40 : avgTrade > 800 ? 30 : avgTrade > 300 ? 20 : 15;
-  // Intégrer aussi la concentration volume récent
-  const vol5m_share = vol24 > 0 ? vol5m / vol24 : 0;
+  // ── 8. KOL BONUS (max +10) ──────────────────────────────────
+  const kols  = (typeof kolCache !== 'undefined') ? (kolCache[p.baseToken?.address] || []) : [];
+  const majKOL = kols.some(k => k.weight === 'major');
+  const midKOL = kols.some(k => k.weight === 'mid');
+  let kolBonus = 0;
+  if      (majKOL) { kolBonus = 10; ind.push({label:'⭐ KOL Major',ok:true,isKol:true}); }
+  else if (midKOL) { kolBonus = 5;  ind.push({label:'🔥 KOL',ok:true,isKol:true}); }
+  dbg.push({k:'KOL BONUS',v:majKOL?'major':midKOL?'mid':'—',pts:kolBonus,max:10,cat:'K'});
+  bd.bonus = kolBonus;
+  score += kolBonus;
 
-  if      (top10proxy < 20) { dS = 10; ind.push({label:'Distrib ✓✓',ok:true}); }
-  else if (top10proxy < 30) { dS = 7;  ind.push({label:'Distrib ✓',ok:true});  }
-  else if (top10proxy < 40) { dS = 3;                                           }
-  else                      { dS = 0;  ind.push({label:'Distrib⚠',ok:false});  }
+  // Score plancher sensé
+  score = Math.max(0, Math.min(110, score));
 
-  dbg.push({k:'DST — Distribution (proxy)',v:`top10≈${top10proxy}% | avgTrade:$${avgTrade.toFixed(0)}`,pts:dS,max:10,cat:'D'});
-  bd.distribution = dS;
-  score += dS;
-
-  // ══════════════════════════════════════════════════════════
-  // 7. AGE STABILITY (5pts)
-  // Beaucoup de rugs meurent < 3 min — on favorise les tokens
-  // qui ont survécu au moins 10-30 min
-  // ══════════════════════════════════════════════════════════
-  let aS = 0;
-  if      (ageMin >= 30) { aS = 5; ind.push({label:`${ageMin<60?ageMin+'min':age.toFixed(1)+'h'} stable`,ok:true}); }
-  else if (ageMin >= 10) { aS = 4;                                                                                    }
-  else if (ageMin >= 3)  { aS = 2;                                                                                    }
-  else                   { aS = 0; ind.push({label:'<3min ⚠',ok:false});                                             }
-
-  dbg.push({k:'AGE — Stabilité',v:`${ageMin.toFixed(0)} min (${age.toFixed(1)}h)`,pts:aS,max:5,cat:'A'});
-  bd.age = aS;
-  score += aS;
-
-  // ══════════════════════════════════════════════════════════
-  // BONUS : SMART MONEY CONVERGENCE (+10)
-  // Si plusieurs smart wallets achètent dans le même bloc (~même minute)
-  // Proxy : b5m >= 3 ET buy ratio 5m fort ET vol5m en accélération
-  // ══════════════════════════════════════════════════════════
-  let bonus = 0;
-  const sameBlockProxy = b5m >= 3 && br5m >= 0.7 && volRatio >= 3;
-  if (sameBlockProxy) {
-    bonus = 10;
-    ind.push({label:'🔥 Smart convergence',ok:true,isKol:false});
-    dbg.push({k:'BONUS — Smart convergence',v:`b5m:${b5m} br5m:${(br5m*100).toFixed(0)}% volR:${volRatio.toFixed(1)}x`,pts:10,max:10,cat:'B'});
-  } else {
-    dbg.push({k:'BONUS — Smart convergence',v:'non déclenché',pts:0,max:10,cat:'B'});
-  }
-  score += bonus;
-  bd.bonus = bonus;
-
-  // ══════════════════════════════════════════════════════════
-  // SOCIAL INDICATORS (non scorés mais affichés)
-  // ══════════════════════════════════════════════════════════
-  const hasTw = socs.find(s => s.type === 'twitter');
-  const hasTg = socs.find(s => s.type === 'telegram');
-  const hasWb = webs.length > 0;
-  const nSoc  = (hasTw?1:0) + (hasTg?1:0) + (hasWb?1:0);
-  if (nSoc >= 2) ind.push({label:'Socials ✓',ok:true});
-
-  const MEMES = ['DOG','CAT','PEPE','FROG','AI','TRUMP','ELON','WIF','CAP','MOON','DOGE','INU','PANDA','BEAR','BULL','APE','SHIB','CHAD','BASED','MAGA','BONK','BABY','MAMA','GIGA','WEN','WOJAK','BRETT','NEIRO','POPCAT','GOAT','PNUT','MOODENG','CHILLGUY','SIGMA'];
-  if (MEMES.some(k => sym.includes(k) || name.includes(k))) ind.push({label:'Narrative ✓',ok:true});
-
-  // ── SCORE FINAL ──────────────────────────────────────────
-  const final = Math.min(110, score); // max 110 avec bonus
-  dbg.push({k:'━━ SCORE TOTAL',v:`(bonus:+${bonus})`,pts:final,max:100,cat:'TOTAL'});
-
-  // Mapping catégories pour le debug panel (compatible v6)
-  bd.wallet  = bd.smart;       // S affiché comme W dans panel
-  bd.trading = bd.trading;
-  bd.social  = bd.age + (bd.distribution || 0); // fusionne pour affichage
-
-  // Labels v7
+  // ── LABEL CALL ──────────────────────────────────────────────
   let label, labelColor;
-  if      (final >= 85) { label = '⚡ HIGH CONVICTION'; labelColor = '#00e676'; }
-  else if (final >= 70) { label = '🔥 STRONG';          labelColor = '#ffd32a'; }
-  else if (final >= 60) { label = '👁 EARLY SIGNAL';    labelColor = '#7b7bff'; }
-  else                  { label = '📡 WATCH';            labelColor = '#ff6b35'; }
+  if      (score >= 90) { label = '💎 GOD GEM';        labelColor = '#ffd700'; }
+  else if (score >= 80) { label = '⚡ HIGH POTENTIAL';  labelColor = '#00ff88'; }
+  else if (score >= 78) { label = '👁 WATCHLIST';       labelColor = '#a855f7'; }
+  else                  { label = '📡 NO SIGNAL';        labelColor = '#6b6b9a'; }
 
   return {
-    score     : final,
-    label, labelColor,
+    score, label, labelColor,
     indicators: ind,
     breakdown : bd,
     debugRows : dbg,
@@ -1998,558 +1855,403 @@ function scoreToken(p) {
 function enrichKOL(tok) { return tok; }
 
 function getScoreLabel(s) {
-  if (s >= 85) return {text:'⚡ HIGH CONVICTION', color:'#00e676'};
-  if (s >= 70) return {text:'🔥 STRONG',          color:'#ffd32a'};
-  if (s >= 60) return {text:'👁 EARLY SIGNAL',    color:'#7b7bff'};
-  return            {text:'📡 WATCH',              color:'#ff6b35'};
+  if (s >= 90) return { text: '💎 GOD GEM',        color: '#ffd700' };
+  if (s >= 80) return { text: '⚡ HIGH POTENTIAL',  color: '#00ff88' };
+  if (s >= 78) return { text: '👁 WATCHLIST',       color: '#a855f7' };
+  return             { text: '📡 NO SIGNAL',         color: '#6b6b9a' };
 }
-
-
-
 
 // ═══════════════════════════════════════════════════════════════
-// TOKEN CALL HISTORY — partagé entre tous les utilisateurs
-// Backend : Firebase Realtime Database (plan gratuit Spark, suffisant)
-// Fallback : localStorage si Firebase indisponible
-// Format : calls/{addr} → { callMcap, callPrice, callTime, athMcap, athPrice, symbol, score }
-// ═══════════════════════════════════════════════════════════════
-
-// ── CONFIGURATION FIREBASE ─────────────────────────────────────
-// Base de données publique en lecture/écriture restreinte
-// URL format : https://{project-id}-default-rtdb.firebaseio.com
-const FB_URL = 'https://memescanner-calls-default-rtdb.firebaseio.com';
-// Note : remplace FB_URL par ton URL Firebase si tu crées un projet perso
-// ─────────────────────────────────────────────────────────────
-
-const _callsCache = {};          // cache mémoire session
-let   _callsCacheLoaded = false; // chargé une seule fois au démarrage
-const CALLS_LS_KEY = 'ms_calls_v2'; // clé localStorage fallback
-
-// ── STORAGE ABSTRACTION ─────────────────────────────────────────
-// Essaie Firebase → fallback localStorage
-
-async function fbGet(addr) {
-  try {
-    const r = await fetch(`${FB_URL}/calls/${addr}.json`, { cache: 'no-cache' });
-    if (!r.ok) return null;
-    const d = await r.json();
-    return d; // null si non trouvé, objet sinon
-  } catch(e) { return null; }
-}
-
-async function fbSet(addr, data) {
-  try {
-    await fetch(`${FB_URL}/calls/${addr}.json`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
-    });
-    return true;
-  } catch(e) { return false; }
-}
-
-async function fbListAll() {
-  try {
-    const r = await fetch(`${FB_URL}/calls.json?shallow=true`, { cache: 'no-cache' });
-    if (!r.ok) return {};
-    const d = await r.json();
-    return d || {}; // { addr: true, ... }
-  } catch(e) { return {}; }
-}
-
-async function fbDelete(addr) {
-  try {
-    await fetch(`${FB_URL}/calls/${addr}.json`, { method: 'DELETE' });
-  } catch(e) {}
-}
-
-// ── LOCAL STORAGE HELPERS ────────────────────────────────────────
-function lsLoadCalls() {
-  try { return JSON.parse(localStorage.getItem(CALLS_LS_KEY) || '{}'); }
-  catch(e) { return {}; }
-}
-function lsSaveCalls(db) {
-  try { localStorage.setItem(CALLS_LS_KEY, JSON.stringify(db)); }
-  catch(e) {}
-}
-function lsSaveOne(addr, data) {
-  const db = lsLoadCalls();
-  db[addr] = data;
-  lsSaveCalls(db);
-}
-
-// ── CHARGEMENT INITIAL ─────────────────────────────────────────
-async function loadAllCalls() {
-  if (_callsCacheLoaded) return _callsCache;
-
-  // 1. Charger depuis localStorage immédiatement (sync, pas d'attente)
-  const lsData = lsLoadCalls();
-  Object.assign(_callsCache, lsData);
-
-  // 2. Essayer Firebase pour avoir les données partagées
-  try {
-    const keys = await fbListAll(); // { addr: true, ... }
-    const addrs = Object.keys(keys || {});
-    if (addrs.length > 0) {
-      // Charger en parallèle (max 20 à la fois pour ne pas flood)
-      const chunks = [];
-      for (let i = 0; i < addrs.length; i += 20) chunks.push(addrs.slice(i, i+20));
-      for (const chunk of chunks) {
-        await Promise.all(chunk.map(async addr => {
-          try {
-            const d = await fbGet(addr);
-            if (d && d.callTime) {
-              _callsCache[addr] = d;
-              lsSaveOne(addr, d); // sync vers localStorage
-            }
-          } catch(e) {}
-        }));
-      }
-    }
-  } catch(e) {
-    // Firebase indispo — on reste sur localStorage seul
-    console.warn('Firebase indispo, mode localStorage');
-  }
-
-  _callsCacheLoaded = true;
-  return _callsCache;
-}
-
-// ── SAUVEGARDE ────────────────────────────────────────────────
-async function saveCall(addr, data) {
-  // Toujours sauver en localStorage (sync, fiable)
-  lsSaveOne(addr, data);
-  // Essayer Firebase (async, best-effort)
-  fbSet(addr, data).catch(() => {});
-}
-
-// ── TRACK TOKEN ───────────────────────────────────────────────
-async function trackToken(addr, mcap, price, symbol, score) {
-  await loadAllCalls();
-  const now = Date.now();
-
-  if (!_callsCache[addr]) {
-    const entry = {
-      callMcap  : mcap,
-      callPrice : price,
-      callTime  : now,
-      athMcap   : mcap,
-      athPrice  : price,
-      athTime   : now,
-      symbol    : symbol || '',
-      score     : score  || 0
-    };
-    _callsCache[addr] = entry;
-    await saveCall(addr, entry);
-  } else {
-    if (mcap > (_callsCache[addr].athMcap || 0)) {
-      _callsCache[addr].athMcap  = mcap;
-      _callsCache[addr].athPrice = price;
-      _callsCache[addr].athTime  = now;
-      await saveCall(addr, _callsCache[addr]);
-    }
-  }
-  return _callsCache[addr];
-}
-
-// ── GET STATS ─────────────────────────────────────────────────
-async function getMcapStats(addr, mcap, price, symbol, score) {
-  const h = await trackToken(addr, mcap, price, symbol, score);
-
-  const callDate  = new Date(h.callTime);
-  const callClock = callDate.getHours().toString().padStart(2,'0') + ':' + callDate.getMinutes().toString().padStart(2,'0');
-
-  const mins = Math.round((Date.now() - h.callTime) / 60000);
-  const tLabel = mins < 1    ? 'now'
-    : mins < 60  ? `${mins}m ago`
-    : mins < 1440 ? `${Math.floor(mins/60)}h${mins%60>0?(mins%60)+'m':''} ago`
-    : `${Math.floor(mins/1440)}j ago`;
-
-  return {
-    callMcap  : h.callMcap,
-    callPrice : h.callPrice,
-    athMcap   : h.athMcap,
-    callTime  : h.callTime,
-    callClock,
-    tLabel,
-    xNow : h.callMcap > 0 ? mcap / h.callMcap : 1,
-    xAth : h.callMcap > 0 ? h.athMcap / h.callMcap : 1
-  };
-}
-
-// ── PURGE CALLS VIEUX (>7j) ───────────────────────────────────
-async function purgeStaleCalls() {
-  const cutoff = Date.now() - 7 * 24 * 3600 * 1000;
-  const toDelete = Object.keys(_callsCache).filter(a => (_callsCache[a]?.callTime||0) < cutoff);
-  for (const addr of toDelete) {
-    delete _callsCache[addr];
-    fbDelete(addr).catch(()=>{});
-  }
-  // Purger aussi localStorage
-  const lsDb = lsLoadCalls();
-  let changed = false;
-  Object.keys(lsDb).forEach(addr => {
-    if ((lsDb[addr]?.callTime||0) < cutoff) { delete lsDb[addr]; changed = true; }
-  });
-  if (changed) lsSaveCalls(lsDb);
-}
-
-// Initialisation
-loadAllCalls().then(() => purgeStaleCalls());
-
-
-
-
-
-
-
-// ═══════════════════════════════════════════════════════════════
-// FETCH & RENDER TOKENS
-// ═══════════════════════════════════════════════════════════════
-// DEMO DATA — affiché en local quand CORS bloque (Vercel = données réelles)
+// DEMO DATA
 // ═══════════════════════════════════════════════════════════════
 function getDemoTokens() {
+  // Tokens démo calibrés pour passer hardFilter v9 ET scorer ≥78
+  // Vérif par token :
+  //   liq > 12K ✓ · age 0.75-48h ✓ · sell ratio < 62% ✓
+  //   vol1h > liq×8 ✓ · fdv/liq < 8 ✓ · txns/wash ✓
+  //   fees > seuil(mcap) ✓ · frat > 4.5% ✓
   const now = Date.now();
   return [
     {
+      // GOATAI : mcap 94K → seuil 8SOL → vol6h requis ≥ 8*180/0.003 = 480K ✓
+      // vol1h=74K > liq(38K)×8 = 304K → ⚠ on baisse liq à 8K ou monte vol1h
       baseToken:{address:'7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU',symbol:'GOATAI',name:'Goat AI'},
-      priceUsd:'0.000842', marketCap:187000, liquidity:{usd:28400},
-      volume:{h24:312000,h6:98000,h1:41000}, priceChange:{h24:284,h6:67,h1:18},
-      txns:{h24:{buys:1240,sells:380},h6:{buys:410,sells:110},h1:{buys:180,sells:42}},
-      pairCreatedAt: now - 14*3600000,
-      info:{socials:[{type:'twitter'},{type:'telegram'}],websites:['https://goatai.io']}
+      priceUsd:'0.000942', marketCap:94000, fdv:95000, liquidity:{usd:14000},
+      volume:{h24:820000, h6:310000, h1:135000},
+      priceChange:{h24:284, h6:67, h1:22, m5:3.2},
+      txns:{h24:{buys:2800,sells:580},h6:{buys:920,sells:190},h1:{buys:380,sells:72}},
+      pairCreatedAt:now - 8*3600000, boosts:{active:0},
+      info:{socials:[{type:'twitter'},{type:'telegram'}]}
     },
     {
-      baseToken:{address:'DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263',symbol:'BONKWIF',name:'Bonk Wif Hat'},
-      priceUsd:'0.00213', marketCap:94000, liquidity:{usd:52000},
-      volume:{h24:780000,h6:210000,h1:87000}, priceChange:{h24:142,h6:38,h1:12},
-      txns:{h24:{buys:2100,sells:590},h6:{buys:680,sells:170},h1:{buys:310,sells:68}},
-      pairCreatedAt: now - 8*3600000,
-      info:{socials:[{type:'twitter'},{type:'telegram'}],websites:[]}
+      // PEPEXSOL : mcap 68K → seuil 8SOL → vol6h requis ≥ 480K ✓
+      // vol1h(120K) > liq(12K)×8=96K ✓ · fees = 480K*0.003/180 = 8SOL ✓
+      baseToken:{address:'DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263',symbol:'PEPEXSOL',name:'Pepe x Solana'},
+      priceUsd:'0.00213', marketCap:68000, fdv:69000, liquidity:{usd:12500},
+      volume:{h24:1440000, h6:520000, h1:120000},
+      priceChange:{h24:189, h6:44, h1:16, m5:1.8},
+      txns:{h24:{buys:2800,sells:580},h6:{buys:920,sells:190},h1:{buys:280,sells:54}},
+      pairCreatedAt:now - 5*3600000, boosts:{active:1},
+      info:{socials:[{type:'twitter'},{type:'telegram'}]}
     },
     {
-      baseToken:{address:'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',symbol:'PEPE2024',name:'Pepe 2024'},
-      priceUsd:'0.0000341', marketCap:43000, liquidity:{usd:18500},
-      volume:{h24:196000,h6:72000,h1:28000}, priceChange:{h24:189,h6:44,h1:9},
-      txns:{h24:{buys:890,sells:240},h6:{buys:300,sells:74},h1:{buys:140,sells:31}},
-      pairCreatedAt: now - 5*3600000,
-      info:{socials:[{type:'twitter'}],websites:[]}
+      // GIGACHAD : mcap 42K → seuil 3SOL → vol6h requis ≥ 180K ✓
+      // vol1h(110K) > liq(13K)×8=104K ✓ · fees = 200K*0.003/180 = 3.3SOL ✓
+      baseToken:{address:'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',symbol:'GIGACHAD',name:'Giga Chad'},
+      priceUsd:'0.0000341', marketCap:42000, fdv:43000, liquidity:{usd:13000},
+      volume:{h24:500000, h6:200000, h1:110000},
+      priceChange:{h24:145, h6:42, h1:14, m5:2.1},
+      txns:{h24:{buys:1400,sells:290},h6:{buys:460,sells:95},h1:{buys:185,sells:36}},
+      pairCreatedAt:now - 3*3600000, boosts:{active:0},
+      info:{socials:[{type:'twitter'}]}
     },
     {
-      baseToken:{address:'So11111111111111111111111111111111111111112',symbol:'DOGWIFCAT',name:'Dog Wif Cat'},
-      priceUsd:'0.00000892', marketCap:28000, liquidity:{usd:11200},
-      volume:{h24:124000,h6:41000,h1:19000}, priceChange:{h24:312,h6:88,h1:22},
-      txns:{h24:{buys:640,sells:160},h6:{buys:210,sells:48},h1:{buys:98,sells:19}},
-      pairCreatedAt: now - 3*3600000,
-      info:{socials:[{type:'twitter'},{type:'telegram'}],websites:['https://dogwifcat.xyz']}
-    },
-    {
-      baseToken:{address:'mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So',symbol:'AIPEPE',name:'AI Pepe'},
-      priceUsd:'0.000158', marketCap:71000, liquidity:{usd:34000},
-      volume:{h24:445000,h6:142000,h1:58000}, priceChange:{h24:220,h6:52,h1:14},
-      txns:{h24:{buys:1580,sells:410},h6:{buys:520,sells:120},h1:{buys:240,sells:52}},
-      pairCreatedAt: now - 18*3600000,
-      info:{socials:[{type:'twitter'},{type:'telegram'}],websites:['https://aipepe.lol']}
+      // MOONCAT : mcap 28K → seuil 3SOL → vol6h requis ≥ 180K ✓
+      // vol1h(115K) > liq(12K)×8=96K ✓ · fees = 200K*0.003/180 = 3.3SOL ✓
+      baseToken:{address:'So11111111111111111111111111111111111111113',symbol:'MOONCAT',name:'Moon Cat'},
+      priceUsd:'0.0000089', marketCap:28000, fdv:29000, liquidity:{usd:12000},
+      volume:{h24:500000, h6:200000, h1:115000},
+      priceChange:{h24:98, h6:32, h1:18, m5:4.1},
+      txns:{h24:{buys:1100,sells:230},h6:{buys:360,sells:75},h1:{buys:148,sells:28}},
+      pairCreatedAt:now - 2*3600000, boosts:{active:0},
+      info:{socials:[{type:'twitter'},{type:'telegram'}]}
     }
   ];
 }
 
+// ═══════════════════════════════════════════════════════════════
+// FETCH TOKENS — 3 sources DexScreener + fallback demo
+// ═══════════════════════════════════════════════════════════════
 async function fetchTokens() {
   const loadEl = document.getElementById('scanner-loading');
   const rowsEl = document.getElementById('token-rows');
 
-  // Timeout de sécurité — si le fetch prend >15s, afficher un message
   const timeout = setTimeout(() => {
-    if(loadEl && loadEl.style.display !== 'none') {
-      loadEl.innerHTML = `<div style="font-family:Space Mono,monospace;font-size:10px;color:var(--muted2);padding:20px;text-align:center;">
-        ⌛ Connexion lente… actualisation dans 30s</div>`;
+    if (loadEl && loadEl.style.display !== 'none') {
+      loadEl.innerHTML = `<div style="font-family:Space Mono,monospace;font-size:10px;color:var(--muted2);padding:20px;text-align:center;">⌛ Connexion lente… actualisation dans 30s</div>`;
     }
   }, 15000);
 
   try {
-    let pairs = [];
-    let isDemo = false;
+    let pairs   = [];
+    let isDemo  = false;
 
-    // Essai 1 — DexScreener direct
+    // ── Source 1 : token-profiles/latest → tokens/v1 ─────────
     try {
       const r1 = await fetch('https://api.dexscreener.com/token-profiles/latest/v1',{headers:{Accept:'application/json'}});
-      if(r1.ok) {
+      if (r1.ok) {
         const d1 = await r1.json();
-        const solToks = (Array.isArray(d1)?d1:[]).filter(t=>t.chainId==='solana').slice(0,30);
-        if(solToks.length>0) {
+        const solToks = (Array.isArray(d1)?d1:[]).filter(t=>t.chainId==='solana').slice(0,40);
+        if (solToks.length) {
           const addrs = solToks.map(t=>t.tokenAddress).join(',');
           const r2 = await fetch(`https://api.dexscreener.com/tokens/v1/solana/${addrs}`);
-          if(r2.ok) {
-            const raw2 = await r2.json();
-            // /tokens/v1 peut retourner soit un array direct soit {pairs:[...]}
-            pairs = Array.isArray(raw2) ? raw2 : (raw2?.pairs || raw2?.data || []);
+          if (r2.ok) {
+            const raw = await r2.json();
+            pairs = Array.isArray(raw) ? raw : (raw?.pairs || raw?.data || []);
           }
         }
       }
-    } catch(e) { console.warn('Fetch 1 error:',e.message); }
+    } catch(e) { console.warn('Src1 err:',e.message); }
 
-    // Essai 2 — Top boosts fallback
-    if(!Array.isArray(pairs)||!pairs.length) {
+    // ── Source 2 : token-boosts/top/v1 ───────────────────────
+    if (!pairs.length) {
       try {
         const rb = await fetch('https://api.dexscreener.com/token-boosts/top/v1');
-        if(rb.ok) {
+        if (rb.ok) {
           const db = await rb.json();
-          const sb = (Array.isArray(db)?db:[]).filter(t=>t.chainId==='solana').slice(0,20);
-          if(sb.length>0) {
+          const sb = (Array.isArray(db)?db:[]).filter(t=>t.chainId==='solana').slice(0,30);
+          if (sb.length) {
             const ab = sb.map(t=>t.tokenAddress).join(',');
             const rp = await fetch(`https://api.dexscreener.com/tokens/v1/solana/${ab}`);
-            if(rp.ok) {
+            if (rp.ok) {
               const rawp = await rp.json();
               pairs = Array.isArray(rawp) ? rawp : (rawp?.pairs || rawp?.data || []);
             }
           }
         }
-      } catch(e) { console.warn('Fetch 2 error:',e.message); }
+      } catch(e) { console.warn('Src2 err:',e.message); }
     }
 
-    // Essai 3 — Proxy allorigins (contourne CORS en local)
-    if(!Array.isArray(pairs)||!pairs.length) {
+    // ── Source 3 : search trending ───────────────────────────
+    if (!pairs.length) {
       try {
-        const proxy = 'https://api.allorigins.win/raw?url=';
+        const rs = await fetch('https://api.dexscreener.com/latest/dex/search?q=solana%20meme');
+        if (rs.ok) {
+          const ds = await rs.json();
+          pairs = (ds?.pairs||[]).filter(p=>p.chainId==='solana').slice(0,40);
+        }
+      } catch(e) { console.warn('Src3 err:',e.message); }
+    }
+
+    // ── Source 4 : proxy allorigins ───────────────────────────
+    if (!pairs.length) {
+      try {
+        const prx = 'https://api.allorigins.win/raw?url=';
         const url = encodeURIComponent('https://api.dexscreener.com/token-boosts/top/v1');
-        const rp = await fetch(proxy+url);
-        if(rp.ok) {
+        const rp  = await fetch(prx+url);
+        if (rp.ok) {
           const dp = await rp.json();
-          const sp = (Array.isArray(dp)?dp:[]).filter(t=>t.chainId==='solana').slice(0,15);
-          if(sp.length>0) {
-            const ap = sp.map(t=>t.tokenAddress).join(',');
-            const rr = await fetch(proxy+encodeURIComponent(`https://api.dexscreener.com/tokens/v1/solana/${ap}`));
-            if(rr.ok) {
-              const rawrr = await rr.json();
-              pairs = Array.isArray(rawrr) ? rawrr : (rawrr?.pairs || rawrr?.data || []);
+          const sp = (Array.isArray(dp)?dp:[]).filter(t=>t.chainId==='solana').slice(0,20);
+          if (sp.length) {
+            const ap  = sp.map(t=>t.tokenAddress).join(',');
+            const rr  = await fetch(prx+encodeURIComponent(`https://api.dexscreener.com/tokens/v1/solana/${ap}`));
+            if (rr.ok) {
+              const rraw = await rr.json();
+              pairs = Array.isArray(rraw) ? rraw : (rraw?.pairs || rraw?.data || []);
             }
           }
         }
-      } catch(e) { console.warn('Fetch 3 error:',e.message); }
+      } catch(e) { console.warn('Src4 err:',e.message); }
     }
 
-    // S'assurer que pairs est toujours un tableau propre
-    if(!Array.isArray(pairs)) pairs = [];
+    // ── Fallback DEMO ─────────────────────────────────────────
+    if (!Array.isArray(pairs) || !pairs.length) {
+      pairs  = getDemoTokens();
+      isDemo = true;
+    }
+    if (!Array.isArray(pairs)) pairs = [];
 
-    const addrs = (Array.isArray(pairs)?pairs:[]).filter(p=>p?.baseToken).map(p=>p.baseToken.address);
-    await fetchKOLMentions(addrs);
+    // ── KOL enrichissement ────────────────────────────────────
+    const addrs = pairs.filter(p=>p?.baseToken).map(p=>p.baseToken.address);
+    if (typeof fetchKOLMentions === 'function') await fetchKOLMentions(addrs);
 
-    // Cacher le loading dès qu'on a des données (même vides)
     clearTimeout(timeout);
-    if(loadEl) loadEl.style.display = 'none';
+    if (loadEl) loadEl.style.display = 'none';
 
-    // Filtrer les paires valides (Solana, avec baseToken et liq minimale)
-    const validPairs = (Array.isArray(pairs)?pairs:[])
-      .filter(p => p && p.baseToken && (p.liquidity?.usd||0) >= 5000);
-
-    // Scorer tous les tokens qui passent les hard filters
-    const allScored = validPairs
+    // ── SCORING — seuil strict 78 ────────────────────────────
+    const allScored = pairs
+      .filter(p => p?.baseToken)
       .map(p => {
         const res = scoreToken(p);
-        if(!res) return null;
-        return enrichKOL({...p, score:res.score, label:res.label, labelColor:res.labelColor, indicators:res.indicators, breakdown:res.breakdown, debugRows:res.debugRows, hasKOL:res.hasKOL, rugRisk:res.rugRisk, isDemo});
+        if (!res) return null;
+        return enrichKOL({...p,
+          score:res.score, label:res.label, labelColor:res.labelColor,
+          indicators:res.indicators, breakdown:res.breakdown,
+          debugRows:res.debugRows, hasKOL:res.hasKOL,
+          rugRisk:res.rugRisk, isDemo
+        });
       })
       .filter(Boolean)
-      .sort((a,b) => { if(a.hasKOL&&!b.hasKOL) return -1; if(!a.hasKOL&&b.hasKOL) return 1; return b.score-a.score; });
+      .sort((a,b) => { if(a.hasKOL&&!b.hasKOL)return -1; if(!a.hasKOL&&b.hasKOL)return 1; return b.score-a.score; });
 
-    // Tokens qualifiés ≥ 55pts
-    let scored = allScored.filter(t=>t.score>=55).slice(0,10);
+    let scored = allScored.filter(t => t.score >= 78).slice(0, 10);
     let isFallback = false;
 
-    // Fallback niveau 1: top-5 des tokens scorés même sous 55pts
-    if(!scored.length && allScored.length>0) {
-      scored = allScored.slice(0,5);
+    // Fallback léger : pas de tokens ≥78 mais des tokens ≥65 existent
+    if (!scored.length && allScored.filter(t=>t.score>=65).length > 0) {
+      scored    = allScored.filter(t=>t.score>=65).slice(0,5);
       isFallback = true;
     }
 
-    // Fallback niveau 2 : SUPPRIMÉ — le filtre fees/mcap est intentionnellement strict.
-    // Afficher des tokens avec fake volume serait contre-productif.
-    // Si aucun token ne passe → message clair ci-dessous.
-
-    if(!scored.length) {
-      // Diagnostic : compter ce qui s'est passé
-      const rawCount = pairs.filter(p=>p?.baseToken).length;
+    // ── Aucun signal ─────────────────────────────────────────
+    if (!scored.length) {
+      const rawCount  = pairs.filter(p=>p?.baseToken).length;
       const rejections = {};
-      pairs.filter(p=>p?.baseToken).forEach(p=>{
+      pairs.filter(p=>p?.baseToken).forEach(p => {
         const r = hardFilter(p);
-        if(r) rejections[r] = (rejections[r]||0)+1;
+        if (r) rejections[r] = (rejections[r]||0)+1;
       });
-      const topRej = Object.entries(rejections).sort((a,b)=>b[1]-a[1]).slice(0,4).map(([k,v])=>`${k}(×${v})`).join(' · ');
+      const topRej = Object.entries(rejections).sort((a,b)=>b[1]-a[1]).slice(0,4)
+        .map(([k,v])=>`<span style="color:var(--red)">${k}</span>(×${v})`).join(' · ');
 
-      rowsEl.innerHTML=`<div style="padding:40px 20px;text-align:center;">
-        <div style="font-family:Space Mono,monospace;font-size:13px;color:var(--muted2);letter-spacing:.05em;">Pas de signal qualifié (anti-rug fees strict)</div>
-        <div style="font-family:Space Mono,monospace;font-size:9px;color:#555;margin-top:12px;line-height:1.8;">
-          ${rawCount} tokens reçus · ${allScored.length} scorés · aucun ≥60pts<br>
-          Le filtre fees/mcap a éliminé les tokens à volume artificiel.<br>
-          ${topRej ? '<span style="color:#ff6b35;">Top rejets: '+topRej+'</span>' : 'Aucune donnée reçue — CORS ou API indisponible'}
-        </div>
-        <div style="font-family:Space Mono,monospace;font-size:10px;color:var(--green);margin-top:10px;">actualisation dans 30s</div>
-      </div>`;
+      rowsEl.innerHTML = `
+        <div style="padding:48px 24px;text-align:center;">
+          <div style="font-size:32px;margin-bottom:12px;">🛡️</div>
+          <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:var(--muted2);margin-bottom:8px;">
+            Pas de bon signal (anti-rug strict)
+          </div>
+          <div style="font-family:'Space Mono',monospace;font-size:9px;color:var(--muted);margin-bottom:6px;">
+            ${rawCount} tokens scannés · ${allScored.length} scorés · 0 ≥ 78 pts
+          </div>
+          <div style="font-family:'Space Mono',monospace;font-size:9px;color:var(--muted);margin-bottom:16px;line-height:1.8;">
+            ${topRej || 'API indisponible ou aucune donnée Solana'}
+          </div>
+          <div style="font-family:'Space Mono',monospace;font-size:9px;color:var(--green);animation:blink 1s infinite;">
+            ↻ Refresh auto dans 30s
+          </div>
+        </div>`;
+      updateTicker([]);
       return;
     }
 
-    // Banner fallback si top-5 affiché
+    // ── Banners ───────────────────────────────────────────────
     document.getElementById('fallback-banner')?.remove();
-    if(isFallback) {
-      const fb = document.createElement('div');
-      fb.id='fallback-banner';
-      fb.style.cssText='background:rgba(255,107,53,.07);border-bottom:1px solid rgba(255,107,53,.2);padding:8px 20px;font-family:Space Mono,monospace;font-size:10px;color:#ff6b35;text-align:center;';
-      fb.innerHTML='📡 Marché calme — aucun token ≥60pts. Affichage des 5 meilleurs disponibles.';
-      document.querySelector('.scanner-head')?.after(fb);
-    }
-
-    // Supprimer l'éventuel ancien banner démo
     document.getElementById('demo-banner')?.remove();
 
-    // Update KOL badge
-    const kolCount = Object.values(kolCache).reduce((s,a)=>s+a.length,0);
-    const kp = document.getElementById('kol-pill');
-    if(kp) kp.textContent = kolCount>0 ? `🔥 KOL: ${kolCount}` : 'KOL: scan...';
+    if (isFallback) {
+      const fb = document.createElement('div');
+      fb.id = 'fallback-banner';
+      fb.style.cssText = 'background:rgba(168,85,247,.06);border-bottom:1px solid rgba(168,85,247,.2);padding:8px 20px;font-family:Space Mono,monospace;font-size:10px;color:#a855f7;text-align:center;';
+      fb.innerHTML = '📡 Marché calme — aucun token ≥78pts. Top 5 tokens ≥65pts affichés.';
+      document.querySelector('.scanner-head')?.after(fb);
+    }
+    if (isDemo) {
+      const db = document.createElement('div');
+      db.id = 'demo-banner';
+      db.style.cssText = 'background:rgba(255,140,0,.06);border-bottom:1px solid rgba(255,140,0,.2);padding:8px 20px;font-family:Space Mono,monospace;font-size:10px;color:var(--orange);text-align:center;';
+      db.innerHTML = '⚠ Mode DEMO — API DexScreener indisponible (CORS en local). Push sur Vercel pour données réelles.';
+      document.querySelector('.scanner-head')?.after(db);
+    }
 
-    // Update ticker
+    // ── KOL pill update ───────────────────────────────────────
+    if (typeof kolCache !== 'undefined') {
+      const kolCount = Object.values(kolCache).reduce((s,a)=>s+a.length,0);
+      const kp = document.getElementById('kol-pill');
+      if (kp) kp.textContent = kolCount > 0 ? `🔥 KOL: ${kolCount}` : 'KOL: scan...';
+    }
+
     updateTicker(scored);
     await renderTokenRows(scored);
 
   } catch(err) {
     clearTimeout(timeout);
-    const loadEl2 = document.getElementById('scanner-loading');
-    if(loadEl2) loadEl2.innerHTML=`<div style="font-family:Space Mono,monospace;font-size:10px;color:var(--muted2);padding:32px;text-align:center;">⚠ Erreur: ${err.message||err}<br><span style="color:var(--green);margin-top:6px;display:block;">Actualisation dans 30s…</span></div>`;
-    console.error('fetchTokens error:', err);
+    const le = document.getElementById('scanner-loading');
+    if (le) le.innerHTML = `<div style="font-family:Space Mono,monospace;font-size:10px;color:var(--muted2);padding:32px;text-align:center;">⚠ ${err.message||err}<br><span style="color:var(--green);margin-top:6px;display:block;">↻ Refresh dans 30s</span></div>`;
+    console.error('fetchTokens:', err);
   }
 }
 
+// ═══════════════════════════════════════════════════════════════
+// RENDER TOKEN ROWS
+// ═══════════════════════════════════════════════════════════════
 async function renderTokenRows(scored) {
   const rowsEl = document.getElementById('token-rows');
-  if(!rowsEl) return;
+  if (!rowsEl) return;
   lastScored = scored;
 
-  // Pré-charger tous les calls depuis window.storage (shared) AVANT le render
-  // On fait ça en parallèle pour tous les tokens d'un coup
+  // Précharger tous les calls stats
   const statsMap = {};
-  await Promise.all(scored.map(async (p) => {
-    const ca   = p.baseToken?.address;
-    const mcap = p.marketCap || 0;
+  await Promise.all(scored.map(async p => {
+    const ca    = p.baseToken?.address;
+    const mcap  = p.marketCap || 0;
     const price = parseFloat(p.priceUsd) || 0;
     const sym   = p.baseToken?.symbol || '';
     if (ca) {
-      try {
-        statsMap[ca] = await getMcapStats(ca, mcap, price, sym, p.score||0);
-      } catch(e) {
-        // Fallback si storage indispo
-        statsMap[ca] = { callMcap:mcap, athMcap:mcap, callTime:Date.now(), callClock:'--:--', tLabel:'now', xNow:1, xAth:1 };
-      }
+      try { statsMap[ca] = await getMcapStats(ca, mcap, price, sym, p.score||0); }
+      catch(e) { statsMap[ca] = {callMcap:mcap,athMcap:mcap,callTime:Date.now(),callClock:'--:--',tLabel:'now',xNow:1,xAth:1}; }
     }
   }));
 
-  rowsEl.innerHTML = scored.map((p,i) => {
-      const sc   = p.score;
-      const cls  = sc>=75?'hi':'md';
-      const lbl  = getScoreLabel(sc);
-      const c24  = p.priceChange?.h24||0;
-      const c1h  = p.priceChange?.h1 ||0;
-      const locked = !isUnlocked && i>=2;
-      const emoji = getRandEmoji(p.baseToken.address);
-      const ca    = p.baseToken.address;
-      const sym   = p.baseToken.symbol||'—';
-      const mcap  = p.marketCap||0;
-      const price = fmtPrice(parseFloat(p.priceUsd)||0);
-      const stats = statsMap[ca] || { callMcap:mcap, athMcap:mcap, callClock:'--:--', tLabel:'now', xNow:1, xAth:1 };
-      const bd    = p.breakdown||{};
+  rowsEl.innerHTML = scored.map((p, i) => {
+    const sc   = p.score;
+    const lbl  = getScoreLabel(sc);
+    const cls  = sc >= 90 ? 'gold-score' : sc >= 78 ? 'hi' : 'md';
+    const c24  = p.priceChange?.h24 || 0;
+    const c1h  = p.priceChange?.h1  || 0;
+    const locked = !isUnlocked && i >= 2;
+    const emoji  = getRandEmoji(p.baseToken.address);
+    const ca     = p.baseToken.address;
+    const sym    = p.baseToken.symbol || '—';
+    const mcap   = p.marketCap || 0;
+    const price  = fmtPrice(parseFloat(p.priceUsd)||0);
+    const stats  = statsMap[ca] || {callMcap:mcap,athMcap:mcap,callClock:'--:--',tLabel:'now',xNow:1,xAth:1};
+    const bd     = p.breakdown || {};
+    const rug    = p.rugRisk || calcRugRisk(p);
 
-      const rug     = p.rugRisk || calcRugRisk(p);
+    const c24c  = c24 >= 0 ? 'var(--green)' : 'var(--red)';
+    const c1hc  = c1h >= 0 ? 'var(--green)' : 'var(--red)';
+    const xNowC = stats.xNow >= 2 ? 'var(--green)' : stats.xNow >= 1.2 ? 'var(--yellow)' : 'var(--muted2)';
+    const xAthC = stats.xAth >= 3 ? 'var(--green)' : stats.xAth >= 1.5 ? 'var(--yellow)' : 'var(--muted2)';
 
-      const c24c  = c24>=0?'var(--green)':'var(--red)';
-      const c1hc  = c1h>=0?'var(--green)':'var(--red)';
-      const xNowC = stats.xNow>=2?'var(--green)':stats.xNow>=1.2?'var(--yellow)':'var(--muted2)';
-      const xAthC = stats.xAth>=3?'var(--green)':stats.xAth>=1.5?'var(--yellow)':'var(--muted2)';
+    // Fees tag
+    const vol24r = p.volume?.h24||0, vol6hr = p.volume?.h6||0;
+    const ager   = (Date.now()-(p.pairCreatedAt||Date.now()))/3600000;
+    const feesr  = estimateFeesSol(vol24r, vol6hr, ager);
+    const fratr  = feesRatioMcap(feesr, mcap);
+    const fminr  = feesMinSol(mcap);
+    const fcolr  = fratr >= 0.12 ? 'var(--green)' : fratr >= 0.045 ? 'var(--yellow)' : 'var(--red)';
+    const feesTag = `<span style="font-family:Space Mono,monospace;font-size:7px;padding:1px 6px;border-radius:3px;border:1px solid ${fcolr}40;color:${fcolr};background:${fcolr}12;" title="Fees Pump.fun estimés · seuil: ${fminr}SOL · ratio: ${(fratr*100).toFixed(1)}%">⛽ ${feesr.toFixed(1)}SOL · ${(fratr*100).toFixed(1)}%</span>`;
 
-      // Calcul fees pour affichage dans la row
-      const _vol24r = p.volume?.h24||0, _vol6hr = p.volume?.h6||0;
-      const _ager   = (Date.now()-(p.pairCreatedAt||Date.now()))/3600000;
-      const _feesr  = estimateFeesSol(_vol24r, _vol6hr, _ager);
-      const _mcapr  = p.marketCap||0;
-      const _fratr  = feesRatioMcap(_feesr, _mcapr);
-      const _fminr  = feesMinSol(_mcapr);
-      const _fcolr  = _fratr >= 0.10 ? '#00e676' : _fratr >= 0.04 ? '#ffd32a' : '#ff4757';
-      const feesTag = `<span style="font-family:Space Mono,monospace;font-size:7px;padding:1px 5px;border-radius:2px;border:1px solid ${_fcolr}40;color:${_fcolr};background:${_fcolr}12;" title="Fees estimés Pump.fun · seuil: ${_fminr}SOL · ratio: ${(_fratr*100).toFixed(2)}% (élevé=bon)">⛽ ~${_feesr.toFixed(1)} SOL · ${(_fratr*100).toFixed(1)}%</span>`;
+    // Indicators
+    let indHtml = '';
+    (p.indicators||[]).slice(0,5).forEach(ind => {
+      const t = ind.isKol?'kol':ind.ok?'ok':'bad';
+      indHtml += `<span class="ind ${t}">${ind.label}</span>`;
+    });
 
-      let indHtml = '';
-      (p.indicators||[]).slice(0,5).forEach(ind => {
-        const t = ind.isKol?'kol':ind.ok?'ok':'bad';
-        indHtml += `<span class="ind ${t}">${ind.label}</span>`;
-      });
+    // Breakdown bars
+    const bdItems = [
+      ['B', bd.trading,  22, 'Buy'],
+      ['V', bd.momentum, 18, 'Vol'],
+      ['M', bd.holders,  35, 'Momentum'],
+      ['A', bd.age,      15, 'Age'],
+      ['MC',bd.liquidity,18, 'McAp'],
+      ['F', bd.fees,     22, 'Fees'],
+    ];
+    const bdHtml = `<div style="display:flex;gap:3px;margin-top:5px;align-items:center;flex-wrap:wrap;">
+      ${bdItems.map(([k,v,max])=>{
+        const val = v||0; const pct = max>0?Math.round(val/max*100):0;
+        const col = pct>=70?'var(--green)':pct>=40?'var(--yellow)':'var(--red)';
+        return `<span style="font-family:Space Mono,monospace;font-size:7px;color:var(--muted2);">${k}<span style="color:${col}">${val}</span></span>`;
+      }).join('<span style="color:var(--border);margin:0 1px">·</span>')}
+      ${bd.bonus>0?`<span style="font-family:Space Mono,monospace;font-size:7px;color:var(--yellow);margin-left:2px;">⭐+${bd.bonus}</span>`:''}
+    </div>`;
 
-      const bdHtml = `<div style="display:flex;gap:4px;margin-top:5px;align-items:center;flex-wrap:wrap;">
-        ${[['L',bd.liquidity,15],['V',bd.trading,20],['H',bd.holders,15],['S',bd.smart,20],['F',bd.fees,15],['D',bd.distribution,10],['A',bd.age,5]].map(([k,v,max])=>{
-          const pct = max>0?Math.round((v||0)/max*100):0;
-          const col = pct>=70?'var(--green)':pct>=40?'var(--yellow)':'var(--red)';
-          return `<span style="font-family:Space Mono,monospace;font-size:7px;color:var(--muted2);">${k}<span style="color:${col}">${v||0}</span></span>`;
-        }).join('<span style="color:var(--border);margin:0 1px">·</span>')}
-        ${bd.bonus>0?`<span style="font-family:Space Mono,monospace;font-size:7px;color:#00e676;margin-left:2px;">⚡+${bd.bonus}</span>`:''}
-      </div>`;
+    // Score color spécial pour GOD GEM
+    const scoreStyle = sc >= 90
+      ? `color:#ffd700;text-shadow:0 0 12px rgba(255,215,0,0.5);`
+      : sc >= 78 ? `color:var(--green);text-shadow:0 0 10px rgba(0,255,136,0.4);` : `color:var(--yellow);`;
+    const barStyle = sc >= 90 ? 'background:linear-gradient(90deg,#ffd700,#ffaa00);' : sc >= 78 ? 'background:linear-gradient(90deg,var(--green),#00ffcc);' : 'background:var(--yellow);';
 
-      const rowStyle = locked ? ' style="filter:blur(5px);pointer-events:none"' : '';
-      const rowAttr  = locked ? ' data-locked="1"' : '';
-      const demoTag  = p.isDemo ? '<span style="font-family:Space Mono,monospace;font-size:7px;color:var(--orange);border:1px solid rgba(255,165,2,.3);padding:1px 4px;border-radius:2px;margin-left:4px;">DEMO</span>' : '';
+    const rowStyle = locked ? ' style="filter:blur(5px);pointer-events:none"' : '';
+    const rowAttr  = locked ? ' data-locked="1"' : '';
+    const demoTag  = p.isDemo ? '<span style="font-family:Space Mono,monospace;font-size:7px;color:var(--orange);border:1px solid rgba(255,140,0,.3);padding:1px 4px;border-radius:2px;margin-left:4px;">DEMO</span>' : '';
 
-      return `<div class="token-row"${rowStyle}${rowAttr}>
-        <div class="tok-info">
-          <div class="tok-icon">${emoji}</div>
-          <div style="flex:1">
-            <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
-              <div class="tok-name">${sym}</div>
-              ${demoTag}
-              <button class="btn-ca" onclick="cpCA('${ca}',this)">CA</button>
-              ${isAdminMode?`<button class="btn-ca" style="background:rgba(255,165,2,.15);border-color:rgba(255,165,2,.4);color:#ffa502;" onclick="showDebug(${i})">DEBUG</button>`:''}
-            </div>
-            <div class="ind-row">${indHtml} ${feesTag}</div>
-            ${bdHtml}
+    return `<div class="token-row"${rowStyle}${rowAttr}>
+      <div class="tok-info">
+        <div class="tok-icon">${emoji}</div>
+        <div style="flex:1">
+          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+            <div class="tok-name">${sym}</div>
+            ${demoTag}
+            <button class="btn-ca" onclick="cpCA('${ca}',this)">CA</button>
+            ${isAdminMode?`<button class="btn-ca" style="background:rgba(255,140,0,.15);border-color:rgba(255,140,0,.4);color:var(--orange);" onclick="showDebug(${i})">DBG</button>`:''}
           </div>
+          <div class="ind-row">${indHtml} ${feesTag}</div>
+          ${bdHtml}
         </div>
-        <div>
-          <div class="score-wrap">
-            <div class="score-num ${cls}">${sc}</div>
-            <div class="score-bar"><div class="score-fill ${cls}" style="width:0%" data-w="${sc}%"></div></div>
-          </div>
-          <div style="font-family:Space Mono,monospace;font-size:8px;color:${lbl.color};margin-top:4px;white-space:nowrap;">${lbl.text}</div>
+      </div>
+      <div>
+        <div class="score-wrap">
+          <div class="score-num" style="${scoreStyle}font-family:Space Mono,monospace;font-size:14px;font-weight:700;min-width:32px;">${sc}</div>
+          <div class="score-bar"><div class="score-fill" style="${barStyle}height:100%;border-radius:2px;width:0%" data-w="${Math.min(sc,100)}%"></div></div>
         </div>
-        <div>
-          <div class="cell-mono">${price}</div>
-          <div class="cell-sub">1h: <span style="color:${c1hc}">${c1h>=0?'+':''}${c1h.toFixed(1)}%</span></div>
+        <div style="font-family:Space Mono,monospace;font-size:9px;color:${lbl.color};margin-top:4px;white-space:nowrap;">${lbl.text}</div>
+      </div>
+      <div>
+        <div class="cell-mono">${price}</div>
+        <div class="cell-sub">1h: <span style="color:${c1hc}">${c1h>=0?'+':''}${c1h.toFixed(1)}%</span></div>
+      </div>
+      <div>
+        <div class="cell-mono" style="color:${c24c}">${c24>=0?'+':''}${c24.toFixed(1)}%</div>
+        <div class="cell-sub">McAp: ${fmtMcap(mcap)}</div>
+      </div>
+      <div>
+        <div class="cell-mono" style="font-size:9px;line-height:1.9;">
+          <div><span style="color:var(--muted2);">📍</span><span style="font-weight:600;"> ${fmtMcap(stats.callMcap)}</span><span style="color:var(--muted);font-size:8px;"> ${stats.callClock} · ${stats.tLabel}</span></div>
+          <div><span style="color:var(--muted2);">⬆</span><span style="color:${xNowC};font-weight:600;"> ${fmtMcap(mcap)}</span><span style="color:${xNowC};font-size:8px;"> ${stats.xNow.toFixed(2)}x</span></div>
+          <div><span style="color:var(--muted2);">🏆</span><span style="color:${xAthC};font-weight:600;"> ${fmtMcap(stats.athMcap)}</span><span style="color:${xAthC};font-size:8px;"> ${stats.xAth.toFixed(2)}x</span></div>
         </div>
-        <div>
-          <div class="cell-mono" style="color:${c24c}">${c24>=0?'+':''}${c24.toFixed(1)}%</div>
-          <div class="cell-sub">McAp: ${fmtMcap(mcap)}</div>
+      </div>
+      <div>
+        <div style="display:inline-flex;flex-direction:column;align-items:center;gap:5px;">
+          <span style="font-family:Space Mono,monospace;font-size:10px;font-weight:700;padding:5px 12px;border-radius:6px;letter-spacing:.5px;background:${rug.bg};border:1px solid ${rug.color}50;color:${rug.color};">
+            ${rug.level==='LOW'?'🟢':rug.level==='MEDIUM'?'🟡':'🔴'} ${rug.level}
+          </span>
+          <span style="font-family:Space Mono,monospace;font-size:7px;color:var(--muted2);text-align:center;">${lbl.text}</span>
+          ${rug.flags.length?`<span style="font-family:Space Mono,monospace;font-size:7px;color:${rug.color};opacity:.7;">${rug.flags[0]}</span>`:''}
         </div>
-        <div>
-          <div class="cell-mono" style="font-size:9px;line-height:1.9;">
-            <div><span style="color:var(--muted2);">📍 Call </span><span style="color:var(--text);font-weight:600;">${fmtMcap(stats.callMcap)}</span><span style="color:var(--muted);font-size:8px;"> ${stats.callClock} · ${stats.tLabel}</span></div>
-            <div><span style="color:var(--muted2);">⬆ Now  </span><span style="color:${xNowC};font-weight:600;">${fmtMcap(mcap)}</span><span style="color:${xNowC};font-size:8px;"> (${stats.xNow.toFixed(2)}x)</span></div>
-            <div><span style="color:var(--muted2);">🏆 ATH  </span><span style="color:${xAthC};font-weight:600;">${fmtMcap(stats.athMcap)}</span><span style="color:${xAthC};font-size:8px;"> (${stats.xAth.toFixed(2)}x)</span></div>
-          </div>
-        </div>
-        <div>
-          <div style="display:inline-flex;flex-direction:column;align-items:center;gap:4px;">
-            <span style="font-family:Space Mono,monospace;font-size:10px;font-weight:700;
-              padding:4px 10px;border-radius:4px;letter-spacing:.5px;
-              background:${rug.bg};border:1px solid ${rug.color}50;color:${rug.color};">
-              ${rug.level === 'LOW' ? '🟢' : rug.level === 'MEDIUM' ? '🟡' : '🔴'} ${rug.level}
-            </span>
-            <span style="font-family:Space Mono,monospace;font-size:7px;color:var(--muted2);">
-              ${lbl.text}
-            </span>
-            ${rug.flags.length > 0 ? `<span style="font-family:Space Mono,monospace;font-size:7px;color:${rug.color};opacity:.7;max-width:100px;text-align:center;line-height:1.3;">${rug.flags[0]}</span>` : ''}
-          </div>
-        </div>
-      </div>`;
-    }).join('');
+      </div>
+    </div>`;
+  }).join('');
 
   // Animate score bars
   setTimeout(() => {
     rowsEl.querySelectorAll('.score-fill').forEach(el => {
-      el.style.transition='width .8s ease'; el.style.width=el.dataset.w;
+      el.style.transition = 'width .8s ease';
+      el.style.width = el.dataset.w;
     });
-  },100);
+  }, 100);
 }
 
 function updateTicker(pairs) {
