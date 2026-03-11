@@ -997,8 +997,8 @@ async function renderHistory() {
     // Time display
     const mins  = Math.floor(ageCall/60000);
     const hours = Math.floor(ageCall/3600000);
-    const days  = Math.floor(ageCall/86400000);
-    const timeStr = days > 0 ? `il y a ${days}j` : hours > 0 ? `il y a ${hours}h` : `il y a ${mins}m`;
+    const remMins = mins % 60;
+    const timeStr = hours > 0 ? `il y a ${hours}h${remMins > 0 ? remMins+'m' : '' }` : `il y a ${mins}m`;
 
     cards += `<div class="hist-card">
       <div class="hist-card-header">
