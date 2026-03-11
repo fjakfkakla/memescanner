@@ -246,6 +246,40 @@ section{scroll-margin-top:70px;}
   nav{padding:0 1rem;}
   .nav-links{display:none;}
 }
+
+/* ── SCANNER TABS ───────────────────────────────────────────── */
+.scanner-tabs{display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:1.5rem;}
+.s-tab{padding:.55rem 1.4rem;font-size:.82rem;font-weight:600;cursor:pointer;border:none;background:none;color:var(--muted);border-bottom:2px solid transparent;transition:.2s;font-family:var(--font);}
+.s-tab.active{color:var(--green);border-bottom-color:var(--green);}
+.s-tab:hover:not(.active){color:var(--text);}
+
+/* ── HISTORY GRID ───────────────────────────────────────────── */
+.history-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:1rem;padding:.5rem 0;}
+.hist-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1rem 1.1rem;display:flex;flex-direction:column;gap:.55rem;transition:.2s;}
+.hist-card:hover{border-color:rgba(0,255,136,.25);transform:translateY(-1px);}
+.hist-card-header{display:flex;align-items:center;gap:.6rem;}
+.hist-tok-icon{width:36px;height:36px;border-radius:50%;background:rgba(0,255,136,.1);border:1px solid rgba(0,255,136,.2);display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0;}
+.hist-tok-name{font-weight:700;font-size:.95rem;color:var(--text);}
+.hist-tok-sub{font-size:.68rem;color:var(--muted);font-family:var(--font-mono);}
+.hist-xrow{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.4rem;text-align:center;}
+.hist-x-cell{background:rgba(255,255,255,.03);border-radius:6px;padding:.35rem .3rem;}
+.hist-x-label{font-size:.58rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:2px;}
+.hist-x-val{font-size:.95rem;font-weight:700;}
+.hist-x-val.up{color:var(--green);}
+.hist-x-val.down{color:var(--red);}
+.hist-x-val.neutral{color:var(--muted);}
+.hist-mcap-row{display:flex;flex-direction:column;gap:.18rem;font-size:.72rem;}
+.hist-mcap-line{display:flex;justify-content:space-between;}
+.hist-mcap-line span:first-child{color:var(--muted);}
+.hist-mcap-line span:last-child{color:var(--text);font-family:var(--font-mono);}
+.hist-footer{display:flex;justify-content:space-between;align-items:center;font-size:.65rem;color:var(--muted);border-top:1px solid var(--border);padding-top:.45rem;margin-top:.1rem;}
+.hist-dex-btn{padding:.3rem .7rem;background:rgba(0,255,136,.1);border:1px solid rgba(0,255,136,.2);color:var(--green);border-radius:5px;font-size:.65rem;font-weight:600;cursor:pointer;text-decoration:none;}
+.hist-empty{text-align:center;padding:3rem 1rem;color:var(--muted);}
+.hist-empty-icon{font-size:2.5rem;margin-bottom:.7rem;}
+.hist-badge{font-size:.6rem;padding:.15rem .4rem;border-radius:4px;font-weight:700;}
+.hist-badge-live{background:rgba(0,255,136,.15);color:var(--green);}
+.hist-badge-dead{background:rgba(255,60,60,.1);color:var(--red);}
+.hist-count{font-size:.72rem;color:var(--muted);margin-left:.5rem;}
 </style>
 </head>
 <body>
@@ -379,11 +413,27 @@ section{scroll-margin-top:70px;}
       <button class="scan-btn scan-btn-green" onclick="fetchTokens()">↻ Refresh</button>
     </div>
   </div>
-  <div id="scannerContent">
-    <div class="loading-state" id="loadingEl">
-      <div class="spinner"></div>
-      <div style="font-family:var(--font-mono);font-size:.85rem;color:var(--muted)">Analyse en cours...</div>
+  <!-- TABS -->
+  <div class="scanner-tabs">
+    <button class="s-tab active" id="tabLive" onclick="switchTab('live')">📡 Live <span id="liveCount" class="hist-count"></span></button>
+    <button class="s-tab" id="tabHistory" onclick="switchTab('history')">📋 Historique <span id="histCount" class="hist-count"></span></button>
+  </div>
+  <!-- LIVE PANEL -->
+  <div id="panelLive">
+    <div id="scannerContent">
+      <div class="loading-state" id="loadingEl">
+        <div class="spinner"></div>
+        <div style="font-family:var(--font-mono);font-size:.85rem;color:var(--muted)">Analyse en cours...</div>
+      </div>
     </div>
+  </div>
+  <!-- HISTORY PANEL -->
+  <div id="panelHistory" style="display:none">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+      <div style="font-size:.8rem;color:var(--muted)">Tous les tokens callés depuis le début · ne disparaissent jamais</div>
+      <button class="scan-btn scan-btn-outline" onclick="renderHistory()" style="font-size:.72rem">↻ Refresh</button>
+    </div>
+    <div id="historyContent"><div class="hist-empty"><div class="hist-empty-icon">📭</div><div>Chargement...</div></div></div>
   </div>
 </div>
 </section>
@@ -822,8 +872,8 @@ RUG RISK       : ${t.rugRisk}`;
 // ============================================================
 // PERSISTENT CALLS
 // ============================================================
-async function saveCall(addr, callMcap, callTime) {
-  const entry = { callMcap, callTime, athMcap: callMcap };
+async function saveCall(addr, callMcap, callTime, symbol='') {
+  const entry = { callMcap, callTime, athMcap: callMcap, addr, symbol };
   try { const all=JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}'); if(!all[addr]){all[addr]=entry;localStorage.setItem(STORAGE_KEY,JSON.stringify(all));} } catch(e) {}
   try { const key=addr.replace(/[.#$\/\[\]]/g,'_'); const ex=await fetch(`${FB_URL}/calls/${key}.json`).then(r=>r.json()).catch(()=>null); if(!ex) await fetch(`${FB_URL}/calls/${key}.json`,{method:'PUT',body:JSON.stringify(entry)}); } catch(e) {}
 }
@@ -843,6 +893,152 @@ async function getCallData(addr) {
 function fmtNum(n) { if(!n||isNaN(n))return'?'; if(n>=1e6)return(n/1e6).toFixed(1)+'M'; if(n>=1e3)return(n/1e3).toFixed(1)+'K'; return n.toFixed(0); }
 function timeAgo(ts) { const d=Math.floor((Date.now()-ts)/1000); if(d<60)return d+'s ago'; if(d<3600)return Math.floor(d/60)+'m ago'; return Math.floor(d/3600)+'h ago'; }
 function fmtTime(ts) { const d=new Date(ts); return d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0'); }
+
+
+// ============================================================
+// TABS — Live / Historique
+// ============================================================
+let currentTab = 'live';
+function switchTab(tab) {
+  currentTab = tab;
+  document.getElementById('panelLive').style.display    = tab === 'live'    ? 'block' : 'none';
+  document.getElementById('panelHistory').style.display = tab === 'history' ? 'block' : 'none';
+  document.getElementById('tabLive').classList.toggle('active',    tab === 'live');
+  document.getElementById('tabHistory').classList.toggle('active', tab === 'history');
+  if (tab === 'history') renderHistory();
+}
+
+// ============================================================
+// RENDER HISTORY — tous les calls persistants
+// ============================================================
+async function renderHistory() {
+  const container = document.getElementById('historyContent');
+  container.innerHTML = '<div class="hist-empty"><div class="hist-empty-icon">⏳</div><div style="color:var(--muted)">Chargement...</div></div>';
+
+  // ── Charger depuis Firebase ──────────────────────────────
+  let calls = {};
+  try {
+    const fb = await fetch(`${FB_URL}/calls.json`).then(r => r.json());
+    if (fb && typeof fb === 'object') {
+      Object.entries(fb).forEach(([key, val]) => {
+        if (val && val.callTime) calls[key] = val;
+      });
+    }
+  } catch(e) {}
+  // Merge localStorage (priorité Firebase pour ATH)
+  try {
+    const local = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+    Object.entries(local).forEach(([addr, val]) => {
+      const key = addr.replace(/[.#$\/\[\]]/g, '_');
+      if (!calls[key]) calls[key] = { ...val, addr };
+      else {
+        if (!calls[key].addr) calls[key].addr = addr;
+        if ((val.athMcap||0) > (calls[key].athMcap||0)) calls[key].athMcap = val.athMcap;
+      }
+    });
+  } catch(e) {}
+
+  const entries = Object.entries(calls);
+  // Update count badge
+  const hc = document.getElementById('histCount');
+  if (hc) hc.textContent = entries.length ? `(${entries.length})` : '';
+
+  if (!entries.length) {
+    container.innerHTML = `<div class="hist-empty">
+      <div class="hist-empty-icon">📭</div>
+      <div style="font-weight:600;color:var(--text);margin-bottom:.4rem">Aucun call encore</div>
+      <div style="font-size:.8rem">Les calls apparaîtront ici dès que le scanner en détecte un.</div>
+    </div>`;
+    return;
+  }
+
+  // Trier par date (plus récent en premier)
+  entries.sort((a,b) => (b[1].callTime||0) - (a[1].callTime||0));
+
+  // Récupérer prix actuels depuis DexScreener pour les tokens récents (<48h)
+  const recentAddrs = entries
+    .filter(([,v]) => Date.now() - (v.callTime||0) < 48*3600000 && (v.addr||v.address))
+    .map(([,v]) => v.addr || v.address)
+    .filter(Boolean).slice(0, 30);
+
+  let liveMap = {};
+  if (recentAddrs.length) {
+    try {
+      const chunk = recentAddrs.slice(0,20).join(',');
+      const res = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${chunk}`, {signal:AbortSignal.timeout(8000)}).then(r=>r.json());
+      (res.pairs||[]).forEach(p => {
+        const a = p.baseToken?.address;
+        if (a) liveMap[a] = p.marketCap || p.fdv || 0;
+      });
+    } catch(e) {}
+  }
+
+  // ── Render cards ──────────────────────────────────────────
+  const EMOJIS_LIST = ['🐸','🚀','💎','🌙','🔥','⚡','🦊','🐉','🦁','🎯','👾','🤖'];
+  let cards = '';
+  for (const [key, v] of entries) {
+    const addr        = v.addr || v.address || '';
+    const callMcap    = v.callMcap  || 0;
+    const athMcap     = v.athMcap   || callMcap;
+    const callTime    = v.callTime  || 0;
+    const sym         = (v.symbol   || key.slice(0,8).toUpperCase());
+    const currentMcap = liveMap[addr] || 0;
+
+    const highX    = callMcap > 0 ? athMcap    / callMcap : 1;
+    const latestX  = callMcap > 0 ? (currentMcap > 0 ? currentMcap / callMcap : highX) : 1;
+    const isLive   = currentMcap > 0 && Date.now() - callTime < 48*3600000;
+    const ageCall  = Date.now() - callTime;
+
+    function xColor(x) { return x >= 2 ? 'up' : x >= 1 ? 'neutral' : 'down'; }
+
+    const emoji = EMOJIS_LIST[Math.abs(addr.charCodeAt(0)||0) % EMOJIS_LIST.length];
+    const dexUrl = `https://dexscreener.com/solana/${addr}`;
+
+    // Time display
+    const mins  = Math.floor(ageCall/60000);
+    const hours = Math.floor(ageCall/3600000);
+    const days  = Math.floor(ageCall/86400000);
+    const timeStr = days > 0 ? `il y a ${days}j` : hours > 0 ? `il y a ${hours}h` : `il y a ${mins}m`;
+
+    cards += `<div class="hist-card">
+      <div class="hist-card-header">
+        <div class="hist-tok-icon">${emoji}</div>
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;gap:.4rem;flex-wrap:wrap">
+            <span class="hist-tok-name">${sym}</span>
+            <span class="hist-badge ${isLive ? 'hist-badge-live' : 'hist-badge-dead'}">${isLive ? '🟢 LIVE' : '⚫ PASSÉ'}</span>
+          </div>
+          <div class="hist-tok-sub">${addr ? addr.slice(0,10)+'...'+addr.slice(-4) : '—'}</div>
+        </div>
+      </div>
+      <div class="hist-xrow">
+        <div class="hist-x-cell">
+          <div class="hist-x-label">Highest X</div>
+          <div class="hist-x-val ${xColor(highX)}">${highX.toFixed(1)}x</div>
+        </div>
+        <div class="hist-x-cell">
+          <div class="hist-x-label">Latest X</div>
+          <div class="hist-x-val ${xColor(latestX)}">${latestX.toFixed(1)}x</div>
+        </div>
+        <div class="hist-x-cell">
+          <div class="hist-x-label">KOLs</div>
+          <div class="hist-x-val neutral">0</div>
+        </div>
+      </div>
+      <div class="hist-mcap-row">
+        <div class="hist-mcap-line"><span>Initial</span><span style="color:var(--green)">$${fmtNum(callMcap)}</span></div>
+        <div class="hist-mcap-line"><span>Mcap actuel</span><span>${currentMcap > 0 ? '$'+fmtNum(currentMcap) : '—'}</span></div>
+        <div class="hist-mcap-line"><span>ATH</span><span style="color:var(--gold)">$${fmtNum(athMcap)}</span></div>
+      </div>
+      <div class="hist-footer">
+        <span>${timeStr}</span>
+        <a href="${dexUrl}" target="_blank" class="hist-dex-btn">DexScreener →</a>
+      </div>
+    </div>`;
+  }
+
+  container.innerHTML = `<div class="history-grid">${cards}</div>`;
+}
 
 // ============================================================
 // HARD FILTER v12 — early gems 25K-250K, strict anti-rug
@@ -1147,7 +1343,7 @@ async function fetchTokens() {
 
   for (const t of scored) {
     const existing = await getCallData(t.addr);
-    if (!existing) await saveCall(t.addr, t.mcap, Date.now());
+    if (!existing) await saveCall(t.addr, t.mcap, Date.now(), t.symbol);
     else if (t.mcap > (existing.athMcap||0)) await updateAth(t.addr, t.mcap);
   }
 
@@ -1171,6 +1367,7 @@ async function fetchTokens() {
     await renderTokenTable(scored);
   }
 
+  if (currentTab === 'history') renderHistory();
   if (refreshTimer) clearTimeout(refreshTimer);
   refreshTimer = setTimeout(fetchTokens, 20000);
 }
@@ -1240,6 +1437,9 @@ async function renderTokenTable(tokens) {
     return;
   }
 
+  // Update live count
+  const lc = document.getElementById('liveCount');
+  if (lc) lc.textContent = tokens.length ? `(${tokens.length})` : '';
   content.innerHTML = `<table class="token-table">
     <thead><tr>
       <th>Token</th><th>Score</th><th>McAp Call / Now / ATH</th><th>⛽ Fees Estimés</th><th>Rug Risk</th>
