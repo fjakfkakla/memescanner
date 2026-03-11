@@ -799,6 +799,22 @@ function renderCodes() {
     </div>`;
   }).join('');
 }
+function copyAddr(addr, el) {
+  navigator.clipboard.writeText(addr).then(() => {
+    const prev = el.textContent;
+    el.textContent = '✅ Copié!';
+    el.style.color = 'var(--green)';
+    setTimeout(() => { el.textContent = prev; el.style.color = ''; }, 1500);
+  }).catch(() => {
+    const ta = document.createElement('textarea');
+    ta.value = addr; document.body.appendChild(ta); ta.select();
+    document.execCommand('copy'); document.body.removeChild(ta);
+    const prev = el.textContent;
+    el.textContent = '✅ Copié!';
+    el.style.color = 'var(--green)';
+    setTimeout(() => { el.textContent = prev; el.style.color = ''; }, 1500);
+  });
+}
 function cpCode(code, btn) {
   navigator.clipboard.writeText(code).then(()=>{
     const o=btn.textContent; btn.textContent='✓'; btn.style.borderColor='var(--green)'; btn.style.color='var(--green)';
@@ -1475,7 +1491,7 @@ async function renderTokenTable(tokens) {
           <span class="tok-emoji">${t.emoji}</span>
           <div>
             <div class="tok-sym"><a href="${t.pairUrl}" target="_blank" style="color:inherit;text-decoration:none">${t.symbol}</a>${debugBtn}</div>
-            <div class="tok-addr">${t.addr.slice(0,8)}...${t.addr.slice(-4)}</div>
+            <div class="tok-addr" onclick="copyAddr(\`${t.addr}\`,this)" style="cursor:pointer;" title="Copier l'adresse">${t.addr.slice(0,8)}...${t.addr.slice(-4)} 📋</div>
           </div>
         </div>
       </td>
