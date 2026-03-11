@@ -362,7 +362,7 @@ section{scroll-margin-top:70px;}
       <span style="font-family:var(--font-mono);font-size:.8rem">🎰 IRANCOIN</span>
       <span class="demo-reject">✗ staircase: c24h +480% c1h +2%</span>
     </div>
-    <div style="text-align:center;margin-top:.8rem;font-size:.65rem;color:var(--muted);font-family:var(--font-mono)">2 qualifiés · 15 hard filters · score min 80</div>
+    <div style="text-align:center;margin-top:.8rem;font-size:.65rem;color:var(--muted);font-family:var(--font-mono)">2 qualifiés · 15 hard filters · score min 45</div>
   </div>
 </div>
 </section>
@@ -1043,201 +1043,229 @@ async function renderHistory() {
 // ============================================================
 // HARD FILTER v12 — early gems 25K-250K, strict anti-rug
 // ============================================================
+// ============================================================
+// SMART WALLETS — known profitable Solana traders
+// ============================================================
+const SMART_WALLETS = new Set([
+  '9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM',
+  'HN7cABqLq46Es1jh92dQQisAq662SmxELLLsHHe4YWrH',
+  'GGztQqQ2GgN3dpASHb3DFGCn6mYgdxiTT1PJB7MHy7um',
+  'CuieVDEDtLo7FypA9SbLM9saXFdb1dsshEkyErMqkRQq',
+  'CakcnaRDHka2gXyfxNZMNByNnC9c9mBMGFCa9AKqeQVS',
+  '5tzFkiKscXHK5ZXCGbCg9SxGU5VGa3XEPz8JR9FcFN5U',
+  'EhYXq3ANp5nAerUpbSgd7VK2RRcxK1zNuSQ755G5Xfce',
+  'DfMxre4cKmvogbLrPigxmibVTTQDuzjdXojWzjCXXhzj',
+  '4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R',
+  'ASTyfSima4LLAdDgoFGkgqoKowG1LZFDr9fAQrg7iaJZ',
+  'H6ARHf6YXhGYeQfUzQNGk6rDNnLBQKrenN712K4GGKBG',
+  'DCAKuApAuZtVNYLk3KTAVW9GLWVvPbnb5CxxRRmVgcTx',
+  'BczD9LJyQiBBSykXdoFY7mFLzXQCbBMiMhGFNHwrMUFM',
+  'JBu1AL4obBcCMqKBBxhpWCNUt136ijcuMZLFvTP7iWdB',
+]);
+const swCache = {};
+async function fetchSmartWalletActivity(tokenAddr) {
+  if (!tokenAddr) return {count:0,clustered:false};
+  const now = Date.now();
+  if (swCache[tokenAddr] && now-swCache[tokenAddr].ts<90000) return swCache[tokenAddr].result;
+  try {
+    const data = await fetch(`https://api.dexscreener.com/latest/dex/pairs/solana/${tokenAddr}`,
+      {signal:AbortSignal.timeout(5000)}).then(r=>r.json());
+    const trades=data?.trades||data?.recentTrades||[];
+    const SW_WIN=5*60*1000, CL_WIN=30*1000;
+    const recent=trades.filter(t=>t.type==='buy'&&now-(t.timestamp||0)*1000<SW_WIN);
+    let smartBuys=0, buyTs=[];
+    for (const tx of recent) {
+      if (SMART_WALLETS.has(tx.maker||tx.wallet||tx.address||'')) {smartBuys++;buyTs.push((tx.timestamp||0)*1000);}
+    }
+    let clustered=false;
+    if (buyTs.length>=2) { buyTs.sort((a,b)=>a-b); for(let i=1;i<buyTs.length;i++) if(buyTs[i]-buyTs[i-1]<CL_WIN){clustered=true;break;} }
+    const result={count:smartBuys,clustered};
+    swCache[tokenAddr]={ts:now,result};
+    return result;
+  } catch(e) { return {count:0,clustered:false}; }
+}
+function smartWalletScore(sw) {
+  let p=sw.count>=3?25:sw.count===2?15:sw.count===1?8:0;
+  if(sw.clustered)p+=10;
+  return p;
+}
+
 function hardFilter(p) {
-  const ageH      = (Date.now() - (p.pairCreatedAt||0)) / 3600000;
-  const liq       = p.liquidity?.usd || 0;
-  const mcap      = p.marketCap || p.fdv || 0;
-  const fdv       = p.fdv || mcap;
-  const buys1     = p.txns?.h1?.buys  || 0;
-  const sells1    = p.txns?.h1?.sells || 0;
-  const total1    = buys1 + sells1 || 1;
-  const sellRatio = sells1 / total1;
-  const vol1      = p.volume?.h1  || 0;
-  const vol6      = p.volume?.h6  || 0;
-  const vol24     = p.volume?.h24 || 0;
-  const c1h       = p.priceChange?.h1  || 0;
-  const c24h      = p.priceChange?.h24 || 0;
-  const m5        = p.priceChange?.m5  || 0;
-  const txns1     = buys1 + sells1;
-  const avgTrade  = txns1 > 0 ? vol1 / txns1 : 9999;
+  const ageH     = (Date.now()-(p.pairCreatedAt||0))/3600000;
+  const liq      = p.liquidity?.usd||0;
+  const mcap     = p.marketCap||p.fdv||0;
+  const fdv      = p.fdv||mcap;
+  const buys1    = p.txns?.h1?.buys||0;
+  const sells1   = p.txns?.h1?.sells||0;
+  const total1   = buys1+sells1||1;
+  const sellRatio= sells1/total1;
+  const vol1     = p.volume?.h1||0;
+  const vol6     = p.volume?.h6||0;
+  const vol24    = p.volume?.h24||0;
+  const m5       = p.priceChange?.m5||0;
 
-  // F1 — mcap 25K-250K focus early gems
-  if (mcap < 25000)     return { pass:false, reason:`mcap $${fmtNum(mcap)} < $25K` };
-  if (mcap > 250000)    return { pass:false, reason:`mcap $${fmtNum(mcap)} > $250K` };
-  // F2 — liquidité mini
-  if (liq < 8000)       return { pass:false, reason:`liq $${fmtNum(liq)} < $8K` };
-  // F3 — age 0.5h-24h
-  if (ageH < 0.5)       return { pass:false, reason:`age ${ageH.toFixed(2)}h < 0.5h` };
-  if (ageH > 24)        return { pass:false, reason:`age ${ageH.toFixed(1)}h > 24h` };
-  // F4 — sell dominance (dump actif)
-  if (sellRatio > 0.62) return { pass:false, reason:`sell ratio ${(sellRatio*100).toFixed(0)}% > 62%` };
-  // F5 — crash 1h
-  if (c1h < -15)        return { pass:false, reason:`crash 1h ${c1h.toFixed(1)}%` };
-  // F6 — pump bot m5
-  if (m5 > 300)         return { pass:false, reason:`pump bot m5 +${m5.toFixed(0)}%` };
-  // F7 — vol/liq minimal (activité réelle, pas zombie)
-  //      seuil bas pour ne pas rejeter les early avec vol h1 encore limité
-  const volLiqMin = ageH < 2 ? 1.5 : ageH < 6 ? 3 : 5;
-  if (liq > 0 && vol1 < liq * volLiqMin)
-    return { pass:false, reason:`vol/liq ${(vol1/liq).toFixed(1)}x < ${volLiqMin}x` };
-  // F8 — fdv/liq (émission dilutive)
-  if (liq > 0 && fdv / liq > 7)
-    return { pass:false, reason:`fdv/liq ${(fdv/liq).toFixed(1)}x > 7x` };
-  // F9 — wash trading pur (beaucoup de txns, avg trade microscopique)
-  if (txns1 > 120 && avgTrade < 60)
-    return { pass:false, reason:`wash: ${txns1} txns avg $${avgTrade.toFixed(0)}` };
-  // F10 — staircase dump (pump passé + distribution active)
-  if (c24h > 350 && c1h < 5)
-    return { pass:false, reason:`staircase c24h +${c24h.toFixed(0)}% c1h ${c1h.toFixed(1)}%` };
-  // F11 — flash crash m5
-  if (m5 < -25)         return { pass:false, reason:`flash crash m5 ${m5.toFixed(1)}%` };
-  // F12 — fdv/mcap (unlock massif imminent)
-  if (mcap > 0 && fdv / mcap > 10)
-    return { pass:false, reason:`fdv/mcap ${(fdv/mcap).toFixed(1)}x > 10x` };
+  // HARD STOPS — seulement les 3 obligatoires
+  if (mcap < 8000)   return {pass:false, reason:`mcap $${fmtNum(mcap)}<$8K`};
+  if (liq  < 6000)   return {pass:false, reason:`liq $${fmtNum(liq)}<$6K`};
+  if (ageH < 0.033)  return {pass:false, reason:`age ${(ageH*60).toFixed(0)}min<2min`};
 
-  // F13 — FEES anti-rug (seul vrai signal organique)
-  // Prend le meilleur volume connu, extrapole vol1h si token trop early
-  const volEst   = Math.max(vol6 || 0, vol24 || 0, vol1 * Math.max(ageH, 1) * 1.2);
-  const feesSOL  = (volEst * 0.003) / 180;
-  // Seuils progressifs selon âge — early tokens ont encore peu de vol accumulé
-  const feesMin  = ageH < 1 ? 0.3
-                 : ageH < 3 ? 0.8
-                 : ageH < 6 ? (mcap >= 100000 ? 4 : 2)
-                 :             (mcap >= 100000 ? 8 : 4);
-  if (feesSOL < feesMin)
-    return { pass:false, reason:`fees ${feesSOL.toFixed(2)} SOL < ${feesMin} SOL` };
+  // HARD KILLS — rugs évidents uniquement (seuils très larges)
+  if (sellRatio > 0.92)              return {pass:false, reason:`dump total ${(sellRatio*100).toFixed(0)}%`};
+  if (m5 < -50)                      return {pass:false, reason:`crash m5 ${m5.toFixed(0)}%`};
+  if (fdv>0&&mcap>0&&fdv/mcap>25)   return {pass:false, reason:`fdv/mcap ${(fdv/mcap).toFixed(0)}x`};
 
-  // Ratio fees/mcap — signal organique vs artificial pump
-  const feesRatio = mcap > 0 ? feesSOL / (mcap / 100000) : 0;
-  // Seuil ratio progressif — moins strict sur early pour ne pas bloquer les gems <2h
-  const minRatio  = ageH < 1 ? 0.005
-                  : ageH < 3 ? 0.02
-                  : ageH < 6 ? 0.05
-                  :             0.08;
-  if (feesRatio < minRatio)
-    return { pass:false, reason:`fees/mcap ${(feesRatio*100).toFixed(1)}% < ${(minRatio*100).toFixed(1)}%` };
-
-  return { pass:true, feesSOL, feesMin, feesRatio, ageH, sellRatio };
+  const volEst   = Math.max(vol6||0, vol24||0, vol1*Math.max(ageH,0.5)*2, vol1*3);
+  const feesSOL  = (volEst*0.003)/180;
+  const feesRatio= mcap>0 ? feesSOL/(mcap/100000) : 0;
+  return {pass:true, feesSOL, feesRatio, ageH, sellRatio};
 }
 
 
 // ============================================================
 // SCORING ENGINE v12 — early gems 30K-200K max asymétrie
 // ============================================================
-function scoreToken(p) {
-  const ageH      = (Date.now() - (p.pairCreatedAt||0)) / 3600000;
-  const liq       = p.liquidity?.usd || 0;
-  const mcap      = p.marketCap || p.fdv || 0;
-  const buys1     = p.txns?.h1?.buys  || 0;
-  const sells1    = p.txns?.h1?.sells || 0;
-  const total1    = buys1 + sells1 || 1;
-  const buyRatio  = buys1 / total1;
-  const vol1      = p.volume?.h1  || 0;
-  const vol6      = p.volume?.h6  || 0;
-  const vol24     = p.volume?.h24 || 0;
-  const c1h       = p.priceChange?.h1  || 0;
-  const c6h       = p.priceChange?.h6  || 0;
-  const c24h      = p.priceChange?.h24 || 0;
-  const m5        = p.priceChange?.m5  || 0;
-  const hasSocials = !!(p.info?.socials?.length || p.info?.websites?.length);
-  const volAvgH   = (vol6 / 6) || (vol1 || 1);
-  const volAccel  = vol1 / volAvgH;
-  const volEst    = Math.max(vol6 || 0, vol24 || 0, vol1 * Math.max(ageH, 1) * 1.2);
-  const feesSOL   = (volEst * 0.003) / 180;
-  const feesMin   = ageH < 3 ? 0.8 : (mcap >= 100000 ? 8 : 4);
-  const feesRatio = mcap > 0 ? feesSOL / (mcap / 100000) : 0;
-  const staircase = c24h > 350 && c1h < 5;
+function scoreToken(p, swData={count:0,clustered:false}) {
+  const ageH     = (Date.now()-(p.pairCreatedAt||0))/3600000;
+  const liq      = p.liquidity?.usd||0;
+  const mcap     = p.marketCap||p.fdv||0;
+  const fdv      = p.fdv||mcap;
+  const buys1    = p.txns?.h1?.buys||0;
+  const sells1   = p.txns?.h1?.sells||0;
+  const total1   = buys1+sells1||1;
+  const buyRatio = buys1/total1;
+  const vol1     = p.volume?.h1||0;
+  const vol6     = p.volume?.h6||0;
+  const vol24    = p.volume?.h24||0;
+  const c1h      = p.priceChange?.h1||0;
+  const c6h      = p.priceChange?.h6||0;
+  const c24h     = p.priceChange?.h24||0;
+  const m5       = p.priceChange?.m5||0;
+  const hasSocials = !!(p.info?.socials?.length||p.info?.websites?.length);
+  const volAvgH  = (vol6/6)||(vol1||1);
+  const volAccel = vol1/volAvgH;
+  const volEst   = Math.max(vol6||0, vol24||0, vol1*Math.max(ageH,0.5)*2, vol1*3);
+  const feesSOL  = (volEst*0.003)/180;
+  const feesRatio= mcap>0 ? feesSOL/(mcap/100000) : 0;
+  const staircase= c24h>400&&c1h<3;
 
   let score = 0;
 
-  // 1. Buy Pressure (+32 max / -35 min)
-  let buyScore = 0;
-  if      (buyRatio > 0.75) buyScore =  32;
-  else if (buyRatio > 0.65) buyScore =  20;
-  else if (buyRatio > 0.55) buyScore =   8;
-  else                      buyScore = -35;
+  // 1. BUY PRESSURE (+20 à -15)
+  // Contribute positive even at neutral 50/50
+  let buyScore = buyRatio>0.78 ? 20
+               : buyRatio>0.65 ? 14
+               : buyRatio>0.52 ?  8
+               : buyRatio>0.42 ?  2
+               : -15;
   score += buyScore;
 
-  // 2. Vol Accélération (+30 max)
-  let volScore = 0;
-  if      (volAccel > 3)   volScore =  30;
-  else if (volAccel > 2)   volScore =  22;
-  else if (volAccel > 1.2) volScore =  12;
-  else if (volAccel > 0.6) volScore =   4;
-  else                     volScore = -15;
+  // 2. VOL ACCÉLÉRATION (+20 à -8)
+  // Moindre pénalité sur faible accel pour early tokens
+  let volScore = volAccel>4   ? 20
+               : volAccel>2.5 ? 15
+               : volAccel>1.5 ? 10
+               : volAccel>0.8 ?  5
+               : volAccel>0.3 ? -3
+               : -8;
   score += volScore;
 
-  // 3. Momentum h1 (+28) + h6 (+18)
+  // 3. MOMENTUM — m5 + h1 + h6 (+30 à -15)
   let momentumScore = 0;
-  if      (c1h > 18 && c1h < 130) momentumScore += 28;
-  else if (c1h > 5  && c1h < 200) momentumScore += 14;
-  else if (c1h > 0)                momentumScore +=  5;
-  if      (c6h > 35)               momentumScore += 18;
-  else if (c6h > 12)               momentumScore +=  9;
-  else if (c6h > 0)                momentumScore +=  3;
-  if (staircase) momentumScore -= 50;
+  // m5 signal fort early
+  if      (m5>15&&m5<250) momentumScore += 12;
+  else if (m5>5 &&m5<350) momentumScore +=  6;
+  else if (m5>0)          momentumScore +=  2;
+  else if (m5<-20)        momentumScore -=  8;
+  // h1 trend
+  if      (c1h>20&&c1h<200) momentumScore += 12;
+  else if (c1h>5 &&c1h<300) momentumScore +=  7;
+  else if (c1h>0)            momentumScore +=  3;
+  else if (c1h<-20)          momentumScore -=  8;
+  // h6 trend
+  if      (c6h>30)  momentumScore += 8;
+  else if (c6h>10)  momentumScore += 4;
+  else if (c6h>0)   momentumScore += 1;
+  if (staircase) momentumScore -= 30;
   score += momentumScore;
 
-  // 4. Age 0.6-10h sweet spot (+28)
-  let ageScore = 0;
-  if      (ageH >= 0.6 && ageH <= 10) ageScore = 28;
-  else if (ageH > 10   && ageH <= 24) ageScore = 14;
-  else                                 ageScore =  6;
+  // 4. AGE — sweet spot early (+18)
+  let ageScore = (ageH>=0.5&&ageH<=8)  ? 18
+               : (ageH>8  &&ageH<=24)  ? 10
+               : 4;
   score += ageScore;
 
-  // 5. McAp asymétrie max 30K-150K (+35)
-  let mcapScore = 0;
-  if      (mcap >= 30000  && mcap <= 150000) mcapScore = 35;
-  else if (mcap > 150000  && mcap <= 250000) mcapScore = 18;
-  else                                        mcapScore =  6;
+  // 5. MCAP — asymétrie (+22)
+  let mcapScore = (mcap>=8000 &&mcap<=50000)  ? 16
+                : (mcap>50000 &&mcap<=150000) ? 22
+                : (mcap>150000&&mcap<=300000) ? 14
+                : (mcap>300000&&mcap<=600000) ?  6
+                : 1;
   score += mcapScore;
 
-  // 6. Socials (+22)
-  const socialScore = hasSocials ? 22 : 0;
+  // 6. LIQUIDITÉ — signal santé (+10)
+  let liqScore = liq>80000 ? 10
+               : liq>30000 ?  7
+               : liq>15000 ?  4
+               : liq>8000  ?  1
+               : 0;
+  score += liqScore;
+
+  // 7. SOCIALS (+12)
+  const socialScore = hasSocials ? 12 : 0;
   score += socialScore;
 
-  // 7. Fees ratio — signal organique (+35 / -45)
-  let feesScore = 0;
-  if      (feesRatio > 0.12) feesScore =  35;
-  else if (feesRatio > 0.08) feesScore =  22;
-  else if (feesRatio > 0.04) feesScore =  10;
-  else if (feesRatio > 0.02) feesScore =   0;
-  else                       feesScore = -45;
+  // 8. FEES RATIO — signal organique (+18 à -20)
+  let feesScore = feesRatio>0.15 ? 18
+                : feesRatio>0.08 ? 12
+                : feesRatio>0.04 ?  6
+                : feesRatio>0.01 ?  1
+                : -20;
   score += feesScore;
 
-  // Rug risk — LOW seulement si buy dominant + fees organiques
-  let rugPoints = 0;
-  if (buyRatio  < 0.60)   rugPoints += 2;
-  if (feesRatio < 0.08)   rugPoints += 2;
-  if (volAccel  < 0.7)    rugPoints++;
-  if (c1h       < 0)      rugPoints++;
-  if (!hasSocials)        rugPoints++;
-  if (liq       < 10000)  rugPoints++;
-  if (ageH      < 1)      rugPoints++;
-  if (buyRatio > 0.70 && feesRatio > 0.08) rugPoints = Math.max(0, rugPoints - 2);
-  const rugRisk = rugPoints >= 4 ? 'HIGH' : rugPoints >= 2 ? 'MEDIUM' : 'LOW';
+  // 9. SMART WALLETS (+35 max)
+  const swScore = smartWalletScore(swData);
+  score += swScore;
 
-  const emoji = EMOJIS[Math.floor(Math.random() * EMOJIS.length)];
-  const sym   = (p.baseToken?.symbol || 'UNKNOWN').toUpperCase().slice(0, 12);
-  const addr  = p.baseToken?.address || '';
+  // 10. TXNS VOLUME signal (+8)
+  const txns1 = buys1+sells1;
+  const txnScore = txns1>200 ? 8 : txns1>80 ? 5 : txns1>30 ? 2 : 0;
+  score += txnScore;
+
+  // Rug risk
+  let rugPoints = 0;
+  if (buyRatio<0.45)  rugPoints += 3;
+  if (feesRatio<0.03) rugPoints += 2;
+  if (volAccel<0.3)   rugPoints++;
+  if (c1h<-10)        rugPoints++;
+  if (!hasSocials)    rugPoints++;
+  if (liq<8000)       rugPoints++;
+  if (ageH<0.5)       rugPoints++;
+  if (buyRatio>0.65&&feesRatio>0.06) rugPoints = Math.max(0,rugPoints-2);
+  if (swData.count>=2)               rugPoints = Math.max(0,rugPoints-2);
+  const rugRisk = rugPoints>=5?'HIGH':rugPoints>=3?'MEDIUM':'LOW';
+
+  const emoji = EMOJIS[Math.floor(Math.random()*EMOJIS.length)];
+  const sym   = (p.baseToken?.symbol||'UNKNOWN').toUpperCase().slice(0,12);
+  const addr  = p.baseToken?.address||'';
 
   return {
-    score: Math.max(0, Math.min(130, Math.round(score))),
-    symbol: sym, emoji, addr, mcap, liq,
-    socials: hasSocials, rugRisk,
-    pairUrl: p.url || `https://dexscreener.com/solana/${addr}`,
-    raw: p,
-    debug: { buyScore, volScore, momentumScore, ageScore, mcapScore, socialScore, feesScore,
-             buyRatio, volAccel, c1h, c6h, c24h, m5, ageH, feesSOL, feesMin, feesRatio, staircase }
+    score: Math.max(0,Math.min(150,Math.round(score))),
+    symbol:sym, emoji, addr, mcap, liq,
+    socials:hasSocials, rugRisk, swData,
+    pairUrl: p.url||`https://dexscreener.com/solana/${addr}`,
+    raw:p,
+    debug:{buyScore,volScore,momentumScore,ageScore,mcapScore,liqScore,socialScore,feesScore,swScore,txnScore,
+           buyRatio,volAccel,c1h,c6h,c24h,m5,ageH,feesSOL,feesRatio,staircase}
   };
 }
 
 
 function getLabel(score) {
-  if (score >= 100) return { text:'⚡ GOD GEM',       cls:'score-god-gem' };
-  if (score >= 90)  return { text:'🔥 HIGH POTENTIAL', cls:'score-high-pot' };
-  if (score >= 83)  return { text:'💎 SOLID CALL',     cls:'score-solid' };
-  if (score >= 80)  return { text:'🌱 EARLY GEM',      cls:'score-solid' };
+  if (score>=105) return {text:'⚡ GOD GEM',       cls:'score-god-gem'};
+  if (score>=85)  return {text:'🔥 HIGH POTENTIAL', cls:'score-high-pot'};
+  if (score>=68)  return {text:'💎 SOLID CALL',     cls:'score-solid'};
+  if (score>=52)  return {text:'🌱 EARLY SIGNAL',   cls:'score-solid'};
+  if (score>=40)  return {text:'👀 WATCH',           cls:'score-solid'};
   return null;
 }
 
@@ -1338,7 +1366,7 @@ async function fetchTokens() {
       if (!converted) continue;
       if (!converted.chainId || converted.chainId !== 'solana') continue;
       const mcapPre = converted.marketCap || converted.fdv || 0;
-      if (mcapPre > 0 && (mcapPre < 15000 || mcapPre > 350000)) continue; // Pre-filter large caps
+      if (mcapPre > 600000) continue; // Pre-filter mega caps only
       const addr = converted.baseToken?.address || converted.pairAddress || Math.random().toString();
       if (seen.has(addr)) continue;
       seen.add(addr);
@@ -1354,7 +1382,7 @@ async function fetchTokens() {
     else { rejected[f.reason] = (rejected[f.reason]||0)+1; }
   }
 
-  const scored = passed.map(p => scoreToken(p)).filter(t => t.score >= 80);
+  const scored = passed.map(p => scoreToken(p)).filter(t => t.score >= 40);
   scored.sort((a,b) => b.score - a.score);
 
   for (const t of scored) {
