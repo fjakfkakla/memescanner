@@ -362,7 +362,7 @@ section{scroll-margin-top:70px;}
       <span style="font-family:var(--font-mono);font-size:.8rem">🎰 IRANCOIN</span>
       <span class="demo-reject">✗ staircase: c24h +480% c1h +2%</span>
     </div>
-    <div style="text-align:center;margin-top:.8rem;font-size:.65rem;color:var(--muted);font-family:var(--font-mono)">2 qualifiés · 15 hard filters · score min 45</div>
+    <div style="text-align:center;margin-top:.8rem;font-size:.65rem;color:var(--muted);font-family:var(--font-mono)">2 qualifiés · 15 hard filters · score min 85</div>
   </div>
 </div>
 </section>
@@ -991,6 +991,7 @@ async function renderHistory() {
 
   // ── Render cards ──────────────────────────────────────────
   const EMOJIS_LIST = ['🐸','🚀','💎','🌙','🔥','⚡','🦊','🐉','🦁','🎯','👾','🤖'];
+  function xColor(x) { return x >= 2 ? 'up' : x >= 1 ? 'neutral' : 'down'; }
   let cards = '';
   for (const [key, v] of entries) {
     const addr        = v.addr || v.address || '';
@@ -1004,8 +1005,6 @@ async function renderHistory() {
     const latestX  = callMcap > 0 ? (currentMcap > 0 ? currentMcap / callMcap : highX) : 1;
     const isLive   = currentMcap > 0 && Date.now() - callTime < 48*3600000;
     const ageCall  = Date.now() - callTime;
-
-    function xColor(x) { return x >= 2 ? 'up' : x >= 1 ? 'neutral' : 'down'; }
 
     const emoji = EMOJIS_LIST[Math.abs(addr.charCodeAt(0)||0) % EMOJIS_LIST.length];
     const dexUrl = `https://dexscreener.com/solana/${addr}`;
@@ -1024,7 +1023,7 @@ async function renderHistory() {
             <span class="hist-tok-name">${sym}</span>
             <span class="hist-badge ${isLive ? 'hist-badge-live' : 'hist-badge-dead'}">${isLive ? '🟢 LIVE' : '⚫ PASSÉ'}</span>
           </div>
-          <div class="hist-tok-sub">${addr ? addr.slice(0,10)+'...'+addr.slice(-4) : '—'}</div>
+          <div class="hist-tok-sub" onclick="addr && copyAddr(addr,this)" style="cursor:${addr?'pointer':'default'}" title="Copier l'adresse">${addr ? addr.slice(0,10)+'...'+addr.slice(-4)+' 📋' : '—'}</div>
         </div>
       </div>
       <div class="hist-xrow">
@@ -1115,22 +1114,35 @@ function hardFilter(p) {
   const sells1   = p.txns?.h1?.sells||0;
   const total1   = buys1+sells1||1;
   const sellRatio= sells1/total1;
+  const txns1    = buys1+sells1;
   const vol1     = p.volume?.h1||0;
   const vol6     = p.volume?.h6||0;
   const vol24    = p.volume?.h24||0;
+  const c1h      = p.priceChange?.h1||0;
+  const c24h     = p.priceChange?.h24||0;
   const m5       = p.priceChange?.m5||0;
+  const avgTrade = txns1>0 ? vol1/txns1 : 9999;
 
-  // HARD STOPS — seulement les 3 obligatoires
-  if (mcap < 8000)   return {pass:false, reason:`mcap $${fmtNum(mcap)}<$8K`};
-  if (liq  < 6000)   return {pass:false, reason:`liq $${fmtNum(liq)}<$6K`};
-  if (ageH < 0.033)  return {pass:false, reason:`age ${(ageH*60).toFixed(0)}min<2min`};
+  // HARD STOPS (3 obligatoires)
+  if (mcap < 8000)  return {pass:false, reason:`mcap $${fmtNum(mcap)} < $8K`};
+  if (liq  < 6000)  return {pass:false, reason:`liq $${fmtNum(liq)} < $6K`};
+  if (ageH < 0.033) return {pass:false, reason:`age ${(ageH*60).toFixed(0)}min < 2min`};
 
-  // HARD KILLS — rugs évidents uniquement (seuils très larges)
-  if (sellRatio > 0.92)              return {pass:false, reason:`dump total ${(sellRatio*100).toFixed(0)}%`};
-  if (m5 < -50)                      return {pass:false, reason:`crash m5 ${m5.toFixed(0)}%`};
-  if (fdv>0&&mcap>0&&fdv/mcap>25)   return {pass:false, reason:`fdv/mcap ${(fdv/mcap).toFixed(0)}x`};
+  // QUALITÉ MINIMUM — évite les tokens fantômes
+  if (vol1 < 500 && vol6 < 2000)   return {pass:false, reason:`vol trop faible $${fmtNum(Math.max(vol1,vol6/6))}/h`};
+  if (txns1 < 10)                   return {pass:false, reason:`txns ${txns1}<10`};
+  if (buys1 < 5)                    return {pass:false, reason:`buys ${buys1}<5`};
 
-  const volEst   = Math.max(vol6||0, vol24||0, vol1*Math.max(ageH,0.5)*2, vol1*3);
+  // ANTI-RUG — signaux de rug confirmés
+  if (sellRatio > 0.65)               return {pass:false, reason:`sell ${(sellRatio*100).toFixed(0)}% > 65%`};
+  if (m5 < -30)                       return {pass:false, reason:`crash m5 ${m5.toFixed(0)}%`};
+  if (c1h < -20)                      return {pass:false, reason:`crash 1h ${c1h.toFixed(0)}%`};
+  if (fdv>0&&mcap>0&&fdv/mcap>15)    return {pass:false, reason:`fdv/mcap ${(fdv/mcap).toFixed(0)}x`};
+  if (liq>0&&fdv/liq>10)             return {pass:false, reason:`fdv/liq ${(fdv/liq).toFixed(1)}x`};
+  if (txns1>150&&avgTrade<50)        return {pass:false, reason:`wash: avg $${avgTrade.toFixed(0)}`};
+  if (c24h>500&&c1h<-5)             return {pass:false, reason:`P&D: c24h +${c24h.toFixed(0)}% c1h ${c1h.toFixed(0)}%`};
+
+  const volEst   = Math.max(vol6||0, vol24||0, vol1*Math.max(ageH,0.5)*2);
   const feesSOL  = (volEst*0.003)/180;
   const feesRatio= mcap>0 ? feesSOL/(mcap/100000) : 0;
   return {pass:true, feesSOL, feesRatio, ageH, sellRatio};
@@ -1138,13 +1150,12 @@ function hardFilter(p) {
 
 
 // ============================================================
-// SCORING ENGINE v12 — early gems 30K-200K max asymétrie
+// SCORING ENGINE v13 — qualité > quantité
 // ============================================================
 function scoreToken(p, swData={count:0,clustered:false}) {
   const ageH     = (Date.now()-(p.pairCreatedAt||0))/3600000;
   const liq      = p.liquidity?.usd||0;
   const mcap     = p.marketCap||p.fdv||0;
-  const fdv      = p.fdv||mcap;
   const buys1    = p.txns?.h1?.buys||0;
   const sells1   = p.txns?.h1?.sells||0;
   const total1   = buys1+sells1||1;
@@ -1156,132 +1167,93 @@ function scoreToken(p, swData={count:0,clustered:false}) {
   const c6h      = p.priceChange?.h6||0;
   const c24h     = p.priceChange?.h24||0;
   const m5       = p.priceChange?.m5||0;
-  const hasSocials = !!(p.info?.socials?.length||p.info?.websites?.length);
+  const hasSocials=!!(p.info?.socials?.length||p.info?.websites?.length);
   const volAvgH  = (vol6/6)||(vol1||1);
   const volAccel = vol1/volAvgH;
-  const volEst   = Math.max(vol6||0, vol24||0, vol1*Math.max(ageH,0.5)*2, vol1*3);
+  const volEst   = Math.max(vol6||0, vol24||0, vol1*Math.max(ageH,0.5)*2);
   const feesSOL  = (volEst*0.003)/180;
   const feesRatio= mcap>0 ? feesSOL/(mcap/100000) : 0;
   const staircase= c24h>400&&c1h<3;
-
+  const txns1    = buys1+sells1;
   let score = 0;
 
-  // 1. BUY PRESSURE (+20 à -15)
-  // Contribute positive even at neutral 50/50
-  let buyScore = buyRatio>0.78 ? 20
-               : buyRatio>0.65 ? 14
-               : buyRatio>0.52 ?  8
-               : buyRatio>0.42 ?  2
-               : -15;
+  // 1. Buy Pressure (+25 / -20) — acheteurs dominants requis
+  let buyScore = buyRatio>0.72?25 : buyRatio>0.62?16 : buyRatio>0.55?6 : buyRatio>0.48?-8 : -30;
   score += buyScore;
 
-  // 2. VOL ACCÉLÉRATION (+20 à -8)
-  // Moindre pénalité sur faible accel pour early tokens
-  let volScore = volAccel>4   ? 20
-               : volAccel>2.5 ? 15
-               : volAccel>1.5 ? 10
-               : volAccel>0.8 ?  5
-               : volAccel>0.3 ? -3
-               : -8;
+  // 2. Vol Accélération (+22 / -10)
+  const sellRatio2 = sells1/total1;
+  const sellPenalty = sellRatio2>0.55?-20 : sellRatio2>0.50?-8 : 0;
+  let volScore = (volAccel>3?22 : volAccel>2?16 : volAccel>1.3?9 : volAccel>0.7?3 : volAccel>0.3?-4 : -10) + sellPenalty;
   score += volScore;
 
-  // 3. MOMENTUM — m5 + h1 + h6 (+30 à -15)
+  // 3. Momentum m5 + h1 + h6 (+35 / -20)
   let momentumScore = 0;
-  // m5 signal fort early
-  if      (m5>15&&m5<250) momentumScore += 12;
-  else if (m5>5 &&m5<350) momentumScore +=  6;
-  else if (m5>0)          momentumScore +=  2;
-  else if (m5<-20)        momentumScore -=  8;
-  // h1 trend
-  if      (c1h>20&&c1h<200) momentumScore += 12;
-  else if (c1h>5 &&c1h<300) momentumScore +=  7;
-  else if (c1h>0)            momentumScore +=  3;
-  else if (c1h<-20)          momentumScore -=  8;
-  // h6 trend
-  if      (c6h>30)  momentumScore += 8;
-  else if (c6h>10)  momentumScore += 4;
-  else if (c6h>0)   momentumScore += 1;
-  if (staircase) momentumScore -= 30;
+  if      (m5>15&&m5<250) momentumScore+=14; else if(m5>5) momentumScore+=6; else if(m5<-20) momentumScore-=8;
+  if      (c1h>20&&c1h<200) momentumScore+=15; else if(c1h>8&&c1h<300) momentumScore+=8; else if(c1h>0) momentumScore+=2; else if(c1h<-15) momentumScore-=8;
+  if      (c6h>30) momentumScore+=8; else if(c6h>10) momentumScore+=4;
+  if (staircase) momentumScore -= 35;
   score += momentumScore;
 
-  // 4. AGE — sweet spot early (+18)
-  let ageScore = (ageH>=0.5&&ageH<=8)  ? 18
-               : (ageH>8  &&ageH<=24)  ? 10
-               : 4;
+  // 4. Age sweet spot 1h-12h (+20)
+  let ageScore = (ageH>=1&&ageH<=12)?20 : (ageH>=0.5&&ageH<1)?14 : (ageH>12&&ageH<=24)?10 : 3;
   score += ageScore;
 
-  // 5. MCAP — asymétrie (+22)
-  let mcapScore = (mcap>=8000 &&mcap<=50000)  ? 16
-                : (mcap>50000 &&mcap<=150000) ? 22
-                : (mcap>150000&&mcap<=300000) ? 14
-                : (mcap>300000&&mcap<=600000) ?  6
-                : 1;
+  // 5. McAp 30K-150K (+28)
+  let mcapScore = (mcap>=30000&&mcap<=150000)?28 : (mcap>150000&&mcap<=300000)?18 : (mcap>8000&&mcap<30000)?12 : (mcap>300000&&mcap<=600000)?8 : 2;
   score += mcapScore;
 
-  // 6. LIQUIDITÉ — signal santé (+10)
-  let liqScore = liq>80000 ? 10
-               : liq>30000 ?  7
-               : liq>15000 ?  4
-               : liq>8000  ?  1
-               : 0;
-  score += liqScore;
-
-  // 7. SOCIALS (+12)
-  const socialScore = hasSocials ? 12 : 0;
+  // 6. Socials (+15)
+  const socialScore = hasSocials?15:0;
   score += socialScore;
 
-  // 8. FEES RATIO — signal organique (+18 à -20)
-  let feesScore = feesRatio>0.15 ? 18
-                : feesRatio>0.08 ? 12
-                : feesRatio>0.04 ?  6
-                : feesRatio>0.01 ?  1
-                : -20;
+  // 7. Fees organique (+22 / -25) — clé anti-rug
+  let feesScore = feesRatio>0.12?22 : feesRatio>0.07?12 : feesRatio>0.04?0 : feesRatio>0.01?-15 : -35;
   score += feesScore;
 
-  // 9. SMART WALLETS (+35 max)
+  // 8. Liq santé (+8)
+  let liqScore = liq>50000?8 : liq>20000?5 : liq>10000?2 : 0;
+  score += liqScore;
+
+  // 9. Smart Wallets (+35 max)
   const swScore = smartWalletScore(swData);
   score += swScore;
 
-  // 10. TXNS VOLUME signal (+8)
-  const txns1 = buys1+sells1;
-  const txnScore = txns1>200 ? 8 : txns1>80 ? 5 : txns1>30 ? 2 : 0;
+  // 10. Txns signal (+6)
+  const txnScore = txns1>150?6 : txns1>60?3 : 0;
   score += txnScore;
 
   // Rug risk
   let rugPoints = 0;
-  if (buyRatio<0.45)  rugPoints += 3;
-  if (feesRatio<0.03) rugPoints += 2;
-  if (volAccel<0.3)   rugPoints++;
-  if (c1h<-10)        rugPoints++;
+  if (buyRatio<0.50)  rugPoints+=3;
+  if (feesRatio<0.04) rugPoints+=2;
+  if (volAccel<0.4)   rugPoints++;
+  if (c1h<-8)         rugPoints++;
   if (!hasSocials)    rugPoints++;
   if (liq<8000)       rugPoints++;
   if (ageH<0.5)       rugPoints++;
-  if (buyRatio>0.65&&feesRatio>0.06) rugPoints = Math.max(0,rugPoints-2);
-  if (swData.count>=2)               rugPoints = Math.max(0,rugPoints-2);
+  if (buyRatio>0.65&&feesRatio>0.07) rugPoints=Math.max(0,rugPoints-2);
+  if (swData.count>=2)               rugPoints=Math.max(0,rugPoints-2);
   const rugRisk = rugPoints>=5?'HIGH':rugPoints>=3?'MEDIUM':'LOW';
 
-  const emoji = EMOJIS[Math.floor(Math.random()*EMOJIS.length)];
-  const sym   = (p.baseToken?.symbol||'UNKNOWN').toUpperCase().slice(0,12);
-  const addr  = p.baseToken?.address||'';
-
+  const emoji=EMOJIS[Math.floor(Math.random()*EMOJIS.length)];
+  const sym=(p.baseToken?.symbol||'UNKNOWN').toUpperCase().slice(0,12);
+  const addr=p.baseToken?.address||'';
   return {
-    score: Math.max(0,Math.min(150,Math.round(score))),
-    symbol:sym, emoji, addr, mcap, liq,
-    socials:hasSocials, rugRisk, swData,
-    pairUrl: p.url||`https://dexscreener.com/solana/${addr}`,
-    raw:p,
-    debug:{buyScore,volScore,momentumScore,ageScore,mcapScore,liqScore,socialScore,feesScore,swScore,txnScore,
+    score:Math.max(0,Math.min(150,Math.round(score))),
+    symbol:sym,emoji,addr,mcap,liq,socials:hasSocials,rugRisk,swData,
+    pairUrl:p.url||`https://dexscreener.com/solana/${addr}`,raw:p,
+    debug:{buyScore,volScore,momentumScore,ageScore,mcapScore,socialScore,feesScore,liqScore,swScore,txnScore,
            buyRatio,volAccel,c1h,c6h,c24h,m5,ageH,feesSOL,feesRatio,staircase}
   };
 }
 
 
 function getLabel(score) {
-  if (score>=105) return {text:'⚡ GOD GEM',       cls:'score-god-gem'};
-  if (score>=85)  return {text:'🔥 HIGH POTENTIAL', cls:'score-high-pot'};
-  if (score>=68)  return {text:'💎 SOLID CALL',     cls:'score-solid'};
-  if (score>=52)  return {text:'🌱 EARLY SIGNAL',   cls:'score-solid'};
-  if (score>=40)  return {text:'👀 WATCH',           cls:'score-solid'};
+  if (score>=115) return {text:'⚡ GOD GEM',        cls:'score-god-gem'};
+  if (score>=95)  return {text:'🔥 HIGH POTENTIAL', cls:'score-high-pot'};
+  if (score>=82)  return {text:'💎 SOLID CALL',     cls:'score-solid'};
+  if (score>=72)  return {text:'🌱 EARLY GEM',      cls:'score-solid'};
   return null;
 }
 
@@ -1398,7 +1370,7 @@ async function fetchTokens() {
     else { rejected[f.reason] = (rejected[f.reason]||0)+1; }
   }
 
-  const scored = passed.map(p => scoreToken(p)).filter(t => t.score >= 40);
+  const scored = passed.map(p => scoreToken(p)).filter(t => t.score >= 85);
   scored.sort((a,b) => b.score - a.score);
 
   for (const t of scored) {
@@ -1407,6 +1379,24 @@ async function fetchTokens() {
     else if (t.mcap > (existing.athMcap||0)) await updateAth(t.addr, t.mcap);
   }
 
+  // STICKY: garde les calls récents (<30min) même s'ils ne passent plus le scan
+  const now30 = Date.now();
+  const STICKY_MS = 20 * 60 * 1000; // 20 minutes
+  const prevAddrs = new Set(lastScored.map(t=>t.addr));
+  const newAddrs  = new Set(scored.map(t=>t.addr));
+  // Ajoute les tokens sticky (callés il y a <30min, pas dans nouveaux résultats)
+  for (const prev of lastScored) {
+    if (!newAddrs.has(prev.addr)) {
+      try {
+        const cd = await getCallData(prev.addr);
+        if (cd && now30 - (cd.callTime||0) < STICKY_MS) {
+          prev._sticky = true;
+          scored.push(prev);
+        }
+      } catch(e) {}
+    }
+  }
+  scored.sort((a,b) => b.score - a.score);
   lastScored = scored;
   if (loadEl) loadEl.style.display = 'none';
   document.getElementById('scanDot').style.background = 'var(--green)';
@@ -1450,7 +1440,7 @@ async function fetchTokens() {
 
   if (currentTab === 'history') renderHistory();
   if (refreshTimer) clearTimeout(refreshTimer);
-  refreshTimer = setTimeout(fetchTokens, 20000);
+  refreshTimer = setTimeout(fetchTokens, 45000);
 }
 
 // ============================================================
