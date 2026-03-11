@@ -1059,15 +1059,15 @@ function hardFilter(p) {
   const c24h     = p.priceChange?.h24 || 0;
   const m5       = p.priceChange?.m5  || 0;
   const txns1    = buys1 + sells1;
-  const avgTrade = txns1 > 0 ? vol1/txns1 : 9999;
+  const avgTrade = txns1 > 0 ? vol1 / txns1 : 9999;
 
   // F1 — Focus mcap 25K-250K OBLIGATOIRE
   if (mcap < 25000)  return { pass:false, reason:`mcap $${fmtNum(mcap)} < $25K` };
   if (mcap > 250000) return { pass:false, reason:`mcap $${fmtNum(mcap)} > $250K` };
   // F2 — Liquidité min
   if (liq < 9000)    return { pass:false, reason:`liq $${fmtNum(liq)} < $9K` };
-  // F3 — Age (min 30min pour catcher early organiques)
-  if (ageH < 0.2)    return { pass:false, reason:`age ${ageH.toFixed(2)}h < 0.2h (bundle risk)` };
+  // F3 — Age min 0.5h (30min)
+  if (ageH < 0.5)    return { pass:false, reason:`age ${ageH.toFixed(2)}h < 0.5h (bundle risk)` };
   if (ageH > 24)     return { pass:false, reason:`age ${ageH.toFixed(1)}h > 24h` };
   // F4 — Dump actif
   if (sellRatio > 0.58) return { pass:false, reason:`sell ratio ${(sellRatio*100).toFixed(0)}% > 58%` };
@@ -1076,10 +1076,10 @@ function hardFilter(p) {
   // F6 — Pump bot m5
   if (m5 > 280)      return { pass:false, reason:`pump bot m5 +${m5.toFixed(0)}%` };
   // F7 — Vol/liq organique (adapté selon âge)
-  const volLiqMin = ageH < 1 ? 2 : ageH < 3 ? 5 : 9;
+  const volLiqMin = ageH < 1 ? 3 : ageH < 3 ? 6 : 9;
   if (liq > 0 && vol1 < liq * volLiqMin) return { pass:false, reason:`vol1h/liq ${(vol1/liq).toFixed(1)}x < ${volLiqMin}x` };
   // F8 — FDV/liq
-  if (liq > 0 && fdv/liq > 5.5) return { pass:false, reason:`fdv/liq ${(fdv/liq).toFixed(1)}x > 5.5x` };
+  if (liq > 0 && fdv / liq > 5.5) return { pass:false, reason:`fdv/liq ${(fdv/liq).toFixed(1)}x > 5.5x` };
   // F9 — Wash trading
   if (txns1 > 80 && avgTrade < 80) return { pass:false, reason:`wash avg $${avgTrade.toFixed(0)} < $80` };
   // F10 — Staircase dump
@@ -1087,22 +1087,26 @@ function hardFilter(p) {
   // F11 — Flash crash m5
   if (m5 < -22)      return { pass:false, reason:`flash crash m5 ${m5.toFixed(1)}%` };
   // F12 — FDV dilution
-  if (mcap > 0 && fdv/mcap > 8) return { pass:false, reason:`fdv/mcap ${(fdv/mcap).toFixed(1)}x` };
-  // F13 — FEES anti-rug (meilleur volume selon âge)
-  let volForFees;
-  if      (ageH >= 6  && vol24 > vol6 * 0.5) volForFees = vol24;
-  else if (ageH >= 2  && vol6  > 0)          volForFees = vol6;
-  else if (vol1 > 0)                         volForFees = vol1 * Math.min(ageH * 2, 6);
-  else                                       volForFees = vol6 || vol24;
-  const feesSOL   = (volForFees * 0.003) / 180;
-  const feesMin   = mcap >= 100000 ? 8 : 4;
-  if (feesSOL < feesMin) return { pass:false, reason:`fees ~${feesSOL.toFixed(1)} SOL < ${feesMin} SOL` };
+  if (mcap > 0 && fdv / mcap > 8) return { pass:false, reason:`fdv/mcap ${(fdv/mcap).toFixed(1)}x` };
+
+  // F13 — FEES anti-rug
+  // Prend le meilleur volume disponible sans extrapolation biaisée
+  const volBest  = Math.max(vol6, vol24, vol1 * 6);
+  const feesSOL  = (volBest * 0.003) / 180;
+  // Seuils assouplis pour early (<2h) car vol6 encore petit
+  const feesMin  = ageH < 2
+    ? (mcap >= 100000 ? 3   : 1.5)
+    : (mcap >= 100000 ? 8   : 4);
+  if (feesSOL < feesMin) return { pass:false, reason:`fees ~${feesSOL.toFixed(2)} SOL < ${feesMin} SOL` };
+
+  // Ratio fees/mcap — clé organique
   const feesRatio = mcap > 0 ? feesSOL / (mcap / 100000) : 0;
-  const minRatio  = ageH < 1 ? 0.03 : 0.08;
+  const minRatio  = ageH < 2 ? 0.02 : 0.08;
   if (feesRatio < minRatio) return { pass:false, reason:`fees/mcap ${(feesRatio*100).toFixed(1)}% < ${(minRatio*100).toFixed(0)}%` };
 
   return { pass:true, feesSOL, feesMin, feesRatio, ageH, sellRatio };
 }
+
 
 // ============================================================
 // SCORING ENGINE v12 — early gems 30K-200K max asymétrie
@@ -1123,22 +1127,17 @@ function scoreToken(p) {
   const c24h     = p.priceChange?.h24 || 0;
   const m5       = p.priceChange?.m5  || 0;
   const hasSocials = !!(p.info?.socials?.length || p.info?.websites?.length);
-  const volAvgH  = vol6/6 || 1;
+  const volAvgH  = (vol6 / 6) || 1;
   const volAccel = vol1 / volAvgH;
-  // Fees — même logique que hardFilter
-  let volForFees;
-  if      (ageH >= 6  && vol24 > vol6 * 0.5) volForFees = vol24;
-  else if (ageH >= 2  && vol6  > 0)          volForFees = vol6;
-  else if (vol1 > 0)                         volForFees = vol1 * Math.min(ageH * 2, 6);
-  else                                       volForFees = vol6 || vol24;
-  const feesSOL   = (volForFees * 0.003) / 180;
-  const feesMin   = mcap >= 100000 ? 8 : 4;
+  const volBest  = Math.max(vol6, vol24, vol1 * 6);
+  const feesSOL  = (volBest * 0.003) / 180;
+  const feesMin  = ageH < 2 ? (mcap >= 100000 ? 3 : 1.5) : (mcap >= 100000 ? 8 : 4);
   const feesRatio = mcap > 0 ? feesSOL / (mcap / 100000) : 0;
   const staircase = c24h > 300 && c1h < 7;
 
   let score = 0;
 
-  // 1. Buy Pressure (32 pts max)
+  // 1. Buy Pressure (+32 max)
   let buyScore = 0;
   if      (buyRatio > 0.75) buyScore =  32;
   else if (buyRatio > 0.65) buyScore =  20;
@@ -1146,64 +1145,64 @@ function scoreToken(p) {
   else                      buyScore = -35;
   score += buyScore;
 
-  // 2. Vol Accélération (30 pts max)
+  // 2. Vol Accélération (+30 max)
   let volScore = 0;
-  if      (volAccel > 3)   volScore = 30;
-  else if (volAccel > 2)   volScore = 22;
-  else if (volAccel > 1.2) volScore = 12;
-  else if (volAccel < 0.4) volScore = -28;
+  if      (volAccel > 3)   volScore =  30;
+  else if (volAccel > 2)   volScore =  22;
+  else if (volAccel > 1.2) volScore =  12;
+  else if (volAccel < 0.5) volScore = -25;
   score += volScore;
 
-  // 3. Momentum h1 (28 pts) + h6 (18 pts)
+  // 3. Momentum h1 (+28) + h6 (+18)
   let momentumScore = 0;
   if      (c1h > 18 && c1h < 130) momentumScore += 28;
-  else if (c1h > 8  && c1h < 200) momentumScore += 16;
+  else if (c1h > 8  && c1h < 200) momentumScore += 14;
   if      (c6h > 35)              momentumScore += 18;
   else if (c6h > 12)              momentumScore +=  9;
   if (staircase) momentumScore -= 50;
   score += momentumScore;
 
-  // 4. Age 0.6-10h sweet spot (28 pts)
+  // 4. Age 0.6-10h sweet spot (+28)
   let ageScore = 0;
-  if      (ageH >= 0.2 && ageH <= 10) ageScore = 28;
+  if      (ageH >= 0.6 && ageH <= 10) ageScore = 28;
   else if (ageH > 10   && ageH <= 24) ageScore = 14;
-  else if (ageH < 0.2)                ageScore =  3;
+  else                                ageScore =  5;
   score += ageScore;
 
-  // 5. McAp asymétrie max 30K-150K (35 pts)
+  // 5. McAp asymétrie 30K-150K (+35)
   let mcapScore = 0;
   if      (mcap >= 30000  && mcap <= 150000) mcapScore = 35;
   else if (mcap > 150000  && mcap <= 250000) mcapScore = 18;
-  else if (mcap < 30000)                     mcapScore =  8;
+  else                                        mcapScore =  6;
   score += mcapScore;
 
-  // 6. Socials (22 pts)
+  // 6. Socials (+22)
   let socialScore = hasSocials ? 22 : 0;
   score += socialScore;
 
-  // 7. Fees ratio — clé du winrate
+  // 7. Fees ratio (+35 / -45)
   let feesScore = 0;
   if      (feesRatio > 0.12) feesScore =  35;
-  else if (feesRatio > 0.10) feesScore =  24;
-  else if (feesRatio > 0.08) feesScore =  14;
+  else if (feesRatio > 0.10) feesScore =  22;
+  else if (feesRatio > 0.08) feesScore =  12;
+  else if (feesRatio > 0.04) feesScore =   0;
   else                       feesScore = -45;
   score += feesScore;
 
-  // Rug risk — LOW seulement si fees élevé + buy dominant
+  // Rug risk
   let rugPoints = 0;
-  if (buyRatio < 0.62)   rugPoints += 2;
+  if (buyRatio  < 0.62)  rugPoints += 2;
   if (feesRatio < 0.09)  rugPoints += 2;
-  if (volAccel < 0.8)    rugPoints++;
-  if (c1h < 0)           rugPoints++;
+  if (volAccel  < 0.8)   rugPoints++;
+  if (c1h       < 0)     rugPoints++;
   if (!hasSocials)       rugPoints++;
-  if (liq < 12000)       rugPoints++;
-  if (ageH < 1)          rugPoints++;
-  // Bonus LOW si signaux forts
+  if (liq       < 12000) rugPoints++;
+  if (ageH      < 1)     rugPoints++;
   if (buyRatio > 0.72 && feesRatio > 0.10) rugPoints = Math.max(0, rugPoints - 2);
   const rugRisk = rugPoints >= 4 ? 'HIGH' : rugPoints >= 2 ? 'MEDIUM' : 'LOW';
 
-  const emoji = EMOJIS[Math.floor(Math.random()*EMOJIS.length)];
-  const sym   = (p.baseToken?.symbol||'UNKNOWN').toUpperCase().slice(0,12);
+  const emoji = EMOJIS[Math.floor(Math.random() * EMOJIS.length)];
+  const sym   = (p.baseToken?.symbol || 'UNKNOWN').toUpperCase().slice(0, 12);
   const addr  = p.baseToken?.address || '';
 
   return {
@@ -1217,11 +1216,12 @@ function scoreToken(p) {
   };
 }
 
+
 function getLabel(score) {
-  if (score >= 95) return { text:'⚡ GOD GEM', cls:'score-god-gem' };
-  if (score >= 88) return { text:'🔥 HIGH POTENTIAL', cls:'score-high-pot' };
-  if (score >= 83) return { text:'💎 SOLID CALL', cls:'score-solid' };
-  if (score >= 80) return { text:'🌱 EARLY GEM', cls:'score-solid' };
+  if (score >= 100) return { text:'⚡ GOD GEM',       cls:'score-god-gem' };
+  if (score >= 90)  return { text:'🔥 HIGH POTENTIAL', cls:'score-high-pot' };
+  if (score >= 83)  return { text:'💎 SOLID CALL',     cls:'score-solid' };
+  if (score >= 80)  return { text:'🌱 EARLY GEM',      cls:'score-solid' };
   return null;
 }
 
@@ -1358,7 +1358,7 @@ async function fetchTokens() {
     content.innerHTML = `
       <div class="empty-state">
         <div class="empty-icon">🔍</div>
-        <div class="empty-title">Aucun early gem 30-200K qualifié (anti-rug strict)</div>
+        <div class="empty-title">Aucun early gem 30-200K qualifié (anti-rug strict) – Refresh 20s</div>
         <div class="empty-sub">Marché calme ou rugs filtrés. Refresh auto 20s.</div>
         ${topRej ? `<div class="empty-sub" style="margin-top:.6rem;font-size:.7rem;opacity:.6">Top rejets: ${topRej}</div>` : ''}
         <div class="empty-sub" style="margin-top:.4rem;opacity:.5">${pairs.length} analysés · ${passed.length} passent filtres · ${scored.length} scorés ≥82</div>
