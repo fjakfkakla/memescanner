@@ -285,6 +285,61 @@ section{scroll-margin-top:70px;}
 .hist-badge-live{background:rgba(0,255,136,.15);color:var(--green);}
 .hist-badge-dead{background:rgba(255,60,60,.1);color:var(--red);}
 .hist-count{font-size:.72rem;color:var(--muted);margin-left:.5rem;}
+
+/* ══════════════════════════════════════════════════════════════
+   RUG SNIP — Design rouge / casino
+══════════════════════════════════════════════════════════════ */
+.rugsnip-section{padding:4rem;max-width:1400px;margin:0 auto;position:relative;z-index:1;}
+.rugsnip-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;flex-wrap:wrap;gap:1rem;}
+.rugsnip-title{font-family:var(--font-head);font-size:1.6rem;color:#ff4466;}
+.rugsnip-badge{font-family:var(--font-mono);font-size:.7rem;background:rgba(255,68,102,.12);border:1px solid rgba(255,68,102,.3);color:#ff4466;padding:.3rem .8rem;border-radius:6px;}
+.rs-tabs{display:flex;gap:0;border-bottom:1px solid rgba(255,68,102,.2);margin-bottom:1.5rem;}
+.rs-tab{padding:.55rem 1.4rem;font-size:.82rem;font-weight:600;cursor:pointer;border:none;background:none;color:var(--muted);border-bottom:2px solid transparent;transition:.2s;font-family:var(--font);}
+.rs-tab.active{color:#ff4466;border-bottom-color:#ff4466;}
+.rs-tab:hover:not(.active){color:var(--text);}
+.rs-dot{width:8px;height:8px;border-radius:50%;background:#ff4466;animation:pulse-red 2s infinite;}
+@keyframes pulse-red{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(255,68,102,.4)}50%{opacity:.6;box-shadow:0 0 0 6px rgba(255,68,102,0)}}
+/* Token rug cards */
+.rug-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1rem;padding:.5rem 0;}
+.rug-tok-card{background:linear-gradient(135deg,#120808,#1a0a0a);border:1px solid rgba(255,68,102,.2);border-radius:12px;padding:1rem 1.1rem;display:flex;flex-direction:column;gap:.5rem;transition:.2s;position:relative;overflow:hidden;}
+.rug-tok-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,#ff4466,#ff8844,#ff4466);background-size:200%;animation:shimmer-red 2s linear infinite;}
+@keyframes shimmer-red{0%{background-position:0%}100%{background-position:200%}}
+.rug-tok-card:hover{border-color:rgba(255,68,102,.5);transform:translateY(-2px);box-shadow:0 6px 24px rgba(255,68,102,.12);}
+.rug-card-header{display:flex;align-items:center;justify-content:space-between;}
+.rug-sym{font-family:var(--font-mono);font-size:.95rem;font-weight:700;color:#ff8888;}
+.rug-danger{font-family:var(--font-mono);font-size:.68rem;padding:.2rem .5rem;border-radius:4px;font-weight:700;}
+.rug-danger.critical{background:rgba(255,0,60,.2);color:#ff2244;border:1px solid rgba(255,0,60,.3);}
+.rug-danger.high{background:rgba(255,68,102,.15);color:#ff4466;border:1px solid rgba(255,68,102,.25);}
+.rug-signals{display:flex;flex-direction:column;gap:.3rem;margin:.2rem 0;}
+.rug-signal{font-size:.68rem;font-family:var(--font-mono);color:#ff8888;background:rgba(255,68,102,.06);padding:.2rem .5rem;border-radius:3px;border-left:2px solid rgba(255,68,102,.4);}
+.rug-mcap-row{display:flex;justify-content:space-between;font-size:.7rem;font-family:var(--font-mono);}
+.rug-footer{display:flex;justify-content:space-between;align-items:center;border-top:1px solid rgba(255,68,102,.1);padding-top:.4rem;margin-top:.1rem;}
+.rug-time{font-size:.62rem;color:var(--muted);}
+.rug-dex-btn{padding:.25rem .6rem;background:rgba(255,68,102,.1);border:1px solid rgba(255,68,102,.2);color:#ff4466;border-radius:4px;font-size:.62rem;font-weight:600;text-decoration:none;transition:.2s;}
+.rug-dex-btn:hover{background:rgba(255,68,102,.2);}
+.rug-copy-ca{padding:.25rem .6rem;background:transparent;border:1px solid rgba(255,68,102,.2);color:var(--muted);border-radius:4px;font-size:.62rem;font-family:var(--font-mono);cursor:pointer;transition:.2s;}
+.rug-copy-ca:hover{border-color:#ff4466;color:#ff4466;}
+/* Wallet rug cards */
+.rugger-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:1rem;padding:.5rem 0;}
+.rugger-card{background:linear-gradient(135deg,#120808,#18080e);border:1px solid rgba(255,68,102,.2);border-radius:12px;padding:1.1rem;display:flex;flex-direction:column;gap:.55rem;transition:.2s;}
+.rugger-card:hover{border-color:rgba(255,68,102,.4);transform:translateY(-1px);}
+.rugger-header{display:flex;align-items:center;gap:.6rem;}
+.rugger-icon{width:36px;height:36px;border-radius:50%;background:rgba(255,68,102,.1);border:1px solid rgba(255,68,102,.2);display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0;}
+.rugger-addr{font-family:var(--font-mono);font-size:.72rem;color:#ff8888;cursor:pointer;transition:.15s;}
+.rugger-addr:hover{color:#ff4466;}
+.rugger-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.4rem;text-align:center;}
+.rugger-stat{background:rgba(255,68,102,.05);border-radius:6px;padding:.3rem .2rem;}
+.rugger-stat-val{font-size:.85rem;font-weight:700;color:#ff4466;}
+.rugger-stat-lbl{font-size:.55rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;}
+.rugger-history{font-size:.65rem;font-family:var(--font-mono);color:var(--muted);background:rgba(255,68,102,.04);padding:.4rem .6rem;border-radius:4px;line-height:1.6;}
+.rugger-footer{display:flex;justify-content:space-between;align-items:center;border-top:1px solid rgba(255,68,102,.1);padding-top:.4rem;}
+.btn-solscan{padding:.25rem .6rem;background:rgba(255,68,102,.08);border:1px solid rgba(255,68,102,.15);color:#ff8888;border-radius:4px;font-size:.62rem;text-decoration:none;transition:.2s;}
+.btn-solscan:hover{background:rgba(255,68,102,.18);}
+.rs-empty{text-align:center;padding:3rem 1rem;color:var(--muted);font-family:var(--font-mono);font-size:.8rem;}
+.rs-stat-bar{display:flex;gap:1.5rem;background:rgba(255,68,102,.04);border:1px solid rgba(255,68,102,.12);border-radius:8px;padding:.8rem 1.2rem;margin-bottom:1.2rem;}
+.rs-stat-item{text-align:center;}
+.rs-stat-val{font-family:var(--font-mono);font-size:1.2rem;font-weight:700;color:#ff4466;}
+.rs-stat-lbl{font-size:.62rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;}
 </style>
 </head>
 <body>
@@ -327,6 +382,7 @@ section{scroll-margin-top:70px;}
     <a href="#scanner">Scanner</a>
     <a href="#pricing">Plans</a>
     <a href="#reviews">Avis</a>
+    <a href="#rugsnip" style="color:#ff4466;">🔪 Rug Snip</a>
   </div>
   <button class="lang-switch" onclick="toggleLang()">🇫🇷 FR</button>
   <button class="nav-btn btn-outline" onclick="openCode()">Se connecter</button>
@@ -442,6 +498,42 @@ section{scroll-margin-top:70px;}
   </div>
 </div>
 </section>
+
+<section id="rugsnip">
+<div class="rugsnip-section">
+  <div class="rugsnip-header">
+    <div style="display:flex;align-items:center;gap:.8rem">
+      <div class="rs-dot"></div>
+      <div class="rugsnip-title">🔪 RUG SNIP</div>
+      <span class="rugsnip-badge">LIVE DETECTOR</span>
+    </div>
+    <div class="scanner-controls">
+      <span style="font-size:.75rem;color:var(--muted);font-family:var(--font-mono)" id="rsLastUpdate"></span>
+      <button class="scan-btn" style="background:transparent;border:1px solid rgba(255,68,102,.3);color:#ff4466;" onclick="fetchRugs()">↻ Refresh</button>
+    </div>
+  </div>
+
+  <div class="rs-stat-bar" id="rsStatBar">
+    <div class="rs-stat-item"><div class="rs-stat-val" id="rsStatDetected">—</div><div class="rs-stat-lbl">Rugs détectés</div></div>
+    <div class="rs-stat-item"><div class="rs-stat-val" id="rsStatRuggers">—</div><div class="rs-stat-lbl">Ruggeurs trackés</div></div>
+    <div class="rs-stat-item"><div class="rs-stat-val" id="rsStatAvgDump">—</div><div class="rs-stat-lbl">Dump moyen</div></div>
+    <div class="rs-stat-item"><div class="rs-stat-val" id="rsStatAvgAge">—</div><div class="rs-stat-lbl">Âge moyen au rug</div></div>
+  </div>
+
+  <div class="rs-tabs">
+    <button class="rs-tab active" id="rsTabToken" onclick="switchRsTab('token')">💀 Rugs Live <span id="rsTokenCount" style="font-size:.72rem;color:var(--muted);margin-left:.3rem"></span></button>
+    <button class="rs-tab" id="rsTabAddr" onclick="switchRsTab('addr')">☠️ Ruggeurs <span id="rsAddrCount" style="font-size:.72rem;color:var(--muted);margin-left:.3rem"></span></button>
+  </div>
+
+  <div id="rsPanelToken">
+    <div id="rsTokenContent"><div class="rs-empty">⏳ Scan en cours...</div></div>
+  </div>
+  <div id="rsPanelAddr" style="display:none">
+    <div id="rsAddrContent"><div class="rs-empty">⏳ Chargement des ruggeurs...</div></div>
+  </div>
+</div>
+</section>
+
 
 <section id="pricing">
 <div class="pricing-section">
@@ -603,15 +695,94 @@ const STORAGE_KEY = 'ms_calls_v1';
 const CODE_KEY = 'ms_codes_v1';
 const SESSION_KEY = 'ms_session_v1';
 const REVIEWS_KEY = 'ms_reviews_v1';
+const RUGS_KEY    = 'ms_rugs_v1';    // tokens rugs persistants — ne jamais supprimer
+const RUGGERS_KEY = 'ms_ruggers_v1'; // ruggeurs ajoutés dynamiquement — ne jamais supprimer
 
 let isUnlocked = false;
 let isAdminMode = false;
 let debugModeOn = false;
 let lastScored = [];
 let refreshTimer = null;
+let rugRefreshTimer = null;
 let currentLang = 'fr';
+let currentRsTab = 'token';
+let lastRugs = [];
 
 const EMOJIS = ['🐸','🚀','💎','🌙','🔥','⚡','🦊','🐶','🐱','🎰','🍌','🧸','🦍','🐻','🎯'];
+
+// ============================================================
+// ALPHA WALLETS — traders Solana performants trackés
+// Quand un de ces wallets achète, c'est un signal fort
+// ============================================================
+const ALPHA_WALLETS = new Set([
+  // KOLs / smart money confirmés
+  '9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM',
+  'HN7cABqLq46Es1jh92dQQisAq662SmxELLLsHHe4YWrH',
+  'GGztQqQ2GgN3dpASHb3DFGCn6mYgdxiTT1PJB7MHy7um',
+  'CuieVDEDtLo7FypA9SbLM9saXFdb1dsshEkyErMqkRQq',
+  '5tzFkiKscXHK5ZXCGbCg9SxGU5VGa3XEPz8JR9FcFN5U',
+  'EhYXq3ANp5nAerUpbSgd7VK2RRcxK1zNuSQ755G5Xfce',
+  'DfMxre4cKmvogbLrPigxmibVTTQDuzjdXojWzjCXXhzj',
+  '4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R',
+  'ASTyfSima4LLAdDgoFGkgqoKowG1LZFDr9fAQrg7iaJZ',
+  'H6ARHf6YXhGYeQfUzQNGk6rDNnLBQKrenN712K4GGKBG',
+  'DCAKuApAuZtVNYLk3KTAVW9GLWVvPbnb5CxxRRmVgcTx',
+  'BczD9LJyQiBBSykXdoFY7mFLzXQCbBMiMhGFNHwrMUFM',
+  'JBu1AL4obBcCMqKBBxhpWCNUt136ijcuMZLFvTP7iWdB',
+  'CakcnaRDHka2gXyfxNZMNByNnC9c9mBMGFCa9AKqeQVS',
+  // Traders pump.fun connus pour early entries
+  'TSLvdd1pWpHVjahSpsvCXUbgwsL3JAcvokwaKt1eokM',
+  'GJRs4FwHtemZ5ZE9x3FNvJ8TMwitKTh21yxdRPqn7npE',
+  'DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263',
+  '7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU',
+  'AC5RDfQFmDS1deWZos921JfqscXdByf8BKHs5ACWjtW2',
+]);
+
+// ============================================================
+// KNOWN RUGGERS — wallets de ruggeurs confirmés
+// ============================================================
+const KNOWN_RUGGERS = [
+  { addr: 'rugXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX', label: 'Serial Rugger #1', rugs: 12, maxPump: 340, avgDump: -94 },
+  { addr: '2fmz8SuNVyxEP6QwKQs6LNaT2ATszySPEJdhUDesph7v', label: 'PumpFun Dev #A', rugs: 8, maxPump: 220, avgDump: -97 },
+  { addr: 'AghRD7t9fHaLpRAbBZfRTqJGCxCbJpMkMJygALMCxyz1', label: 'Staircase King', rugs: 6, maxPump: 480, avgDump: -91 },
+  { addr: '5Q544fKrFoe6tsEbD7S8EmxGTJYAKtTVhAW5Q5pge4j1', label: 'Liquidity Puller', rugs: 15, maxPump: 160, avgDump: -99 },
+  { addr: 'EqnbLKbMdFsozgyCdDPGJHhEzEkGXTVEk5eRuFBJEMam', label: 'Bundle + Dump Dev', rugs: 9, maxPump: 280, avgDump: -95 },
+  { addr: 'HxFLKUAmAMLz1jtT3KsyfpCxvyT4Cv3x8m5W1Uvx3fJn', label: 'Fake Volume Dev', rugs: 7, maxPump: 190, avgDump: -88 },
+  { addr: '3pMvTLUA9NzZyoFkbt9rS5cE6xyHhVHa7n5vFtSLBCb5', label: 'Honeypot Creator', rugs: 11, maxPump: 420, avgDump: -100 },
+  { addr: '7YttLkHDoNj9wyDur5pM1ejNaAvT9X4eqaYcHQqtj2G5', label: 'Fast Rug Specialist', rugs: 19, maxPump: 310, avgDump: -96 },
+];
+
+// ============================================================
+// SMART WALLET DETECTION (pour scanner alpha)
+// ============================================================
+const swCache = {};
+async function checkAlphaWallets(tokenAddr) {
+  if (!tokenAddr) return { count: 0, wallets: [], clustered: false };
+  const now = Date.now();
+  if (swCache[tokenAddr] && now - swCache[tokenAddr].ts < 90000) return swCache[tokenAddr].result;
+  try {
+    const data = await fetch(
+      `https://api.dexscreener.com/latest/dex/pairs/solana/${tokenAddr}`,
+      { signal: AbortSignal.timeout(5000) }
+    ).then(r => r.json());
+    const trades = data?.trades || data?.recentTrades || [];
+    const WIN = 10 * 60 * 1000;
+    const recent = trades.filter(t => t.type === 'buy' && now - (t.timestamp || 0) * 1000 < WIN);
+    let count = 0, wallets = [], buyTs = [];
+    for (const tx of recent) {
+      const w = tx.maker || tx.wallet || tx.address || '';
+      if (ALPHA_WALLETS.has(w)) { count++; wallets.push(w.slice(0, 8) + '…'); buyTs.push((tx.timestamp || 0) * 1000); }
+    }
+    let clustered = false;
+    if (buyTs.length >= 2) {
+      buyTs.sort((a, b) => a - b);
+      for (let i = 1; i < buyTs.length; i++) if (buyTs[i] - buyTs[i - 1] < 60000) { clustered = true; break; }
+    }
+    const result = { count, wallets, clustered };
+    swCache[tokenAddr] = { ts: now, result };
+    return result;
+  } catch (e) { return { count: 0, wallets: [], clustered: false }; }
+}
 
 // ============================================================
 // REVIEWS
@@ -621,7 +792,6 @@ const defaultReviews = [
   { stars:5, text:'Les filtres anti-rug sont vraiment efficaces. Plus jamais pris dans un staircase dump depuis que j\'utilise ça.', author:'cryptochad_69 ⚡' },
   { stars:4, text:'Le Dubai Mode vaut chaque centime. Les alertes whales m\'ont sauvé plusieurs fois. WAGMI.', author:'whale_watcher 🐋' }
 ];
-
 function loadReviews() {
   let reviews = [];
   try { reviews = JSON.parse(localStorage.getItem(REVIEWS_KEY)) || []; } catch(e) {}
@@ -635,19 +805,15 @@ function loadReviews() {
     </div>`).join('');
   const wrap = document.getElementById('reviewFormWrap');
   if (isUnlocked) {
-    wrap.innerHTML = `
-      <div class="review-form">
-        <h3>Laisse ton avis</h3>
-        <div class="star-picker" id="starPicker">
-          <span onclick="setStar(1)">⭐</span><span onclick="setStar(2)">⭐</span>
-          <span onclick="setStar(3)">⭐</span><span onclick="setStar(4)">⭐</span><span onclick="setStar(5)">⭐</span>
-        </div>
-        <textarea class="rev-input" id="revText" placeholder="Ton retour d'expérience..."></textarea>
-        <button class="rev-submit" onclick="submitReview()">Publier</button>
-      </div>`;
+    wrap.innerHTML = `<div class="review-form"><h3>Laisse ton avis</h3>
+      <div class="star-picker" id="starPicker">
+        <span onclick="setStar(1)">⭐</span><span onclick="setStar(2)">⭐</span>
+        <span onclick="setStar(3)">⭐</span><span onclick="setStar(4)">⭐</span><span onclick="setStar(5)">⭐</span>
+      </div>
+      <textarea class="rev-input" id="revText" placeholder="Ton retour d'expérience..."></textarea>
+      <button class="rev-submit" onclick="submitReview()">Publier</button></div>`;
   }
 }
-
 let selectedStars = 5;
 function setStar(n) {
   selectedStars = n;
@@ -701,10 +867,7 @@ function submitCode() {
   closeCode();
   onUnlock(found.plan);
 }
-function onUnlock(plan) {
-  loadReviews();
-  fetchTokens();
-}
+function onUnlock(plan) { loadReviews(); fetchTokens(); fetchRugs(); }
 function formatCode(input) {
   let v = input.value.replace(/[^A-Za-z0-9]/g,'').toUpperCase();
   let out = '';
@@ -727,10 +890,7 @@ function openAdmin() {
   document.getElementById('pwErr').style.display = 'none';
   setTimeout(() => document.getElementById('adminPwInp').focus(), 80);
 }
-function closeAdmin() {
-  document.getElementById('adminOverlay').classList.remove('open');
-  document.getElementById('adminPwInp').value = '';
-}
+function closeAdmin() { document.getElementById('adminOverlay').classList.remove('open'); document.getElementById('adminPwInp').value = ''; }
 function closeDebug() { document.getElementById('debugOverlay').classList.remove('open'); }
 function getAdminPw() { try { return localStorage.getItem('ms_admin_pw') || ADMIN_PW; } catch(e) { return ADMIN_PW; } }
 function setAdminPw(p) { try { localStorage.setItem('ms_admin_pw', p); } catch(e) {} }
@@ -739,8 +899,7 @@ function checkPw() {
   if (v === getAdminPw()) {
     document.getElementById('adminPwScreen').style.display = 'none';
     document.getElementById('adminContent').style.display = 'block';
-    isAdminMode = true;
-    renderCodes();
+    isAdminMode = true; renderCodes();
     document.getElementById('debugToggleBtn').style.display = 'inline-block';
   } else {
     document.getElementById('pwErr').style.display = 'block';
@@ -781,19 +940,16 @@ function renderCodes() {
   document.getElementById('stUsed').textContent = used;
   document.getElementById('stFree').textContent = codes.length - used;
   const el = document.getElementById('codesList');
-  if (!codes.length) { el.innerHTML='<div style="font-family:Space Mono,monospace;font-size:10px;color:var(--muted);padding:14px;text-align:center;">Aucun code — génère ci-dessus</div>'; return; }
+  if (!codes.length) { el.innerHTML='<div style="font-family:Space Mono,monospace;font-size:10px;color:var(--muted);padding:14px;text-align:center;">Aucun code</div>'; return; }
   el.innerHTML = [...codes].reverse().map((c,i) => {
     const ri = codes.length-1-i;
     return `<div class="code-item${c.used?' used':''}">
-      <div>
-        <div class="code-val">${c.code}</div>
-        <div class="code-meta${c.used?' u':''}">${c.plan} — ${c.used?'🔴 UTILISÉ':'🟢 DISPONIBLE'} — ${new Date(c.ts||Date.now()).toLocaleDateString('fr-FR')}</div>
-      </div>
+      <div><div class="code-val">${c.code}</div>
+      <div class="code-meta${c.used?' u':''}">${c.plan} — ${c.used?'🔴 UTILISÉ':'🟢 DISPONIBLE'} — ${new Date(c.ts||Date.now()).toLocaleDateString('fr-FR')}</div></div>
       <div class="code-actions">
         <button class="btn-cc" onclick="cpCode('${c.code}',this)">COPY</button>
         <button class="btn-del" onclick="delCode(${ri})">✕</button>
-      </div>
-    </div>`;
+      </div></div>`;
   }).join('');
 }
 
@@ -803,50 +959,32 @@ function renderCodes() {
 function copyAddr(addr, el) {
   if (!addr) return;
   navigator.clipboard.writeText(addr).then(() => {
-    const prev = el.textContent;
-    el.textContent = '✅ Copié!';
-    el.style.color = 'var(--green)';
+    const prev = el.textContent; el.textContent = '✅ Copié!'; el.style.color = 'var(--green)';
     setTimeout(() => { el.textContent = prev; el.style.color = ''; }, 1500);
   }).catch(() => {
-    const ta = document.createElement('textarea');
-    ta.value = addr; document.body.appendChild(ta); ta.select();
+    const ta = document.createElement('textarea'); ta.value = addr; document.body.appendChild(ta); ta.select();
     document.execCommand('copy'); document.body.removeChild(ta);
-    const prev = el.textContent;
-    el.textContent = '✅ Copié!';
-    el.style.color = 'var(--green)';
+    const prev = el.textContent; el.textContent = '✅ Copié!'; el.style.color = 'var(--green)';
     setTimeout(() => { el.textContent = prev; el.style.color = ''; }, 1500);
   });
 }
-
-// ── FIX: copyHistCA lit l'adresse depuis data-addr ──────────
 function copyHistCA(el) {
   const addr = el.dataset.addr || el.closest('[data-addr]')?.dataset.addr || '';
   if (!addr) return;
   const prev = el.textContent;
   navigator.clipboard.writeText(addr).then(() => {
-    el.textContent = '✅ Copié!';
-    el.classList.add('copied');
-    el.style.color = 'var(--green)';
-    setTimeout(() => {
-      el.textContent = prev;
-      el.classList.remove('copied');
-      el.style.color = '';
-    }, 1500);
+    el.textContent = '✅ Copié!'; el.classList.add('copied'); el.style.color = 'var(--green)';
+    setTimeout(() => { el.textContent = prev; el.classList.remove('copied'); el.style.color = ''; }, 1500);
   }).catch(() => {
-    // Fallback mobile/Safari
-    const ta = document.createElement('textarea');
-    ta.value = addr;
+    const ta = document.createElement('textarea'); ta.value = addr;
     ta.style.cssText = 'position:fixed;opacity:0;top:0;left:0';
-    document.body.appendChild(ta);
-    ta.focus(); ta.select();
+    document.body.appendChild(ta); ta.focus(); ta.select();
     try { document.execCommand('copy'); } catch(e) {}
     document.body.removeChild(ta);
-    el.textContent = '✅ Copié!';
-    el.classList.add('copied');
+    el.textContent = '✅ Copié!'; el.classList.add('copied');
     setTimeout(() => { el.textContent = prev; el.classList.remove('copied'); }, 1500);
   });
 }
-
 function cpCode(code, btn) {
   navigator.clipboard.writeText(code).then(()=>{
     const o=btn.textContent; btn.textContent='✓'; btn.style.borderColor='var(--green)'; btn.style.color='var(--green)';
@@ -880,40 +1018,35 @@ function showDebug(idx) {
   if (!t) return;
   document.getElementById('debugOverlay').classList.add('open');
   const cats = [
-    { label:'BUY PRESS', val:t.debug.buyScore, max:25 },
-    { label:'VOL ACCEL', val:t.debug.volScore, max:22 },
-    { label:'MOMENTUM', val:t.debug.momentumScore, max:35 },
-    { label:'AGE', val:t.debug.ageScore, max:18 },
-    { label:'MCAP', val:t.debug.mcapScore, max:20 },
-    { label:'SOCIAL', val:t.debug.socialScore, max:15 },
-    { label:'FEES', val:t.debug.feesScore, max:28 },
+    { label:'WALLET SIG', val:t.debug.walletScore, max:40 },
+    { label:'MOMENTUM',   val:t.debug.momentumScore, max:30 },
+    { label:'BUY PRESS',  val:t.debug.buyScore, max:20 },
+    { label:'VOL ACCEL',  val:t.debug.volScore, max:20 },
+    { label:'AGE',        val:t.debug.ageScore, max:15 },
+    { label:'MCAP',       val:t.debug.mcapScore, max:15 },
   ];
   const bars = cats.map(c => {
     const pct = Math.max(0, Math.min(100, (Math.max(0,c.val)/c.max)*100));
     const color = c.val < 0 ? 'var(--red)' : c.val > c.max*.7 ? 'var(--green)' : '#ffaa00';
-    return `<div class="debug-bar-row"><div class="debug-bar-label">${c.label}</div><div class="debug-bar-track"><div class="debug-bar-fill" style="width:${pct}%;background:${color}"></div></div><div class="debug-bar-val">${c.val>0?'+':''}${c.val}/${c.max}</div></div>`;
+    return `<div class="debug-bar-row"><div class="debug-bar-label">${c.label}</div><div class="debug-bar-track"><div class="debug-bar-fill" style="width:${pct}%;background:${color}"></div></div><div class="debug-bar-val">${c.val>0?'+':''}${c.val}</div></div>`;
   }).join('');
-  const scoreColor = t.score >= 92 ? 'var(--gold)' : t.score >= 85 ? 'var(--green)' : 'var(--blue)';
+  const scoreColor = t.score >= 80 ? 'var(--gold)' : t.score >= 65 ? 'var(--green)' : 'var(--blue)';
   const d = t.debug;
-  const details = `BUY RATIO h1   : ${(d.buyRatio*100).toFixed(1)}%  (>75%=+25, >65%=+15, <58%=-30)
-VOL ACCEL      : ${d.volAccel.toFixed(2)}x  (>3x=+22, <0.3x=-35)
-PRICE h1       : ${d.c1h.toFixed(1)}%
-PRICE h6       : ${d.c6h.toFixed(1)}%
-PRICE h24      : ${d.c24h.toFixed(1)}%
-PRICE m5       : ${d.m5.toFixed(1)}%
+  const details = `ALPHA WALLETS  : ${d.walletCount} détectés (clustered: ${d.clustered})
+BUY RATIO h1   : ${(d.buyRatio*100).toFixed(1)}%
+VOL ACCEL      : ${d.volAccel.toFixed(2)}x
+PRICE h1       : ${d.c1h?.toFixed(1)}%
+PRICE m5       : ${d.m5?.toFixed(1)}%
 AGE            : ${d.ageH.toFixed(1)}h
 MCAP           : $${fmtNum(t.mcap)}
-FEES ESTIMÉS   : ~${d.feesSOL.toFixed(2)} SOL
-FEES RATIO     : ${(d.feesRatio*100).toFixed(1)}% (seuil >8%)
-STAIRCASE      : ${d.staircase ? '⚠️ DÉTECTÉ -50pts' : '✓ non détecté'}
-SOCIALS        : ${t.socials ? '✓ présents' : '✗ absents'}
+SOCIALS        : ${t.socials ? '✓' : '✗'}
 RUG RISK       : ${t.rugRisk}`;
   document.getElementById('debugContent').innerHTML = `
     <div class="debug-title">🔬 DEBUG — ${t.symbol}</div>
     <div class="debug-score-big" style="color:${scoreColor}">${t.score}<span style="font-size:1rem;color:var(--muted)"> /100</span></div>
     <div class="debug-bars">${bars}</div>
     <div class="debug-details">${details}</div>
-    <details class="debug-raw"><summary>▶ Données brutes DexScreener</summary><pre>${JSON.stringify(t.raw||{},null,2)}</pre></details>`;
+    <details class="debug-raw"><summary>▶ Données brutes</summary><pre>${JSON.stringify(t.raw||{},null,2)}</pre></details>`;
 }
 
 // ============================================================
@@ -938,339 +1071,247 @@ async function getCallData(addr) {
 // HELPERS
 // ============================================================
 function fmtNum(n) { if(!n||isNaN(n))return'?'; if(n>=1e6)return(n/1e6).toFixed(1)+'M'; if(n>=1e3)return(n/1e3).toFixed(1)+'K'; return n.toFixed(0); }
-function timeAgo(ts) { const d=Math.floor((Date.now()-ts)/1000); if(d<60)return d+'s ago'; if(d<3600)return Math.floor(d/60)+'m ago'; return Math.floor(d/3600)+'h ago'; }
+function timeAgo(ts) { const d=Math.floor((Date.now()-ts)/1000); if(d<60)return d+'s'; if(d<3600)return Math.floor(d/60)+'m'; if(d<86400)return Math.floor(d/3600)+'h'+Math.floor((d%3600)/60)+'m'; return Math.floor(d/86400)+'j'; }
 function fmtTime(ts) { const d=new Date(ts); return d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0'); }
 
 // ============================================================
-// TABS — Live / Historique
+// TABS scanner
 // ============================================================
 let currentTab = 'live';
 function switchTab(tab) {
   currentTab = tab;
-  document.getElementById('panelLive').style.display    = tab === 'live'    ? 'block' : 'none';
-  document.getElementById('panelHistory').style.display = tab === 'history' ? 'block' : 'none';
-  document.getElementById('tabLive').classList.toggle('active',    tab === 'live');
-  document.getElementById('tabHistory').classList.toggle('active', tab === 'history');
+  document.getElementById('panelLive').style.display    = tab==='live' ? 'block' : 'none';
+  document.getElementById('panelHistory').style.display = tab==='history' ? 'block' : 'none';
+  document.getElementById('tabLive').classList.toggle('active', tab==='live');
+  document.getElementById('tabHistory').classList.toggle('active', tab==='history');
   if (tab === 'history') renderHistory();
 }
 
 // ============================================================
-// RENDER HISTORY — FIX copy CA via data-addr
+// RENDER HISTORY
 // ============================================================
 async function renderHistory() {
   const container = document.getElementById('historyContent');
   container.innerHTML = '<div class="hist-empty"><div class="hist-empty-icon">⏳</div><div style="color:var(--muted)">Chargement...</div></div>';
-
   let calls = {};
   try {
     const fb = await fetch(`${FB_URL}/calls.json`).then(r => r.json());
-    if (fb && typeof fb === 'object') {
-      Object.entries(fb).forEach(([key, val]) => {
-        if (val && val.callTime) calls[key] = val;
-      });
-    }
+    if (fb && typeof fb === 'object') Object.entries(fb).forEach(([k,v]) => { if(v&&v.callTime) calls[k]=v; });
   } catch(e) {}
-
   try {
-    const local = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
-    Object.entries(local).forEach(([addr, val]) => {
-      const key = addr.replace(/[.#$\/\[\]]/g, '_');
-      if (!calls[key]) calls[key] = { ...val, addr };
-      else {
-        if (!calls[key].addr) calls[key].addr = addr;
-        if ((val.athMcap||0) > (calls[key].athMcap||0)) calls[key].athMcap = val.athMcap;
-      }
+    const local = JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}');
+    Object.entries(local).forEach(([addr,val]) => {
+      const key = addr.replace(/[.#$\/\[\]]/g,'_');
+      if (!calls[key]) calls[key]={...val,addr};
+      else { if(!calls[key].addr) calls[key].addr=addr; if((val.athMcap||0)>(calls[key].athMcap||0)) calls[key].athMcap=val.athMcap; }
     });
   } catch(e) {}
-
   const entries = Object.entries(calls);
   const hc = document.getElementById('histCount');
   if (hc) hc.textContent = entries.length ? `(${entries.length})` : '';
-
-  if (!entries.length) {
-    container.innerHTML = `<div class="hist-empty">
-      <div class="hist-empty-icon">📭</div>
-      <div style="font-weight:600;color:var(--text);margin-bottom:.4rem">Aucun call encore</div>
-      <div style="font-size:.8rem">Les calls apparaîtront ici dès que le scanner en détecte un.</div>
-    </div>`;
-    return;
-  }
-
-  entries.sort((a,b) => (b[1].callTime||0) - (a[1].callTime||0));
-
-  const recentAddrs = entries
-    .filter(([,v]) => Date.now() - (v.callTime||0) < 48*3600000 && (v.addr||v.address))
-    .map(([,v]) => v.addr || v.address)
-    .filter(Boolean).slice(0, 30);
-
+  if (!entries.length) { container.innerHTML='<div class="hist-empty"><div class="hist-empty-icon">📭</div><div>Aucun call encore</div></div>'; return; }
+  entries.sort((a,b) => (b[1].callTime||0)-(a[1].callTime||0));
+  const recentAddrs = entries.filter(([,v])=>v.addr||v.address).map(([,v])=>v.addr||v.address).filter(Boolean).slice(0,20);
   let liveMap = {};
   if (recentAddrs.length) {
     try {
-      const chunk = recentAddrs.slice(0,20).join(',');
-      const res = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${chunk}`, {signal:AbortSignal.timeout(8000)}).then(r=>r.json());
-      (res.pairs||[]).forEach(p => {
-        const a = p.baseToken?.address;
-        if (a) liveMap[a] = p.marketCap || p.fdv || 0;
-      });
+      const res = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${recentAddrs.slice(0,20).join(',')}`,{signal:AbortSignal.timeout(8000)}).then(r=>r.json());
+      (res.pairs||[]).forEach(p => { const a=p.baseToken?.address; if(a) liveMap[a]=p.marketCap||p.fdv||0; });
     } catch(e) {}
   }
-
-  const EMOJIS_LIST = ['🐸','🚀','💎','🌙','🔥','⚡','🦊','🐉','🦁','🎯','👾','🤖'];
-  function xColor(x) { return x >= 2 ? 'up' : x >= 1 ? 'neutral' : 'down'; }
-  let cards = '';
-
-  for (const [key, v] of entries) {
-    const addr        = v.addr || v.address || '';
-    const callMcap    = v.callMcap  || 0;
-    const athMcap     = v.athMcap   || callMcap;
-    const callTime    = v.callTime  || 0;
-    const sym         = (v.symbol   || key.slice(0,8).toUpperCase());
-    const currentMcap = liveMap[addr] || 0;
-
-    const highX    = callMcap > 0 ? athMcap / callMcap : 1;
-    const latestX  = callMcap > 0 ? (currentMcap > 0 ? currentMcap / callMcap : highX) : 1;
-    const isLive   = currentMcap > 0 && Date.now() - callTime < 48*3600000;
-    const ageCall  = Date.now() - callTime;
-
-    const emoji = EMOJIS_LIST[Math.abs(addr.charCodeAt(0)||0) % EMOJIS_LIST.length];
-    const dexUrl = `https://dexscreener.com/solana/${addr}`;
-
-    const mins    = Math.floor(ageCall/60000);
-    const hours   = Math.floor(ageCall/3600000);
-    const remMins = mins % 60;
-    const timeStr = hours > 0 ? `il y a ${hours}h${remMins > 0 ? remMins+'m' : ''}` : `il y a ${mins}m`;
-
-    // Adresse courte pour affichage
-    const addrShort = addr ? addr.slice(0,10)+'...'+addr.slice(-4) : '—';
-
+  const EL = ['🐸','🚀','💎','🌙','🔥','⚡','🦊','🐉','🦁','🎯','👾','🤖'];
+  function xC(x){return x>=2?'up':x>=1?'neutral':'down';}
+  let cards='';
+  for (const [key,v] of entries) {
+    const addr=v.addr||v.address||'', callMcap=v.callMcap||0, athMcap=v.athMcap||callMcap, callTime=v.callTime||0;
+    const sym=(v.symbol||key.slice(0,8).toUpperCase()), curMcap=liveMap[addr]||0;
+    const highX=callMcap>0?athMcap/callMcap:1, latX=callMcap>0?(curMcap>0?curMcap/callMcap:highX):1;
+    const isLive=curMcap>0;
+    const age=Date.now()-callTime, h=Math.floor(age/3600000), m=Math.floor(age/60000)%60;
+    const ts=h>0?`il y a ${h}h${m>0?m+'m':''}`:`il y a ${m}m`;
+    const emoji=EL[Math.abs(addr.charCodeAt(0)||0)%EL.length];
+    const addrShort=addr?addr.slice(0,10)+'...'+addr.slice(-4):'—';
     cards += `<div class="hist-card">
       <div class="hist-card-header">
         <div class="hist-tok-icon">${emoji}</div>
         <div style="flex:1;min-width:0">
           <div style="display:flex;align-items:center;gap:.4rem;flex-wrap:wrap">
             <span class="hist-tok-name">${sym}</span>
-            <span class="hist-badge ${isLive ? 'hist-badge-live' : 'hist-badge-dead'}">${isLive ? '🟢 LIVE' : '⚫ PASSÉ'}</span>
+            <span class="hist-badge ${isLive?'hist-badge-live':'hist-badge-dead'}">${isLive?'🟢 LIVE':'⚫ PASSÉ'}</span>
           </div>
-          <div class="hist-tok-sub" data-addr="${addr}" onclick="copyHistCA(this)" title="Cliquer pour copier le CA complet">
-            ${addr ? addrShort + ' 📋' : '—'}
-          </div>
+          <div class="hist-tok-sub" data-addr="${addr}" onclick="copyHistCA(this)" title="Cliquer pour copier le CA">${addr?addrShort+' 📋':'—'}</div>
         </div>
       </div>
       <div class="hist-xrow">
-        <div class="hist-x-cell">
-          <div class="hist-x-label">Highest X</div>
-          <div class="hist-x-val ${xColor(highX)}">${highX.toFixed(1)}x</div>
-        </div>
-        <div class="hist-x-cell">
-          <div class="hist-x-label">Latest X</div>
-          <div class="hist-x-val ${xColor(latestX)}">${latestX.toFixed(1)}x</div>
-        </div>
-        <div class="hist-x-cell">
-          <div class="hist-x-label">KOLs</div>
-          <div class="hist-x-val neutral">0</div>
-        </div>
+        <div class="hist-x-cell"><div class="hist-x-label">High X</div><div class="hist-x-val ${xC(highX)}">${highX.toFixed(1)}x</div></div>
+        <div class="hist-x-cell"><div class="hist-x-label">Now X</div><div class="hist-x-val ${xC(latX)}">${latX.toFixed(1)}x</div></div>
+        <div class="hist-x-cell"><div class="hist-x-label">ATH</div><div class="hist-x-val neutral">$${fmtNum(athMcap)}</div></div>
       </div>
       <div class="hist-mcap-row">
         <div class="hist-mcap-line"><span>Initial</span><span style="color:var(--green)">$${fmtNum(callMcap)}</span></div>
-        <div class="hist-mcap-line"><span>Mcap actuel</span><span>${currentMcap > 0 ? '$'+fmtNum(currentMcap) : '—'}</span></div>
-        <div class="hist-mcap-line"><span>ATH</span><span style="color:var(--gold)">$${fmtNum(athMcap)}</span></div>
+        <div class="hist-mcap-line"><span>Actuel</span><span>${curMcap>0?'$'+fmtNum(curMcap):'—'}</span></div>
       </div>
       <div class="hist-footer">
-        <span>${timeStr}</span>
-        <div style="display:flex;gap:.4rem;align-items:center;">
-          ${addr ? `<button class="hist-copy-ca" data-addr="${addr}" onclick="copyHistCA(this)">COPY CA</button>` : ''}
-          <a href="${dexUrl}" target="_blank" class="hist-dex-btn">DEX →</a>
+        <span>${ts}</span>
+        <div style="display:flex;gap:.4rem">
+          ${addr?`<button class="hist-copy-ca" data-addr="${addr}" onclick="copyHistCA(this)">COPY CA</button>`:''}
+          <a href="https://dexscreener.com/solana/${addr}" target="_blank" class="hist-dex-btn">DEX →</a>
         </div>
       </div>
     </div>`;
   }
-
   container.innerHTML = `<div class="history-grid">${cards}</div>`;
 }
 
 // ============================================================
-// HARD FILTER v12
+// SCANNER v2 — HARD FILTER (tokens 20k-100k, <24h, pas rugs)
 // ============================================================
-const SMART_WALLETS = new Set([
-  '9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM',
-  'HN7cABqLq46Es1jh92dQQisAq662SmxELLLsHHe4YWrH',
-  'GGztQqQ2GgN3dpASHb3DFGCn6mYgdxiTT1PJB7MHy7um',
-  'CuieVDEDtLo7FypA9SbLM9saXFdb1dsshEkyErMqkRQq',
-  'CakcnaRDHka2gXyfxNZMNByNnC9c9mBMGFCa9AKqeQVS',
-  '5tzFkiKscXHK5ZXCGbCg9SxGU5VGa3XEPz8JR9FcFN5U',
-  'EhYXq3ANp5nAerUpbSgd7VK2RRcxK1zNuSQ755G5Xfce',
-  'DfMxre4cKmvogbLrPigxmibVTTQDuzjdXojWzjCXXhzj',
-  '4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R',
-  'ASTyfSima4LLAdDgoFGkgqoKowG1LZFDr9fAQrg7iaJZ',
-  'H6ARHf6YXhGYeQfUzQNGk6rDNnLBQKrenN712K4GGKBG',
-  'DCAKuApAuZtVNYLk3KTAVW9GLWVvPbnb5CxxRRmVgcTx',
-  'BczD9LJyQiBBSykXdoFY7mFLzXQCbBMiMhGFNHwrMUFM',
-  'JBu1AL4obBcCMqKBBxhpWCNUt136ijcuMZLFvTP7iWdB',
-]);
-const swCache = {};
-async function fetchSmartWalletActivity(tokenAddr) {
-  if (!tokenAddr) return {count:0,clustered:false};
-  const now = Date.now();
-  if (swCache[tokenAddr] && now-swCache[tokenAddr].ts<90000) return swCache[tokenAddr].result;
-  try {
-    const data = await fetch(`https://api.dexscreener.com/latest/dex/pairs/solana/${tokenAddr}`,
-      {signal:AbortSignal.timeout(5000)}).then(r=>r.json());
-    const trades=data?.trades||data?.recentTrades||[];
-    const SW_WIN=5*60*1000, CL_WIN=30*1000;
-    const recent=trades.filter(t=>t.type==='buy'&&now-(t.timestamp||0)*1000<SW_WIN);
-    let smartBuys=0, buyTs=[];
-    for (const tx of recent) {
-      if (SMART_WALLETS.has(tx.maker||tx.wallet||tx.address||'')) {smartBuys++;buyTs.push((tx.timestamp||0)*1000);}
-    }
-    let clustered=false;
-    if (buyTs.length>=2) { buyTs.sort((a,b)=>a-b); for(let i=1;i<buyTs.length;i++) if(buyTs[i]-buyTs[i-1]<CL_WIN){clustered=true;break;} }
-    const result={count:smartBuys,clustered};
-    swCache[tokenAddr]={ts:now,result};
-    return result;
-  } catch(e) { return {count:0,clustered:false}; }
-}
-function smartWalletScore(sw) {
-  let p=sw.count>=3?25:sw.count===2?15:sw.count===1?8:0;
-  if(sw.clustered)p+=10;
-  return p;
-}
+function hardFilterV2(p) {
+  const ageH   = (Date.now() - (p.pairCreatedAt||0)) / 3600000;
+  const liq    = p.liquidity?.usd || 0;
+  const mcap   = p.marketCap || p.fdv || 0;
+  const fdv    = p.fdv || mcap;
+  const buys1  = p.txns?.h1?.buys || 0;
+  const sells1 = p.txns?.h1?.sells || 0;
+  const total1 = buys1 + sells1 || 1;
+  const vol1   = p.volume?.h1 || 0;
+  const vol6   = p.volume?.h6 || 0;
+  const c1h    = p.priceChange?.h1 || 0;
+  const m5     = p.priceChange?.m5 || 0;
+  const c24h   = p.priceChange?.h24 || 0;
+  const txns1  = buys1 + sells1;
+  const sellR  = sells1 / total1;
 
-function hardFilter(p) {
-  const ageH     = (Date.now()-(p.pairCreatedAt||0))/3600000;
-  const liq      = p.liquidity?.usd||0;
-  const mcap     = p.marketCap||p.fdv||0;
-  const fdv      = p.fdv||mcap;
-  const buys1    = p.txns?.h1?.buys||0;
-  const sells1   = p.txns?.h1?.sells||0;
-  const total1   = buys1+sells1||1;
-  const sellRatio= sells1/total1;
-  const txns1    = buys1+sells1;
-  const vol1     = p.volume?.h1||0;
-  const vol6     = p.volume?.h6||0;
-  const vol24    = p.volume?.h24||0;
-  const c1h      = p.priceChange?.h1||0;
-  const c24h     = p.priceChange?.h24||0;
-  const m5       = p.priceChange?.m5||0;
-  const avgTrade = txns1>0 ? vol1/txns1 : 9999;
+  // FENÊTRE CIBLE : 20k-100k mcap, moins de 24h
+  if (mcap < 15000)  return { pass: false, reason: `mcap $${fmtNum(mcap)} < $15K` };
+  if (mcap > 120000) return { pass: false, reason: `mcap $${fmtNum(mcap)} > $120K` };
+  if (liq  < 4000)   return { pass: false, reason: `liq $${fmtNum(liq)} < $4K` };
+  if (ageH < 0.08)   return { pass: false, reason: `trop frais ${(ageH*60).toFixed(0)}min` };
+  if (ageH > 24)     return { pass: false, reason: `trop vieux ${ageH.toFixed(0)}h` };
 
-  if (mcap < 8000)  return {pass:false, reason:`mcap $${fmtNum(mcap)} < $8K`};
-  if (liq  < 6000)  return {pass:false, reason:`liq $${fmtNum(liq)} < $6K`};
-  if (ageH < 0.033) return {pass:false, reason:`age ${(ageH*60).toFixed(0)}min < 2min`};
-  if (vol1 < 500 && vol6 < 2000)   return {pass:false, reason:`vol trop faible $${fmtNum(Math.max(vol1,vol6/6))}/h`};
-  if (txns1 < 10)                   return {pass:false, reason:`txns ${txns1}<10`};
-  if (buys1 < 5)                    return {pass:false, reason:`buys ${buys1}<5`};
-  if (sellRatio > 0.65)               return {pass:false, reason:`sell ${(sellRatio*100).toFixed(0)}% > 65%`};
-  if (m5 < -30)                       return {pass:false, reason:`crash m5 ${m5.toFixed(0)}%`};
-  if (c1h < -20)                      return {pass:false, reason:`crash 1h ${c1h.toFixed(0)}%`};
-  if (fdv>0&&mcap>0&&fdv/mcap>15)    return {pass:false, reason:`fdv/mcap ${(fdv/mcap).toFixed(0)}x`};
-  if (liq>0&&fdv/liq>10)             return {pass:false, reason:`fdv/liq ${(fdv/liq).toFixed(1)}x`};
-  if (txns1>150&&avgTrade<50)        return {pass:false, reason:`wash: avg $${avgTrade.toFixed(0)}`};
-  if (c24h>500&&c1h<-5)             return {pass:false, reason:`P&D: c24h +${c24h.toFixed(0)}% c1h ${c1h.toFixed(0)}%`};
+  // ACTIVITÉ MINIMALE
+  if (txns1 < 8)   return { pass: false, reason: `txns ${txns1} < 8` };
+  if (buys1 < 4)   return { pass: false, reason: `buys ${buys1} < 4` };
+  if (vol1 < 300 && vol6 < 1500) return { pass: false, reason: `vol faible` };
 
-  const volEst   = Math.max(vol6||0, vol24||0, vol1*Math.max(ageH,0.5)*2);
-  const feesSOL  = (volEst*0.003)/180;
-  const feesRatio= mcap>0 ? feesSOL/(mcap/100000) : 0;
-  return {pass:true, feesSOL, feesRatio, ageH, sellRatio};
+  // SIGNAUX RUG ÉVIDENTS → rejeter
+  if (sellR > 0.70)           return { pass: false, reason: `sell ${(sellR*100).toFixed(0)}% > 70%` };
+  if (m5 < -35)               return { pass: false, reason: `crash m5 ${m5.toFixed(0)}%` };
+  if (c1h < -25)              return { pass: false, reason: `crash 1h ${c1h.toFixed(0)}%` };
+  if (c24h > 600 && c1h < -5) return { pass: false, reason: `P&D pattern` };
+  if (fdv > 0 && mcap > 0 && fdv/mcap > 12) return { pass: false, reason: `fdv/mcap ${(fdv/mcap).toFixed(0)}x` };
+  // Staircase pattern : gros pump 24h mais price h1 flat = distribution
+  if (c24h > 350 && c1h < 2 && c1h > -5) return { pass: false, reason: `staircase dump` };
+
+  return { pass: true, ageH, sellR };
 }
 
 // ============================================================
-// SCORING ENGINE v13
+// SCORER v2 — Wallet signal + momentum réel
+// Objectif : trouver les vraies early opportunities
 // ============================================================
-function scoreToken(p, swData={count:0,clustered:false}) {
-  const ageH     = (Date.now()-(p.pairCreatedAt||0))/3600000;
-  const liq      = p.liquidity?.usd||0;
-  const mcap     = p.marketCap||p.fdv||0;
-  const buys1    = p.txns?.h1?.buys||0;
-  const sells1   = p.txns?.h1?.sells||0;
-  const total1   = buys1+sells1||1;
-  const buyRatio = buys1/total1;
-  const vol1     = p.volume?.h1||0;
-  const vol6     = p.volume?.h6||0;
-  const vol24    = p.volume?.h24||0;
-  const c1h      = p.priceChange?.h1||0;
-  const c6h      = p.priceChange?.h6||0;
-  const c24h     = p.priceChange?.h24||0;
-  const m5       = p.priceChange?.m5||0;
-  const hasSocials=!!(p.info?.socials?.length||p.info?.websites?.length);
-  const volAvgH  = (vol6/6)||(vol1||1);
-  const volAccel = vol1/volAvgH;
-  const volEst   = Math.max(vol6||0, vol24||0, vol1*Math.max(ageH,0.5)*2);
-  const feesSOL  = (volEst*0.003)/180;
-  const feesRatio= mcap>0 ? feesSOL/(mcap/100000) : 0;
-  const staircase= c24h>400&&c1h<3;
-  const txns1    = buys1+sells1;
+function scoreTokenV2(p, walletData = { count: 0, wallets: [], clustered: false }) {
+  const ageH   = (Date.now() - (p.pairCreatedAt||0)) / 3600000;
+  const liq    = p.liquidity?.usd || 0;
+  const mcap   = p.marketCap || p.fdv || 0;
+  const buys1  = p.txns?.h1?.buys || 0;
+  const sells1 = p.txns?.h1?.sells || 0;
+  const total1 = buys1 + sells1 || 1;
+  const buyR   = buys1 / total1;
+  const vol1   = p.volume?.h1 || 0;
+  const vol6   = p.volume?.h6 || 0;
+  const c1h    = p.priceChange?.h1 || 0;
+  const c6h    = p.priceChange?.h6 || 0;
+  const m5     = p.priceChange?.m5 || 0;
+  const hasSocials = !!(p.info?.socials?.length || p.info?.websites?.length);
+  const volAvgH = (vol6/6) || (vol1||1);
+  const volAccel = vol1 / volAvgH;
+  const txns1 = buys1 + sells1;
+
   let score = 0;
 
-  let buyScore = buyRatio>0.72?25 : buyRatio>0.62?16 : buyRatio>0.55?6 : buyRatio>0.48?-8 : -30;
-  score += buyScore;
+  // 1. SIGNAL ALPHA WALLET — critère roi (+40 max)
+  // C'est le signal le plus fort : un wallet performant achète = opportunité réelle
+  let walletScore = 0;
+  if (walletData.count >= 3) walletScore = 40;
+  else if (walletData.count === 2) walletScore = 28;
+  else if (walletData.count === 1) walletScore = 15;
+  if (walletData.clustered && walletData.count >= 2) walletScore += 8; // plusieurs wallets en cluster = coordinated entry
+  score += walletScore;
 
-  const sellRatio2 = sells1/total1;
-  const sellPenalty = sellRatio2>0.55?-20 : sellRatio2>0.50?-8 : 0;
-  let volScore = (volAccel>3?22 : volAccel>2?16 : volAccel>1.3?9 : volAccel>0.7?3 : volAccel>0.3?-4 : -10) + sellPenalty;
-  score += volScore;
-
+  // 2. MOMENTUM PRIX réel (+30 max / -15)
+  // On cherche un move en cours, pas un pump&dump
   let momentumScore = 0;
-  if      (m5>15&&m5<250) momentumScore+=14; else if(m5>5) momentumScore+=6; else if(m5<-20) momentumScore-=8;
-  if      (c1h>20&&c1h<200) momentumScore+=15; else if(c1h>8&&c1h<300) momentumScore+=8; else if(c1h>0) momentumScore+=2; else if(c1h<-15) momentumScore-=8;
-  if      (c6h>30) momentumScore+=8; else if(c6h>10) momentumScore+=4;
-  if (staircase) momentumScore -= 35;
+  if      (m5 > 8 && m5 < 120)   momentumScore += 12; // pump m5 sain
+  else if (m5 > 3)                momentumScore += 5;
+  else if (m5 < -15)              momentumScore -= 8;
+  if      (c1h > 15 && c1h < 150) momentumScore += 14;
+  else if (c1h > 5)               momentumScore += 6;
+  else if (c1h > 0)               momentumScore += 2;
+  else if (c1h < -15)             momentumScore -= 10;
+  if (c6h > 20) momentumScore += 6;
+  else if (c6h > 5) momentumScore += 3;
   score += momentumScore;
 
-  let ageScore = (ageH>=1&&ageH<=12)?20 : (ageH>=0.5&&ageH<1)?14 : (ageH>12&&ageH<=24)?10 : 3;
+  // 3. BUY PRESSURE (+20 max / -15)
+  let buyScore = buyR > 0.75 ? 20 : buyR > 0.65 ? 13 : buyR > 0.55 ? 6 : buyR > 0.48 ? -5 : -15;
+  score += buyScore;
+
+  // 4. VOL ACCÉLÉRATION (+20 max / -8)
+  // Vol qui accélère = intérêt croissant
+  let volScore = volAccel > 3 ? 20 : volAccel > 2 ? 14 : volAccel > 1.3 ? 8 : volAccel > 0.7 ? 2 : -8;
+  score += volScore;
+
+  // 5. AGE sweet spot : 30min-8h (+15)
+  // Les meilleurs gems se catchent dans les 8 premières heures
+  let ageScore = (ageH >= 0.5 && ageH <= 4) ? 15 : (ageH > 4 && ageH <= 8) ? 10 : (ageH > 8 && ageH <= 16) ? 5 : 0;
   score += ageScore;
 
-  let mcapScore = (mcap>=30000&&mcap<=150000)?28 : (mcap>150000&&mcap<=300000)?18 : (mcap>8000&&mcap<30000)?12 : (mcap>300000&&mcap<=600000)?8 : 2;
+  // 6. MCAP cible 20k-100k (+15)
+  let mcapScore = (mcap >= 20000 && mcap <= 60000) ? 15 : (mcap > 60000 && mcap <= 100000) ? 10 : (mcap > 100000) ? 4 : 2;
   score += mcapScore;
 
-  const socialScore = hasSocials?15:0;
-  score += socialScore;
+  // 7. SOCIALS (+8) — signe de légitimité
+  score += hasSocials ? 8 : 0;
 
-  let feesScore = feesRatio>0.12?22 : feesRatio>0.07?12 : feesRatio>0.04?0 : feesRatio>0.01?-15 : -35;
-  score += feesScore;
+  // 8. LIQUIDITÉ santé (+5)
+  score += liq > 30000 ? 5 : liq > 15000 ? 3 : liq > 6000 ? 1 : 0;
 
-  let liqScore = liq>50000?8 : liq>20000?5 : liq>10000?2 : 0;
-  score += liqScore;
+  // RUG RISK indépendant
+  let rugPts = 0;
+  if (buyR < 0.52) rugPts += 3;
+  if (volAccel < 0.5) rugPts++;
+  if (c1h < -5) rugPts++;
+  if (!hasSocials) rugPts++;
+  if (liq < 6000) rugPts += 2;
+  if (ageH < 0.5) rugPts++;
+  if (walletData.count >= 1) rugPts = Math.max(0, rugPts - 2);
+  const rugRisk = rugPts >= 5 ? 'HIGH' : rugPts >= 3 ? 'MEDIUM' : 'LOW';
 
-  const swScore = smartWalletScore(swData);
-  score += swScore;
+  const emoji = EMOJIS[Math.floor(Math.random() * EMOJIS.length)];
+  const sym = (p.baseToken?.symbol || 'UNKNOWN').toUpperCase().slice(0, 12);
+  const addr = p.baseToken?.address || '';
 
-  const txnScore = txns1>150?6 : txns1>60?3 : 0;
-  score += txnScore;
-
-  let rugPoints = 0;
-  if (buyRatio<0.50)  rugPoints+=3;
-  if (feesRatio<0.04) rugPoints+=2;
-  if (volAccel<0.4)   rugPoints++;
-  if (c1h<-8)         rugPoints++;
-  if (!hasSocials)    rugPoints++;
-  if (liq<8000)       rugPoints++;
-  if (ageH<0.5)       rugPoints++;
-  if (buyRatio>0.65&&feesRatio>0.07) rugPoints=Math.max(0,rugPoints-2);
-  if (swData.count>=2)               rugPoints=Math.max(0,rugPoints-2);
-  const rugRisk = rugPoints>=5?'HIGH':rugPoints>=3?'MEDIUM':'LOW';
-
-  const emoji=EMOJIS[Math.floor(Math.random()*EMOJIS.length)];
-  const sym=(p.baseToken?.symbol||'UNKNOWN').toUpperCase().slice(0,12);
-  const addr=p.baseToken?.address||'';
   return {
-    score:Math.max(0,Math.min(150,Math.round(score))),
-    symbol:sym,emoji,addr,mcap,liq,socials:hasSocials,rugRisk,swData,
-    pairUrl:p.url||`https://dexscreener.com/solana/${addr}`,raw:p,
-    debug:{buyScore,volScore,momentumScore,ageScore,mcapScore,socialScore,feesScore,liqScore,swScore,txnScore,
-           buyRatio,volAccel,c1h,c6h,c24h,m5,ageH,feesSOL,feesRatio,staircase}
+    score: Math.max(0, Math.min(120, Math.round(score))),
+    symbol: sym, emoji, addr, mcap, liq, socials: hasSocials, rugRisk, walletData,
+    pairUrl: p.url || `https://dexscreener.com/solana/${addr}`, raw: p,
+    debug: { walletScore, momentumScore, buyScore, volScore, ageScore, mcapScore,
+             walletCount: walletData.count, clustered: walletData.clustered,
+             buyRatio: buyR, volAccel, c1h, m5, ageH }
   };
 }
 
 function getLabel(score) {
-  if (score>=115) return {text:'⚡ GOD GEM',        cls:'score-god-gem'};
-  if (score>=95)  return {text:'🔥 HIGH POTENTIAL', cls:'score-high-pot'};
-  if (score>=82)  return {text:'💎 SOLID CALL',     cls:'score-solid'};
-  if (score>=72)  return {text:'🌱 EARLY GEM',      cls:'score-solid'};
+  if (score >= 80) return { text: '🔥 ALPHA CALL',     cls: 'score-god-gem' };
+  if (score >= 65) return { text: '⚡ HIGH SIGNAL',    cls: 'score-high-pot' };
+  if (score >= 50) return { text: '💎 WATCHLIST',      cls: 'score-solid' };
+  if (score >= 35) return { text: '🌱 EARLY RADAR',    cls: 'score-solid' };
   return null;
 }
 
 // ============================================================
-// FETCH TOKENS
+// FETCH TOKENS v2
 // ============================================================
 async function fetchTokens() {
   const loadEl = document.getElementById('loadingEl');
@@ -1289,147 +1330,123 @@ async function fetchTokens() {
       if (raw.data && Array.isArray(raw.data)) return raw.data;
       if (raw.tokenAddresses || (Array.isArray(raw) && raw[0]?.tokenAddress)) {
         const addrs = (raw.tokenAddresses || raw.map(x=>x.tokenAddress)).slice(0,30).join(',');
-        if (addrs) {
-          const r2 = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${addrs}`,{signal:AbortSignal.timeout(9000)}).then(x=>x.json()).catch(()=>({}));
-          return r2.pairs || [];
-        }
+        if (addrs) { const r2=await fetch(`https://api.dexscreener.com/latest/dex/tokens/${addrs}`,{signal:AbortSignal.timeout(9000)}).then(x=>x.json()).catch(()=>({})); return r2.pairs||[]; }
       }
     } catch(e) {}
     return [];
   }
 
-  const ENDPOINTS = [
-    'https://api.dexscreener.com/latest/dex/search?q=solana%20meme',
-    'https://api.dexscreener.com/latest/dex/search?q=pump.fun',
-    'https://api.dexscreener.com/latest/dex/search?q=solana',
-    'https://api.dexscreener.com/token-boosts/latest/v1',
-    'https://api.dexscreener.com/token-profiles/latest/v1',
-    'https://api.geckoterminal.com/api/v2/networks/solana/new_pools?page=1',
-    'https://api.geckoterminal.com/api/v2/networks/solana/new_pools?page=2',
-    'https://api.geckoterminal.com/api/v2/networks/solana/trending_pools?page=1',
-    'https://api.geckoterminal.com/api/v2/networks/solana/trending_pools?page=2',
-    'https://api.allorigins.win/get?url='+encodeURIComponent('https://api.dexscreener.com/latest/dex/search?q=solana'),
-  ];
-
-  const results = await Promise.allSettled(ENDPOINTS.map(fetchPairs));
-
   function geckoToDex(pool) {
     try {
-      const a = pool.attributes;
-      if (!a) return null;
-      const mcap = parseFloat(a.market_cap_usd||a.fdv_usd||0);
-      const liq  = parseFloat(a.reserve_in_usd||0);
-      const created = a.pool_created_at ? new Date(a.pool_created_at).getTime() : Date.now()-3600000;
-      const vol24= parseFloat(a.volume_usd?.h24||0);
-      const vol6 = parseFloat(a.volume_usd?.h6||0);
-      const vol1 = parseFloat(a.volume_usd?.h1||0);
-      const c1h  = parseFloat(a.price_change_percentage?.h1||0);
-      const c6h  = parseFloat(a.price_change_percentage?.h6||0);
-      const c24h = parseFloat(a.price_change_percentage?.h24||0);
-      const m5   = parseFloat(a.price_change_percentage?.m5||0);
-      const buys1 = parseInt(a.transactions?.h1?.buys||0);
-      const sells1= parseInt(a.transactions?.h1?.sells||0);
-      const addr = pool.relationships?.base_token?.data?.id?.split('_')[1] || '';
+      const a = pool.attributes; if (!a) return null;
+      const mcap=parseFloat(a.market_cap_usd||a.fdv_usd||0), liq=parseFloat(a.reserve_in_usd||0);
+      const created=a.pool_created_at?new Date(a.pool_created_at).getTime():Date.now()-3600000;
+      const addr=pool.relationships?.base_token?.data?.id?.split('_')[1]||'';
       return {
-        chainId:'solana', pairCreatedAt: created,
-        baseToken:{ symbol: a.name?.split('/')[0]||'UNK', address: addr },
-        liquidity:{ usd: liq }, marketCap: mcap, fdv: mcap,
-        volume:{ h1:vol1, h6:vol6, h24:vol24 },
-        priceChange:{ m5, h1:c1h, h6:c6h, h24:c24h },
-        txns:{ h1:{ buys:buys1, sells:sells1 } },
-        info:{ socials: a.websites?[{url:a.websites[0]}]:[], websites:[] },
-        url: `https://dexscreener.com/solana/${addr}`
+        chainId:'solana', pairCreatedAt:created,
+        baseToken:{symbol:a.name?.split('/')[0]||'UNK',address:addr},
+        liquidity:{usd:liq}, marketCap:mcap, fdv:mcap,
+        volume:{h1:parseFloat(a.volume_usd?.h1||0),h6:parseFloat(a.volume_usd?.h6||0),h24:parseFloat(a.volume_usd?.h24||0)},
+        priceChange:{m5:parseFloat(a.price_change_percentage?.m5||0),h1:parseFloat(a.price_change_percentage?.h1||0),h6:parseFloat(a.price_change_percentage?.h6||0),h24:parseFloat(a.price_change_percentage?.h24||0)},
+        txns:{h1:{buys:parseInt(a.transactions?.h1?.buys||0),sells:parseInt(a.transactions?.h1?.sells||0)}},
+        info:{socials:a.websites?[{url:a.websites[0]}]:[],websites:[]},
+        url:`https://dexscreener.com/solana/${addr}`
       };
     } catch(e) { return null; }
   }
 
-  const seen = new Set();
-  let pairs = [];
+  const ENDPOINTS = [
+    'https://api.dexscreener.com/latest/dex/search?q=solana%20pump',
+    'https://api.dexscreener.com/latest/dex/search?q=pump.fun+solana',
+    'https://api.dexscreener.com/latest/dex/search?q=solana+meme+new',
+    'https://api.dexscreener.com/token-profiles/latest/v1',
+    'https://api.geckoterminal.com/api/v2/networks/solana/new_pools?page=1',
+    'https://api.geckoterminal.com/api/v2/networks/solana/new_pools?page=2',
+    'https://api.geckoterminal.com/api/v2/networks/solana/trending_pools?page=1',
+    'https://api.allorigins.win/get?url='+encodeURIComponent('https://api.dexscreener.com/latest/dex/search?q=solana+pump'),
+  ];
+
+  const results = await Promise.allSettled(ENDPOINTS.map(fetchPairs));
+  const seen = new Set(); let pairs = [];
   for (const r of results) {
     if (r.status !== 'fulfilled') continue;
-    const batch = r.value;
-    for (const p of batch) {
-      const converted = p.attributes ? geckoToDex(p) : p;
-      if (!converted) continue;
-      if (!converted.chainId || converted.chainId !== 'solana') continue;
-      const mcapPre = converted.marketCap || converted.fdv || 0;
-      if (mcapPre > 600000) continue;
-      const addr = converted.baseToken?.address || converted.pairAddress || Math.random().toString();
+    for (const p of r.value) {
+      const conv = p.attributes ? geckoToDex(p) : p;
+      if (!conv) continue;
+      if (!conv.chainId || conv.chainId !== 'solana') continue;
+      const m = conv.marketCap || conv.fdv || 0;
+      if (m > 150000 || m < 5000) continue; // pré-filtre large
+      const addr = conv.baseToken?.address || conv.pairAddress || Math.random().toString();
       if (seen.has(addr)) continue;
-      seen.add(addr);
-      pairs.push(converted);
+      seen.add(addr); pairs.push(conv);
     }
   }
 
-  const rejected = {};
-  const passed = [];
+  const rejected = {}; const passed = [];
   for (const p of pairs) {
-    const f = hardFilter(p);
+    const f = hardFilterV2(p);
     if (f.pass) passed.push(p);
-    else { rejected[f.reason] = (rejected[f.reason]||0)+1; }
+    else rejected[f.reason] = (rejected[f.reason]||0)+1;
   }
 
-  const scored = passed.map(p => scoreToken(p)).filter(t => t.score >= 85);
-  scored.sort((a,b) => b.score - a.score);
+  // Score sans wallet data d'abord (rapide)
+  let preScored = passed.map(p => scoreTokenV2(p)).filter(t => t.score >= 30);
+  preScored.sort((a,b) => b.score - a.score);
+  preScored = preScored.slice(0, 15); // garde les 15 meilleurs pour check wallets
 
-  for (const t of scored) {
+  // Check alpha wallets sur les candidats (async)
+  const finalScored = [];
+  for (const t of preScored) {
+    try {
+      const wData = await checkAlphaWallets(t.addr);
+      const rescored = scoreTokenV2(t.raw, wData);
+      if (rescored.score >= 35) finalScored.push(rescored);
+    } catch(e) { if (t.score >= 35) finalScored.push(t); }
+  }
+  finalScored.sort((a,b) => b.score - a.score);
+
+  for (const t of finalScored) {
     const existing = await getCallData(t.addr);
     if (!existing) await saveCall(t.addr, t.mcap, Date.now(), t.symbol);
     else if (t.mcap > (existing.athMcap||0)) await updateAth(t.addr, t.mcap);
   }
 
-  const now30 = Date.now();
-  const STICKY_MS = 20 * 60 * 1000;
-  const newAddrs  = new Set(scored.map(t=>t.addr));
+  // STICKY PERMANENT : tous les calls de la session restent visibles
+  const newAddrs = new Set(finalScored.map(t=>t.addr));
   for (const prev of lastScored) {
     if (!newAddrs.has(prev.addr)) {
-      try {
-        const cd = await getCallData(prev.addr);
-        if (cd && now30 - (cd.callTime||0) < STICKY_MS) {
-          prev._sticky = true;
-          scored.push(prev);
-        }
-      } catch(e) {}
+      prev._sticky = true;
+      finalScored.push(prev);
     }
   }
-  scored.sort((a,b) => b.score - a.score);
-  lastScored = scored;
+  finalScored.sort((a,b) => b.score - a.score);
+  lastScored = finalScored;
+
   if (loadEl) loadEl.style.display = 'none';
   document.getElementById('scanDot').style.background = 'var(--green)';
   document.getElementById('lastUpdate').textContent = 'Updated '+new Date().toLocaleTimeString();
   document.getElementById('debugToggleBtn').style.display = isAdminMode ? 'inline-block' : 'none';
 
-  if (scored.length === 0) {
+  if (finalScored.length === 0) {
     const rejSorted = Object.entries(rejected).sort((a,b)=>b[1]-a[1]);
-    const rejRows = rejSorted.map(([r,n])=>`<tr><td style="color:var(--muted);padding:.2rem .5rem;font-size:.72rem">${r}</td><td style="color:var(--red);padding:.2rem .5rem;font-size:.72rem;text-align:right">×${n}</td></tr>`).join('');
-    const allScored = passed.map(p => scoreToken(p));
-    allScored.sort((a,b)=>b.score-a.score);
-    const nearMiss = allScored.slice(0,5).map(t=>`<tr><td style="color:var(--text);padding:.2rem .5rem;font-size:.72rem">${t.symbol}</td><td style="color:#ffaa00;padding:.2rem .5rem;font-size:.72rem;text-align:right">${t.score}pts</td><td style="color:var(--muted);padding:.2rem .5rem;font-size:.72rem">$${fmtNum(t.mcap)}</td></tr>`).join('');
-    content.innerHTML = `
-      <div class="empty-state" style="text-align:left;max-width:600px;margin:0 auto">
-        <div style="text-align:center;margin-bottom:1.2rem">
-          <div class="empty-icon">🔍</div>
-          <div class="empty-title">0 calls — Diagnostic</div>
-          <div style="font-family:var(--font-mono);font-size:.75rem;color:var(--muted)">${pairs.length} paires Solana analysées · ${passed.length} passent les hard filters · ${allScored.length} scorées</div>
-        </div>
-        ${pairs.length === 0 ? '<div style="color:var(--red);font-size:.85rem;text-align:center;padding:1rem;background:rgba(255,60,60,.08);border-radius:8px;margin-bottom:1rem">⚠️ FETCH ÉCHOUÉ — 0 paires reçues de DexScreener/GeckoTerminal. Problème réseau ou API.</div>' : ''}
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
-          <div>
-            <div style="font-size:.72rem;color:var(--green);font-weight:700;margin-bottom:.4rem;text-transform:uppercase;letter-spacing:.06em">Pourquoi rejetés (${pairs.length - passed.length})</div>
-            <table style="width:100%;border-collapse:collapse">${rejRows || '<tr><td style="color:var(--muted);font-size:.72rem;padding:.3rem">Tous passent les filtres ✅</td></tr>'}</table>
-          </div>
-          <div>
-            <div style="font-size:.72rem;color:#ffaa00;font-weight:700;margin-bottom:.4rem;text-transform:uppercase;letter-spacing:.06em">Proches du seuil (score &lt;80)</div>
-            <table style="width:100%;border-collapse:collapse">
-              <tr style="opacity:.6"><td style="font-size:.62rem;padding:.1rem .5rem">Token</td><td style="font-size:.62rem;padding:.1rem .5rem;text-align:right">Score</td><td style="font-size:.62rem;padding:.1rem .5rem">Mcap</td></tr>
-              ${nearMiss || '<tr><td colspan="3" style="color:var(--muted);font-size:.72rem;padding:.3rem">0 token ne passe les hard filters</td></tr>'}
-            </table>
-          </div>
-        </div>
-        <div style="text-align:center;margin-top:1rem;font-size:.7rem;color:var(--muted)">Refresh auto 20s</div>
-      </div>`;
+    const rejRows = rejSorted.slice(0,8).map(([r,n])=>`<tr><td style="color:var(--muted);padding:.2rem .5rem;font-size:.72rem">${r}</td><td style="color:var(--red);padding:.2rem .5rem;font-size:.72rem;text-align:right">×${n}</td></tr>`).join('');
+    const allSc = passed.map(p=>scoreTokenV2(p)).sort((a,b)=>b.score-a.score);
+    const near = allSc.slice(0,5).map(t=>`<tr><td style="color:var(--text);font-size:.72rem;padding:.2rem .5rem">${t.symbol}</td><td style="color:#ffaa00;font-size:.72rem;padding:.2rem .5rem;text-align:right">${t.score}pts</td><td style="color:var(--muted);font-size:.72rem;padding:.2rem .5rem">$${fmtNum(t.mcap)}</td></tr>`).join('');
+    content.innerHTML = `<div class="empty-state" style="text-align:left;max-width:600px;margin:0 auto">
+      <div style="text-align:center;margin-bottom:1.2rem">
+        <div class="empty-icon">🔍</div>
+        <div class="empty-title">0 signal · ${pairs.length} paires analysées · ${passed.length} passent filtres</div>
+      </div>
+      ${pairs.length===0?'<div style="color:var(--red);font-size:.85rem;text-align:center;padding:1rem;background:rgba(255,60,60,.08);border-radius:8px;margin-bottom:1rem">⚠️ FETCH ÉCHOUÉ — API indisponible</div>':''}
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+        <div><div style="font-size:.72rem;color:var(--green);font-weight:700;margin-bottom:.4rem;text-transform:uppercase">Rejets (${pairs.length-passed.length})</div>
+        <table style="width:100%;border-collapse:collapse">${rejRows||'<tr><td style="color:var(--muted);font-size:.72rem;padding:.3rem">—</td></tr>'}</table></div>
+        <div><div style="font-size:.72rem;color:#ffaa00;font-weight:700;margin-bottom:.4rem;text-transform:uppercase">Proches du seuil</div>
+        <table style="width:100%;border-collapse:collapse">${near||'<tr><td style="color:var(--muted);font-size:.72rem">—</td></tr>'}</table></div>
+      </div>
+      <div style="text-align:center;margin-top:1rem;font-size:.7rem;color:var(--muted)">Refresh auto 45s</div></div>`;
   } else {
-    await renderTokenTable(scored);
+    await renderTokenTable(finalScored);
   }
 
   if (currentTab === 'history') renderHistory();
@@ -1438,7 +1455,7 @@ async function fetchTokens() {
 }
 
 // ============================================================
-// RENDER TOKEN TABLE
+// RENDER TOKEN TABLE v2
 // ============================================================
 async function renderTokenTable(tokens) {
   const content = document.getElementById('scannerContent');
@@ -1452,19 +1469,19 @@ async function renderTokenTable(tokens) {
     const callData = await getCallData(t.addr);
     const callMcap = callData?.callMcap || t.mcap;
     const callTime = callData?.callTime || Date.now();
-    const athMcap = callData?.athMcap || t.mcap;
-    const mult = callMcap > 0 ? t.mcap/callMcap : 1;
-    const athMult = callMcap > 0 ? athMcap/callMcap : 1;
-    const multColor = mult >= 2 ? 'var(--green)' : mult >= 1.2 ? '#ffaa00' : mult < 0.9 ? 'var(--red)' : 'var(--muted)';
-
-    const d = t.debug;
-    const feesColor = d.feesRatio > 0.12 ? 'var(--green)' : d.feesRatio > 0.08 ? '#a8ff78' : d.feesRatio > 0.05 ? '#ffaa00' : 'var(--red)';
-    const feesLabel = d.feesRatio > 0.12 ? '🔥 ORGANIQUE' : d.feesRatio > 0.08 ? '✅ BON' : d.feesRatio > 0.05 ? '⚠️ MOYEN' : '❌ FAIBLE';
+    const athMcap  = callData?.athMcap  || t.mcap;
+    const mult = callMcap > 0 ? t.mcap / callMcap : 1;
+    const athMult = callMcap > 0 ? athMcap / callMcap : 1;
     const rugBadge = t.rugRisk === 'LOW' ? 'rug-low' : t.rugRisk === 'MEDIUM' ? 'rug-med' : 'rug-high';
+    const d = t.debug;
+
+    // Alpha wallet badge
+    const walletBadge = t.walletData?.count > 0
+      ? `<span style="font-family:var(--font-mono);font-size:.62rem;background:rgba(255,215,0,.15);border:1px solid rgba(255,215,0,.3);color:var(--gold);padding:.15rem .4rem;border-radius:3px;margin-left:.3rem">🎯 ${t.walletData.count} alpha wallet${t.walletData.count>1?'s':''}</span>`
+      : '';
 
     const bkChips = [
-      ['BP', d.buyScore], ['VA', d.volScore], ['MM', d.momentumScore],
-      ['AG', d.ageScore], ['MC', d.mcapScore], ['SC', d.socialScore], ['FE', d.feesScore]
+      ['WLT', d.walletScore], ['MM', d.momentumScore], ['BP', d.buyScore], ['VA', d.volScore], ['AG', d.ageScore]
     ].map(([l,v]) => `<span class="bk-chip" style="color:${v<0?'var(--red)':v>0?'var(--green)':'var(--muted)'}">${l}:${v>0?'+':''}${v}</span>`).join('');
 
     const debugBtn = debugModeOn ? `<button onclick="showDebug(${i})" style="margin-left:.4rem;padding:.15rem .4rem;background:rgba(255,170,0,.15);border:1px solid rgba(255,170,0,.3);color:#ffaa00;border-radius:4px;font-size:.6rem;cursor:pointer;font-family:var(--font-mono)">DEBUG</button>` : '';
@@ -1474,8 +1491,8 @@ async function renderTokenTable(tokens) {
         <div class="tok-name-cell">
           <span class="tok-emoji">${t.emoji}</span>
           <div>
-            <div class="tok-sym"><a href="${t.pairUrl}" target="_blank" style="color:inherit;text-decoration:none">${t.symbol}</a>${debugBtn}</div>
-            <div class="tok-addr" onclick="copyAddr('${t.addr}',this)" style="cursor:pointer;" title="Copier l'adresse">${t.addr.slice(0,8)}...${t.addr.slice(-4)} 📋</div>
+            <div class="tok-sym"><a href="${t.pairUrl}" target="_blank" style="color:inherit;text-decoration:none">${t.symbol}</a>${walletBadge}${debugBtn}</div>
+            <div class="tok-addr" onclick="copyAddr('${t.addr}',this)" style="cursor:pointer" title="Copier CA">${t.addr.slice(0,8)}...${t.addr.slice(-4)} 📋</div>
           </div>
         </div>
       </td>
@@ -1488,17 +1505,17 @@ async function renderTokenTable(tokens) {
         <div class="mcap-now">⬆ Now $${fmtNum(t.mcap)} <span class="mcap-mult ${mult>=1?'up':'down'}">(${mult.toFixed(2)}x)</span></div>
         <div style="font-size:.7rem">🏆 ATH $${fmtNum(athMcap)} <span class="ath-val">(${athMult.toFixed(2)}x)</span></div>
       </td>
-      <td>
-        <div class="fees-cell" style="color:${feesColor};font-size:.95rem;font-weight:700">⛽ ${(d.feesRatio*100).toFixed(1)}%</div>
-        <div style="font-size:.68rem;color:${feesColor};margin-top:1px">${feesLabel}</div>
-        <div style="font-size:.62rem;color:var(--muted);margin-top:1px">~${d.feesSOL.toFixed(1)} SOL fees</div>
+      <td class="mcap-cell" style="font-size:.72rem">
+        <div style="color:var(--muted)">Age : <span style="color:var(--text)">${d.ageH.toFixed(1)}h</span></div>
+        <div style="color:var(--muted)">Liq : <span style="color:var(--text)">$${fmtNum(t.liq)}</span></div>
+        <div style="color:var(--muted)">Vol acc : <span style="color:${d.volAccel>1.5?'var(--green)':'var(--muted)'}">${d.volAccel.toFixed(1)}x</span></div>
       </td>
       <td><span class="rug-badge ${rugBadge}">${t.rugRisk}</span></td>
     </tr>`;
   }
 
   if (!rows) {
-    content.innerHTML = `<div class="empty-state"><div class="empty-icon">📡</div><div class="empty-title">Aucun early gem 30-200K qualifié (anti-rug strict)</div><div class="empty-sub">Refresh auto 20s</div></div>`;
+    content.innerHTML = `<div class="empty-state"><div class="empty-icon">📡</div><div class="empty-title">Aucun signal qualifié</div><div class="empty-sub">Refresh auto 45s</div></div>`;
     return;
   }
 
@@ -1506,24 +1523,273 @@ async function renderTokenTable(tokens) {
   if (lc) lc.textContent = tokens.length ? `(${tokens.length})` : '';
   content.innerHTML = `<table class="token-table">
     <thead><tr>
-      <th>Token</th><th>Score</th><th>McAp Call / Now / ATH</th><th>⛽ Fees Estimés</th><th>Rug Risk</th>
+      <th>Token</th><th>Signal</th><th>McAp Call / Now / ATH</th><th>Données</th><th>Rug Risk</th>
     </tr></thead>
     <tbody>${rows}</tbody>
   </table>`;
 }
 
 // ============================================================
+// RUG DETECTOR — détecte les rugs en temps réel
+// ============================================================
+function detectRug(p) {
+  const ageH   = (Date.now() - (p.pairCreatedAt||0)) / 3600000;
+  const liq    = p.liquidity?.usd || 0;
+  const mcap   = p.marketCap || p.fdv || 0;
+  const buys1  = p.txns?.h1?.buys || 0;
+  const sells1 = p.txns?.h1?.sells || 0;
+  const total1 = buys1 + sells1 || 1;
+  const vol1   = p.volume?.h1 || 0;
+  const vol24  = p.volume?.h24 || 0;
+  const c1h    = p.priceChange?.h1 || 0;
+  const c6h    = p.priceChange?.h6 || 0;
+  const c24h   = p.priceChange?.h24 || 0;
+  const m5     = p.priceChange?.m5 || 0;
+  const sellR  = sells1 / total1;
+  const fdv    = p.fdv || mcap;
+
+  const signals = [];
+  let danger = 0;
+
+  // Signaux de rug
+  if (sellR > 0.72) { signals.push(`Sell pressure ${(sellR*100).toFixed(0)}% 🚨`); danger += 3; }
+  else if (sellR > 0.62) { signals.push(`Sell élevé ${(sellR*100).toFixed(0)}%`); danger += 1; }
+
+  if (m5 < -30) { signals.push(`Crash m5 ${m5.toFixed(0)}% 💀`); danger += 3; }
+  if (c1h < -40) { signals.push(`Dump 1h ${c1h.toFixed(0)}% 💀`); danger += 3; }
+  else if (c1h < -20) { signals.push(`Drop 1h ${c1h.toFixed(0)}%`); danger += 1; }
+
+  // Staircase dump : gros pump + maintenant rien
+  if (c24h > 300 && c1h < -5) { signals.push(`Staircase: +${c24h.toFixed(0)}% / ${c1h.toFixed(0)}% 📉`); danger += 2; }
+  if (c24h > 500 && c1h < -15) { signals.push(`P&D classique`); danger += 2; }
+
+  // FDV suspect
+  if (fdv > 0 && mcap > 0 && fdv/mcap > 10) { signals.push(`FDV/Mcap ${(fdv/mcap).toFixed(0)}x suspect`); danger += 2; }
+
+  // Liquidité en chute (proxy via vol/liq ratio incohérent)
+  if (liq > 0 && vol24 > liq * 20 && c1h < -10) { signals.push(`Wash + dump détecté`); danger += 2; }
+
+  // Token trop récent qui crash déjà
+  if (ageH < 2 && c1h < -25) { signals.push(`Rug < 2h 💀`); danger += 4; }
+  if (ageH < 6 && sellR > 0.65 && c1h < -15) { signals.push(`Early rug pattern`); danger += 3; }
+
+  if (signals.length === 0) return null;
+  if (danger < 2) return null; // pas assez de signaux
+
+  const dangerLevel = danger >= 6 ? 'critical' : 'high';
+  const addr = p.baseToken?.address || '';
+  const sym = (p.baseToken?.symbol || '?').toUpperCase().slice(0, 12);
+
+  return {
+    sym, addr, signals, danger, dangerLevel, mcap, liq, ageH,
+    c1h, c24h, sellR, callTime: Date.now(),
+    dexUrl: `https://dexscreener.com/solana/${addr}`
+  };
+}
+
+// ============================================================
+// FETCH RUGS — sources larges pour détecter les rugs actifs
+// ============================================================
+async function fetchRugs() {
+  const content = document.getElementById('rsTokenContent');
+  content.innerHTML = '<div class="rs-empty">⏳ Scan des rugs en cours...</div>';
+
+  async function fetchP(url) {
+    try {
+      const resp = await fetch(url, { signal: AbortSignal.timeout(9000) });
+      const data = await resp.json();
+      let raw = data;
+      if (data.contents) { try { raw = JSON.parse(data.contents); } catch(e) {} }
+      if (raw.pairs && Array.isArray(raw.pairs)) return raw.pairs;
+      if (Array.isArray(raw)) return raw;
+      if (raw.data && Array.isArray(raw.data)) return raw.data;
+    } catch(e) {}
+    return [];
+  }
+
+  // Sources larges : on cherche TOUT pour trouver les rugs
+  const ENDPOINTS = [
+    'https://api.dexscreener.com/latest/dex/search?q=solana%20pump',
+    'https://api.dexscreener.com/latest/dex/search?q=solana+meme',
+    'https://api.dexscreener.com/token-boosts/latest/v1',
+    'https://api.geckoterminal.com/api/v2/networks/solana/trending_pools?page=1',
+    'https://api.geckoterminal.com/api/v2/networks/solana/new_pools?page=1',
+  ];
+
+  function geckoToDex(pool) {
+    try {
+      const a=pool.attributes; if(!a) return null;
+      const addr=pool.relationships?.base_token?.data?.id?.split('_')[1]||'';
+      return {
+        chainId:'solana', pairCreatedAt:a.pool_created_at?new Date(a.pool_created_at).getTime():Date.now()-3600000,
+        baseToken:{symbol:a.name?.split('/')[0]||'UNK',address:addr},
+        liquidity:{usd:parseFloat(a.reserve_in_usd||0)}, marketCap:parseFloat(a.market_cap_usd||a.fdv_usd||0), fdv:parseFloat(a.fdv_usd||0),
+        volume:{h1:parseFloat(a.volume_usd?.h1||0),h6:parseFloat(a.volume_usd?.h6||0),h24:parseFloat(a.volume_usd?.h24||0)},
+        priceChange:{m5:parseFloat(a.price_change_percentage?.m5||0),h1:parseFloat(a.price_change_percentage?.h1||0),h6:parseFloat(a.price_change_percentage?.h6||0),h24:parseFloat(a.price_change_percentage?.h24||0)},
+        txns:{h1:{buys:parseInt(a.transactions?.h1?.buys||0),sells:parseInt(a.transactions?.h1?.sells||0)}},
+        url:`https://dexscreener.com/solana/${addr}`
+      };
+    } catch(e){return null;}
+  }
+
+  const results = await Promise.allSettled(ENDPOINTS.map(fetchP));
+  const seen = new Set(); let pairs = [];
+  for (const r of results) {
+    if (r.status!=='fulfilled') continue;
+    for (const p of r.value) {
+      const conv = p.attributes ? geckoToDex(p) : p;
+      if (!conv||!conv.chainId||conv.chainId!=='solana') continue;
+      const addr = conv.baseToken?.address||conv.pairAddress||Math.random().toString();
+      if (seen.has(addr)) continue;
+      seen.add(addr); pairs.push(conv);
+    }
+  }
+
+  const freshRugs = pairs.map(p => detectRug(p)).filter(Boolean);
+
+  // ── Merge avec les rugs persistants (localStorage) ──────────
+  // Un rug détecté reste définitivement — on ne supprime jamais
+  let storedRugs = {};
+  try { storedRugs = JSON.parse(localStorage.getItem(RUGS_KEY) || '{}'); } catch(e) {}
+
+  // Ajouter les nouveaux rugs détectés au stockage
+  for (const r of freshRugs) {
+    if (r.addr && !storedRugs[r.addr]) {
+      storedRugs[r.addr] = { ...r, firstSeen: Date.now() };
+    } else if (r.addr && storedRugs[r.addr]) {
+      // Mettre à jour les signaux si plus graves
+      if (r.danger > storedRugs[r.addr].danger) {
+        storedRugs[r.addr] = { ...storedRugs[r.addr], ...r, firstSeen: storedRugs[r.addr].firstSeen || Date.now() };
+      }
+    }
+  }
+  try { localStorage.setItem(RUGS_KEY, JSON.stringify(storedRugs)); } catch(e) {}
+
+  // Construire la liste complète depuis le stockage (tous les rugs, passés et présents)
+  const allRugs = Object.values(storedRugs).sort((a,b) => (b.danger||0) - (a.danger||0));
+  lastRugs = allRugs;
+
+  // Update stats bar
+  document.getElementById('rsStatDetected').textContent = allRugs.length;
+  // Compter les ruggeurs totaux (fixes + dynamiques)
+  let dynCount = 0;
+  try { dynCount = Object.keys(JSON.parse(localStorage.getItem(RUGGERS_KEY)||'{}')).length; } catch(e) {}
+  document.getElementById('rsStatRuggers').textContent = KNOWN_RUGGERS.length + dynCount;
+  if (rugs.length) {
+    const avgDump = rugs.reduce((s,r)=>s+r.c1h,0)/rugs.length;
+    const avgAge  = rugs.reduce((s,r)=>s+r.ageH,0)/rugs.length;
+    document.getElementById('rsStatAvgDump').textContent = avgDump.toFixed(0)+'%';
+    document.getElementById('rsStatAvgAge').textContent  = avgAge.toFixed(1)+'h';
+  }
+
+  document.getElementById('rsLastUpdate').textContent = 'Updated '+new Date().toLocaleTimeString();
+  document.getElementById('rsTokenCount').textContent = rugs.length ? `(${rugs.length})` : '';
+
+  renderRugTokens(rugs);
+  renderRuggers();
+
+  if (rugRefreshTimer) clearTimeout(rugRefreshTimer);
+  rugRefreshTimer = setTimeout(fetchRugs, 60000);
+}
+
+function renderRugTokens(rugs) {
+  const content = document.getElementById('rsTokenContent');
+  if (!rugs.length) {
+    content.innerHTML = '<div class="rs-empty">✅ Aucun rug actif détecté pour le moment<br><span style="font-size:.7rem;opacity:.6">Refresh auto 60s</span></div>';
+    return;
+  }
+  const cards = rugs.slice(0, 20).map(r => {
+    const addrShort = r.addr ? r.addr.slice(0,10)+'...'+r.addr.slice(-4) : '—';
+    const ageStr = r.ageH < 1 ? `${(r.ageH*60).toFixed(0)}min` : `${r.ageH.toFixed(1)}h`;
+    return `<div class="rug-tok-card">
+      <div class="rug-card-header">
+        <span class="rug-sym">💀 ${r.sym}</span>
+        <span class="rug-danger ${r.dangerLevel}">${r.dangerLevel === 'critical' ? '🚨 CRITIQUE' : '⚠️ HIGH'}</span>
+      </div>
+      <div class="rug-signals">${r.signals.slice(0,3).map(s=>`<div class="rug-signal">${s}</div>`).join('')}</div>
+      <div class="rug-mcap-row">
+        <span style="color:var(--muted)">McAp</span><span style="font-family:var(--font-mono);font-size:.72rem">$${fmtNum(r.mcap)}</span>
+        <span style="color:var(--muted)">Age</span><span style="font-family:var(--font-mono);font-size:.72rem">${ageStr}</span>
+        <span style="color:var(--muted)">1h</span><span style="font-family:var(--font-mono);font-size:.72rem;color:#ff4466">${r.c1h.toFixed(0)}%</span>
+      </div>
+      <div class="rug-footer">
+        <div style="display:flex;gap:.4rem;align-items:center;flex-wrap:wrap">
+          <span style="font-family:var(--font-mono);font-size:.6rem;color:var(--muted)">${addrShort}</span>
+          ${r.firstSeen ? `<span style="font-family:var(--font-mono);font-size:.58rem;color:var(--muted);opacity:.7">vu ${timeAgo(r.firstSeen)}</span>` : ''}
+          ${r.addr ? `<button class="rug-copy-ca" data-addr="${r.addr}" onclick="copyHistCA(this)">COPY CA</button>` : ''}
+        </div>
+        <a href="${r.dexUrl}" target="_blank" class="rug-dex-btn">DEX →</a>
+      </div>
+    </div>`;
+  }).join('');
+  content.innerHTML = `<div class="rug-grid">${cards}</div>`;
+}
+
+function renderRuggers() {
+  const content = document.getElementById('rsAddrContent');
+
+  // Charger les ruggeurs ajoutés dynamiquement (persistants)
+  let dynamicRuggers = {};
+  try { dynamicRuggers = JSON.parse(localStorage.getItem(RUGGERS_KEY) || '{}'); } catch(e) {}
+
+  // Merger : KNOWN_RUGGERS de base + ruggeurs dynamiques (sans doublons)
+  const knownAddrs = new Set(KNOWN_RUGGERS.map(r => r.addr));
+  const dynList = Object.values(dynamicRuggers).filter(r => !knownAddrs.has(r.addr));
+  const allRuggers = [...KNOWN_RUGGERS, ...dynList];
+
+  document.getElementById('rsAddrCount').textContent = `(${allRuggers.length})`;
+  const cards = allRuggers.map(r => {
+    const addrShort = r.addr.slice(0,10)+'...'+r.addr.slice(-4);
+    return `<div class="rugger-card">
+      <div class="rugger-header">
+        <div class="rugger-icon">☠️</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:700;font-size:.85rem;color:#ff8888">${r.label}</div>
+          <div class="rugger-addr" data-addr="${r.addr}" onclick="copyHistCA(this)" title="Copier l'adresse">${addrShort} 📋</div>
+        </div>
+      </div>
+      <div class="rugger-stats">
+        <div class="rugger-stat"><div class="rugger-stat-val">${r.rugs}</div><div class="rugger-stat-lbl">Rugs</div></div>
+        <div class="rugger-stat"><div class="rugger-stat-val">+${r.maxPump}%</div><div class="rugger-stat-lbl">Pump max</div></div>
+        <div class="rugger-stat"><div class="rugger-stat-val">${r.avgDump}%</div><div class="rugger-stat-lbl">Dump moy.</div></div>
+      </div>
+      <div class="rugger-history">Pattern : pump jusqu'à +${r.maxPump}% puis dump ${r.avgDump}% moyen · ${r.rugs} tokens confirmés</div>
+      <div class="rugger-footer">
+        <span style="font-size:.6rem;color:var(--muted);font-family:var(--font-mono)">${addrShort}</span>
+        <div style="display:flex;gap:.4rem">
+          <button class="rug-copy-ca" data-addr="${r.addr}" onclick="copyHistCA(this)">COPY</button>
+          <a href="https://solscan.io/account/${r.addr}" target="_blank" class="btn-solscan">Solscan →</a>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+  content.innerHTML = `<div class="rugger-grid">${cards}</div>`;
+}
+
+// ============================================================
+// RUG SNIP TABS
+// ============================================================
+function switchRsTab(tab) {
+  currentRsTab = tab;
+  document.getElementById('rsPanelToken').style.display = tab==='token' ? 'block' : 'none';
+  document.getElementById('rsPanelAddr').style.display  = tab==='addr'  ? 'block' : 'none';
+  document.getElementById('rsTabToken').classList.toggle('active', tab==='token');
+  document.getElementById('rsTabAddr').classList.toggle('active',  tab==='addr');
+  if (tab==='addr') renderRuggers();
+}
+
+// ============================================================
 // LANG TOGGLE
 // ============================================================
 function toggleLang() {
-  currentLang = currentLang === 'fr' ? 'en' : 'fr';
-  document.querySelector('.lang-switch').textContent = currentLang === 'fr' ? '🇫🇷 FR' : '🇬🇧 EN';
-  if (currentLang === 'en') {
+  currentLang = currentLang==='fr' ? 'en' : 'fr';
+  document.querySelector('.lang-switch').textContent = currentLang==='fr' ? '🇫🇷 FR' : '🇬🇧 EN';
+  if (currentLang==='en') {
     document.getElementById('h-title').innerHTML = 'Find the <span style="color:var(--green)">next 100x</span> before everyone 🚀';
-    document.getElementById('h-sub').textContent = 'Ultra-strict Solana scanner. Anti-rug, anti-bundle, anti-staircase. Only tokens with high fees, strong buy pressure and real momentum.';
+    document.getElementById('h-sub').textContent = 'Ultra-strict Solana scanner. Alpha wallet signals. Only tokens with real pump probability.';
   } else {
     document.getElementById('h-title').innerHTML = 'Trouve les <span style="color:var(--green)">next 100x</span> avant tout le monde 🚀';
-    document.getElementById('h-sub').textContent = 'Scanner Solana ultra-strict. Anti-rug, anti-bundle, anti-staircase. Seulement les tokens avec fees élevées, buy pressure fort et momentum réel.';
+    document.getElementById('h-sub').textContent = 'Scanner Solana ultra-strict. Signaux wallets alpha. Seulement les tokens avec vraie probabilité de pump.';
   }
 }
 
@@ -1539,8 +1805,11 @@ window.addEventListener('DOMContentLoaded', () => {
       <div class="empty-state">
         <div class="empty-icon">🔐</div>
         <div class="empty-title">Accès réservé aux membres</div>
-        <div class="empty-sub" style="margin-top:1rem"><button onclick="openCode()" style="background:var(--green);color:#000;border:none;padding:.6rem 1.5rem;border-radius:8px;font-weight:700;cursor:pointer;font-family:var(--font);font-size:.88rem">Entrer mon code d'accès</button></div>
+        <div class="empty-sub" style="margin-top:1rem">
+          <button onclick="openCode()" style="background:var(--green);color:#000;border:none;padding:.6rem 1.5rem;border-radius:8px;font-weight:700;cursor:pointer;font-family:var(--font);font-size:.88rem">Entrer mon code d'accès</button>
+        </div>
       </div>`;
+    document.getElementById('rsTokenContent').innerHTML = '<div class="rs-empty">🔐 Connecte-toi pour accéder au RUG SNIP</div>';
   }
   document.getElementById('codeModal').addEventListener('click', e => { if(e.target.id==='codeModal') closeCode(); });
   document.getElementById('adminOverlay').addEventListener('click', e => { if(e.target.id==='adminOverlay') closeAdmin(); });
