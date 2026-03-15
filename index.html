@@ -741,16 +741,83 @@ const ALPHA_WALLETS = new Set([
 // ============================================================
 // KNOWN RUGGERS — wallets de ruggeurs confirmés
 // ============================================================
-const KNOWN_RUGGERS = [
-  { addr: 'rugXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX', label: 'Serial Rugger #1', rugs: 12, maxPump: 340, avgDump: -94 },
-  { addr: '2fmz8SuNVyxEP6QwKQs6LNaT2ATszySPEJdhUDesph7v', label: 'PumpFun Dev #A', rugs: 8, maxPump: 220, avgDump: -97 },
-  { addr: 'AghRD7t9fHaLpRAbBZfRTqJGCxCbJpMkMJygALMCxyz1', label: 'Staircase King', rugs: 6, maxPump: 480, avgDump: -91 },
-  { addr: '5Q544fKrFoe6tsEbD7S8EmxGTJYAKtTVhAW5Q5pge4j1', label: 'Liquidity Puller', rugs: 15, maxPump: 160, avgDump: -99 },
-  { addr: 'EqnbLKbMdFsozgyCdDPGJHhEzEkGXTVEk5eRuFBJEMam', label: 'Bundle + Dump Dev', rugs: 9, maxPump: 280, avgDump: -95 },
-  { addr: 'HxFLKUAmAMLz1jtT3KsyfpCxvyT4Cv3x8m5W1Uvx3fJn', label: 'Fake Volume Dev', rugs: 7, maxPump: 190, avgDump: -88 },
-  { addr: '3pMvTLUA9NzZyoFkbt9rS5cE6xyHhVHa7n5vFtSLBCb5', label: 'Honeypot Creator', rugs: 11, maxPump: 420, avgDump: -100 },
-  { addr: '7YttLkHDoNj9wyDur5pM1ejNaAvT9X4eqaYcHQqtj2G5', label: 'Fast Rug Specialist', rugs: 19, maxPump: 310, avgDump: -96 },
-];
+// Ruggeurs de base — vérifiés manuellement
+// La liste s'enrichit dynamiquement via détection automatique (localStorage RUGGERS_KEY)
+const KNOWN_RUGGERS = [];
+// Note : les ruggeurs sont détectés automatiquement via les tokens rugs persistants
+// et enrichis via checkAndAddRugger() à chaque rug confirmé
+
+// ── Vérification activité ruggeur via Solana RPC ──────────────
+// Vérifie : balance SOL > 0 + dernier token créé < 1j
+const RPC_ENDPOINT = 'https://api.mainnet-beta.solana.com';
+const ruggerCheckCache = {};
+
+async function checkRuggerActivity(addr) {
+  if (!addr || addr.length < 32) return { active: false, reason: 'adresse invalide' };
+  const now = Date.now();
+  if (ruggerCheckCache[addr] && now - ruggerCheckCache[addr].ts < 300000) {
+    return ruggerCheckCache[addr].result;
+  }
+  try {
+    // 1. Vérifier balance SOL
+    const balResp = await fetch(RPC_ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ jsonrpc:'2.0', id:1, method:'getBalance', params:[addr] }),
+      signal: AbortSignal.timeout(5000)
+    }).then(r => r.json());
+    const lamports = balResp?.result?.value || 0;
+    const solBalance = lamports / 1e9;
+    if (solBalance < 0.01) {
+      const result = { active: false, reason: `balance vide (${solBalance.toFixed(4)} SOL)`, solBalance };
+      ruggerCheckCache[addr] = { ts: now, result };
+      return result;
+    }
+    // 2. Vérifier transactions récentes
+    const txResp = await fetch(RPC_ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ jsonrpc:'2.0', id:1, method:'getSignaturesForAddress',
+        params:[addr, { limit: 5 }] }),
+      signal: AbortSignal.timeout(5000)
+    }).then(r => r.json());
+    const sigs = txResp?.result || [];
+    const lastTxTime = sigs[0]?.blockTime ? sigs[0].blockTime * 1000 : 0;
+    const lastTxAge = lastTxTime ? (now - lastTxTime) / 3600000 : 999;
+    if (lastTxAge > 24) {
+      const result = { active: false, reason: `inactif depuis ${lastTxAge.toFixed(0)}h`, solBalance, lastTxAge };
+      ruggerCheckCache[addr] = { ts: now, result };
+      return result;
+    }
+    const result = { active: true, solBalance, lastTxAge, reason: `actif (${solBalance.toFixed(2)} SOL, tx il y a ${lastTxAge.toFixed(1)}h)` };
+    ruggerCheckCache[addr] = { ts: now, result };
+    return result;
+  } catch(e) {
+    // En cas d'erreur RPC, on considère actif par défaut (pour ne pas rater de vrais ruggeurs)
+    return { active: true, solBalance: -1, reason: 'RPC timeout — considéré actif' };
+  }
+}
+
+// Ajouter un ruggeur détecté automatiquement (depuis token rug confirmé)
+function checkAndAddRugger(rugToken) {
+  if (!rugToken.addr) return;
+  // On ne peut pas connaître le créateur depuis DexScreener sans API avancée
+  // On stocke le token comme signal dans les ruggeurs dynamiques
+  let stored = {};
+  try { stored = JSON.parse(localStorage.getItem(RUGGERS_KEY)||'{}'); } catch(e) {}
+  const key = 'auto_' + rugToken.addr;
+  if (!stored[key]) {
+    stored[key] = {
+      addr: rugToken.addr,
+      label: `Auto-détecté: ${rugToken.sym}`,
+      rugs: 1, maxPump: Math.max(0, rugToken.c24h||0),
+      avgDump: rugToken.c1h||0,
+      firstSeen: Date.now(),
+      isToken: true // c'est un token rug, pas un wallet ruggeur
+    };
+    try { localStorage.setItem(RUGGERS_KEY, JSON.stringify(stored)); } catch(e) {}
+  }
+}
 
 // ============================================================
 // SMART WALLET DETECTION (pour scanner alpha)
@@ -1534,6 +1601,8 @@ async function renderTokenTable(tokens) {
 // ============================================================
 function detectRug(p) {
   const ageH   = (Date.now() - (p.pairCreatedAt||0)) / 3600000;
+  // Double sécurité : on ne détecte les rugs que sur des tokens < 1h
+  if (ageH > 1) return null;
   const liq    = p.liquidity?.usd || 0;
   const mcap   = p.marketCap || p.fdv || 0;
   const buys1  = p.txns?.h1?.buys || 0;
@@ -1607,13 +1676,13 @@ async function fetchRugs() {
     return [];
   }
 
-  // Sources larges : on cherche TOUT pour trouver les rugs
+  // Sources ciblées pump.fun uniquement — rugs récents <1h
   const ENDPOINTS = [
-    'https://api.dexscreener.com/latest/dex/search?q=solana%20pump',
-    'https://api.dexscreener.com/latest/dex/search?q=solana+meme',
-    'https://api.dexscreener.com/token-boosts/latest/v1',
-    'https://api.geckoterminal.com/api/v2/networks/solana/trending_pools?page=1',
+    'https://api.dexscreener.com/latest/dex/search?q=pump.fun',
+    'https://api.dexscreener.com/latest/dex/search?q=pumpfun+solana',
+    'https://api.dexscreener.com/token-profiles/latest/v1',
     'https://api.geckoterminal.com/api/v2/networks/solana/new_pools?page=1',
+    'https://api.geckoterminal.com/api/v2/networks/solana/new_pools?page=2',
   ];
 
   function geckoToDex(pool) {
@@ -1634,11 +1703,25 @@ async function fetchRugs() {
 
   const results = await Promise.allSettled(ENDPOINTS.map(fetchP));
   const seen = new Set(); let pairs = [];
+  const ONE_HOUR = 3600000;
+  const now = Date.now();
   for (const r of results) {
     if (r.status!=='fulfilled') continue;
     for (const p of r.value) {
       const conv = p.attributes ? geckoToDex(p) : p;
       if (!conv||!conv.chainId||conv.chainId!=='solana') continue;
+      // PUMP.FUN UNIQUEMENT : vérifier via dexId ou url
+      const isPumpFun = (conv.dexId||'').toLowerCase().includes('pump') ||
+                        (conv.url||'').toLowerCase().includes('pump') ||
+                        (conv.labels||[]).some(l=>(l||'').toLowerCase().includes('pump')) ||
+                        (conv.pairAddress||'').endsWith('pump');
+      // Pour les tokens récents sans dexId, on garde si <1h (pump.fun lance beaucoup)
+      const ageMs = now - (conv.pairCreatedAt||0);
+      const isRecent = ageMs < ONE_HOUR;
+      // Filtre : pump.fun OU très récent (<1h) — on élimine les vieux tokens non-pump
+      if (!isPumpFun && !isRecent) continue;
+      // Max 1h pour les rugs — on ne veut que les rugs frais
+      if (ageMs > ONE_HOUR) continue;
       const addr = conv.baseToken?.address||conv.pairAddress||Math.random().toString();
       if (seen.has(addr)) continue;
       seen.add(addr); pairs.push(conv);
@@ -1652,12 +1735,12 @@ async function fetchRugs() {
   let storedRugs = {};
   try { storedRugs = JSON.parse(localStorage.getItem(RUGS_KEY) || '{}'); } catch(e) {}
 
-  // Ajouter les nouveaux rugs détectés au stockage
+  // Ajouter les nouveaux rugs détectés au stockage (persistant)
   for (const r of freshRugs) {
     if (r.addr && !storedRugs[r.addr]) {
       storedRugs[r.addr] = { ...r, firstSeen: Date.now() };
+      checkAndAddRugger(r); // Ajouter aussi dans la liste ruggeurs auto
     } else if (r.addr && storedRugs[r.addr]) {
-      // Mettre à jour les signaux si plus graves
       if (r.danger > storedRugs[r.addr].danger) {
         storedRugs[r.addr] = { ...storedRugs[r.addr], ...r, firstSeen: storedRugs[r.addr].firstSeen || Date.now() };
       }
@@ -1675,17 +1758,17 @@ async function fetchRugs() {
   let dynCount = 0;
   try { dynCount = Object.keys(JSON.parse(localStorage.getItem(RUGGERS_KEY)||'{}')).length; } catch(e) {}
   document.getElementById('rsStatRuggers').textContent = KNOWN_RUGGERS.length + dynCount;
-  if (rugs.length) {
-    const avgDump = rugs.reduce((s,r)=>s+r.c1h,0)/rugs.length;
-    const avgAge  = rugs.reduce((s,r)=>s+r.ageH,0)/rugs.length;
+  if (allRugs.length) {
+    const avgDump = allRugs.reduce((s,r)=>s+(r.c1h||0),0)/allRugs.length;
+    const avgAge  = allRugs.reduce((s,r)=>s+(r.ageH||0),0)/allRugs.length;
     document.getElementById('rsStatAvgDump').textContent = avgDump.toFixed(0)+'%';
     document.getElementById('rsStatAvgAge').textContent  = avgAge.toFixed(1)+'h';
   }
 
   document.getElementById('rsLastUpdate').textContent = 'Updated '+new Date().toLocaleTimeString();
-  document.getElementById('rsTokenCount').textContent = rugs.length ? `(${rugs.length})` : '';
+  document.getElementById('rsTokenCount').textContent = allRugs.length ? `(${allRugs.length})` : '';
 
-  renderRugTokens(rugs);
+  renderRugTokens(allRugs);
   renderRuggers();
 
   if (rugRefreshTimer) clearTimeout(rugRefreshTimer);
@@ -1725,10 +1808,11 @@ function renderRugTokens(rugs) {
   content.innerHTML = `<div class="rug-grid">${cards}</div>`;
 }
 
-function renderRuggers() {
+async function renderRuggers() {
   const content = document.getElementById('rsAddrContent');
+  content.innerHTML = '<div class="rs-empty">⏳ Vérification des ruggeurs actifs...</div>';
 
-  // Charger les ruggeurs ajoutés dynamiquement (persistants)
+  // Charger les ruggeurs dynamiques persistants
   let dynamicRuggers = {};
   try { dynamicRuggers = JSON.parse(localStorage.getItem(RUGGERS_KEY) || '{}'); } catch(e) {}
 
@@ -1737,8 +1821,29 @@ function renderRuggers() {
   const dynList = Object.values(dynamicRuggers).filter(r => !knownAddrs.has(r.addr));
   const allRuggers = [...KNOWN_RUGGERS, ...dynList];
 
-  document.getElementById('rsAddrCount').textContent = `(${allRuggers.length})`;
-  const cards = allRuggers.map(r => {
+  // Vérifier l'activité de chaque ruggeur (balance SOL + dernière tx < 24h)
+  // On filtre : seuls les ruggeurs ACTIFS sont affichés
+  const checkedRuggers = [];
+  for (const r of allRuggers) {
+    if (r.isToken) {
+      // Token auto-détecté — on l'affiche toujours (c'est un rug token, pas un wallet)
+      checkedRuggers.push({ ...r, activityStatus: '🔴 TOKEN RUG', active: true });
+      continue;
+    }
+    if (!r.addr || r.addr.length < 32) continue;
+    const activity = await checkRuggerActivity(r.addr);
+    if (!activity.active) continue; // ruggeur inactif = balance vide ou pas de tx récente → skip
+    checkedRuggers.push({ ...r, activityStatus: `✅ ${activity.reason}`, active: true, solBalance: activity.solBalance });
+  }
+
+  document.getElementById('rsAddrCount').textContent = `(${checkedRuggers.length})`;
+
+  if (!checkedRuggers.length) {
+    content.innerHTML = '<div class="rs-empty">🕵️ Aucun ruggeur actif détecté actuellement<br><span style="font-size:.7rem;opacity:.6">Les ruggeurs inactifs (balance vide ou tx > 24h) sont filtrés</span></div>';
+    return;
+  }
+
+  const cards = checkedRuggers.map(r => {
     const addrShort = r.addr.slice(0,10)+'...'+r.addr.slice(-4);
     return `<div class="rugger-card">
       <div class="rugger-header">
@@ -1753,7 +1858,10 @@ function renderRuggers() {
         <div class="rugger-stat"><div class="rugger-stat-val">+${r.maxPump}%</div><div class="rugger-stat-lbl">Pump max</div></div>
         <div class="rugger-stat"><div class="rugger-stat-val">${r.avgDump}%</div><div class="rugger-stat-lbl">Dump moy.</div></div>
       </div>
-      <div class="rugger-history">Pattern : pump jusqu'à +${r.maxPump}% puis dump ${r.avgDump}% moyen · ${r.rugs} tokens confirmés</div>
+      <div class="rugger-history">
+        ${r.isToken ? `Token rug détecté · dump ${r.avgDump?.toFixed(0)||'?'}% · pump max +${r.maxPump?.toFixed(0)||'?'}%` : `Pattern : pump +${r.maxPump}% puis dump ${r.avgDump}% · ${r.rugs} tokens`}
+        ${r.activityStatus ? `<br><span style="color:rgba(0,255,136,.6);font-size:.6rem">${r.activityStatus}</span>` : ''}
+      </div>
       <div class="rugger-footer">
         <span style="font-size:.6rem;color:var(--muted);font-family:var(--font-mono)">${addrShort}</span>
         <div style="display:flex;gap:.4rem">
@@ -1775,7 +1883,7 @@ function switchRsTab(tab) {
   document.getElementById('rsPanelAddr').style.display  = tab==='addr'  ? 'block' : 'none';
   document.getElementById('rsTabToken').classList.toggle('active', tab==='token');
   document.getElementById('rsTabAddr').classList.toggle('active',  tab==='addr');
-  if (tab==='addr') renderRuggers();
+  if (tab==='addr') renderRuggers(); // async — vérifie balance SOL
 }
 
 // ============================================================
