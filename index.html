@@ -260,7 +260,8 @@ section{scroll-margin-top:70px;}
 .hist-card-header{display:flex;align-items:center;gap:.6rem;}
 .hist-tok-icon{width:36px;height:36px;border-radius:50%;background:rgba(0,255,136,.1);border:1px solid rgba(0,255,136,.2);display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0;}
 .hist-tok-name{font-weight:700;font-size:.95rem;color:var(--text);}
-.hist-tok-sub{font-size:.68rem;color:var(--muted);font-family:var(--font-mono);}
+.hist-tok-sub{font-size:.68rem;color:var(--muted);font-family:var(--font-mono);cursor:pointer;transition:.15s;}
+.hist-tok-sub:hover{color:var(--green);}
 .hist-xrow{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.4rem;text-align:center;}
 .hist-x-cell{background:rgba(255,255,255,.03);border-radius:6px;padding:.35rem .3rem;}
 .hist-x-label{font-size:.58rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:2px;}
@@ -274,6 +275,10 @@ section{scroll-margin-top:70px;}
 .hist-mcap-line span:last-child{color:var(--text);font-family:var(--font-mono);}
 .hist-footer{display:flex;justify-content:space-between;align-items:center;font-size:.65rem;color:var(--muted);border-top:1px solid var(--border);padding-top:.45rem;margin-top:.1rem;}
 .hist-dex-btn{padding:.3rem .7rem;background:rgba(0,255,136,.1);border:1px solid rgba(0,255,136,.2);color:var(--green);border-radius:5px;font-size:.65rem;font-weight:600;cursor:pointer;text-decoration:none;}
+/* ── COPY CA BUTTON ─────────────────────────────────────────── */
+.hist-copy-ca{padding:.3rem .7rem;background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:5px;font-size:.65rem;font-weight:600;cursor:pointer;font-family:var(--font-mono);transition:.2s;}
+.hist-copy-ca:hover{border-color:var(--green);color:var(--green);background:rgba(0,255,136,.06);}
+.hist-copy-ca.copied{border-color:var(--green);color:var(--green);background:rgba(0,255,136,.12);}
 .hist-empty{text-align:center;padding:3rem 1rem;color:var(--muted);}
 .hist-empty-icon{font-size:2.5rem;margin-bottom:.7rem;}
 .hist-badge{font-size:.6rem;padding:.15rem .4rem;border-radius:4px;font-weight:700;}
@@ -525,8 +530,6 @@ section{scroll-margin-top:70px;}
 <div class="admin-overlay" id="adminOverlay">
   <div class="admin-panel">
     <button class="modal-close" onclick="closeAdmin()" style="position:absolute;top:14px;right:14px;background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer;">✕</button>
-
-    <!-- PW Screen -->
     <div id="adminPwScreen">
       <div class="admin-title">ADMIN</div>
       <p class="admin-sub">Accès réservé — entre le mot de passe admin</p>
@@ -536,12 +539,9 @@ section{scroll-margin-top:70px;}
       </div>
       <div class="admin-msg err" id="pwErr">Mot de passe incorrect.</div>
     </div>
-
-    <!-- Content -->
     <div id="adminContent" style="display:none;">
       <div class="admin-title">ADMIN PANEL</div>
       <p class="admin-sub">Gérer les codes d'accès MemeScanner</p>
-
       <div class="admin-section">
         <div class="admin-section-title">⚙ Changer mot de passe admin</div>
         <div class="admin-row">
@@ -550,7 +550,6 @@ section{scroll-margin-top:70px;}
         </div>
         <div class="admin-msg ok" id="pwOkMsg">✓ Mot de passe modifié</div>
       </div>
-
       <div class="admin-section">
         <div class="admin-section-title">🔑 Générer des codes</div>
         <div class="admin-row">
@@ -564,7 +563,6 @@ section{scroll-margin-top:70px;}
         </div>
         <div class="admin-msg ok" id="genOkMsg"></div>
       </div>
-
       <div class="admin-section">
         <div class="admin-section-title" style="display:flex;justify-content:space-between;align-items:center;">
           <span>📋 Codes (<span id="codeCount">0</span>)</span>
@@ -575,7 +573,6 @@ section{scroll-margin-top:70px;}
         </div>
         <div class="codes-list" id="codesList"></div>
       </div>
-
       <div class="admin-section">
         <div class="admin-section-title">📊 Stats</div>
         <div class="admin-stats">
@@ -799,7 +796,12 @@ function renderCodes() {
     </div>`;
   }).join('');
 }
+
+// ============================================================
+// COPY HELPERS
+// ============================================================
 function copyAddr(addr, el) {
+  if (!addr) return;
   navigator.clipboard.writeText(addr).then(() => {
     const prev = el.textContent;
     el.textContent = '✅ Copié!';
@@ -815,6 +817,36 @@ function copyAddr(addr, el) {
     setTimeout(() => { el.textContent = prev; el.style.color = ''; }, 1500);
   });
 }
+
+// ── FIX: copyHistCA lit l'adresse depuis data-addr ──────────
+function copyHistCA(el) {
+  const addr = el.dataset.addr || el.closest('[data-addr]')?.dataset.addr || '';
+  if (!addr) return;
+  const prev = el.textContent;
+  navigator.clipboard.writeText(addr).then(() => {
+    el.textContent = '✅ Copié!';
+    el.classList.add('copied');
+    el.style.color = 'var(--green)';
+    setTimeout(() => {
+      el.textContent = prev;
+      el.classList.remove('copied');
+      el.style.color = '';
+    }, 1500);
+  }).catch(() => {
+    // Fallback mobile/Safari
+    const ta = document.createElement('textarea');
+    ta.value = addr;
+    ta.style.cssText = 'position:fixed;opacity:0;top:0;left:0';
+    document.body.appendChild(ta);
+    ta.focus(); ta.select();
+    try { document.execCommand('copy'); } catch(e) {}
+    document.body.removeChild(ta);
+    el.textContent = '✅ Copié!';
+    el.classList.add('copied');
+    setTimeout(() => { el.textContent = prev; el.classList.remove('copied'); }, 1500);
+  });
+}
+
 function cpCode(code, btn) {
   navigator.clipboard.writeText(code).then(()=>{
     const o=btn.textContent; btn.textContent='✓'; btn.style.borderColor='var(--green)'; btn.style.color='var(--green)';
@@ -872,7 +904,6 @@ PRICE m5       : ${d.m5.toFixed(1)}%
 AGE            : ${d.ageH.toFixed(1)}h
 MCAP           : $${fmtNum(t.mcap)}
 FEES ESTIMÉS   : ~${d.feesSOL.toFixed(2)} SOL
-FEES SEUIL     : ${d.feesMin.toFixed(1)} SOL
 FEES RATIO     : ${(d.feesRatio*100).toFixed(1)}% (seuil >8%)
 STAIRCASE      : ${d.staircase ? '⚠️ DÉTECTÉ -50pts' : '✓ non détecté'}
 SOCIALS        : ${t.socials ? '✓ présents' : '✗ absents'}
@@ -910,7 +941,6 @@ function fmtNum(n) { if(!n||isNaN(n))return'?'; if(n>=1e6)return(n/1e6).toFixed(
 function timeAgo(ts) { const d=Math.floor((Date.now()-ts)/1000); if(d<60)return d+'s ago'; if(d<3600)return Math.floor(d/60)+'m ago'; return Math.floor(d/3600)+'h ago'; }
 function fmtTime(ts) { const d=new Date(ts); return d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0'); }
 
-
 // ============================================================
 // TABS — Live / Historique
 // ============================================================
@@ -925,13 +955,12 @@ function switchTab(tab) {
 }
 
 // ============================================================
-// RENDER HISTORY — tous les calls persistants
+// RENDER HISTORY — FIX copy CA via data-addr
 // ============================================================
 async function renderHistory() {
   const container = document.getElementById('historyContent');
   container.innerHTML = '<div class="hist-empty"><div class="hist-empty-icon">⏳</div><div style="color:var(--muted)">Chargement...</div></div>';
 
-  // ── Charger depuis Firebase ──────────────────────────────
   let calls = {};
   try {
     const fb = await fetch(`${FB_URL}/calls.json`).then(r => r.json());
@@ -941,7 +970,7 @@ async function renderHistory() {
       });
     }
   } catch(e) {}
-  // Merge localStorage (priorité Firebase pour ATH)
+
   try {
     const local = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
     Object.entries(local).forEach(([addr, val]) => {
@@ -955,7 +984,6 @@ async function renderHistory() {
   } catch(e) {}
 
   const entries = Object.entries(calls);
-  // Update count badge
   const hc = document.getElementById('histCount');
   if (hc) hc.textContent = entries.length ? `(${entries.length})` : '';
 
@@ -968,10 +996,8 @@ async function renderHistory() {
     return;
   }
 
-  // Trier par date (plus récent en premier)
   entries.sort((a,b) => (b[1].callTime||0) - (a[1].callTime||0));
 
-  // Récupérer prix actuels depuis DexScreener pour les tokens récents (<48h)
   const recentAddrs = entries
     .filter(([,v]) => Date.now() - (v.callTime||0) < 48*3600000 && (v.addr||v.address))
     .map(([,v]) => v.addr || v.address)
@@ -989,10 +1015,10 @@ async function renderHistory() {
     } catch(e) {}
   }
 
-  // ── Render cards ──────────────────────────────────────────
   const EMOJIS_LIST = ['🐸','🚀','💎','🌙','🔥','⚡','🦊','🐉','🦁','🎯','👾','🤖'];
   function xColor(x) { return x >= 2 ? 'up' : x >= 1 ? 'neutral' : 'down'; }
   let cards = '';
+
   for (const [key, v] of entries) {
     const addr        = v.addr || v.address || '';
     const callMcap    = v.callMcap  || 0;
@@ -1001,7 +1027,7 @@ async function renderHistory() {
     const sym         = (v.symbol   || key.slice(0,8).toUpperCase());
     const currentMcap = liveMap[addr] || 0;
 
-    const highX    = callMcap > 0 ? athMcap    / callMcap : 1;
+    const highX    = callMcap > 0 ? athMcap / callMcap : 1;
     const latestX  = callMcap > 0 ? (currentMcap > 0 ? currentMcap / callMcap : highX) : 1;
     const isLive   = currentMcap > 0 && Date.now() - callTime < 48*3600000;
     const ageCall  = Date.now() - callTime;
@@ -1009,11 +1035,13 @@ async function renderHistory() {
     const emoji = EMOJIS_LIST[Math.abs(addr.charCodeAt(0)||0) % EMOJIS_LIST.length];
     const dexUrl = `https://dexscreener.com/solana/${addr}`;
 
-    // Time display
-    const mins  = Math.floor(ageCall/60000);
-    const hours = Math.floor(ageCall/3600000);
+    const mins    = Math.floor(ageCall/60000);
+    const hours   = Math.floor(ageCall/3600000);
     const remMins = mins % 60;
-    const timeStr = hours > 0 ? `il y a ${hours}h${remMins > 0 ? remMins+'m' : '' }` : `il y a ${mins}m`;
+    const timeStr = hours > 0 ? `il y a ${hours}h${remMins > 0 ? remMins+'m' : ''}` : `il y a ${mins}m`;
+
+    // Adresse courte pour affichage
+    const addrShort = addr ? addr.slice(0,10)+'...'+addr.slice(-4) : '—';
 
     cards += `<div class="hist-card">
       <div class="hist-card-header">
@@ -1023,7 +1051,9 @@ async function renderHistory() {
             <span class="hist-tok-name">${sym}</span>
             <span class="hist-badge ${isLive ? 'hist-badge-live' : 'hist-badge-dead'}">${isLive ? '🟢 LIVE' : '⚫ PASSÉ'}</span>
           </div>
-          <div class="hist-tok-sub" onclick="addr && copyAddr(addr,this)" style="cursor:${addr?'pointer':'default'}" title="Copier l'adresse">${addr ? addr.slice(0,10)+'...'+addr.slice(-4)+' 📋' : '—'}</div>
+          <div class="hist-tok-sub" data-addr="${addr}" onclick="copyHistCA(this)" title="Cliquer pour copier le CA complet">
+            ${addr ? addrShort + ' 📋' : '—'}
+          </div>
         </div>
       </div>
       <div class="hist-xrow">
@@ -1047,7 +1077,10 @@ async function renderHistory() {
       </div>
       <div class="hist-footer">
         <span>${timeStr}</span>
-        <a href="${dexUrl}" target="_blank" class="hist-dex-btn">DexScreener →</a>
+        <div style="display:flex;gap:.4rem;align-items:center;">
+          ${addr ? `<button class="hist-copy-ca" data-addr="${addr}" onclick="copyHistCA(this)">COPY CA</button>` : ''}
+          <a href="${dexUrl}" target="_blank" class="hist-dex-btn">DEX →</a>
+        </div>
       </div>
     </div>`;
   }
@@ -1056,10 +1089,7 @@ async function renderHistory() {
 }
 
 // ============================================================
-// HARD FILTER v12 — early gems 25K-250K, strict anti-rug
-// ============================================================
-// ============================================================
-// SMART WALLETS — known profitable Solana traders
+// HARD FILTER v12
 // ============================================================
 const SMART_WALLETS = new Set([
   '9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM',
@@ -1123,17 +1153,12 @@ function hardFilter(p) {
   const m5       = p.priceChange?.m5||0;
   const avgTrade = txns1>0 ? vol1/txns1 : 9999;
 
-  // HARD STOPS (3 obligatoires)
   if (mcap < 8000)  return {pass:false, reason:`mcap $${fmtNum(mcap)} < $8K`};
   if (liq  < 6000)  return {pass:false, reason:`liq $${fmtNum(liq)} < $6K`};
   if (ageH < 0.033) return {pass:false, reason:`age ${(ageH*60).toFixed(0)}min < 2min`};
-
-  // QUALITÉ MINIMUM — évite les tokens fantômes
   if (vol1 < 500 && vol6 < 2000)   return {pass:false, reason:`vol trop faible $${fmtNum(Math.max(vol1,vol6/6))}/h`};
   if (txns1 < 10)                   return {pass:false, reason:`txns ${txns1}<10`};
   if (buys1 < 5)                    return {pass:false, reason:`buys ${buys1}<5`};
-
-  // ANTI-RUG — signaux de rug confirmés
   if (sellRatio > 0.65)               return {pass:false, reason:`sell ${(sellRatio*100).toFixed(0)}% > 65%`};
   if (m5 < -30)                       return {pass:false, reason:`crash m5 ${m5.toFixed(0)}%`};
   if (c1h < -20)                      return {pass:false, reason:`crash 1h ${c1h.toFixed(0)}%`};
@@ -1148,9 +1173,8 @@ function hardFilter(p) {
   return {pass:true, feesSOL, feesRatio, ageH, sellRatio};
 }
 
-
 // ============================================================
-// SCORING ENGINE v13 — qualité > quantité
+// SCORING ENGINE v13
 // ============================================================
 function scoreToken(p, swData={count:0,clustered:false}) {
   const ageH     = (Date.now()-(p.pairCreatedAt||0))/3600000;
@@ -1177,17 +1201,14 @@ function scoreToken(p, swData={count:0,clustered:false}) {
   const txns1    = buys1+sells1;
   let score = 0;
 
-  // 1. Buy Pressure (+25 / -20) — acheteurs dominants requis
   let buyScore = buyRatio>0.72?25 : buyRatio>0.62?16 : buyRatio>0.55?6 : buyRatio>0.48?-8 : -30;
   score += buyScore;
 
-  // 2. Vol Accélération (+22 / -10)
   const sellRatio2 = sells1/total1;
   const sellPenalty = sellRatio2>0.55?-20 : sellRatio2>0.50?-8 : 0;
   let volScore = (volAccel>3?22 : volAccel>2?16 : volAccel>1.3?9 : volAccel>0.7?3 : volAccel>0.3?-4 : -10) + sellPenalty;
   score += volScore;
 
-  // 3. Momentum m5 + h1 + h6 (+35 / -20)
   let momentumScore = 0;
   if      (m5>15&&m5<250) momentumScore+=14; else if(m5>5) momentumScore+=6; else if(m5<-20) momentumScore-=8;
   if      (c1h>20&&c1h<200) momentumScore+=15; else if(c1h>8&&c1h<300) momentumScore+=8; else if(c1h>0) momentumScore+=2; else if(c1h<-15) momentumScore-=8;
@@ -1195,35 +1216,27 @@ function scoreToken(p, swData={count:0,clustered:false}) {
   if (staircase) momentumScore -= 35;
   score += momentumScore;
 
-  // 4. Age sweet spot 1h-12h (+20)
   let ageScore = (ageH>=1&&ageH<=12)?20 : (ageH>=0.5&&ageH<1)?14 : (ageH>12&&ageH<=24)?10 : 3;
   score += ageScore;
 
-  // 5. McAp 30K-150K (+28)
   let mcapScore = (mcap>=30000&&mcap<=150000)?28 : (mcap>150000&&mcap<=300000)?18 : (mcap>8000&&mcap<30000)?12 : (mcap>300000&&mcap<=600000)?8 : 2;
   score += mcapScore;
 
-  // 6. Socials (+15)
   const socialScore = hasSocials?15:0;
   score += socialScore;
 
-  // 7. Fees organique (+22 / -25) — clé anti-rug
   let feesScore = feesRatio>0.12?22 : feesRatio>0.07?12 : feesRatio>0.04?0 : feesRatio>0.01?-15 : -35;
   score += feesScore;
 
-  // 8. Liq santé (+8)
   let liqScore = liq>50000?8 : liq>20000?5 : liq>10000?2 : 0;
   score += liqScore;
 
-  // 9. Smart Wallets (+35 max)
   const swScore = smartWalletScore(swData);
   score += swScore;
 
-  // 10. Txns signal (+6)
   const txnScore = txns1>150?6 : txns1>60?3 : 0;
   score += txnScore;
 
-  // Rug risk
   let rugPoints = 0;
   if (buyRatio<0.50)  rugPoints+=3;
   if (feesRatio<0.04) rugPoints+=2;
@@ -1248,7 +1261,6 @@ function scoreToken(p, swData={count:0,clustered:false}) {
   };
 }
 
-
 function getLabel(score) {
   if (score>=115) return {text:'⚡ GOD GEM',        cls:'score-god-gem'};
   if (score>=95)  return {text:'🔥 HIGH POTENTIAL', cls:'score-high-pot'};
@@ -1266,7 +1278,6 @@ async function fetchTokens() {
   if (loadEl) loadEl.style.display = 'block';
   document.getElementById('scanDot').style.background = 'var(--gold)';
 
-  // ── Helper fetch one endpoint ──────────────────────────────
   async function fetchPairs(url) {
     try {
       const resp = await fetch(url, { signal: AbortSignal.timeout(9000) });
@@ -1276,7 +1287,6 @@ async function fetchTokens() {
       if (raw.pairs && Array.isArray(raw.pairs)) return raw.pairs;
       if (Array.isArray(raw)) return raw;
       if (raw.data && Array.isArray(raw.data)) return raw.data;
-      // token-boosts → resolve addresses
       if (raw.tokenAddresses || (Array.isArray(raw) && raw[0]?.tokenAddress)) {
         const addrs = (raw.tokenAddresses || raw.map(x=>x.tokenAddress)).slice(0,30).join(',');
         if (addrs) {
@@ -1288,30 +1298,21 @@ async function fetchTokens() {
     return [];
   }
 
-  // ── Fetch ALL endpoints in parallel ───────────────────────
   const ENDPOINTS = [
-    // 1. Search meme solana — good low cap results
     'https://api.dexscreener.com/latest/dex/search?q=solana%20meme',
-    // 2. Search pump fun tokens (most low mcap launches)
     'https://api.dexscreener.com/latest/dex/search?q=pump.fun',
-    // 3. General solana search
     'https://api.dexscreener.com/latest/dex/search?q=solana',
-    // 4. Boosted tokens (community hyped)
     'https://api.dexscreener.com/token-boosts/latest/v1',
-    // 5. Token profiles latest
     'https://api.dexscreener.com/token-profiles/latest/v1',
-    // 6. GeckoTerminal new pools Solana
     'https://api.geckoterminal.com/api/v2/networks/solana/new_pools?page=1',
     'https://api.geckoterminal.com/api/v2/networks/solana/new_pools?page=2',
     'https://api.geckoterminal.com/api/v2/networks/solana/trending_pools?page=1',
     'https://api.geckoterminal.com/api/v2/networks/solana/trending_pools?page=2',
-    // 7. CORS proxy fallback
     'https://api.allorigins.win/get?url='+encodeURIComponent('https://api.dexscreener.com/latest/dex/search?q=solana'),
   ];
 
   const results = await Promise.allSettled(ENDPOINTS.map(fetchPairs));
 
-  // ── GeckoTerminal converter ────────────────────────────────
   function geckoToDex(pool) {
     try {
       const a = pool.attributes;
@@ -1342,19 +1343,17 @@ async function fetchTokens() {
     } catch(e) { return null; }
   }
 
-  // ── Merge, deduplicate ─────────────────────────────────────
   const seen = new Set();
   let pairs = [];
   for (const r of results) {
     if (r.status !== 'fulfilled') continue;
     const batch = r.value;
     for (const p of batch) {
-      // GeckoTerminal pools have .attributes
       const converted = p.attributes ? geckoToDex(p) : p;
       if (!converted) continue;
       if (!converted.chainId || converted.chainId !== 'solana') continue;
       const mcapPre = converted.marketCap || converted.fdv || 0;
-      if (mcapPre > 600000) continue; // Pre-filter mega caps only
+      if (mcapPre > 600000) continue;
       const addr = converted.baseToken?.address || converted.pairAddress || Math.random().toString();
       if (seen.has(addr)) continue;
       seen.add(addr);
@@ -1379,12 +1378,9 @@ async function fetchTokens() {
     else if (t.mcap > (existing.athMcap||0)) await updateAth(t.addr, t.mcap);
   }
 
-  // STICKY: garde les calls récents (<30min) même s'ils ne passent plus le scan
   const now30 = Date.now();
-  const STICKY_MS = 20 * 60 * 1000; // 20 minutes
-  const prevAddrs = new Set(lastScored.map(t=>t.addr));
+  const STICKY_MS = 20 * 60 * 1000;
   const newAddrs  = new Set(scored.map(t=>t.addr));
-  // Ajoute les tokens sticky (callés il y a <30min, pas dans nouveaux résultats)
   for (const prev of lastScored) {
     if (!newAddrs.has(prev.addr)) {
       try {
@@ -1404,10 +1400,8 @@ async function fetchTokens() {
   document.getElementById('debugToggleBtn').style.display = isAdminMode ? 'inline-block' : 'none';
 
   if (scored.length === 0) {
-    // Détail complet des rejets pour diagnostic
     const rejSorted = Object.entries(rejected).sort((a,b)=>b[1]-a[1]);
     const rejRows = rejSorted.map(([r,n])=>`<tr><td style="color:var(--muted);padding:.2rem .5rem;font-size:.72rem">${r}</td><td style="color:var(--red);padding:.2rem .5rem;font-size:.72rem;text-align:right">×${n}</td></tr>`).join('');
-    // Scores des tokens qui passent les filtres mais pas le score min
     const allScored = passed.map(p => scoreToken(p));
     allScored.sort((a,b)=>b.score-a.score);
     const nearMiss = allScored.slice(0,5).map(t=>`<tr><td style="color:var(--text);padding:.2rem .5rem;font-size:.72rem">${t.symbol}</td><td style="color:#ffaa00;padding:.2rem .5rem;font-size:.72rem;text-align:right">${t.score}pts</td><td style="color:var(--muted);padding:.2rem .5rem;font-size:.72rem">$${fmtNum(t.mcap)}</td></tr>`).join('');
@@ -1425,7 +1419,7 @@ async function fetchTokens() {
             <table style="width:100%;border-collapse:collapse">${rejRows || '<tr><td style="color:var(--muted);font-size:.72rem;padding:.3rem">Tous passent les filtres ✅</td></tr>'}</table>
           </div>
           <div>
-            <div style="font-size:.72rem;color:#ffaa00;font-weight:700;margin-bottom:.4rem;text-transform:uppercase;letter-spacing:.06em">Proches du seuil (score <80)</div>
+            <div style="font-size:.72rem;color:#ffaa00;font-weight:700;margin-bottom:.4rem;text-transform:uppercase;letter-spacing:.06em">Proches du seuil (score &lt;80)</div>
             <table style="width:100%;border-collapse:collapse">
               <tr style="opacity:.6"><td style="font-size:.62rem;padding:.1rem .5rem">Token</td><td style="font-size:.62rem;padding:.1rem .5rem;text-align:right">Score</td><td style="font-size:.62rem;padding:.1rem .5rem">Mcap</td></tr>
               ${nearMiss || '<tr><td colspan="3" style="color:var(--muted);font-size:.72rem;padding:.3rem">0 token ne passe les hard filters</td></tr>'}
@@ -1444,7 +1438,7 @@ async function fetchTokens() {
 }
 
 // ============================================================
-// RENDER
+// RENDER TOKEN TABLE
 // ============================================================
 async function renderTokenTable(tokens) {
   const content = document.getElementById('scannerContent');
@@ -1481,7 +1475,7 @@ async function renderTokenTable(tokens) {
           <span class="tok-emoji">${t.emoji}</span>
           <div>
             <div class="tok-sym"><a href="${t.pairUrl}" target="_blank" style="color:inherit;text-decoration:none">${t.symbol}</a>${debugBtn}</div>
-            <div class="tok-addr" onclick="copyAddr(\`${t.addr}\`,this)" style="cursor:pointer;" title="Copier l'adresse">${t.addr.slice(0,8)}...${t.addr.slice(-4)} 📋</div>
+            <div class="tok-addr" onclick="copyAddr('${t.addr}',this)" style="cursor:pointer;" title="Copier l'adresse">${t.addr.slice(0,8)}...${t.addr.slice(-4)} 📋</div>
           </div>
         </div>
       </td>
@@ -1508,7 +1502,6 @@ async function renderTokenTable(tokens) {
     return;
   }
 
-  // Update live count
   const lc = document.getElementById('liveCount');
   if (lc) lc.textContent = tokens.length ? `(${tokens.length})` : '';
   content.innerHTML = `<table class="token-table">
