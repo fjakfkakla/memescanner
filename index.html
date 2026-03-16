@@ -285,6 +285,8 @@ section{scroll-margin-top:70px;}
 .hist-badge-live{background:rgba(0,255,136,.15);color:var(--green);}
 .hist-badge-dead{background:rgba(255,60,60,.1);color:var(--red);}
 .hist-count{font-size:.72rem;color:var(--muted);margin-left:.5rem;}
+.btn-reset{font-family:var(--font-mono);font-size:.68rem;padding:.28rem .7rem;border-radius:5px;cursor:pointer;border:1px solid rgba(255,68,102,.3);background:transparent;color:rgba(255,68,102,.7);transition:.2s;white-space:nowrap;}
+.btn-reset:hover{border-color:#ff4466;color:#ff4466;background:rgba(255,68,102,.08);}
 
 /* ══════════════════════════════════════════════════════════════
    RUG SNIP — Design rouge / casino
@@ -475,9 +477,15 @@ section{scroll-margin-top:70px;}
     </div>
   </div>
   <!-- TABS -->
-  <div class="scanner-tabs">
-    <button class="s-tab active" id="tabLive" onclick="switchTab('live')">📡 Live <span id="liveCount" class="hist-count"></span></button>
-    <button class="s-tab" id="tabHistory" onclick="switchTab('history')">📋 Historique <span id="histCount" class="hist-count"></span></button>
+  <div class="scanner-tabs" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;">
+    <div style="display:flex;">
+      <button class="s-tab active" id="tabLive" onclick="switchTab('live')">📡 Live <span id="liveCount" class="hist-count"></span></button>
+      <button class="s-tab" id="tabHistory" onclick="switchTab('history')">📋 Historique <span id="histCount" class="hist-count"></span></button>
+    </div>
+    <div style="display:flex;gap:.4rem;padding:.3rem 0;">
+      <button class="btn-reset" id="btnResetLive" onclick="resetLive()" style="display:none">🗑 Vider Live</button>
+      <button class="btn-reset" id="btnResetHistory" onclick="resetHistory()" style="display:none">🗑 Vider Historique</button>
+    </div>
   </div>
   <!-- LIVE PANEL -->
   <div id="panelLive">
@@ -491,8 +499,11 @@ section{scroll-margin-top:70px;}
   <!-- HISTORY PANEL -->
   <div id="panelHistory" style="display:none">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
-      <div style="font-size:.8rem;color:var(--muted)">Tous les tokens callés depuis le début · ne disparaissent jamais</div>
-      <button class="scan-btn scan-btn-outline" onclick="renderHistory()" style="font-size:.72rem">↻ Refresh</button>
+      <div style="font-size:.8rem;color:var(--muted)">Tous les tokens callés · persistants</div>
+      <div style="display:flex;gap:.4rem;">
+        <button class="btn-reset" onclick="resetHistory()">🗑 Tout supprimer</button>
+        <button class="scan-btn scan-btn-outline" onclick="renderHistory()" style="font-size:.72rem">↻ Refresh</button>
+      </div>
     </div>
     <div id="historyContent"><div class="hist-empty"><div class="hist-empty-icon">📭</div><div>Chargement...</div></div></div>
   </div>
@@ -520,9 +531,15 @@ section{scroll-margin-top:70px;}
     <div class="rs-stat-item"><div class="rs-stat-val" id="rsStatAvgAge">—</div><div class="rs-stat-lbl">Âge moyen au rug</div></div>
   </div>
 
-  <div class="rs-tabs">
-    <button class="rs-tab active" id="rsTabToken" onclick="switchRsTab('token')">💀 Rugs Live <span id="rsTokenCount" style="font-size:.72rem;color:var(--muted);margin-left:.3rem"></span></button>
-    <button class="rs-tab" id="rsTabAddr" onclick="switchRsTab('addr')">☠️ Ruggeurs <span id="rsAddrCount" style="font-size:.72rem;color:var(--muted);margin-left:.3rem"></span></button>
+  <div class="rs-tabs" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;">
+    <div style="display:flex;">
+      <button class="rs-tab active" id="rsTabToken" onclick="switchRsTab('token')">💀 Rugs Live <span id="rsTokenCount" style="font-size:.72rem;color:var(--muted);margin-left:.3rem"></span></button>
+      <button class="rs-tab" id="rsTabAddr" onclick="switchRsTab('addr')">☠️ Ruggeurs <span id="rsAddrCount" style="font-size:.72rem;color:var(--muted);margin-left:.3rem"></span></button>
+    </div>
+    <div style="display:flex;gap:.4rem;padding:.3rem 0;">
+      <button class="btn-reset" id="btnResetRugs" onclick="resetRugs()" style="display:none">🗑 Vider Rugs</button>
+      <button class="btn-reset" id="btnResetRuggers" onclick="resetRuggers()" style="display:none">🗑 Vider Ruggeurs</button>
+    </div>
   </div>
 
   <div id="rsPanelToken">
@@ -1196,10 +1213,12 @@ function fmtTime(ts) { const d=new Date(ts); return d.getHours().toString().padS
 let currentTab = 'live';
 function switchTab(tab) {
   currentTab = tab;
-  document.getElementById('panelLive').style.display    = tab==='live' ? 'block' : 'none';
+  document.getElementById('panelLive').style.display    = tab==='live'    ? 'block' : 'none';
   document.getElementById('panelHistory').style.display = tab==='history' ? 'block' : 'none';
-  document.getElementById('tabLive').classList.toggle('active', tab==='live');
+  document.getElementById('tabLive').classList.toggle('active',    tab==='live');
   document.getElementById('tabHistory').classList.toggle('active', tab==='history');
+  document.getElementById('btnResetLive').style.display    = tab==='live'    ? 'inline-block' : 'none';
+  document.getElementById('btnResetHistory').style.display = tab==='history' ? 'inline-block' : 'none';
   if (tab === 'history') renderHistory();
 }
 
@@ -2003,7 +2022,9 @@ function switchRsTab(tab) {
   document.getElementById('rsPanelAddr').style.display  = tab==='addr'  ? 'block' : 'none';
   document.getElementById('rsTabToken').classList.toggle('active', tab==='token');
   document.getElementById('rsTabAddr').classList.toggle('active',  tab==='addr');
-  if (tab==='addr') renderRuggers(); // async — vérifie balance SOL
+  document.getElementById('btnResetRugs').style.display    = tab==='token' ? 'inline-block' : 'none';
+  document.getElementById('btnResetRuggers').style.display = tab==='addr'  ? 'inline-block' : 'none';
+  if (tab==='addr') renderRuggers();
 }
 
 // ============================================================
@@ -2019,6 +2040,49 @@ function toggleLang() {
     document.getElementById('h-title').innerHTML = 'Trouve les <span style="color:var(--green)">next 100x</span> avant tout le monde 🚀';
     document.getElementById('h-sub').textContent = 'Scanner Solana ultra-strict. Signaux wallets alpha. Seulement les tokens avec vraie probabilité de pump.';
   }
+}
+
+// ============================================================
+// RESET FUNCTIONS — suppression totale de chaque liste
+// ============================================================
+function resetLive() {
+  if (!confirm('Vider tous les calls live ? Ils réapparaîtront au prochain refresh.')) return;
+  lastScored = [];
+  const content = document.getElementById('scannerContent');
+  content.innerHTML = '<div class="empty-state"><div class="empty-icon">🗑</div><div class="empty-title">Liste vidée</div><div class="empty-sub">Refresh pour recharger</div></div>';
+  const lc = document.getElementById('liveCount');
+  if (lc) lc.textContent = '';
+}
+
+function resetHistory() {
+  if (!confirm('Supprimer tout l\'historique des calls ? Cette action est irréversible.')) return;
+  // Vider localStorage
+  try { localStorage.removeItem(STORAGE_KEY); } catch(e) {}
+  // Vider Firebase
+  try { fetch(`${FB_URL}/calls.json`, { method: 'DELETE' }).catch(()=>{}); } catch(e) {}
+  const hc = document.getElementById('histCount');
+  if (hc) hc.textContent = '';
+  const container = document.getElementById('historyContent');
+  if (container) container.innerHTML = '<div class="hist-empty"><div class="hist-empty-icon">🗑</div><div>Historique supprimé</div></div>';
+}
+
+function resetRugs() {
+  if (!confirm('Supprimer toute la liste des rugs détectés ?')) return;
+  try { localStorage.removeItem(RUGS_KEY); } catch(e) {}
+  try { localStorage.removeItem(DEV_RUGS_KEY); } catch(e) {}
+  lastRugs = [];
+  document.getElementById('rsStatDetected').textContent = '0';
+  document.getElementById('rsTokenCount').textContent = '';
+  document.getElementById('rsTokenContent').innerHTML = '<div class="rs-empty">🗑 Liste des rugs supprimée<br><span style="font-size:.7rem;opacity:.6">Refresh pour recharger</span></div>';
+}
+
+function resetRuggers() {
+  if (!confirm('Supprimer toute la liste des ruggeurs ?')) return;
+  try { localStorage.removeItem(RUGGERS_KEY); } catch(e) {}
+  try { localStorage.removeItem(DEV_RUGS_KEY); } catch(e) {}
+  document.getElementById('rsStatRuggers').textContent = '0';
+  document.getElementById('rsAddrCount').textContent = '';
+  document.getElementById('rsAddrContent').innerHTML = '<div class="rs-empty">🗑 Liste des ruggeurs supprimée</div>';
 }
 
 // ============================================================
