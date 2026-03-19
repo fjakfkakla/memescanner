@@ -1101,7 +1101,14 @@ function submitCode() {
   closeCode();
   onUnlock(found.plan);
 }
-function onUnlock(plan) { loadReviews(); fetchTokens(); fetchRugs(); }
+function onUnlock(plan) {
+  loadReviews();
+  fetchTokens();
+  fetchRugs().then(() => {
+    if (rugPriceTimer) clearTimeout(rugPriceTimer);
+    rugPriceTimer = setTimeout(refreshRugPrices, 15000);
+  });
+}
 function formatCode(input) {
   let v = input.value.replace(/[^A-Za-z0-9]/g,'').toUpperCase();
   let out = '';
@@ -2026,6 +2033,53 @@ async function fetchRugs() {
 
   if (rugRefreshTimer) clearTimeout(rugRefreshTimer);
   rugRefreshTimer = setTimeout(fetchRugs, 60000);
+}
+
+// ── Mise à jour des prix en temps réel (toutes les 15s) ────────
+// Indépendant du scan complet — juste les prix Now + ATH
+let rugPriceTimer = null;
+async function refreshRugPrices() {
+  let storedRugs = {};
+  try { storedRugs = JSON.parse(localStorage.getItem(RUGS_KEY) || '{}'); } catch(e) {}
+  const addrs = Object.values(storedRugs)
+    .map(r => r.addr).filter(a => a && a.length > 10);
+  if (!addrs.length) { rugPriceTimer = setTimeout(refreshRugPrices, 15000); return; }
+
+  let updated = false;
+  const chunks = [];
+  for (let i = 0; i < addrs.length; i += 29) chunks.push(addrs.slice(i, i+29));
+
+  for (const chunk of chunks) {
+    try {
+      const res = await fetch(
+        `https://api.dexscreener.com/latest/dex/tokens/${chunk.join(',')}`,
+        { signal: AbortSignal.timeout(7000) }
+      ).then(r => r.json());
+      (res.pairs || []).forEach(pair => {
+        const addr = pair.baseToken?.address;
+        if (!addr) return;
+        const key = Object.keys(storedRugs).find(k => storedRugs[k].addr === addr);
+        if (!key) return;
+        const liveMcap = pair.marketCap || pair.fdv || 0;
+        if (liveMcap > 0) {
+          storedRugs[key].mcap = liveMcap;
+          if (liveMcap > (storedRugs[key].athMcap || 0)) {
+            storedRugs[key].athMcap = liveMcap;
+            updated = true;
+          }
+        }
+      });
+    } catch(e) {}
+  }
+
+  if (updated) {
+    try { localStorage.setItem(RUGS_KEY, JSON.stringify(storedRugs)); } catch(e) {}
+  }
+  // Toujours re-render pour mettre à jour Now même sans nouvel ATH
+  lastRugs = Object.values(storedRugs).sort((a,b) => (b.danger||0)-(a.danger||0));
+  renderRugTokens(lastRugs);
+
+  rugPriceTimer = setTimeout(refreshRugPrices, 15000);
 }
 
 // Tokens cachés par l'utilisateur (bouton hide)
