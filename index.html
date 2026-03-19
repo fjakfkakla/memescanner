@@ -1668,35 +1668,41 @@ async function renderTokenTable(tokens) {
 // RUG DETECTOR — détecte les rugs en temps réel
 // ============================================================
 // ============================================================
-// detectRug v2 — VRAI pattern rug : pump fort → staircase → dump EN COURS
+// detectRug v3 — Pattern réaliste pump.fun
 //
-// On cherche ce schéma précis (capture 2) :
-//   1. Gros pump au lancement (c24h ou c6h > +200%)
-//   2. Structure staircase en cours (prix qui descend par paliers)
-//   3. Dump actif MAINTENANT (m5 ou c1h en baisse) — pas déjà rugué
+// Les rugs pump.fun typiques :
+//   - Token lancé → monte fort en quelques minutes (m5 ou c1h très positif au peak)
+//   - Puis le dev dump → sell ratio monte, prix chute
+//   - La chute est rapide (m5 < -15%) ou progressive (staircase)
 //
-// Ce qu'on NE veut PAS :
-//   - Token lancé il y a 0min qui dump immédiatement (dev sell at launch, normal)
-//   - Token déjà à -90% depuis longtemps (trop tard)
-//   - Simple dump sans pump préalable
+// On utilise les données DISPONIBLES sur DexScreener pour tokens récents :
+//   - m5 : le plus fiable, mis à jour en temps réel
+//   - c1h : reflète l'heure passée
+//   - sellRatio : ratio sells/total trades
+//   - vol/liq : volume anormal vs liquidité
 // ============================================================
 function detectRug(p) {
-  const ageMs  = Date.now() - (p.pairCreatedAt||0);
+  const ageMs  = Date.now() - (p.pairCreatedAt || 0);
   const ageH   = ageMs / 3600000;
   const ageMin = ageMs / 60000;
 
-  // ── Fenêtre temporelle : entre 5min et 3h ───────────────────
-  // < 5min : trop tôt, le dev qui vend au lancement c'est "normal"
-  // > 3h   : rug déjà terminé, trop tard pour agir
-  if (ageMin < 5)  return null; // lancement immédiat → pas un rug, juste un dev qui vend
-  if (ageH   > 3)  return null; // déjà terminé
+  // Fenêtre : 3 minutes → 6 heures
+  // < 3min : données pas encore stables
+  // > 6h   : rug probablement terminé, plus actionnable
+  if (ageMin < 3) return null;
+  if (ageH > 6)   return null;
 
   const liq    = p.liquidity?.usd || 0;
   const mcap   = p.marketCap || p.fdv || 0;
   const fdv    = p.fdv || mcap;
   const buys1  = p.txns?.h1?.buys  || 0;
   const sells1 = p.txns?.h1?.sells || 0;
+  const buysm5 = p.txns?.m5?.buys  || 0;
+  const sellsm5= p.txns?.m5?.sells || 0;
   const total1 = buys1 + sells1 || 1;
+  const totalm5= buysm5 + sellsm5 || 1;
+  const sellR1h= sells1 / total1;
+  const sellRm5= sellsm5 / totalm5;
   const vol1   = p.volume?.h1  || 0;
   const vol6   = p.volume?.h6  || 0;
   const vol24  = p.volume?.h24 || 0;
@@ -1704,74 +1710,80 @@ function detectRug(p) {
   const c6h    = p.priceChange?.h6  || 0;
   const c24h   = p.priceChange?.h24 || 0;
   const m5     = p.priceChange?.m5  || 0;
-  const sellR  = sells1 / total1;
 
-  // ── CONDITION 1 : Pump préalable OBLIGATOIRE ─────────────────
-  // Il faut qu'il y ait eu un gros move à la hausse avant le rug
-  // C'est le critère discriminant vs un token qui dump dès le début
-  const hadPump = c24h > 150 || c6h > 100 || (c24h > 80 && mcap > 20000);
-  if (!hadPump) return null; // pas de pump préalable = pas un rug intéressant
-
-  // ── CONDITION 2 : Pas encore complètement rugué ──────────────
-  // Si c1h < -85% c'est déjà fini, inutile de signaler
-  if (c1h < -85) return null; // trop tard
-
-  // ── CONDITION 3 : Dump EN COURS (pas déjà terminé) ──────────
-  // m5 négatif = le rug est actif maintenant
-  // OU c1h entre -15% et -85% = en train de ruger
-  const dumpInProgress = m5 < -5 || (c1h < -10 && c1h > -85);
-  if (!dumpInProgress) return null; // prix stable = pas encore en train de ruger
-
-  // ── Construire les signaux affichés ──────────────────────────
   const signals = [];
   let danger = 0;
 
-  // Signal principal : staircase pattern (le plus fiable)
-  // Gros pump + prix qui redescend par paliers
-  if (c24h > 300 && c1h < -20) {
-    signals.push(`📉 Staircase: +${c24h.toFixed(0)}% → ${c1h.toFixed(0)}%`);
-    danger += 4;
-  } else if (c24h > 150 && c1h < -15) {
-    signals.push(`📉 Pump & dump: +${c24h.toFixed(0)}% → ${c1h.toFixed(0)}%`);
-    danger += 3;
-  } else if (c6h > 100 && c1h < -15) {
-    signals.push(`📉 Pump 6h +${c6h.toFixed(0)}% → dump ${c1h.toFixed(0)}%`);
+  // ── SIGNAL 1 : Dump m5 actif (le plus fiable et temps-réel) ─
+  if (m5 < -25) { signals.push(`🚨 Crash m5 ${m5.toFixed(0)}%`); danger += 4; }
+  else if (m5 < -12) { signals.push(`⚠️ Drop m5 ${m5.toFixed(0)}%`); danger += 2; }
+  else if (m5 < -6)  { signals.push(`Drop m5 ${m5.toFixed(0)}%`); danger += 1; }
+
+  // ── SIGNAL 2 : Dump 1h significatif ────────────────────────
+  if (c1h < -50) { signals.push(`💀 Dump 1h ${c1h.toFixed(0)}%`); danger += 3; }
+  else if (c1h < -25) { signals.push(`📉 Drop 1h ${c1h.toFixed(0)}%`); danger += 2; }
+  else if (c1h < -12) { signals.push(`Drop 1h ${c1h.toFixed(0)}%`); danger += 1; }
+
+  // ── SIGNAL 3 : Sell pressure dominante ──────────────────────
+  // Sur m5 (plus réactif) et sur 1h
+  if (sellRm5 > 0.80) { signals.push(`Sell m5 ${(sellRm5*100).toFixed(0)}% 🚨`); danger += 3; }
+  else if (sellRm5 > 0.65) { signals.push(`Sell m5 ${(sellRm5*100).toFixed(0)}%`); danger += 1; }
+  if (sellR1h > 0.70 && c1h < -10) { signals.push(`Sell 1h ${(sellR1h*100).toFixed(0)}%`); danger += 2; }
+
+  // ── SIGNAL 4 : Staircase pattern ────────────────────────────
+  // Token avec gros pump sur 6h/24h mais qui redescend sur 1h
+  // C'est le pattern classique "monte puis dump en escalier"
+  if (c6h > 80 && c1h < -20) {
+    signals.push(`📉 Staircase: +${c6h.toFixed(0)}%(6h) → ${c1h.toFixed(0)}%(1h)`);
     danger += 3;
   }
+  if (c24h > 100 && c1h < -20) {
+    signals.push(`📉 Pump +${c24h.toFixed(0)}% → dump ${c1h.toFixed(0)}%`);
+    danger += 2;
+  }
 
-  // Dump actif sur les 5 dernières minutes
-  if (m5 < -20) { signals.push(`🚨 Crash m5 ${m5.toFixed(0)}% — rug actif`); danger += 3; }
-  else if (m5 < -8) { signals.push(`⚠️ Drop m5 ${m5.toFixed(0)}%`); danger += 1; }
+  // ── SIGNAL 5 : Volume/Liq suspect ───────────────────────────
+  // Beaucoup de volume vs peu de liq = rug de liquidité
+  const volLiqRatio = liq > 0 ? vol1 / liq : 0;
+  if (liq > 0 && liq < 3000 && vol1 > 5000) {
+    signals.push(`LP presque vide ($${fmtNum(liq)})`);
+    danger += 3;
+  } else if (volLiqRatio > 15 && c1h < -10) {
+    signals.push(`Vol/Liq ${volLiqRatio.toFixed(0)}x anormal`);
+    danger += 2;
+  }
 
-  // Sell pressure élevée pendant le dump
-  if (sellR > 0.75) { signals.push(`Sell ${(sellR*100).toFixed(0)}% dominant 🚨`); danger += 2; }
-  else if (sellR > 0.60 && c1h < -10) { signals.push(`Sell ${(sellR*100).toFixed(0)}% + dump`); danger += 1; }
+  // ── SIGNAL 6 : Token très jeune qui dump vite ───────────────
+  // < 30min et déjà -30% = rug rapide classique pump.fun
+  if (ageMin < 30 && c1h < -30) {
+    signals.push(`Rug rapide (<30min, ${c1h.toFixed(0)}%)`);
+    danger += 2;
+  }
 
-  // Liq qui disparaît (rug de liquidité)
-  if (liq > 0 && liq < 2000 && vol24 > 10000) { signals.push(`LP vidée ($${fmtNum(liq)} restant)`); danger += 3; }
-  else if (fdv > 0 && mcap > 0 && fdv/mcap > 8) { signals.push(`FDV/Mcap ${(fdv/mcap).toFixed(0)}x`); danger += 1; }
+  // ── FILTRE : pas assez de preuves ───────────────────────────
+  if (signals.length < 2) return null; // minimum 2 signaux
+  if (danger < 4) return null;         // seuil danger minimum
 
-  // Pas assez de signaux = faux positif
-  if (signals.length === 0) return null;
-  if (danger < 3) return null; // seuil relevé : on veut des rugs certains
+  // ── Token déjà complètement rugué → on garde en mémoire
+  // mais on le flag comme terminé pour ne pas l'afficher
+  const alreadyDead = c1h < -80 && m5 > -5; // prix stable au fond = terminé
+  if (alreadyDead) return null;
 
-  const dangerLevel = danger >= 6 ? 'critical' : 'high';
+  const dangerLevel = danger >= 7 ? 'critical' : 'high';
   const addr = p.baseToken?.address || '';
   const sym  = (p.baseToken?.symbol || '?').toUpperCase().slice(0, 12);
 
-  // Estimer le peak mcap (avant le dump)
-  // DexScreener ne donne pas l'ATH directement — on l'estime
-  const peakMcapEst = mcap > 0 && c1h < 0
-    ? mcap / (1 + c1h/100)  // mcap reconstitué avant le drop 1h
+  // Peak mcap estimé (avant le dump 1h)
+  const peakMcapEst = mcap > 0 && c1h < -5
+    ? Math.round(mcap / Math.max(0.05, 1 + c1h / 100))
     : mcap;
 
   return {
     sym, addr, signals, danger, dangerLevel, mcap, liq, ageH, ageMin,
-    c1h, c6h, c24h, m5, sellR,
-    peakMcapEst,  // mcap estimé au peak (avant rug)
-    hadPump: true,
+    c1h, c6h, c24h, m5, sellR: sellR1h,
+    peakMcapEst,
     callTime: Date.now(),
-    dexUrl: `https://dexscreener.com/solana/${addr}`
+    dexUrl: p.url || `https://dexscreener.com/solana/${addr}`
   };
 }
 
@@ -1795,13 +1807,17 @@ async function fetchRugs() {
     return [];
   }
 
-  // Sources ciblées pump.fun uniquement — rugs récents <1h
+  // Sources maximisées pour couvrir un max de tokens pump.fun récents
   const ENDPOINTS = [
     'https://api.dexscreener.com/latest/dex/search?q=pump.fun',
-    'https://api.dexscreener.com/latest/dex/search?q=pumpfun+solana',
+    'https://api.dexscreener.com/latest/dex/search?q=pumpfun',
+    'https://api.dexscreener.com/latest/dex/search?q=solana+pump',
+    'https://api.dexscreener.com/latest/dex/search?q=solana+meme',
     'https://api.dexscreener.com/token-profiles/latest/v1',
+    'https://api.dexscreener.com/token-boosts/latest/v1',
     'https://api.geckoterminal.com/api/v2/networks/solana/new_pools?page=1',
     'https://api.geckoterminal.com/api/v2/networks/solana/new_pools?page=2',
+    'https://api.geckoterminal.com/api/v2/networks/solana/trending_pools?page=1',
   ];
 
   function geckoToDex(pool) {
@@ -1822,26 +1838,24 @@ async function fetchRugs() {
 
   const results = await Promise.allSettled(ENDPOINTS.map(fetchP));
   const seen = new Set(); let pairs = [];
-  const ONE_HOUR = 3600000;
+  const SIX_HOURS = 6 * 3600000;
   const now = Date.now();
   for (const r of results) {
     if (r.status!=='fulfilled') continue;
     for (const p of r.value) {
       const conv = p.attributes ? geckoToDex(p) : p;
       if (!conv||!conv.chainId||conv.chainId!=='solana') continue;
-      // PUMP.FUN UNIQUEMENT : vérifier via dexId ou url
-      const isPumpFun = (conv.dexId||'').toLowerCase().includes('pump') ||
-                        (conv.url||'').toLowerCase().includes('pump') ||
-                        (conv.labels||[]).some(l=>(l||'').toLowerCase().includes('pump')) ||
-                        (conv.pairAddress||'').endsWith('pump');
-      // Pour les tokens récents sans dexId, on garde si <1h (pump.fun lance beaucoup)
-      const ageMs = now - (conv.pairCreatedAt||0);
-      const isRecent = ageMs < ONE_HOUR;
-      // Filtre : pump.fun OU très récent (<1h) — on élimine les vieux tokens non-pump
-      if (!isPumpFun && !isRecent) continue;
-      // Max 1h pour les rugs — on ne veut que les rugs frais
-      if (ageMs > ONE_HOUR) continue;
-      const addr = conv.baseToken?.address||conv.pairAddress||Math.random().toString();
+
+      // Garder uniquement les tokens récents (<6h)
+      const ageMs = now - (conv.pairCreatedAt || 0);
+      if (ageMs > SIX_HOURS) continue;
+      if (ageMs < 60000) continue; // < 1min : pas encore de données
+
+      // Filtre mcap minimal pour éviter les tokens fantômes
+      const mcap = conv.marketCap || conv.fdv || 0;
+      if (mcap > 0 && mcap < 500) continue; // mcap $0 ou ridiculement bas = données corrompues
+
+      const addr = conv.baseToken?.address || conv.pairAddress || Math.random().toString();
       if (seen.has(addr)) continue;
       seen.add(addr); pairs.push(conv);
     }
