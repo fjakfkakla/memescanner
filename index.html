@@ -1708,92 +1708,86 @@ function detectRug(p) {
   const m5      = p.priceChange?.m5  || 0;
 
   // ══════════════════════════════════════════════════════════
-  // RÈGLE CLÉ : On veut attraper le rug AU DÉBUT, pas à la fin
+  // LOGIQUE v4 : attraper le DÉBUT du rug, pas la fin
   //
-  // Profil recherché :
-  //   - c1h encore positif OU faiblement négatif (< -30%)
-  //     → le pump est récent, le rug commence tout juste
-  //   - m5 négatif → la bougie actuelle tourne rouge
-  //   - sell pressure montante sur m5
+  // Pattern cible (Brps1dAWew36v9DGNCsRsjmum2G4zMeXZmiXChZLpump) :
+  //   - Token lancé depuis <30min
+  //   - c1h encore très positif (+100% à +500%) = pump récent
+  //   - m5 vire négatif (-5% à -20%) = staircase qui commence
+  //   - Ou sell m5 > 60% = vendeurs qui commencent à sortir
   //
-  // Ce qu'on EXCLUT (trop tard) :
-  //   - c1h < -40% → le rug est déjà bien entamé
-  //   - m5 stable/positif ET c1h très négatif → déjà fini
+  // Ce qu'on EXCLUT :
+  //   - c1h < -35% → déjà trop rugué
+  //   - aucun pump préalable (flat token)
+  //   - aucun signal actif sur m5
   // ══════════════════════════════════════════════════════════
 
-  // EXCLUSION : déjà trop tard — le dump est largement entamé
-  if (c1h < -40 && m5 > -10) return null; // dump passé + stabilisé = trop tard
-  if (c1h < -60) return null;             // déjà rugué à plus de 60%
-
-  // CONDITION MINIMALE : il faut qu'il se passe QUELQUE CHOSE maintenant
-  // m5 doit être négatif (début du dump) OU sell m5 dominante
-  const dumpStarting = m5 < -5 || sellRm5 > 0.65;
-  if (!dumpStarting) return null;
-
-  // CONDITION : le token a eu un pump (sinon pas intéressant)
-  // On vérifie que c1h OU c6h OU c24h était positif récemment
-  const hadAnyPump = c1h > -30 || c6h > 10 || c24h > 20;
-  if (!hadAnyPump) return null;
+  // Exclu : déjà bien rugué
+  if (c1h < -35) return null;
 
   const signals = [];
   let danger = 0;
 
-  // ── SIGNAL PRINCIPAL : m5 en train de chuter ────────────────
-  // C'est le signal le plus précieux — le rug commence MAINTENANT
-  if (m5 < -30)      { signals.push(`🚨 Dump m5 ${m5.toFixed(0)}% — DÉBUT RUG`); danger += 5; }
-  else if (m5 < -15) { signals.push(`⚠️ Chute m5 ${m5.toFixed(0)}%`);             danger += 3; }
-  else if (m5 < -5)  { signals.push(`📉 Baisse m5 ${m5.toFixed(0)}%`);             danger += 1; }
-
-  // ── SIGNAL : Sell pressure sur m5 (gens qui sortent maintenant) ─
-  if (sellRm5 > 0.80)      { signals.push(`🚨 Sells m5 ${(sellRm5*100).toFixed(0)}% — sortie massive`); danger += 4; }
-  else if (sellRm5 > 0.65) { signals.push(`Sells m5 ${(sellRm5*100).toFixed(0)}%`);                     danger += 2; }
-
-  // ── SIGNAL : Contexte — pump récent confirmant le pattern ───
-  // c1h encore positif = le pump est tout récent, le dump commence
-  if (c1h > 50 && m5 < -10) {
-    signals.push(`🎯 Pump récent +${c1h.toFixed(0)}%(1h) → début dump m5`);
-    danger += 3; // Pattern PARFAIT : encore haut mais m5 vire
-  } else if (c1h > 10 && m5 < -5) {
-    signals.push(`Pump +${c1h.toFixed(0)}%(1h) → drop m5`);
-    danger += 2;
-  } else if (c6h > 50 && c1h < -5 && m5 < -5) {
-    signals.push(`Staircase: +${c6h.toFixed(0)}%(6h) → ${c1h.toFixed(0)}%(1h)`);
+  // ── PATTERN STAIRCASE (LE PLUS IMPORTANT) ───────────────────
+  // Token encore très haut sur 1h MAIS m5 commence à baisser
+  // = début de staircase, exactement ce qu'on cherche
+  if (c1h > 100 && m5 < -5) {
+    signals.push(`🎯 STAIRCASE: +${c1h.toFixed(0)}%(1h) → m5 ${m5.toFixed(0)}%`);
+    danger += 4;
+  } else if (c1h > 50 && m5 < -8) {
+    signals.push(`📉 Pump +${c1h.toFixed(0)}% → drop m5 ${m5.toFixed(0)}%`);
     danger += 3;
-  } else if (c24h > 80 && c1h < -10 && m5 < -5) {
-    signals.push(`Pump +${c24h.toFixed(0)}%(24h) → dump actif`);
+  } else if (c1h > 20 && m5 < -12) {
+    signals.push(`Drop m5 ${m5.toFixed(0)}% après +${c1h.toFixed(0)}%(1h)`);
     danger += 2;
   }
 
-  // ── SIGNAL : LP qui fond ─────────────────────────────────────
+  // ── PATTERN : AU PIC + SELLS M5 COMMENCENT ──────────────────
+  // c1h très positif + sell m5 > 58% + m5 légèrement négatif
+  // = vendeurs qui commencent à sortir au sommet
+  if (c1h > 100 && sellRm5 > 0.58 && m5 < 0) {
+    signals.push(`🔴 Pic +${c1h.toFixed(0)}% + sells m5 ${(sellRm5*100).toFixed(0)}%`);
+    danger += 3;
+  } else if (c1h > 50 && sellRm5 > 0.65) {
+    signals.push(`Pump +${c1h.toFixed(0)}% + sells m5 ${(sellRm5*100).toFixed(0)}%`);
+    danger += 2;
+  }
+
+  // ── PATTERN : CRASH M5 ACTIF ─────────────────────────────────
+  if (m5 < -30) { signals.push(`🚨 Crash m5 ${m5.toFixed(0)}%`); danger += 4; }
+  else if (m5 < -15) { signals.push(`⚠️ Chute m5 ${m5.toFixed(0)}%`); danger += 2; }
+
+  // ── PATTERN : SELL PRESSURE M5 FORTE ─────────────────────────
+  if (sellRm5 > 0.75) { signals.push(`🚨 Sell m5 ${(sellRm5*100).toFixed(0)}%`); danger += 3; }
+  else if (sellRm5 > 0.62 && m5 < -3) { signals.push(`Sell m5 ${(sellRm5*100).toFixed(0)}%`); danger += 1; }
+
+  // ── PATTERN STAIRCASE 6H ─────────────────────────────────────
+  if (c6h > 50 && c1h < -5 && m5 < -5) {
+    signals.push(`Staircase +${c6h.toFixed(0)}%(6h) → ${c1h.toFixed(0)}%(1h)`);
+    danger += 3;
+  }
+
+  // ── LP QUASI-VIDE ─────────────────────────────────────────────
   if (liq > 0 && liq < 3000 && vol1 > 3000) {
     signals.push(`LP $${fmtNum(liq)} quasi-vide`);
     danger += 3;
   }
 
-  // ── SIGNAL : Sell 1h élevé (contexte) ───────────────────────
-  if (sellR1h > 0.65 && c1h < -5) {
-    signals.push(`Sell 1h ${(sellR1h*100).toFixed(0)}%`);
-    danger += 1;
-  }
+  // Filtres finaux
+  if (signals.length === 0) return null;
+  if (danger < 3) return null; // seuil abaissé à 3
 
-  // Pas assez de preuves
-  if (signals.length < 2) return null;
-  if (danger < 4) return null;
-
-  const dangerLevel = danger >= 7 ? 'critical' : 'high';
+  const dangerLevel = danger >= 6 ? 'critical' : 'high';
   const addr = p.baseToken?.address || '';
   const sym  = (p.baseToken?.symbol || '?').toUpperCase().slice(0, 12);
 
   // Peak mcap estimé
-  // Si c1h encore positif → mcap actuel ≈ peak
-  // Si c1h légèrement négatif → reconstituer
   const peakMcapEst = c1h < -5
     ? Math.round(mcap / Math.max(0.1, 1 + c1h / 100))
     : mcap;
 
-  // Score d'urgence : plus c'est tôt dans le rug, plus urgent
-  // c1h proche de 0 = on est au tout début → urgence max
-  const urgency = c1h > 20 ? 'MAINTENANT' : c1h > -10 ? 'TÔTÔT' : 'EN COURS';
+  // Urgence : c1h encore positif = rug qui vient JUSTE de commencer
+  const urgency = c1h > 50 ? 'MAINTENANT' : c1h > 0 ? 'DEBUT' : 'EN COURS';
 
   return {
     sym, addr, signals, danger, dangerLevel, urgency, mcap, liq, ageH, ageMin,
@@ -1931,10 +1925,10 @@ function renderRugTokens(rugs) {
     content.innerHTML = '<div class="rs-empty">✅ Aucun rug actif détecté<br><span style="font-size:.7rem;opacity:.6">On cherche : pump fort → staircase → dump en cours · Refresh auto 60s</span></div>';
     return;
   }
-  // Filtrer : c1h > -40% seulement → on veut les rugs encore jeunes
+  // Filtrer : c1h > -35% (cohérent avec detectRug) + trier par fraîcheur
+  // Les plus frais en premier = c1h le plus positif = rug qui vient de commencer
   const activeRugs = rugs
-    .filter(r => (r.c1h||0) > -40)
-    // Trier : les plus frais d'abord (c1h le moins négatif = rug qui vient de commencer)
+    .filter(r => (r.c1h||0) > -35)
     .sort((a,b) => (b.c1h||0) - (a.c1h||0));
 
   const cards = activeRugs.slice(0, 30).map(r => {
