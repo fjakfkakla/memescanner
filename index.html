@@ -289,59 +289,131 @@ section{scroll-margin-top:70px;}
 .btn-reset:hover{border-color:#ff4466;color:#ff4466;background:rgba(255,68,102,.08);}
 
 /* ══════════════════════════════════════════════════════════════
-   RUG SNIP — Design rouge / casino
+   RUG SNIP — Style Rugs.fun / memecoin
 ══════════════════════════════════════════════════════════════ */
+/* ── Section wrapper ── */
 .rugsnip-section{padding:4rem;max-width:1400px;margin:0 auto;position:relative;z-index:1;}
-.rugsnip-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;flex-wrap:wrap;gap:1rem;}
-.rugsnip-title{font-family:var(--font-head);font-size:1.6rem;color:#ff4466;}
-.rugsnip-badge{font-family:var(--font-mono);font-size:.7rem;background:rgba(255,68,102,.12);border:1px solid rgba(255,68,102,.3);color:#ff4466;padding:.3rem .8rem;border-radius:6px;}
-.rs-tabs{display:flex;gap:0;border-bottom:1px solid rgba(255,68,102,.2);margin-bottom:1.5rem;}
-.rs-tab{padding:.55rem 1.4rem;font-size:.82rem;font-weight:600;cursor:pointer;border:none;background:none;color:var(--muted);border-bottom:2px solid transparent;transition:.2s;font-family:var(--font);}
-.rs-tab.active{color:#ff4466;border-bottom-color:#ff4466;}
-.rs-tab:hover:not(.active){color:var(--text);}
-.rs-dot{width:8px;height:8px;border-radius:50%;background:#ff4466;animation:pulse-red 2s infinite;}
-@keyframes pulse-red{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(255,68,102,.4)}50%{opacity:.6;box-shadow:0 0 0 6px rgba(255,68,102,0)}}
-/* Token rug cards */
-.rug-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1rem;padding:.5rem 0;}
-.rug-tok-card{background:linear-gradient(135deg,#120808,#1a0a0a);border:1px solid rgba(255,68,102,.2);border-radius:12px;padding:1rem 1.1rem;display:flex;flex-direction:column;gap:.5rem;transition:.2s;position:relative;overflow:hidden;}
-.rug-tok-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,#ff4466,#ff8844,#ff4466);background-size:200%;animation:shimmer-red 2s linear infinite;}
-@keyframes shimmer-red{0%{background-position:0%}100%{background-position:200%}}
-.rug-tok-card:hover{border-color:rgba(255,68,102,.5);transform:translateY(-2px);box-shadow:0 6px 24px rgba(255,68,102,.12);}
-.rug-card-header{display:flex;align-items:center;justify-content:space-between;}
-.rug-sym{font-family:var(--font-mono);font-size:.95rem;font-weight:700;color:#ff8888;}
-.rug-danger{font-family:var(--font-mono);font-size:.68rem;padding:.2rem .5rem;border-radius:4px;font-weight:700;}
-.rug-danger.critical{background:rgba(255,0,60,.2);color:#ff2244;border:1px solid rgba(255,0,60,.3);}
-.rug-danger.high{background:rgba(255,68,102,.15);color:#ff4466;border:1px solid rgba(255,68,102,.25);}
-.rug-signals{display:flex;flex-direction:column;gap:.3rem;margin:.2rem 0;}
-.rug-signal{font-size:.68rem;font-family:var(--font-mono);color:#ff8888;background:rgba(255,68,102,.06);padding:.2rem .5rem;border-radius:3px;border-left:2px solid rgba(255,68,102,.4);}
-.rug-mcap-row{display:flex;justify-content:space-between;font-size:.7rem;font-family:var(--font-mono);}
-.rug-footer{display:flex;justify-content:space-between;align-items:center;border-top:1px solid rgba(255,68,102,.1);padding-top:.4rem;margin-top:.1rem;}
-.rug-time{font-size:.62rem;color:var(--muted);}
-.rug-dex-btn{padding:.25rem .6rem;background:rgba(255,68,102,.1);border:1px solid rgba(255,68,102,.2);color:#ff4466;border-radius:4px;font-size:.62rem;font-weight:600;text-decoration:none;transition:.2s;}
-.rug-dex-btn:hover{background:rgba(255,68,102,.2);}
-.rug-copy-ca{padding:.25rem .6rem;background:transparent;border:1px solid rgba(255,68,102,.2);color:var(--muted);border-radius:4px;font-size:.62rem;font-family:var(--font-mono);cursor:pointer;transition:.2s;}
-.rug-copy-ca:hover{border-color:#ff4466;color:#ff4466;}
-/* Wallet rug cards */
-.rugger-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:1rem;padding:.5rem 0;}
-.rugger-card{background:linear-gradient(135deg,#120808,#18080e);border:1px solid rgba(255,68,102,.2);border-radius:12px;padding:1.1rem;display:flex;flex-direction:column;gap:.55rem;transition:.2s;}
-.rugger-card:hover{border-color:rgba(255,68,102,.4);transform:translateY(-1px);}
-.rugger-header{display:flex;align-items:center;gap:.6rem;}
-.rugger-icon{width:36px;height:36px;border-radius:50%;background:rgba(255,68,102,.1);border:1px solid rgba(255,68,102,.2);display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0;}
-.rugger-addr{font-family:var(--font-mono);font-size:.72rem;color:#ff8888;cursor:pointer;transition:.15s;}
-.rugger-addr:hover{color:#ff4466;}
-.rugger-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.4rem;text-align:center;}
-.rugger-stat{background:rgba(255,68,102,.05);border-radius:6px;padding:.3rem .2rem;}
-.rugger-stat-val{font-size:.85rem;font-weight:700;color:#ff4466;}
-.rugger-stat-lbl{font-size:.55rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;}
-.rugger-history{font-size:.65rem;font-family:var(--font-mono);color:var(--muted);background:rgba(255,68,102,.04);padding:.4rem .6rem;border-radius:4px;line-height:1.6;}
-.rugger-footer{display:flex;justify-content:space-between;align-items:center;border-top:1px solid rgba(255,68,102,.1);padding-top:.4rem;}
-.btn-solscan{padding:.25rem .6rem;background:rgba(255,68,102,.08);border:1px solid rgba(255,68,102,.15);color:#ff8888;border-radius:4px;font-size:.62rem;text-decoration:none;transition:.2s;}
-.btn-solscan:hover{background:rgba(255,68,102,.18);}
-.rs-empty{text-align:center;padding:3rem 1rem;color:var(--muted);font-family:var(--font-mono);font-size:.8rem;}
-.rs-stat-bar{display:flex;gap:1.5rem;background:rgba(255,68,102,.04);border:1px solid rgba(255,68,102,.12);border-radius:8px;padding:.8rem 1.2rem;margin-bottom:1.2rem;}
+/* Background grunge effet pour le RUG SNIP */
+.rugsnip-section::before{content:'';position:fixed;top:0;left:0;right:0;bottom:0;pointer-events:none;z-index:0;
+  background:radial-gradient(ellipse at 15% 50%,rgba(255,30,60,.03) 0%,transparent 55%),
+             radial-gradient(ellipse at 85% 20%,rgba(180,0,40,.04) 0%,transparent 50%);}
+.rugsnip-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;flex-wrap:wrap;gap:1rem;position:relative;z-index:1;}
+.rugsnip-title{font-family:'Syne',sans-serif;font-size:1.8rem;font-weight:800;color:#ff2244;letter-spacing:-1px;
+  text-shadow:0 0 20px rgba(255,34,68,.4),0 0 40px rgba(255,34,68,.15);}
+.rugsnip-badge{font-family:'Space Mono',monospace;font-size:.68rem;background:rgba(255,0,40,.15);border:1px solid rgba(255,40,80,.4);color:#ff4466;padding:.25rem .7rem;border-radius:4px;letter-spacing:.06em;}
+/* ── Tabs ── */
+.rs-tabs{display:flex;gap:0;border-bottom:1px solid rgba(255,40,80,.2);margin-bottom:1.5rem;position:relative;z-index:1;}
+.rs-tab{padding:.55rem 1.4rem;font-size:.82rem;font-weight:600;cursor:pointer;border:none;background:none;color:rgba(255,100,120,.5);border-bottom:2px solid transparent;transition:.2s;font-family:var(--font);}
+.rs-tab.active{color:#ff4466;border-bottom-color:#ff4466;text-shadow:0 0 8px rgba(255,68,102,.5);}
+.rs-tab:hover:not(.active){color:rgba(255,120,140,.8);}
+/* ── Live dot ── */
+.rs-dot{width:9px;height:9px;border-radius:50%;background:#ff2244;box-shadow:0 0 6px #ff2244,0 0 12px rgba(255,34,68,.6);animation:pulse-red 1.5s infinite;}
+@keyframes pulse-red{0%,100%{opacity:1;box-shadow:0 0 6px #ff2244,0 0 12px rgba(255,34,68,.5)}50%{opacity:.7;box-shadow:0 0 3px #ff2244,0 0 6px rgba(255,34,68,.2)}}
+/* ── Stats bar ── */
+.rs-stat-bar{display:flex;gap:1.5rem;flex-wrap:wrap;background:rgba(255,20,50,.05);border:1px solid rgba(255,40,80,.15);border-radius:8px;padding:.8rem 1.4rem;margin-bottom:1.4rem;position:relative;z-index:1;}
 .rs-stat-item{text-align:center;}
-.rs-stat-val{font-family:var(--font-mono);font-size:1.2rem;font-weight:700;color:#ff4466;}
-.rs-stat-lbl{font-size:.62rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;}
+.rs-stat-val{font-family:'Syne',sans-serif;font-size:1.3rem;font-weight:800;color:#ff4466;}
+.rs-stat-lbl{font-size:.58rem;color:rgba(255,100,120,.6);text-transform:uppercase;letter-spacing:.08em;margin-top:1px;}
+/* ── Rug Token Grid ── */
+.rug-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(285px,1fr));gap:1.1rem;padding:.5rem 0;position:relative;z-index:1;}
+/* Card principale — style rugs.fun sombre avec grain */
+.rug-tok-card{
+  background:linear-gradient(145deg,#0d0406 0%,#160608 50%,#0d0406 100%);
+  border:1px solid rgba(255,40,80,.25);border-radius:14px;
+  padding:1rem 1.1rem 0.9rem;display:flex;flex-direction:column;gap:.45rem;
+  transition:.25s;position:relative;overflow:hidden;cursor:default;}
+/* Ligne rouge animée en haut */
+.rug-tok-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,transparent,#ff2244,#ff6644,#ff2244,transparent);
+  background-size:300%;animation:shimmer-red 2.5s linear infinite;}
+/* Lueur rouge sur les bords */
+.rug-tok-card::after{content:'';position:absolute;inset:0;border-radius:14px;
+  box-shadow:inset 0 0 30px rgba(255,30,60,.04);pointer-events:none;}
+@keyframes shimmer-red{0%{background-position:200%}100%{background-position:-100%}}
+.rug-tok-card:hover{border-color:rgba(255,60,100,.55);transform:translateY(-3px);
+  box-shadow:0 8px 32px rgba(255,30,60,.18),0 0 0 1px rgba(255,60,100,.1);}
+.rug-tok-card.hidden-card{opacity:.2;filter:blur(2px);pointer-events:none;}
+/* Header de la card */
+.rug-card-header{display:flex;align-items:center;justify-content:space-between;gap:.4rem;}
+.rug-sym{font-family:'Syne',sans-serif;font-size:1rem;font-weight:800;color:#fff;letter-spacing:-.3px;
+  text-shadow:0 0 10px rgba(255,80,100,.4);}
+.rug-card-actions{display:flex;align-items:center;gap:.3rem;}
+/* Badge danger */
+.rug-danger{font-family:'Space Mono',monospace;font-size:.6rem;padding:.18rem .5rem;border-radius:4px;font-weight:700;white-space:nowrap;letter-spacing:.04em;}
+.rug-danger.critical{background:rgba(255,0,40,.25);color:#ff2244;border:1px solid rgba(255,0,40,.4);text-shadow:0 0 6px rgba(255,34,68,.6);}
+.rug-danger.high{background:rgba(255,68,102,.15);color:#ff6680;border:1px solid rgba(255,68,102,.3);}
+/* Bouton hide */
+.rug-btn-hide{background:transparent;border:1px solid rgba(255,60,80,.2);color:rgba(255,80,100,.5);
+  padding:.15rem .4rem;border-radius:3px;font-size:.58rem;cursor:pointer;transition:.2s;font-family:'Space Mono',monospace;}
+.rug-btn-hide:hover{border-color:rgba(255,60,80,.5);color:rgba(255,100,120,.9);}
+/* Signals */
+.rug-signals{display:flex;flex-direction:column;gap:.28rem;margin:.1rem 0;}
+.rug-signal{font-size:.65rem;font-family:'Space Mono',monospace;color:rgba(255,140,160,.9);
+  background:rgba(255,30,60,.08);padding:.18rem .5rem;border-radius:3px;
+  border-left:2px solid rgba(255,50,80,.5);line-height:1.4;}
+/* Grid stats Call/Now/ATH/X */
+.rug-stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:.3rem;margin:.3rem 0;}
+.rug-stat-cell{text-align:center;background:rgba(255,20,50,.07);border:1px solid rgba(255,40,80,.1);border-radius:5px;padding:.28rem .15rem;}
+.rug-stat-lbl{font-size:.5rem;color:rgba(255,100,120,.6);text-transform:uppercase;letter-spacing:.06em;line-height:1.2;}
+.rug-stat-val{font-family:'Space Mono',monospace;font-size:.72rem;font-weight:700;line-height:1.4;}
+/* Footer actions */
+.rug-footer{display:flex;justify-content:space-between;align-items:center;
+  border-top:1px solid rgba(255,40,80,.1);padding-top:.4rem;margin-top:.2rem;gap:.3rem;}
+.rug-addr-txt{font-family:'Space Mono',monospace;font-size:.58rem;color:rgba(255,120,140,.5);}
+.rug-age-txt{font-family:'Space Mono',monospace;font-size:.56rem;color:rgba(255,100,120,.4);}
+.rug-dex-btn{padding:.22rem .55rem;background:rgba(255,40,80,.1);border:1px solid rgba(255,40,80,.25);
+  color:#ff6680;border-radius:4px;font-size:.6rem;font-weight:600;text-decoration:none;transition:.2s;font-family:'Space Mono',monospace;}
+.rug-dex-btn:hover{background:rgba(255,40,80,.22);color:#ff99aa;}
+.rug-copy-ca{padding:.22rem .55rem;background:transparent;border:1px solid rgba(255,40,80,.18);
+  color:rgba(255,100,120,.6);border-radius:4px;font-size:.6rem;font-family:'Space Mono',monospace;cursor:pointer;transition:.2s;}
+.rug-copy-ca:hover{border-color:rgba(255,60,90,.5);color:#ff8899;}
+/* Bouton PnL share */
+.rug-btn-pnl{padding:.22rem .55rem;background:rgba(255,170,0,.1);border:1px solid rgba(255,170,0,.3);
+  color:#ffcc44;border-radius:4px;font-size:.6rem;font-family:'Space Mono',monospace;cursor:pointer;transition:.2s;}
+.rug-btn-pnl:hover{background:rgba(255,170,0,.2);color:#ffdd66;}
+/* ── Wallet ruggers ── */
+.rugger-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:1rem;padding:.5rem 0;}
+.rugger-card{background:linear-gradient(145deg,#0d0406,#160608);border:1px solid rgba(255,40,80,.2);border-radius:12px;padding:1.1rem;display:flex;flex-direction:column;gap:.55rem;transition:.2s;}
+.rugger-card:hover{border-color:rgba(255,60,100,.4);transform:translateY(-1px);}
+.rugger-header{display:flex;align-items:center;gap:.6rem;}
+.rugger-icon{width:36px;height:36px;border-radius:50%;background:rgba(255,30,60,.12);border:1px solid rgba(255,40,80,.25);display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0;}
+.rugger-addr{font-family:'Space Mono',monospace;font-size:.7rem;color:rgba(255,140,160,.8);cursor:pointer;transition:.15s;}
+.rugger-addr:hover{color:#ff6680;}
+.rugger-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.4rem;text-align:center;}
+.rugger-stat{background:rgba(255,30,60,.06);border-radius:6px;padding:.3rem .2rem;}
+.rugger-stat-val{font-size:.85rem;font-weight:700;color:#ff4466;}
+.rugger-stat-lbl{font-size:.54rem;color:rgba(255,100,120,.5);text-transform:uppercase;letter-spacing:.05em;}
+.rugger-history{font-size:.63rem;font-family:'Space Mono',monospace;color:rgba(255,120,140,.6);background:rgba(255,30,60,.05);padding:.4rem .6rem;border-radius:4px;line-height:1.6;}
+.rugger-footer{display:flex;justify-content:space-between;align-items:center;border-top:1px solid rgba(255,40,80,.1);padding-top:.4rem;}
+.btn-solscan{padding:.22rem .55rem;background:rgba(255,30,60,.07);border:1px solid rgba(255,40,80,.15);color:rgba(255,140,160,.7);border-radius:4px;font-size:.6rem;text-decoration:none;transition:.2s;}
+.btn-solscan:hover{background:rgba(255,30,60,.18);}
+/* ── Empty state ── */
+.rs-empty{text-align:center;padding:3rem 1rem;color:rgba(255,100,120,.5);font-family:'Space Mono',monospace;font-size:.78rem;}
+/* ── PnL Share Modal ── */
+.pnl-overlay{position:fixed;inset:0;background:rgba(0,0,0,.88);backdrop-filter:blur(10px);z-index:500;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:.3s;}
+.pnl-overlay.open{opacity:1;pointer-events:all;}
+.pnl-card{position:relative;width:420px;max-width:95vw;border-radius:20px;overflow:hidden;
+  background:linear-gradient(160deg,#0a0a0a 0%,#111008 40%,#080a04 100%);
+  border:1.5px solid rgba(0,255,136,.25);box-shadow:0 0 60px rgba(0,255,136,.12);}
+.pnl-card-inner{padding:2rem 1.8rem 1.6rem;text-align:center;position:relative;z-index:1;}
+.pnl-logo{font-family:'Syne',sans-serif;font-size:.9rem;font-weight:800;color:var(--green);letter-spacing:1px;opacity:.8;margin-bottom:.8rem;}
+.pnl-sym{font-family:'Syne',sans-serif;font-size:2rem;font-weight:800;color:#fff;letter-spacing:-1px;margin-bottom:.3rem;}
+.pnl-called{font-family:'Space Mono',monospace;font-size:.72rem;color:rgba(255,255,255,.45);margin-bottom:1rem;}
+.pnl-mult{font-family:'Syne',sans-serif;font-size:4.5rem;font-weight:800;line-height:1;
+  background:linear-gradient(135deg,#00ff88,#88ff44);-webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  filter:drop-shadow(0 0 20px rgba(0,255,136,.5));margin-bottom:.4rem;}
+.pnl-mult.big-mult{font-size:5.5rem;}
+.pnl-sub{font-family:'Space Mono',monospace;font-size:.68rem;color:rgba(255,255,255,.4);margin-bottom:1.2rem;}
+.pnl-mcap-row{display:flex;justify-content:center;gap:1.5rem;margin-bottom:1.2rem;}
+.pnl-mcap-cell{text-align:center;}
+.pnl-mcap-val{font-family:'Space Mono',monospace;font-size:.85rem;font-weight:700;}
+.pnl-mcap-lbl{font-size:.55rem;color:rgba(255,255,255,.35);text-transform:uppercase;letter-spacing:.06em;}
+.pnl-footer-txt{font-family:'Space Mono',monospace;font-size:.6rem;color:rgba(255,255,255,.25);letter-spacing:.06em;}
+.pnl-actions{display:flex;gap:.6rem;justify-content:center;padding:.8rem 1.8rem 1.4rem;}
+.pnl-btn-dl{flex:1;padding:.65rem;background:var(--green);color:#000;border:none;border-radius:8px;font-family:'Syne',sans-serif;font-weight:700;font-size:.85rem;cursor:pointer;transition:.2s;}
+.pnl-btn-dl:hover{background:#00e87a;transform:translateY(-1px);}
+.pnl-btn-close{padding:.65rem 1.2rem;background:transparent;border:1px solid rgba(255,255,255,.15);color:rgba(255,255,255,.5);border-radius:8px;font-family:var(--font);font-size:.82rem;cursor:pointer;transition:.2s;}
+.pnl-btn-close:hover{border-color:rgba(255,255,255,.3);color:rgba(255,255,255,.8);}
 </style>
 </head>
 <body>
@@ -699,6 +771,35 @@ section{scroll-margin-top:70px;}
   <div class="debug-box">
     <button class="modal-close" onclick="closeDebug()">✕</button>
     <div id="debugContent"></div>
+  </div>
+</div>
+
+<!-- PnL Share Modal -->
+<div class="pnl-overlay" id="pnlOverlay" onclick="if(event.target===this)closePnl()">
+  <div class="pnl-card" id="pnlCard">
+    <div class="pnl-card-inner">
+      <div class="pnl-logo">🐸 MemecoinPump</div>
+      <div class="pnl-sym" id="pnlSym">TOKEN</div>
+      <div class="pnl-called" id="pnlCalled">called at $—</div>
+      <div class="pnl-mult" id="pnlMult">0.00x</div>
+      <div class="pnl-sub" id="pnlSub">ATH depuis le call</div>
+      <div class="pnl-mcap-row">
+        <div class="pnl-mcap-cell">
+          <div class="pnl-mcap-val" style="color:#ffaa44" id="pnlCallVal">$—</div>
+          <div class="pnl-mcap-lbl">Call</div>
+        </div>
+        <div class="pnl-mcap-cell" style="font-size:1.4rem;color:rgba(0,255,136,.4);align-self:center">→</div>
+        <div class="pnl-mcap-cell">
+          <div class="pnl-mcap-val" style="color:#00ff88" id="pnlAthVal">$—</div>
+          <div class="pnl-mcap-lbl">ATH</div>
+        </div>
+      </div>
+      <div class="pnl-footer-txt">memecoinpump.vercel.app · DYOR · NFA 🐸</div>
+    </div>
+    <div class="pnl-actions">
+      <button class="pnl-btn-dl" onclick="downloadPnl()">⬇ Télécharger</button>
+      <button class="pnl-btn-close" onclick="closePnl()">Fermer</button>
+    </div>
   </div>
 </div>
 
@@ -1862,9 +1963,9 @@ async function fetchRugs() {
       if (ageMs > SIX_HOURS) continue;
       if (ageMs < 60000) continue; // < 1min : pas encore de données
 
-      // Filtre mcap minimal pour éviter les tokens fantômes
+      // Filtre mcap : minimum $10K pour éviter les tokens poubelle
       const mcap = conv.marketCap || conv.fdv || 0;
-      if (mcap > 0 && mcap < 500) continue; // mcap $0 ou ridiculement bas = données corrompues
+      if (mcap > 0 && mcap < 10000) continue; // < $10K = token sans intérêt
 
       const addr = conv.baseToken?.address || conv.pairAddress || Math.random().toString();
       if (seen.has(addr)) continue;
@@ -1882,11 +1983,19 @@ async function fetchRugs() {
   // Ajouter les nouveaux rugs détectés au stockage (persistant)
   for (const r of freshRugs) {
     if (r.addr && !storedRugs[r.addr]) {
-      storedRugs[r.addr] = { ...r, firstSeen: Date.now() };
+      storedRugs[r.addr] = { ...r, firstSeen: Date.now(), callMcap: r.mcap, athMcap: r.mcap };
       checkAndAddRugger(r); // Ajouter aussi dans la liste ruggeurs auto
     } else if (r.addr && storedRugs[r.addr]) {
+      // Mettre à jour ATH si mcap plus élevé
+      if (r.mcap > (storedRugs[r.addr].athMcap || 0)) {
+        storedRugs[r.addr].athMcap = r.mcap;
+      }
       if (r.danger > storedRugs[r.addr].danger) {
-        storedRugs[r.addr] = { ...storedRugs[r.addr], ...r, firstSeen: storedRugs[r.addr].firstSeen || Date.now() };
+        storedRugs[r.addr] = { ...storedRugs[r.addr], ...r,
+          firstSeen: storedRugs[r.addr].firstSeen || Date.now(),
+          callMcap: storedRugs[r.addr].callMcap || r.mcap,
+          athMcap: storedRugs[r.addr].athMcap || r.mcap
+        };
       }
     }
   }
@@ -1919,65 +2028,84 @@ async function fetchRugs() {
   rugRefreshTimer = setTimeout(fetchRugs, 60000);
 }
 
+// Tokens cachés par l'utilisateur (bouton hide)
+let hiddenRugs = new Set();
+try { hiddenRugs = new Set(JSON.parse(localStorage.getItem('ms_hidden_rugs')||'[]')); } catch(e) {}
+function hideRug(addr) {
+  hiddenRugs.add(addr);
+  try { localStorage.setItem('ms_hidden_rugs', JSON.stringify([...hiddenRugs])); } catch(e) {}
+  // Re-render sans ce token
+  renderRugTokens(lastRugs);
+}
+
 function renderRugTokens(rugs) {
-  const content = document.getElementById('rsTokenContent');
+  const el = document.getElementById('rsTokenContent');
   if (!rugs.length) {
-    content.innerHTML = '<div class="rs-empty">✅ Aucun rug actif détecté<br><span style="font-size:.7rem;opacity:.6">On cherche : pump fort → staircase → dump en cours · Refresh auto 60s</span></div>';
+    el.innerHTML = '<div class="rs-empty">✅ Aucun rug détecté<br><span style="font-size:.7rem;opacity:.6">Refresh auto 60s</span></div>';
     return;
   }
-  // Filtrer : c1h > -35% (cohérent avec detectRug) + trier par fraîcheur
-  // Les plus frais en premier = c1h le plus positif = rug qui vient de commencer
   const activeRugs = rugs
-    .filter(r => (r.c1h||0) > -35)
+    .filter(r => (r.c1h||0) > -35 && !hiddenRugs.has(r.addr))
     .sort((a,b) => (b.c1h||0) - (a.c1h||0));
 
+  if (!activeRugs.length) {
+    el.innerHTML = '<div class="rs-empty">✅ Aucun rug actif (c1h > -35%)<br><span style="font-size:.7rem;opacity:.6">Refresh pour de nouveaux signaux</span></div>';
+    return;
+  }
+
   const cards = activeRugs.slice(0, 30).map(r => {
-    const addrShort = r.addr ? r.addr.slice(0,10)+'...'+r.addr.slice(-4) : '—';
+    const addrShort = r.addr ? r.addr.slice(0,6)+'...'+r.addr.slice(-4) : '—';
     const ageStr    = (r.ageMin||0) < 60 ? `${Math.round(r.ageMin||0)}min` : `${(r.ageH||0).toFixed(1)}h`;
-    const m5Color   = (r.m5||0) < -10 ? '#ff2244' : (r.m5||0) < 0 ? '#ff6644' : '#ffaa00';
-    const pumpStr   = r.c24h > 0 ? `+${r.c24h.toFixed(0)}%` : (r.c6h > 0 ? `+${r.c6h.toFixed(0)}%` : '—');
-    return `<div class="rug-tok-card">
+    const callMcap  = r.callMcap || r.mcap;
+    const athMcap   = r.athMcap  || callMcap;
+    const nowMcap   = r.mcap;
+    // Multiplicateur ATH / Call
+    const xAth = callMcap > 0 ? (athMcap / callMcap) : 1;
+    const xNow = callMcap > 0 ? (nowMcap / callMcap) : 1;
+    const xColor = xAth >= 3 ? '#00ff88' : xAth >= 2 ? '#88ff44' : xAth >= 1.5 ? '#ffcc44' : '#ff8866';
+    const badgeLabel = r.urgency === 'MAINTENANT' ? '🔴 DÉBUT RUG !' : r.dangerLevel === 'critical' ? '🚨 RUG EN COURS' : '⚠️ DUMP';
+    const badgeStyle = r.urgency === 'MAINTENANT' ? 'animation:pulse-red 0.7s infinite;' : '';
+    return `<div class="rug-tok-card" id="rugcard-${r.addr}">
       <div class="rug-card-header">
         <span class="rug-sym">💀 ${r.sym}</span>
-        <span class="rug-danger ${r.dangerLevel}" style="${r.urgency==='MAINTENANT'?'animation:pulse-red 0.6s infinite;font-size:.75rem;':''}">${
-          r.urgency === 'MAINTENANT' ? '🔴 DÉBUT RUG !' :
-          r.dangerLevel === 'critical' ? '🚨 RUG EN COURS' : '⚠️ DUMP'
-        }</span>
+        <div class="rug-card-actions">
+          <span class="rug-danger ${r.dangerLevel}" style="${badgeStyle}">${badgeLabel}</span>
+          <button class="rug-btn-hide" onclick="hideRug('${r.addr}')" title="Cacher ce token">✕</button>
+        </div>
       </div>
       <div class="rug-signals">${r.signals.slice(0,3).map(s=>`<div class="rug-signal">${s}</div>`).join('')}</div>
-      <div class="rug-mcap-row" style="display:grid;grid-template-columns:repeat(4,1fr);gap:.3rem;margin:.3rem 0;">
-        <div style="text-align:center;background:rgba(255,68,102,.06);border-radius:4px;padding:.25rem">
-          <div style="font-size:.55rem;color:var(--muted)">PEAK</div>
-          <div style="font-family:var(--font-mono);font-size:.7rem;color:#ffaa00">$${fmtNum(r.peakMcapEst||r.mcap)}</div>
+      <div class="rug-stats-grid">
+        <div class="rug-stat-cell">
+          <div class="rug-stat-lbl">📍 Call</div>
+          <div class="rug-stat-val" style="color:#ffaa44">$${fmtNum(callMcap)}</div>
         </div>
-        <div style="text-align:center;background:rgba(255,68,102,.06);border-radius:4px;padding:.25rem">
-          <div style="font-size:.55rem;color:var(--muted)">NOW</div>
-          <div style="font-family:var(--font-mono);font-size:.7rem;color:#ff4466">$${fmtNum(r.mcap)}</div>
+        <div class="rug-stat-cell">
+          <div class="rug-stat-lbl">⬆ Now</div>
+          <div class="rug-stat-val" style="color:#ff5577">$${fmtNum(nowMcap)}</div>
         </div>
-        <div style="text-align:center;background:rgba(255,68,102,.06);border-radius:4px;padding:.25rem">
-          <div style="font-size:.55rem;color:var(--muted)">PUMP</div>
-          <div style="font-family:var(--font-mono);font-size:.7rem;color:#ffaa00">${pumpStr}</div>
+        <div class="rug-stat-cell">
+          <div class="rug-stat-lbl">🏆 ATH</div>
+          <div class="rug-stat-val" style="color:#ff8866">$${fmtNum(athMcap)}</div>
         </div>
-        <div style="text-align:center;background:rgba(255,68,102,.06);border-radius:4px;padding:.25rem">
-          <div style="font-size:.55rem;color:var(--muted)">m5</div>
-          <div style="font-family:var(--font-mono);font-size:.7rem;color:${m5Color}">${(r.m5||0).toFixed(0)}%</div>
+        <div class="rug-stat-cell" style="background:rgba(0,255,136,.06);border-color:rgba(0,255,136,.15)">
+          <div class="rug-stat-lbl" style="color:rgba(0,255,136,.5)">× ATH</div>
+          <div class="rug-stat-val" style="color:${xColor};font-size:.82rem">${xAth.toFixed(2)}x</div>
         </div>
       </div>
       <div class="rug-footer">
-        <div style="display:flex;gap:.4rem;align-items:center;flex-wrap:wrap">
-          <span style="font-family:var(--font-mono);font-size:.6rem;color:var(--muted)">${addrShort}</span>
-          <span style="font-family:var(--font-mono);font-size:.58rem;color:var(--muted);opacity:.7">${ageStr}</span>
-          ${r.addr ? `<button class="rug-copy-ca" data-addr="${r.addr}" onclick="copyHistCA(this)">COPY CA</button>` : ''}
+        <div style="display:flex;gap:.3rem;align-items:center;flex-wrap:wrap">
+          <span class="rug-addr-txt">${addrShort}</span>
+          <span class="rug-age-txt">${ageStr}</span>
+          ${r.addr ? `<button class="rug-copy-ca" data-addr="${r.addr}" onclick="copyHistCA(this)">CA</button>` : ''}
         </div>
-        <a href="${r.dexUrl}" target="_blank" class="rug-dex-btn">DEX →</a>
+        <div style="display:flex;gap:.3rem;align-items:center">
+          <button class="rug-btn-pnl" onclick="openRugPnl('${r.addr}','${r.sym}',${callMcap},${athMcap})">📤 PnL</button>
+          <a href="${r.dexUrl}" target="_blank" class="rug-dex-btn">DEX →</a>
+        </div>
       </div>
     </div>`;
   }).join('');
-  if (!activeRugs.length) {
-    content.innerHTML = '<div class="rs-empty">✅ Aucun rug débutant détecté (seuil : c1h > -40%)<br><span style="font-size:.7rem;opacity:.6">Refresh auto 60s · On cherche les rugs qui commencent juste</span></div>';
-    return;
-  }
-  content.innerHTML = `<div class="rug-grid">${cards}</div>`;
+  el.innerHTML = `<div class="rug-grid">${cards}</div>`;
 }
 
 async function renderRuggers() {
@@ -2071,6 +2199,48 @@ function toggleLang() {
     document.getElementById('h-title').innerHTML = 'Trouve les <span style="color:var(--green)">next 100x</span> avant tout le monde 🚀';
     document.getElementById('h-sub').textContent = 'Scanner Solana ultra-strict. Signaux wallets alpha. Seulement les tokens avec vraie probabilité de pump.';
   }
+}
+
+// ============================================================
+// PnL SHARE — carte style memecoin
+// ============================================================
+function openRugPnl(addr, sym, callMcap, athMcap) {
+  const xAth = callMcap > 0 ? (athMcap / callMcap) : 1;
+  const multEl = document.getElementById('pnlMult');
+  const xStr = xAth >= 10 ? xAth.toFixed(1)+'x' : xAth.toFixed(2)+'x';
+  multEl.textContent = xStr;
+  multEl.className = 'pnl-mult' + (xAth >= 5 ? ' big-mult' : '');
+  // Couleur du multiplicateur selon la performance
+  if      (xAth >= 5)  { multEl.style.background = 'linear-gradient(135deg,#00ff88,#00ffcc)'; }
+  else if (xAth >= 2)  { multEl.style.background = 'linear-gradient(135deg,#88ff44,#ccff00)'; }
+  else if (xAth >= 1)  { multEl.style.background = 'linear-gradient(135deg,#ffcc44,#ff8844)'; }
+  else                  { multEl.style.background = 'linear-gradient(135deg,#ff4466,#ff2244)'; }
+  multEl.style['-webkit-background-clip'] = 'text';
+  multEl.style['-webkit-text-fill-color'] = 'transparent';
+  document.getElementById('pnlSym').textContent = '$' + sym;
+  document.getElementById('pnlCalled').textContent = 'called at $' + fmtNum(callMcap);
+  document.getElementById('pnlCallVal').textContent = '$' + fmtNum(callMcap);
+  document.getElementById('pnlAthVal').textContent  = '$' + fmtNum(athMcap);
+  document.getElementById('pnlSub').textContent = 'ATH depuis le call · ' + new Date().toLocaleDateString('fr-FR');
+  document.getElementById('pnlOverlay').classList.add('open');
+}
+function closePnl() {
+  document.getElementById('pnlOverlay').classList.remove('open');
+}
+async function downloadPnl() {
+  const card = document.getElementById('pnlCard');
+  // Fallback sans html2canvas : copier le texte
+  const sym  = document.getElementById('pnlSym').textContent;
+  const mult = document.getElementById('pnlMult').textContent;
+  const call = document.getElementById('pnlCallVal').textContent;
+  const ath  = document.getElementById('pnlAthVal').textContent;
+  const txt  = `${sym} — ${mult} ATH\nCall: ${call} → ATH: ${ath}\nmemecoinpump.vercel.app 🐸`;
+  try {
+    await navigator.clipboard.writeText(txt);
+    const btn = document.querySelector('.pnl-btn-dl');
+    const o = btn.textContent; btn.textContent = '✅ Copié!';
+    setTimeout(() => btn.textContent = o, 1800);
+  } catch(e) {}
 }
 
 // ============================================================
