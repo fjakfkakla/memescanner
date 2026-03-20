@@ -2278,11 +2278,13 @@ function renderRugTokens(rugs) {
   }
 
   const cards = activeRugs.map(r => { // Tous les tokens visibles, sans limite
+    if (!r || !r.addr) return '';
     const addrShort = r.addr ? r.addr.slice(0,6)+'...'+r.addr.slice(-4) : '—';
     const ageStr    = (r.ageMin||0) < 60 ? `${Math.round(r.ageMin||0)}min` : `${(r.ageH||0).toFixed(1)}h`;
-    const callMcap  = r.callMcap || r.mcap;
+    const callMcap  = r.callMcap || r.mcap || 0;
     const athMcap   = r.athMcap  || callMcap;
-    const nowMcap   = r.mcap;
+    const nowMcap   = r.mcap || 0;
+    const signals   = Array.isArray(r.signals) ? r.signals : [];
     // Multiplicateur ATH / Call
     const xAth = callMcap > 0 ? (athMcap / callMcap) : 1;
     const xNow = callMcap > 0 ? (nowMcap / callMcap) : 1;
@@ -2297,7 +2299,7 @@ function renderRugTokens(rugs) {
           <button class="rug-btn-hide" onclick="hideRug('${r.addr}')" title="Cacher ce token">✕</button>
         </div>
       </div>
-      <div class="rug-signals">${r.signals.slice(0,3).map(s=>`<div class="rug-signal">${s}</div>`).join('')}</div>
+      <div class="rug-signals">${signals.slice(0,3).map(s=>`<div class="rug-signal">${s}</div>`).join('')}</div>
       <div class="rug-stats-grid">
         <div class="rug-stat-cell">
           <div class="rug-stat-lbl">📍 Call</div>
@@ -2328,7 +2330,7 @@ function renderRugTokens(rugs) {
         </div>
       </div>
     </div>`;
-  }).join('');
+  }).filter(Boolean).join('');
   el.innerHTML = `<div class="rug-grid">${cards}</div>`;
 }
 
