@@ -2040,39 +2040,41 @@ async function fetchRugs() {
       </div>`;
     return;
   }
-  // ── Étape 1 : Afficher localStorage IMMÉDIATEMENT (sans attendre Firebase) ──
-  const localRugs = Object.values(JSON.parse(localStorage.getItem(RUGS_KEY) || '{}')).sort((a,b) => (b.danger||0)-(a.danger||0));
-  if (localRugs.length > 0) {
-    lastRugs = localRugs;
-    renderRugTokens(localRugs);
-    const vc = localRugs.filter(r => !hiddenRugs.has(r.addr)).length;
-    document.getElementById('rsTokenCount').textContent = vc ? `(${vc})` : '';
-    document.getElementById('rsStatDetected').textContent = vc;
-  } else {
-    content.innerHTML = '<div class="rs-empty">⏳ Scan des rugs en cours...</div>';
+  // ── Chargement rugs : Firebase EN PREMIER (source de vérité partagée) ──
+  // Navigation privée = localStorage vide → DOIT venir de Firebase
+  content.innerHTML = '<div class="rs-empty" style="font-size:.75rem">⏳ Chargement...</div>';
+
+  // 1. Essayer Firebase d'abord (partagé entre tous les appareils)
+  let mergedRugs = {};
+  try {
+    const fbData = await fetch(`${FB_URL}/rugs.json`, { signal: AbortSignal.timeout(6000) }).then(r => r.json());
+    if (fbData && typeof fbData === 'object' && !Array.isArray(fbData)) {
+      mergedRugs = { ...fbData };
+    }
+  } catch(e) {}
+
+  // 2. Merger avec localStorage (rugs récents peut-être pas encore sur Firebase)
+  try {
+    const local = JSON.parse(localStorage.getItem(RUGS_KEY) || '{}');
+    mergedRugs = { ...mergedRugs, ...local }; // local écrase Firebase si conflit
+  } catch(e) {}
+
+  // 3. Sauvegarder le merge dans localStorage pour la prochaine fois
+  if (Object.keys(mergedRugs).length > 0) {
+    try { localStorage.setItem(RUGS_KEY, JSON.stringify(mergedRugs)); } catch(e) {}
   }
 
-  // ── Charger Firebase en arrière-plan (non-bloquant) ──────────
-  fetch(`${FB_URL}/rugs.json`, { signal: AbortSignal.timeout(5000) })
-    .then(r => r.json())
-    .then(fbRugs => {
-      if (fbRugs && typeof fbRugs === 'object' && !Array.isArray(fbRugs)) {
-        const existing = JSON.parse(localStorage.getItem(RUGS_KEY) || '{}');
-        const merged = { ...existing, ...fbRugs };
-        localStorage.setItem(RUGS_KEY, JSON.stringify(merged));
-        // Re-render si Firebase a plus de rugs
-        const fbList = Object.values(merged).sort((a,b) => (b.danger||0)-(a.danger||0));
-        if (fbList.length > localRugs.length) {
-          lastRugs = fbList;
-          renderRugTokens(fbList);
-          const vc2 = fbList.filter(r => !hiddenRugs.has(r.addr)).length;
-          document.getElementById('rsTokenCount').textContent = vc2 ? `(${vc2})` : '';
-          document.getElementById('rsStatDetected').textContent = vc2;
-        }
-      }
-    }).catch(() => {});
+  // 4. Afficher immédiatement ce qu'on a
+  const initialRugs = Object.values(mergedRugs).sort((a,b) => (b.danger||0)-(a.danger||0));
+  if (initialRugs.length > 0) {
+    lastRugs = initialRugs;
+    renderRugTokens(initialRugs);
+    const vc = initialRugs.filter(r => !hiddenRugs.has(r.addr)).length;
+    document.getElementById('rsTokenCount').textContent = vc ? `(${vc})` : '';
+    document.getElementById('rsStatDetected').textContent = vc;
+  }
 
-  // ── Étape 2 : Scanner de nouveaux rugs en arrière-plan ───────
+  // ── Scanner de nouveaux rugs ───────────────────────────────────
 
   async function fetchP(url) {
     try {
