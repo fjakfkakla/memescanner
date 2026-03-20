@@ -2029,18 +2029,31 @@ function detectRug(p) {
 // ============================================================
 async function fetchRugs() {
   const content = document.getElementById('rsTokenContent');
-  content.innerHTML = '<div class="rs-empty">⏳ Scan des rugs en cours...</div>';
-
-  // Charger les rugs persistants depuis Firebase (partagés entre appareils)
+  // ── Étape 1 : Afficher immédiatement les rugs déjà stockés ──
+  // Charger Firebase + localStorage et afficher TOUT DE SUITE
   try {
-    const fbRugs = await fetch(`${FB_URL}/rugs.json`).then(r => r.json());
+    const fbRugs = await fetch(`${FB_URL}/rugs.json`, { signal: AbortSignal.timeout(4000) }).then(r => r.json());
     if (fbRugs && typeof fbRugs === 'object' && !Array.isArray(fbRugs)) {
       const existing = JSON.parse(localStorage.getItem(RUGS_KEY) || '{}');
-      // Merger Firebase + local (Firebase a priorité)
       const merged = { ...existing, ...fbRugs };
       localStorage.setItem(RUGS_KEY, JSON.stringify(merged));
     }
   } catch(e) {}
+
+  // Afficher les rugs déjà connus immédiatement (pas besoin d'attendre le scan)
+  const cachedRugs = Object.values(JSON.parse(localStorage.getItem(RUGS_KEY) || '{}')).sort((a,b) => (b.danger||0)-(a.danger||0));
+  if (cachedRugs.length > 0) {
+    lastRugs = cachedRugs;
+    renderRugTokens(cachedRugs);
+    // Mettre à jour le compteur
+    const vc = cachedRugs.filter(r => !hiddenRugs.has(r.addr)).length;
+    document.getElementById('rsTokenCount').textContent = vc ? `(${vc})` : '';
+    document.getElementById('rsStatDetected').textContent = vc;
+  } else {
+    content.innerHTML = '<div class="rs-empty">⏳ Scan des rugs en cours...</div>';
+  }
+
+  // ── Étape 2 : Scanner de nouveaux rugs en arrière-plan ───────
 
   async function fetchP(url) {
     try {
