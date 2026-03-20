@@ -1073,7 +1073,8 @@ async function submitCode(){
   localStorage.setItem(SESSION_KEY,JSON.stringify({plan:found.plan,expires:Date.now()+30*24*60*60*1000}));
   isUnlocked=true;closeCode();onUnlock(found.plan);
 }
-function onUnlock(plan){loadReviews();fetchTokens();fetchRugs().then(()=>{if(rugPriceTimer)clearTimeout(rugPriceTimer);rugPriceTimer=setTimeout(refreshRugPrices,15000);});}
+function onUnlock(plan){loadReviews();fetchTokens();fetchRugs().then(()=>{if(rugPriceTimer)clearTimeout(rugPriceTimer);// Refresh prices immediately after rugs load, then every 15s
+rugPriceTimer=setTimeout(refreshRugPrices,3000);});}
 function formatCode(input){let v=input.value.replace(/[^A-Za-z0-9]/g,'').toUpperCase();let out='';for(let i=0;i<v.length&&i<12;i++){if(i>0&&i%4===0)out+='-';out+=v[i];}input.value=out;}
 
 // ============================================================
@@ -1660,46 +1661,80 @@ async function refreshRugPrices(){
   if(!isUnlocked){rugPriceTimer=setTimeout(refreshRugPrices,15000);return;}
   let storedRugs={};
   try{storedRugs=JSON.parse(localStorage.getItem(RUGS_KEY)||'{}');}catch(e){}
-  const addrs=Object.values(storedRugs).map(r=>r.addr).filter(a=>a&&a.length>10);
+
+  // Construire un index addr→key pour lookup rapide
+  const addrToKey={};
+  Object.keys(storedRugs).forEach(k=>{
+    const a=storedRugs[k].addr;
+    if(a&&a.length>10)addrToKey[a]=k;
+  });
+  const addrs=Object.keys(addrToKey);
   if(!addrs.length){rugPriceTimer=setTimeout(refreshRugPrices,15000);return;}
-  let updated=false;
+
+  // Grouper les paires par token address pour prendre le meilleur
+  // DexScreener retourne parfois plusieurs paires pour un même token
+  // On garde la paire avec le plus gros volume (= la paire active/principale)
+  const bestPairByAddr={};
+
   const chunks=[];
   for(let i=0;i<addrs.length;i+=29)chunks.push(addrs.slice(i,i+29));
   for(const chunk of chunks){
     try{
-      const res=await fetch(`https://api.dexscreener.com/latest/dex/tokens/${chunk.join(',')}`,{signal:AbortSignal.timeout(7000)}).then(r=>r.json());
+      const res=await fetch(`https://api.dexscreener.com/latest/dex/tokens/${chunk.join(',')}`,{signal:AbortSignal.timeout(8000)}).then(r=>r.json());
       (res.pairs||[]).forEach(pair=>{
-        const addr=pair.baseToken?.address;if(!addr)return;
-        // Trouver le rug par adresse (la clé peut être différente de l'adresse)
-        const key=Object.keys(storedRugs).find(k=>storedRugs[k].addr===addr);
-        if(!key)return;
-        const liveMcap=pair.marketCap||pair.fdv||0;
-        // Toujours mettre à jour nowMcap — même si 0 (token rugué/mort)
-        storedRugs[key].nowMcap=liveMcap; // 0 = token mort/rugué
-        if(liveMcap>0){
-          // ATH = max de callMcap, athMcap précédent, et nowMcap
-          const prevAth=storedRugs[key].athMcap||storedRugs[key].callMcap||storedRugs[key].mcap||0;
-          if(liveMcap>prevAth)storedRugs[key].athMcap=liveMcap;
+        const addr=pair.baseToken?.address;
+        if(!addr||!addrToKey[addr])return;
+        // Garder la paire avec le plus gros volume h1
+        // = données les plus récentes et les plus fiables
+        const vol=pair.volume?.h1||0;
+        const prev=bestPairByAddr[addr];
+        if(!prev||(pair.volume?.h1||0)>(prev.volume?.h1||0)){
+          bestPairByAddr[addr]=pair;
         }
-        storedRugs[key].c1h=pair.priceChange?.h1??storedRugs[key].c1h??0;
-        storedRugs[key].c6h=pair.priceChange?.h6??storedRugs[key].c6h??0;
-        storedRugs[key].c24h=pair.priceChange?.h24??storedRugs[key].c24h??0;
-        storedRugs[key].m5=pair.priceChange?.m5??storedRugs[key].m5??0;
-        storedRugs[key].liq=pair.liquidity?.usd??storedRugs[key].liq??0;
-        const b1=pair.txns?.h1?.buys||0,s1=pair.txns?.h1?.sells||0;
-        if(b1+s1>0)storedRugs[key].sellR=s1/(b1+s1);
-        updated=true;
       });
     }catch(e){}
   }
+
+  let updated=false;
+  // Appliquer la meilleure paire pour chaque token
+  Object.entries(bestPairByAddr).forEach(([addr,pair])=>{
+    const key=addrToKey[addr];
+    if(!key)return;
+
+    // mcap : prendre la valeur la plus cohérente
+    // marketCap est le mcap total, fdv = fully diluted
+    // Pour Pump.fun, marketCap = fdv en général
+    const liveMcap=pair.marketCap||pair.fdv||0;
+
+    // Toujours écrire nowMcap — 0 = token mort/rugué
+    storedRugs[key].nowMcap=liveMcap;
+
+    if(liveMcap>0){
+      const prevAth=storedRugs[key].athMcap||storedRugs[key].callMcap||0;
+      if(liveMcap>prevAth)storedRugs[key].athMcap=liveMcap;
+    }
+    // Données de prix fraîches
+    if(pair.priceChange?.h1!=null)storedRugs[key].c1h=pair.priceChange.h1;
+    if(pair.priceChange?.h6!=null)storedRugs[key].c6h=pair.priceChange.h6;
+    if(pair.priceChange?.h24!=null)storedRugs[key].c24h=pair.priceChange.h24;
+    if(pair.priceChange?.m5!=null)storedRugs[key].m5=pair.priceChange.m5;
+    if(pair.liquidity?.usd!=null)storedRugs[key].liq=pair.liquidity.usd;
+    const b1=pair.txns?.h1?.buys||0,s1=pair.txns?.h1?.sells||0;
+    if(b1+s1>0)storedRugs[key].sellR=s1/(b1+s1);
+    updated=true;
+  });
+
+  // Tokens non trouvés dans cette réponse = peut-être morts
+  // On ne touche PAS à nowMcap si on n'a pas eu de réponse
+  // (éviter de mettre 0 sur un token juste parce que l'API était lente)
+
   if(updated){
     try{localStorage.setItem(RUGS_KEY,JSON.stringify(storedRugs));}catch(e){}
-    // Sync Firebase en arrière-plan
     fetch(`${FB_URL}/rugs.json`,{method:'PUT',body:JSON.stringify(storedRugs)}).catch(()=>{});
   }
-  // ← FIX PRINCIPAL : toujours re-sync lastRugs depuis storedRugs (avec les vrais prix à jour)
+
+  // Re-sync lastRugs et re-render
   lastRugs=Object.values(storedRugs).sort((a,b)=>(b.danger||0)-(a.danger||0));
-  // Toujours re-render même sans updated (pour rafraîchir les timeAgo)
   renderRugTokens(lastRugs);
   rugPriceTimer=setTimeout(refreshRugPrices,15000);
 }
@@ -1731,12 +1766,13 @@ function renderRugTokens(rugs){
     //   - undefined/null = jamais refreshé → fallback sur r.mcap
     //   - 0 = token rugué/mort (DexScreener retourne 0)
     //   - >0 = prix live réel
-    const nowMcapRaw = (r.nowMcap !== undefined && r.nowMcap !== null) ? r.nowMcap : (r.mcap||callMcap);
-    const nowMcap = nowMcapRaw; // peut être 0 si rugué
-    // athMcap = plus haut depuis le call (ne pas inclure nowMcap=0)
-    const athMcap=r.athMcap||callMcap;
+    // nowMcap: undefined = jamais refreshé (affiché "—"), 0 = rugué (affiché "💀 RUG"), >0 = prix live
+    const nowMcapSet = r.nowMcap !== undefined && r.nowMcap !== null;
+    const nowMcap = nowMcapSet ? r.nowMcap : -1; // -1 = sentinelle "pas encore chargé"
+    // athMcap = plus haut depuis le call
+    const athMcap = r.athMcap || callMcap;
     const signals=Array.isArray(r.signals)?r.signals:[];
-    const xAth=callMcap>0?(athMcap/callMcap):1;
+    const xAth=callMcap>0&&athMcap>callMcap?(athMcap/callMcap):1;
     const xNow=callMcap>0&&nowMcap>0?(nowMcap/callMcap):1;
     const xColor=xAth>=3?'#00ff88':xAth>=2?'#88ff44':xAth>=1.5?'#ffcc44':'#ff8866';
 
@@ -1750,7 +1786,7 @@ function renderRugTokens(rugs){
 
     // Couleurs stats
     const callColor='#ffaa44';
-    const nowColor=nowMcap===0?'#ff2244':nowMcap>callMcap?'#44ff88':nowMcap<callMcap*0.7?'#ff5577':'#ffcc44';
+    const nowColor=nowMcap===0?'#ff2244':nowMcap<0?'rgba(255,255,255,.3)':nowMcap>callMcap?'#44ff88':nowMcap<callMcap*0.7?'#ff5577':'#ffcc44';
     const athColor='#ffaa44';
 
     return`<div class="rug-tok-card">
@@ -1783,7 +1819,7 @@ function renderRugTokens(rugs){
         <div class="rtc-stat">
           <span class="rtc-stat-icon">⏰</span>
           <div class="rtc-stat-lbl">1 NOW</div>
-          <div class="rtc-stat-val" style="color:${nowColor}">${nowMcap===0?'💀 RUG':nowMcap>0?'$'+fmtNum(nowMcap):'—'}</div>
+          <div class="rtc-stat-val" style="color:${nowColor}">${nowMcap===0?'💀 RUG':nowMcap>0?'$'+fmtNum(nowMcap):'⏳'}</div>
         </div>
         <div class="rtc-stat">
           <span class="rtc-stat-icon">🏆</span>
