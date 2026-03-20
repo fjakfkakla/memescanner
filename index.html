@@ -1675,10 +1675,7 @@ async function fetchTokens() {
     'https://api.dexscreener.com/latest/dex/search?q=pump.fun+solana',
     'https://api.dexscreener.com/latest/dex/search?q=solana+meme+new',
     'https://api.dexscreener.com/token-profiles/latest/v1',
-    'https://api.geckoterminal.com/api/v2/networks/solana/new_pools?page=1',
-    'https://api.geckoterminal.com/api/v2/networks/solana/new_pools?page=2',
-    'https://api.geckoterminal.com/api/v2/networks/solana/trending_pools?page=1',
-    'https://api.allorigins.win/get?url='+encodeURIComponent('https://api.dexscreener.com/latest/dex/search?q=solana+pump'),
+    'https://api.dexscreener.com/token-boosts/latest/v1',
   ];
 
   const results = await Promise.allSettled(ENDPOINTS.map(fetchPairs));
@@ -2272,8 +2269,8 @@ function renderRugTokens(rugs) {
     return;
   }
   const activeRugs = rugs
-    .filter(r => (r.c1h||0) > -35 && !hiddenRugs.has(r.addr))
-    .sort((a,b) => (b.c1h||0) - (a.c1h||0));
+    .filter(r => !hiddenRugs.has(r.addr))
+    .sort((a,b) => (b.danger||0) - (a.danger||0));
 
   if (!activeRugs.length) {
     el.innerHTML = '<div class="rs-empty">✅ Aucun rug actif (c1h > -35%)<br><span style="font-size:.7rem;opacity:.6">Refresh pour de nouveaux signaux</span></div>';
