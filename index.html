@@ -390,6 +390,10 @@ section{scroll-margin-top:70px;}
 .btn-solscan:hover{background:rgba(255,30,60,.18);}
 /* ── Empty state ── */
 .rs-empty{text-align:center;padding:3rem 1rem;color:rgba(255,100,120,.5);font-family:'Space Mono',monospace;font-size:.78rem;}
+.rug-sort-opt{padding:.55rem 1rem;font-family:'Space Mono',monospace;font-size:.72rem;color:rgba(255,140,160,.8);cursor:pointer;transition:.15s;border-bottom:1px solid rgba(255,40,80,.1);}
+.rug-sort-opt:last-child{border-bottom:none;}
+.rug-sort-opt:hover{background:rgba(255,40,80,.1);color:#ff8899;}
+.rug-sort-opt.active{background:rgba(255,40,80,.15);color:#ff4466;font-weight:700;}
 /* ── PnL Share Modal ── */
 .pnl-overlay{position:fixed;inset:0;background:rgba(0,0,0,.88);backdrop-filter:blur(10px);z-index:500;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:.3s;}
 .pnl-overlay.open{opacity:1;pointer-events:all;}
@@ -597,11 +601,30 @@ section{scroll-margin-top:70px;}
     </div>
   </div>
 
-  <div class="rs-stat-bar" id="rsStatBar">
-    <div class="rs-stat-item"><div class="rs-stat-val" id="rsStatDetected">—</div><div class="rs-stat-lbl">Rugs détectés</div></div>
-    <div class="rs-stat-item"><div class="rs-stat-val" id="rsStatRuggers">—</div><div class="rs-stat-lbl">Ruggeurs trackés</div></div>
-    <div class="rs-stat-item"><div class="rs-stat-val" id="rsStatAvgDump">—</div><div class="rs-stat-lbl">Dump moyen</div></div>
-    <div class="rs-stat-item"><div class="rs-stat-val" id="rsStatAvgAge">—</div><div class="rs-stat-lbl">Âge moyen au rug</div></div>
+  <div class="rs-stat-bar" id="rsStatBar" style="justify-content:space-between;align-items:center;">
+    <div style="display:flex;gap:1.5rem;flex-wrap:wrap;">
+      <div class="rs-stat-item"><div class="rs-stat-val" id="rsStatDetected">—</div><div class="rs-stat-lbl">Rugs détectés</div></div>
+      <div class="rs-stat-item"><div class="rs-stat-val" id="rsStatRuggers">—</div><div class="rs-stat-lbl">Ruggeurs trackés</div></div>
+      <div class="rs-stat-item"><div class="rs-stat-val" id="rsStatAvgDump">—</div><div class="rs-stat-lbl">Dump moyen</div></div>
+      <div class="rs-stat-item"><div class="rs-stat-val" id="rsStatAvgAge">—</div><div class="rs-stat-lbl">Âge moyen au rug</div></div>
+    </div>
+    <div style="position:relative;">
+      <button id="rugSortBtn" onclick="toggleRugSort()" style="
+        background:rgba(255,40,80,.1);border:1px solid rgba(255,40,80,.3);
+        color:#ff6680;padding:.35rem .8rem;border-radius:6px;
+        font-family:'Space Mono',monospace;font-size:.68rem;cursor:pointer;
+        display:flex;align-items:center;gap:.4rem;white-space:nowrap;">
+        <span id="rugSortIcon">↕</span> <span id="rugSortLabel">Trier</span>
+      </button>
+      <div id="rugSortMenu" style="
+        display:none;position:absolute;right:0;top:calc(100% + 4px);
+        background:#0d0406;border:1px solid rgba(255,40,80,.3);border-radius:8px;
+        min-width:200px;z-index:100;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.5);">
+        <div onclick="setRugSort('recent')" class="rug-sort-opt" id="sort-recent">🕐 Plus récent d'abord</div>
+        <div onclick="setRugSort('old')" class="rug-sort-opt" id="sort-old">⏳ Plus vieux d'abord</div>
+        <div onclick="setRugSort('xbest')" class="rug-sort-opt" id="sort-xbest">🏆 Meilleur X d'abord</div>
+      </div>
+    </div>
   </div>
 
   <div class="rs-tabs" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;">
@@ -848,6 +871,7 @@ let lastRugs = [];
 let hiddenRugs = new Set();
 try { hiddenRugs = new Set(JSON.parse(localStorage.getItem('ms_hidden_rugs')||'[]')); } catch(e) {}
 let rugPriceTimer = null;
+let currentRugSort = 'recent'; // recent | old | xbest
 
 const EMOJIS = ['🐸','🚀','💎','🌙','🔥','⚡','🦊','🐶','🐱','🎰','🍌','🧸','🦍','🐻','🎯'];
 
@@ -2255,6 +2279,48 @@ async function refreshRugPrices() {
 }
 
 // Tokens cachés par l'utilisateur (bouton hide)
+// ── Tri des rugs ─────────────────────────────────────────
+function toggleRugSort() {
+  const menu = document.getElementById('rugSortMenu');
+  menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+  // Fermer si clic ailleurs
+  setTimeout(() => {
+    document.addEventListener('click', function close(e) {
+      if (!e.target.closest('#rugSortBtn') && !e.target.closest('#rugSortMenu')) {
+        menu.style.display = 'none';
+        document.removeEventListener('click', close);
+      }
+    });
+  }, 10);
+}
+
+function setRugSort(mode) {
+  currentRugSort = mode;
+  document.getElementById('rugSortMenu').style.display = 'none';
+  // Mettre à jour le label du bouton
+  const labels = { recent: '🕐 Récent', old: '⏳ Vieux', xbest: '🏆 Meilleur X' };
+  document.getElementById('rugSortLabel').textContent = labels[mode];
+  // Mettre à jour les classes actives
+  document.querySelectorAll('.rug-sort-opt').forEach(el => el.classList.remove('active'));
+  const el = document.getElementById('sort-' + mode);
+  if (el) el.classList.add('active');
+  // Re-render avec le nouveau tri
+  renderRugTokens(lastRugs);
+}
+
+function sortRugs(rugs) {
+  const list = [...rugs];
+  if (currentRugSort === 'recent') {
+    return list.sort((a,b) => (b.firstSeen||b.callTime||0) - (a.firstSeen||a.callTime||0));
+  } else if (currentRugSort === 'old') {
+    return list.sort((a,b) => (a.firstSeen||a.callTime||0) - (b.firstSeen||b.callTime||0));
+  } else if (currentRugSort === 'xbest') {
+    const xOf = r => { const c = r.callMcap||r.mcap||1; return (r.athMcap||c)/c; };
+    return list.sort((a,b) => xOf(b) - xOf(a));
+  }
+  return list;
+}
+
 function hideRug(addr) {
   hiddenRugs.add(addr);
   try { localStorage.setItem('ms_hidden_rugs', JSON.stringify([...hiddenRugs])); } catch(e) {}
@@ -2268,9 +2334,9 @@ function renderRugTokens(rugs) {
     el.innerHTML = '<div class="rs-empty">✅ Aucun rug détecté<br><span style="font-size:.7rem;opacity:.6">Refresh auto 60s</span></div>';
     return;
   }
-  const activeRugs = rugs
-    .filter(r => !hiddenRugs.has(r.addr))
-    .sort((a,b) => (b.danger||0) - (a.danger||0));
+  const activeRugs = sortRugs(
+    rugs.filter(r => r && r.addr && !hiddenRugs.has(r.addr))
+  );
 
   if (!activeRugs.length) {
     el.innerHTML = '<div class="rs-empty">✅ Aucun rug actif (c1h > -35%)<br><span style="font-size:.7rem;opacity:.6">Refresh pour de nouveaux signaux</span></div>';
