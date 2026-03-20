@@ -1674,21 +1674,21 @@ async function refreshRugPrices(){
         const key=Object.keys(storedRugs).find(k=>storedRugs[k].addr===addr);
         if(!key)return;
         const liveMcap=pair.marketCap||pair.fdv||0;
+        // Toujours mettre à jour nowMcap — même si 0 (token rugué/mort)
+        storedRugs[key].nowMcap=liveMcap; // 0 = token mort/rugué
         if(liveMcap>0){
-          // nowMcap = prix live actualisé — callMcap et mcap restent intacts
-          storedRugs[key].nowMcap=liveMcap;
           // ATH = max de callMcap, athMcap précédent, et nowMcap
           const prevAth=storedRugs[key].athMcap||storedRugs[key].callMcap||storedRugs[key].mcap||0;
           if(liveMcap>prevAth)storedRugs[key].athMcap=liveMcap;
-          storedRugs[key].c1h=pair.priceChange?.h1??storedRugs[key].c1h??0;
-          storedRugs[key].c6h=pair.priceChange?.h6??storedRugs[key].c6h??0;
-          storedRugs[key].c24h=pair.priceChange?.h24??storedRugs[key].c24h??0;
-          storedRugs[key].m5=pair.priceChange?.m5??storedRugs[key].m5??0;
-          storedRugs[key].liq=pair.liquidity?.usd??storedRugs[key].liq??0;
-          const b1=pair.txns?.h1?.buys||0,s1=pair.txns?.h1?.sells||0;
-          if(b1+s1>0)storedRugs[key].sellR=s1/(b1+s1);
-          updated=true;
         }
+        storedRugs[key].c1h=pair.priceChange?.h1??storedRugs[key].c1h??0;
+        storedRugs[key].c6h=pair.priceChange?.h6??storedRugs[key].c6h??0;
+        storedRugs[key].c24h=pair.priceChange?.h24??storedRugs[key].c24h??0;
+        storedRugs[key].m5=pair.priceChange?.m5??storedRugs[key].m5??0;
+        storedRugs[key].liq=pair.liquidity?.usd??storedRugs[key].liq??0;
+        const b1=pair.txns?.h1?.buys||0,s1=pair.txns?.h1?.sells||0;
+        if(b1+s1>0)storedRugs[key].sellR=s1/(b1+s1);
+        updated=true;
       });
     }catch(e){}
   }
@@ -1727,11 +1727,14 @@ function renderRugTokens(rugs){
     const ageStr=(r.ageMin||0)<60?`${Math.round(r.ageMin||0)}min`:`${(r.ageH||0).toFixed(1)}h`;
     // callMcap = prix au moment du call — jamais écrasé
     const callMcap=r.callMcap||r.mcap||0;
-    // nowMcap = prix live mis à jour par refreshRugPrices (champ nowMcap)
-    // fallback sur r.mcap uniquement si nowMcap absent
-    const nowMcap=r.nowMcap||r.mcap||callMcap;
-    // athMcap = plus haut depuis le call
-    const athMcap=r.athMcap||Math.max(callMcap,nowMcap);
+    // nowMcap :
+    //   - undefined/null = jamais refreshé → fallback sur r.mcap
+    //   - 0 = token rugué/mort (DexScreener retourne 0)
+    //   - >0 = prix live réel
+    const nowMcapRaw = (r.nowMcap !== undefined && r.nowMcap !== null) ? r.nowMcap : (r.mcap||callMcap);
+    const nowMcap = nowMcapRaw; // peut être 0 si rugué
+    // athMcap = plus haut depuis le call (ne pas inclure nowMcap=0)
+    const athMcap=r.athMcap||callMcap;
     const signals=Array.isArray(r.signals)?r.signals:[];
     const xAth=callMcap>0?(athMcap/callMcap):1;
     const xNow=callMcap>0&&nowMcap>0?(nowMcap/callMcap):1;
@@ -1747,7 +1750,7 @@ function renderRugTokens(rugs){
 
     // Couleurs stats
     const callColor='#ffaa44';
-    const nowColor=nowMcap>callMcap?'#44ff88':nowMcap<callMcap*0.7?'#ff5577':'#ffcc44';
+    const nowColor=nowMcap===0?'#ff2244':nowMcap>callMcap?'#44ff88':nowMcap<callMcap*0.7?'#ff5577':'#ffcc44';
     const athColor='#ffaa44';
 
     return`<div class="rug-tok-card">
@@ -1780,7 +1783,7 @@ function renderRugTokens(rugs){
         <div class="rtc-stat">
           <span class="rtc-stat-icon">⏰</span>
           <div class="rtc-stat-lbl">1 NOW</div>
-          <div class="rtc-stat-val" style="color:${nowColor}">$${fmtNum(nowMcap)}</div>
+          <div class="rtc-stat-val" style="color:${nowColor}">${nowMcap===0?'💀 RUG':nowMcap>0?'$'+fmtNum(nowMcap):'—'}</div>
         </div>
         <div class="rtc-stat">
           <span class="rtc-stat-icon">🏆</span>
