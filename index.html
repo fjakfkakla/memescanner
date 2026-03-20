@@ -2040,39 +2040,35 @@ async function fetchRugs() {
       </div>`;
     return;
   }
-  // ── Chargement rugs : Firebase EN PREMIER (source de vérité partagée) ──
-  // Navigation privée = localStorage vide → DOIT venir de Firebase
-  content.innerHTML = '<div class="rs-empty" style="font-size:.75rem">⏳ Chargement...</div>';
-
-  // 1. Essayer Firebase d'abord (partagé entre tous les appareils)
+  // ── Chargement rugs : Firebase + localStorage en parallèle ────
   let mergedRugs = {};
-  try {
-    const fbData = await fetch(`${FB_URL}/rugs.json`, { signal: AbortSignal.timeout(6000) }).then(r => r.json());
-    if (fbData && typeof fbData === 'object' && !Array.isArray(fbData)) {
-      mergedRugs = { ...fbData };
+
+  // localStorage immédiatement
+  try { mergedRugs = JSON.parse(localStorage.getItem(RUGS_KEY) || '{}'); } catch(e) {}
+
+  // Afficher ce qu'on a tout de suite
+  const showRugs = (rugs) => {
+    const list = Object.values(rugs).sort((a,b) => (b.danger||0)-(a.danger||0));
+    if (list.length > 0) {
+      lastRugs = list;
+      renderRugTokens(list);
+      const vc = list.filter(r => !hiddenRugs.has(r.addr)).length;
+      document.getElementById('rsTokenCount').textContent = vc ? `(${vc})` : '';
+      document.getElementById('rsStatDetected').textContent = vc;
+    } else {
+      content.innerHTML = '<div class="rs-empty">⏳ Scan en cours...</div>';
     }
-  } catch(e) {}
+  };
+  showRugs(mergedRugs);
 
-  // 2. Merger avec localStorage (rugs récents peut-être pas encore sur Firebase)
-  try {
-    const local = JSON.parse(localStorage.getItem(RUGS_KEY) || '{}');
-    mergedRugs = { ...mergedRugs, ...local }; // local écrase Firebase si conflit
-  } catch(e) {}
-
-  // 3. Sauvegarder le merge dans localStorage pour la prochaine fois
-  if (Object.keys(mergedRugs).length > 0) {
-    try { localStorage.setItem(RUGS_KEY, JSON.stringify(mergedRugs)); } catch(e) {}
-  }
-
-  // 4. Afficher immédiatement ce qu'on a
-  const initialRugs = Object.values(mergedRugs).sort((a,b) => (b.danger||0)-(a.danger||0));
-  if (initialRugs.length > 0) {
-    lastRugs = initialRugs;
-    renderRugTokens(initialRugs);
-    const vc = initialRugs.filter(r => !hiddenRugs.has(r.addr)).length;
-    document.getElementById('rsTokenCount').textContent = vc ? `(${vc})` : '';
-    document.getElementById('rsStatDetected').textContent = vc;
-  }
+  // Firebase en parallèle — enrichit l'affichage quand disponible
+  fetch(`${FB_URL}/rugs.json`).then(r => r.json()).then(fbData => {
+    if (fbData && typeof fbData === 'object' && !Array.isArray(fbData)) {
+      mergedRugs = { ...fbData, ...mergedRugs };
+      try { localStorage.setItem(RUGS_KEY, JSON.stringify(mergedRugs)); } catch(e) {}
+      showRugs(mergedRugs);
+    }
+  }).catch(() => {});
 
   // ── Scanner de nouveaux rugs ───────────────────────────────────
 
@@ -2090,18 +2086,12 @@ async function fetchRugs() {
   }
 
   // Sources ciblées pour nouveaux tokens pump.fun <6h, boostés ou non
+  // GeckoTerminal bloqué par CORS depuis navigateur → uniquement DexScreener
   const ENDPOINTS = [
-    // GeckoTerminal new pools — couvre TOUS les nouveaux tokens, pas seulement les boostés
-    'https://api.geckoterminal.com/api/v2/networks/solana/new_pools?page=1',
-    'https://api.geckoterminal.com/api/v2/networks/solana/new_pools?page=2',
-    'https://api.geckoterminal.com/api/v2/networks/solana/new_pools?page=3',
-    'https://api.geckoterminal.com/api/v2/networks/solana/new_pools?page=4',
-    // Trending pools Solana — tokens qui ont du volume
-    'https://api.geckoterminal.com/api/v2/networks/solana/trending_pools?page=1',
-    'https://api.geckoterminal.com/api/v2/networks/solana/trending_pools?page=2',
-    // DexScreener — recherches complémentaires
     'https://api.dexscreener.com/latest/dex/search?q=pump.fun',
     'https://api.dexscreener.com/latest/dex/search?q=solana+pump',
+    'https://api.dexscreener.com/latest/dex/search?q=pumpfun',
+    'https://api.dexscreener.com/latest/dex/search?q=solana+meme',
     'https://api.dexscreener.com/token-profiles/latest/v1',
     'https://api.dexscreener.com/token-boosts/latest/v1',
   ];
