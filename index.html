@@ -2047,7 +2047,7 @@ async function fetchRugs() {
   try { mergedRugs = JSON.parse(localStorage.getItem(RUGS_KEY) || '{}'); } catch(e) {}
 
   // Afficher ce qu'on a tout de suite
-  const showRugs = (rugs) => {
+  const showRugs = (rugs, fromFB) => {
     const list = Object.values(rugs).sort((a,b) => (b.danger||0)-(a.danger||0));
     if (list.length > 0) {
       lastRugs = list;
@@ -2055,20 +2055,26 @@ async function fetchRugs() {
       const vc = list.filter(r => !hiddenRugs.has(r.addr)).length;
       document.getElementById('rsTokenCount').textContent = vc ? `(${vc})` : '';
       document.getElementById('rsStatDetected').textContent = vc;
+    } else if (fromFB) {
+      // Firebase a répondu mais 0 rugs → scan actif
+      content.innerHTML = '<div class="rs-empty">✅ Aucun rug actif<br><span style="font-size:.7rem;opacity:.6">Refresh auto 60s</span></div>';
     } else {
-      content.innerHTML = '<div class="rs-empty">⏳ Scan en cours...</div>';
+      // Pas encore de Firebase → message d'attente
+      content.innerHTML = '<div class="rs-empty" style="font-size:.75rem;color:rgba(255,100,120,.5)">🔄 Synchronisation...</div>';
     }
   };
-  showRugs(mergedRugs);
+  showRugs(mergedRugs, false);
 
-  // Firebase en parallèle — enrichit l'affichage quand disponible
+  // Firebase — charge et affiche dès que disponible
   fetch(`${FB_URL}/rugs.json`).then(r => r.json()).then(fbData => {
     if (fbData && typeof fbData === 'object' && !Array.isArray(fbData)) {
       mergedRugs = { ...fbData, ...mergedRugs };
       try { localStorage.setItem(RUGS_KEY, JSON.stringify(mergedRugs)); } catch(e) {}
-      showRugs(mergedRugs);
     }
-  }).catch(() => {});
+    showRugs(mergedRugs, true); // true = Firebase a répondu
+  }).catch(() => {
+    showRugs(mergedRugs, true); // Firebase KO → afficher ce qu'on a
+  });
 
   // ── Scanner de nouveaux rugs ───────────────────────────────────
 
