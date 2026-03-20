@@ -1362,132 +1362,165 @@ async function renderTokenTable(tokens){
 // detectRug v5 — Pump.fun EARLY ONLY (20min–2h)
 // Cible : Mars Occupier, Vibe Check style — pump puis staircase
 // ============================================================
+// ============================================================
+// PUMP.FUN PROXY DETECTION
+// ============================================================
 function isPumpFunToken(p){
-  // Proxy Pump.fun : dexId contient "pump" OU liq < 45K (pas encore migré Raydium)
   const dexId=(p.dexId||p.dex||'').toLowerCase();
   const liq=p.liquidity?.usd||0;
   if(dexId.includes('pump'))return true;
-  if(dexId.includes('raydium')&&liq>=45000)return false; // clairement Raydium migré
-  return liq<45000; // sous 45K = encore sur Pump.fun bonding curve
+  if(dexId.includes('raydium')&&liq>=45000)return false;
+  return liq<45000;
 }
 
+// ============================================================
+// detectRug v6 — Pump.fun early staircase detector
+// Cible : XCAT (2min), CHIBUCK (15min) et similaires
+//
+// CES TOKENS SONT CALLÉS PENDANT LA MONTÉE EN ESCALIER :
+//   - Frais : 1min → 90min
+//   - Pump fort au lancement (+200% à +5000%)
+//   - Distribution SS pendant la montée (sell ratio monte)
+//   - Liq Pump.fun : 8K–45K (pas encore migré Raydium)
+//   - Vol/Mcap très élevé = activité frénétique
+//   - Mcap : 20K–300K (pendant la montée)
+// ============================================================
 function detectRug(p){
   const ageMs=Date.now()-(p.pairCreatedAt||0);
   const ageH=ageMs/3600000,ageMin=ageMs/60000;
 
   // ── HARD FILTERS ────────────────────────────────────────────
-  // Fenêtre stricte : 20min → 2h (early Pump.fun uniquement)
-  if(ageMin<20)return null;
-  if(ageH>2)return null;
+  // Fenêtre large : 1min → 90min
+  // XCAT = 2min, CHIBUCK = 15min → on ne peut pas commencer à 20min
+  if(ageMin<1)return null;
+  if(ageMin>90)return null;  // au-delà de 90min, trop tard pour la majorité des rugs pump.fun
 
   const liq=p.liquidity?.usd||0;
   const mcap=p.marketCap||p.fdv||0;
 
-  // Rejette si migré Raydium ou trop gros
+  // Rejette si migré Raydium (liq > 45K) ou taille incohérente
   if(liq>45000)return null;           // déjà migré Raydium
-  if(mcap>350000)return null;          // trop gros, plus early
-  if(mcap<10000)return null;           // trop petit, données nulles
+  if(liq<3000)return null;            // trop peu de liquidité = données nulles
+  if(mcap>350000)return null;         // trop gros
+  if(mcap<8000)return null;           // trop petit
 
-  // Proxy Pump.fun : rejette si clairement Raydium avec grosse liq
+  // Pump.fun uniquement
   if(!isPumpFunToken(p))return null;
 
   const buys1=p.txns?.h1?.buys||0,sells1=p.txns?.h1?.sells||0;
   const buysm5=p.txns?.m5?.buys||0,sellsm5=p.txns?.m5?.sells||0;
   const total1=buys1+sells1||1,totalm5=buysm5+sellsm5||1;
   const sellR1h=sells1/total1,sellRm5=sellsm5/totalm5;
-  const vol1=p.volume?.h1||0;
+  const vol1=p.volume?.h1||0,vol6=p.volume?.h6||0;
   const c1h=p.priceChange?.h1||0;
   const c6h=p.priceChange?.h6||0;
   const c24h=p.priceChange?.h24||0;
   const m5=p.priceChange?.m5||0;
 
-  // Hard filter : sell ratio m5 < 52% = pas encore en vrai dump → ignorer
-  if(sellRm5<0.52)return null;
+  // Vol minimum : token doit avoir une activité réelle
+  if(vol1<1000&&(buys1+sells1)<5)return null;
 
-  // ── SCORING DANGER (0–10) ────────────────────────────────────
+  // ── SCORING DANGER (0–12) ────────────────────────────────────
   const signals=[];let danger=0;
 
-  // 1. STAIRCASE classique : gros pump récent MAIS prix qui stagne/baisse
-  //    c24h ou c6h > +250% MAIS c1h < +8% ou m5 < -10%
-  const bigPump=(c24h>250||c6h>250);
-  const staircaseFlat=(c1h<8);
-  const staircaseDrop=(m5<=-10);
-  if(bigPump&&(staircaseFlat||staircaseDrop)){
-    const ref=c24h>c6h?c24h:c6h;
-    if(staircaseDrop){
-      signals.push(`🎯 STAIRCASE: +${ref.toFixed(0)}% → m5 ${m5.toFixed(0)}%`);
-    } else {
-      signals.push(`📊 STAIRCASE: +${ref.toFixed(0)}% pump → flat (c1h +${c1h.toFixed(0)}%)`);
-    }
+  // 1. PUMP FORT = signal principal
+  // Le token a pumpé fort récemment — c'est le setup du staircase
+  const bigPump=Math.max(c24h,c6h,c1h);
+  const hasBigPump=bigPump>=150; // +150% minimum pour être intéressant
+
+  // 2. STAIRCASE en cours : big pump MAIS distribution visible
+  //    Pattern XCAT/CHIBUCK : pump +500%–+5000%, SS orange partout
+  if(c24h>=200&&c1h<15){
+    // Gros pump 24h mais 1h qui ralentit = distribution par paliers
+    signals.push(`🎯 STAIRCASE: +${c24h.toFixed(0)}%(24h) → c1h +${c1h.toFixed(0)}%`);
     danger+=4;
-  } else if((c24h>100||c6h>100)&&m5<=-10){
-    // Pump modéré + grosse bougie m5 → staircase moins fort
-    signals.push(`📉 Pump +${Math.max(c24h,c6h).toFixed(0)}% → m5 ${m5.toFixed(0)}%`);
+  } else if(c6h>=200&&c1h<15){
+    signals.push(`🎯 STAIRCASE: +${c6h.toFixed(0)}%(6h) → c1h +${c1h.toFixed(0)}%`);
+    danger+=4;
+  } else if(c1h>=150&&m5<5){
+    // Pump très récent (1h) + m5 qui ralentit = début du staircase
+    signals.push(`📊 Pump 1h +${c1h.toFixed(0)}% → m5 ${m5.toFixed(0)}%`);
+    danger+=3;
+  } else if(hasBigPump&&sellR1h>=0.52){
+    // Pump + sell pressure = distribution commence
+    signals.push(`📈 Pump +${bigPump.toFixed(0)}% + sells h1 ${(sellR1h*100).toFixed(0)}%`);
     danger+=2;
   }
 
-  // 2. GROSSE BOUGIE : crash brutal m5 ou c1h
-  if(m5<=-18){
-    signals.push(`🚨 Grosse bougie m5 ${m5.toFixed(0)}%`);
+  // 3. SELLS SS orange : distribution pendant la montée
+  //    C'est exactement ce qu'on voit sur XCAT et CHIBUCK
+  if(sellRm5>=0.65){
+    signals.push(`🔴 SS massifs m5 ${(sellRm5*100).toFixed(0)}% — distribution`);
     danger+=3;
-  } else if(m5<=-10&&danger===0){
-    // Compter uniquement si pas déjà dans staircase
-    signals.push(`⚠️ Chute m5 ${m5.toFixed(0)}%`);
+  } else if(sellRm5>=0.55){
+    signals.push(`🟠 SS m5 ${(sellRm5*100).toFixed(0)}%`);
     danger+=2;
   }
-  if(c1h<=-22){
-    signals.push(`🚨 Crash 1h ${c1h.toFixed(0)}%`);
-    danger+=3;
-  } else if(c1h<=-12&&!signals.find(s=>s.includes('1h'))){
-    signals.push(`📉 Drop 1h ${c1h.toFixed(0)}%`);
-    danger+=1;
-  }
-
-  // 3. SELLS MASSIFS : les "SS" orange sur chart
-  if(sellRm5>=0.68){
-    signals.push(`🔴 Sell m5 ${(sellRm5*100).toFixed(0)}% — dump massif`);
-    danger+=3;
-  } else if(sellRm5>=0.58){
-    signals.push(`🟠 Sell m5 ${(sellRm5*100).toFixed(0)}%`);
-    danger+=1;
-  }
-  if(sellR1h>=0.60){
+  if(sellR1h>=0.58&&sellRm5>=0.50){
     signals.push(`🟠 Sell h1 ${(sellR1h*100).toFixed(0)}%`);
     danger+=1;
   }
 
-  // 4. VOL/LIQ > 18x avec sells dominants = activité frénétique de dump
-  const volLiqRatio=liq>0?vol1/liq:0;
-  if(volLiqRatio>=18&&sellRm5>=0.55){
-    signals.push(`🔥 Vol/Liq ${volLiqRatio.toFixed(0)}x + sells ${(sellRm5*100).toFixed(0)}%`);
+  // 4. GROSSE BOUGIE négative = dump en cours
+  if(m5<=-15){
+    signals.push(`🚨 Bougie m5 ${m5.toFixed(0)}%`);
+    danger+=3;
+  } else if(m5<=-8&&hasBigPump){
+    signals.push(`⚠️ Drop m5 ${m5.toFixed(0)}% post-pump`);
     danger+=2;
   }
-
-  // 5. AGE sweet spot 30–90min : rug frais, encore temps d'agir
-  if(ageMin>=30&&ageMin<=90){
-    danger+=2; // bonus silencieux — pas de signal texte
+  if(c1h<=-20){
+    signals.push(`🚨 Crash 1h ${c1h.toFixed(0)}%`);
+    danger+=3;
   }
 
-  // Filtre final : danger minimum 6
-  if(danger<6)return null;
+  // 5. VOL/MCAP très élevé = activité frénétique (signe de pump&dump)
+  //    XCAT: 419K vol / 126K mcap = 3.3x — très élevé
+  const volMcapRatio=mcap>0?vol1/mcap:0;
+  if(volMcapRatio>=2&&hasBigPump){
+    signals.push(`🔥 Vol/Mcap ${volMcapRatio.toFixed(1)}x — activité pump`);
+    danger+=2;
+  } else if(volMcapRatio>=1.5&&sellRm5>=0.52){
+    signals.push(`🔥 Vol/Mcap ${volMcapRatio.toFixed(1)}x`);
+    danger+=1;
+  }
+
+  // 6. VOL/LIQ très élevé = Pump.fun surchauffé
+  const volLiqRatio=liq>0?vol1/liq:0;
+  if(volLiqRatio>=12&&sellRm5>=0.50){
+    signals.push(`⚡ Vol/Liq ${volLiqRatio.toFixed(0)}x`);
+    danger+=1;
+  }
+
+  // 7. TOKEN ULTRA FRAIS (<10min) avec pump fort = exactement XCAT
+  if(ageMin<=10&&hasBigPump&&sellRm5>=0.50){
+    signals.push(`⏱ Ultra frais ${Math.round(ageMin)}min — pump ${bigPump.toFixed(0)}%`);
+    danger+=2;
+  } else if(ageMin<=30&&hasBigPump&&sellRm5>=0.52){
+    danger+=1; // bonus silencieux pour les tokens frais
+  }
+
+  // Filtre final : danger minimum 5 (abaissé pour catcher plus de tokens)
+  if(danger<5)return null;
   if(signals.length===0)return null;
 
   const dangerLevel=danger>=8?'critical':'high';
   const addr=p.baseToken?.address||'';
   const sym=(p.baseToken?.symbol||'?').toUpperCase().slice(0,12);
-  const urgency=m5<=-18||sellRm5>=0.68?'MAINTENANT':'DEBUT';
+  // Urgence : encore en montée (c1h positif) = on peut encore shortcher
+  const urgency=(c1h>=0&&m5>=-5)?'EN MONTEE':(m5<=-15||sellRm5>=0.65)?'MAINTENANT':'DEBUT';
 
   return{
     sym,addr,signals,danger,dangerLevel,urgency,
     mcap,liq,ageH,ageMin,c1h,c6h,c24h,m5,
-    sellR:sellR1h,sellRm5,
+    sellR:sellR1h,sellRm5,volMcapRatio,
     callTime:Date.now(),
     dexUrl:p.url||`https://dexscreener.com/solana/${addr}`
   };
 }
 
 // ============================================================
-// FETCH RUGS — sources Pump.fun early uniquement
+// FETCH RUGS — Pump.fun tokens frais 1min–90min
 // ============================================================
 async function fetchRugs(){
   const content=document.getElementById('rsTokenContent');
@@ -1508,9 +1541,9 @@ async function fetchRugs(){
       document.getElementById('rsTokenCount').textContent=vc?`(${vc})`:'';
       document.getElementById('rsStatDetected').textContent=vc;
     } else if(fromFB){
-      content.innerHTML='<div class="rs-empty">✅ Aucun rug Pump.fun détecté<br><span style="font-size:.7rem;opacity:.6">Refresh auto 45s · fenêtre 20min–2h</span></div>';
+      content.innerHTML='<div class="rs-empty">\u2705 Aucun rug Pump.fun d\xe9tect\xe9<br><span style="font-size:.7rem;opacity:.6">Scan toutes les 30s \u00b7 fen\xeatre 1\u201390min</span></div>';
     } else {
-      content.innerHTML='<div class="rs-empty" style="font-size:.75rem;color:rgba(255,100,120,.5)">🔄 Scan Pump.fun en cours...</div>';
+      content.innerHTML='<div class="rs-empty" style="font-size:.75rem;color:rgba(255,100,120,.5)">\ud83d\udd04 Scan Pump.fun en cours...</div>';
     }
   };
   showRugs(mergedRugs,false);
@@ -1524,7 +1557,7 @@ async function fetchRugs(){
     showRugs(mergedRugs,true);
   }).catch(()=>{showRugs(mergedRugs,true);});
 
-  // ── Fetch Pump.fun tokens frais ────────────────────────────
+  // ── Fetch tokens Pump.fun frais ───────────────────────────────
   async function fetchP(url){
     try{
       const resp=await fetch(url,{signal:AbortSignal.timeout(9000)});
@@ -1538,31 +1571,32 @@ async function fetchRugs(){
     return[];
   }
 
-  // Endpoints ciblés Pump.fun — tokens frais 20min–2h
+  // Endpoints ciblés Pump.fun — priorité aux tokens trending/boostés
+  // qui ont de l'activité = plus de chance d'avoir les SS orange
   const ENDPOINTS=[
+    'https://api.dexscreener.com/token-boosts/latest/v1',
+    'https://api.dexscreener.com/token-profiles/latest/v1',
     'https://api.dexscreener.com/latest/dex/search?q=pump.fun',
     'https://api.dexscreener.com/latest/dex/search?q=pumpfun+solana',
-    'https://api.dexscreener.com/latest/dex/search?q=pump+solana+new',
-    'https://api.dexscreener.com/token-profiles/latest/v1',
-    'https://api.dexscreener.com/token-boosts/latest/v1',
+    'https://api.dexscreener.com/latest/dex/search?q=pump+solana',
+    'https://api.dexscreener.com/latest/dex/search?q=solana+new+token',
   ];
 
   const results=await Promise.allSettled(ENDPOINTS.map(fetchP));
   const seen=new Set();let pairs=[];
-  const TWO_HOURS=2*3600000,now=Date.now();
+  const NINETY_MIN=90*60000,now=Date.now();
 
   for(const r of results){
     if(r.status!=='fulfilled')continue;
     for(const p of r.value){
       if(!p||!p.chainId||p.chainId!=='solana')continue;
       const ageMs=now-(p.pairCreatedAt||0);
-      // Fenêtre stricte : 20min → 2h
-      if(ageMs<20*60000||ageMs>TWO_HOURS)continue;
+      // Fenêtre 1min → 90min
+      if(ageMs<60000||ageMs>NINETY_MIN)continue;
       const mcap=p.marketCap||p.fdv||0;
-      if(mcap<10000||mcap>350000)continue;
-      // Rejeter si déjà migré Raydium
+      if(mcap<8000||mcap>350000)continue;
       const liq=p.liquidity?.usd||0;
-      if(liq>45000)continue;
+      if(liq>45000)continue; // Raydium migré
       const addr=p.baseToken?.address||p.pairAddress||'';
       if(!addr||seen.has(addr))continue;
       seen.add(addr);pairs.push(p);
@@ -1614,7 +1648,7 @@ async function fetchRugs(){
   renderRugTokens(allRugs);renderRuggers();
 
   if(rugRefreshTimer)clearTimeout(rugRefreshTimer);
-  rugRefreshTimer=setTimeout(fetchRugs,45000); // 45s au lieu de 60s — plus réactif
+  rugRefreshTimer=setTimeout(fetchRugs,30000); // 30s — plus réactif pour les tokens 2-15min
 }
 
 // ============================================================
@@ -1704,8 +1738,8 @@ function renderRugTokens(rugs){
     const xColor=xAth>=3?'#00ff88':xAth>=2?'#88ff44':xAth>=1.5?'#ffcc44':'#ff8866';
 
     // Badge style : "RUG SNIPED!" inspiré screens 5/6/7
-    const badgeText=r.urgency==='MAINTENANT'?'🔴 RUG SNIPED!':r.dangerLevel==='critical'?'🚨 RUG EN COURS':'⚠️ DUMP DÉTECTÉ';
-    const badgeClass=r.urgency==='MAINTENANT'||r.dangerLevel==='critical'?'critical':'high';
+    const badgeText=r.urgency==='EN MONTEE'?'🟡 STAIRCASE ACTIF':r.urgency==='MAINTENANT'?'🔴 RUG SNIPED!':r.dangerLevel==='critical'?'🚨 RUG EN COURS':'⚠️ DUMP DÉTECTÉ';
+    const badgeClass=r.urgency==='EN MONTEE'?'high':r.urgency==='MAINTENANT'||r.dangerLevel==='critical'?'critical':'high';
 
     // Heure du call
     const callTimeStored=r.firstSeen||r.callTime||Date.now();
