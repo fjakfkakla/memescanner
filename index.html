@@ -616,7 +616,7 @@ section{scroll-margin-top:70px;}
   </div>
 
   <div id="rsPanelToken">
-    <div id="rsTokenContent"><div class="rs-empty">⏳ Scan en cours...</div></div>
+    <div id="rsTokenContent"><div class="rs-empty">⏳ Chargement...</div></div>
   </div>
   <div id="rsPanelAddr" style="display:none">
     <div id="rsAddrContent"><div class="rs-empty">⏳ Chargement des ruggeurs...</div></div>
@@ -2585,7 +2585,8 @@ window.addEventListener('DOMContentLoaded', () => {
           <button onclick="openCode()" style="background:var(--green);color:#000;border:none;padding:.6rem 1.5rem;border-radius:8px;font-weight:700;cursor:pointer;font-family:var(--font);font-size:.88rem">Entrer mon code d'accès</button>
         </div>
       </div>`;
-    document.getElementById('rsTokenContent').innerHTML = '<div class="rs-empty">🔐 Connecte-toi pour accéder au RUG SNIP</div>';
+    // RUG SNIP visible sans connexion — les rugs sont publics
+    fetchRugs();
   }
   document.getElementById('codeModal').addEventListener('click', e => { if(e.target.id==='codeModal') closeCode(); });
   document.getElementById('adminOverlay').addEventListener('click', e => { if(e.target.id==='adminOverlay') closeAdmin(); });
