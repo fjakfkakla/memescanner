@@ -1089,10 +1089,34 @@ function submitReview() {
 // ============================================================
 // CODES / SESSION
 // ============================================================
-function loadCodes() {
-  try { return JSON.parse(localStorage.getItem(CODE_KEY)) || getDefaultCodes(); } catch(e) { return getDefaultCodes(); }
+// ── Codes sur Firebase — partagés entre tous les appareils ──
+async function loadCodesFromFB() {
+  try {
+    const data = await fetch(`${FB_URL}/codes.json`).then(r => r.json());
+    if (data && Array.isArray(data) && data.length > 0) {
+      localStorage.setItem(CODE_KEY, JSON.stringify(data)); // cache local
+      return data;
+    }
+  } catch(e) {}
+  // Fallback localStorage
+  try { const local = JSON.parse(localStorage.getItem(CODE_KEY)); if (local?.length) return local; } catch(e) {}
+  return getDefaultCodes();
 }
-function saveCodes(c) { localStorage.setItem(CODE_KEY, JSON.stringify(c)); }
+async function saveCodesFB(codes) {
+  // Sauvegarder localStorage ET Firebase
+  try { localStorage.setItem(CODE_KEY, JSON.stringify(codes)); } catch(e) {}
+  try { await fetch(`${FB_URL}/codes.json`, { method: 'PUT', body: JSON.stringify(codes) }); } catch(e) {}
+}
+function loadCodes() {
+  // Sync: retourne le cache local (plus rapide)
+  try { const c = JSON.parse(localStorage.getItem(CODE_KEY)); if (c?.length) return c; } catch(e) {}
+  return getDefaultCodes();
+}
+function saveCodes(c) {
+  localStorage.setItem(CODE_KEY, JSON.stringify(c));
+  // Sauvegarder aussi sur Firebase en arrière-plan
+  fetch(`${FB_URL}/codes.json`, { method: 'PUT', body: JSON.stringify(c) }).catch(()=>{});
+}
 function getDefaultCodes() {
   return [
     { code:'CODE-DEMO-1234', plan:'alpha', used:false },
@@ -1103,14 +1127,26 @@ function getDefaultCodes() {
 function checkSession() {
   try {
     const s = JSON.parse(localStorage.getItem(SESSION_KEY));
-    if (s && s.expires > Date.now()) { isUnlocked = true; onUnlock(s.plan); }
+    if (s && s.expires > Date.now()) {
+      isUnlocked = true;
+      // Sync les codes depuis Firebase en arrière-plan pour avoir les derniers
+      loadCodesFromFB().catch(()=>{});
+      onUnlock(s.plan);
+    }
   } catch(e) {}
 }
-function submitCode() {
+async function submitCode() {
   const val = document.getElementById('codeInput').value.trim().toUpperCase();
   const err = document.getElementById('codeErr');
-  const codes = loadCodes();
+  const btn = document.querySelector('.code-submit');
+  if (btn) { btn.textContent = 'Vérification...'; btn.disabled = true; }
+
+  // Charger les codes depuis Firebase (source de vérité)
+  let codes = await loadCodesFromFB();
   const found = codes.find(c => c.code === val && !c.used);
+
+  if (btn) { btn.textContent = 'Accéder →'; btn.disabled = false; }
+
   if (!found) {
     err.textContent = 'Code invalide ou déjà utilisé.';
     err.style.display = 'block';
@@ -1118,7 +1154,7 @@ function submitCode() {
     return;
   }
   found.used = true;
-  saveCodes(codes);
+  await saveCodesFB(codes); // Marquer utilisé sur Firebase immédiatement
   localStorage.setItem(SESSION_KEY, JSON.stringify({ plan: found.plan, expires: Date.now() + 30*24*60*60*1000 }));
   isUnlocked = true;
   closeCode();
@@ -1196,8 +1232,8 @@ function genCodes() {
   m.style.display = 'block';
   setTimeout(() => m.style.display = 'none', 4000);
 }
-function renderCodes() {
-  const codes = loadCodes();
+async function renderCodes() {
+  const codes = await loadCodesFromFB(); // Toujours depuis Firebase pour l'admin
   const used = codes.filter(c=>c.used).length;
   document.getElementById('codeCount').textContent = codes.length;
   document.getElementById('stTotal').textContent = codes.length;
@@ -1843,6 +1879,13 @@ function detectRug(p) {
   const sellRm5 = sellsm5 / totalm5;
   const vol1    = p.volume?.h1  || 0;
   const c1h     = p.priceChange?.h1  || 0;
+
+  // ── FILTRE ANTI-X1 : tokens sans liquidité réelle ───────────
+  // Ces tokens n'ont jamais pumpé → LP quasi-vide dès le départ
+  // Ils feront toujours X1 car pas de vrais acheteurs/vendeurs
+  // Screen 2/3/4 : LP $0-$329, supply 99%+ dev holding
+  if (liq < 500) return null;          // LP $0 ou quasi-nul = token fantôme
+  if (liq < 2000 && vol1 < 5000) return null; // Peu de liq ET peu de volume = rien ne se passe
   const c6h     = p.priceChange?.h6  || 0;
   const c24h    = p.priceChange?.h24 || 0;
   const m5      = p.priceChange?.m5  || 0;
@@ -1977,6 +2020,17 @@ async function fetchRugs() {
   const content = document.getElementById('rsTokenContent');
   content.innerHTML = '<div class="rs-empty">⏳ Scan des rugs en cours...</div>';
 
+  // Charger les rugs persistants depuis Firebase (partagés entre appareils)
+  try {
+    const fbRugs = await fetch(`${FB_URL}/rugs.json`).then(r => r.json());
+    if (fbRugs && typeof fbRugs === 'object' && !Array.isArray(fbRugs)) {
+      const existing = JSON.parse(localStorage.getItem(RUGS_KEY) || '{}');
+      // Merger Firebase + local (Firebase a priorité)
+      const merged = { ...existing, ...fbRugs };
+      localStorage.setItem(RUGS_KEY, JSON.stringify(merged));
+    }
+  } catch(e) {}
+
   async function fetchP(url) {
     try {
       const resp = await fetch(url, { signal: AbortSignal.timeout(9000) });
@@ -2075,6 +2129,8 @@ async function fetchRugs() {
     }
   }
   try { localStorage.setItem(RUGS_KEY, JSON.stringify(storedRugs)); } catch(e) {}
+  // Sync Firebase en arrière-plan
+  fetch(`${FB_URL}/rugs.json`, { method: 'PUT', body: JSON.stringify(storedRugs) }).catch(()=>{});
 
   // Construire la liste complète depuis le stockage (tous les rugs, passés et présents)
   const allRugs = Object.values(storedRugs).sort((a,b) => (b.danger||0) - (a.danger||0));
