@@ -1358,99 +1358,262 @@ async function renderTokenTable(tokens){
 // ============================================================
 // RUG DETECTOR v4
 // ============================================================
+// ============================================================
+// detectRug v5 — Pump.fun EARLY ONLY (20min–2h)
+// Cible : Mars Occupier, Vibe Check style — pump puis staircase
+// ============================================================
+function isPumpFunToken(p){
+  // Proxy Pump.fun : dexId contient "pump" OU liq < 45K (pas encore migré Raydium)
+  const dexId=(p.dexId||p.dex||'').toLowerCase();
+  const liq=p.liquidity?.usd||0;
+  if(dexId.includes('pump'))return true;
+  if(dexId.includes('raydium')&&liq>=45000)return false; // clairement Raydium migré
+  return liq<45000; // sous 45K = encore sur Pump.fun bonding curve
+}
+
 function detectRug(p){
   const ageMs=Date.now()-(p.pairCreatedAt||0);
   const ageH=ageMs/3600000,ageMin=ageMs/60000;
-  if(ageMin<2)return null;if(ageH>6)return null;
-  const mcapCheck=p.marketCap||p.fdv||0;
-  if(mcapCheck>0&&mcapCheck<10000)return null;
-  const liq=p.liquidity?.usd||0,mcap=p.marketCap||p.fdv||0;
+
+  // ── HARD FILTERS ────────────────────────────────────────────
+  // Fenêtre stricte : 20min → 2h (early Pump.fun uniquement)
+  if(ageMin<20)return null;
+  if(ageH>2)return null;
+
+  const liq=p.liquidity?.usd||0;
+  const mcap=p.marketCap||p.fdv||0;
+
+  // Rejette si migré Raydium ou trop gros
+  if(liq>45000)return null;           // déjà migré Raydium
+  if(mcap>350000)return null;          // trop gros, plus early
+  if(mcap<10000)return null;           // trop petit, données nulles
+
+  // Proxy Pump.fun : rejette si clairement Raydium avec grosse liq
+  if(!isPumpFunToken(p))return null;
+
   const buys1=p.txns?.h1?.buys||0,sells1=p.txns?.h1?.sells||0;
   const buysm5=p.txns?.m5?.buys||0,sellsm5=p.txns?.m5?.sells||0;
   const total1=buys1+sells1||1,totalm5=buysm5+sellsm5||1;
   const sellR1h=sells1/total1,sellRm5=sellsm5/totalm5;
   const vol1=p.volume?.h1||0;
-  if(liq<500)return null;if(liq<2000&&vol1<5000)return null;
-  const c1h=p.priceChange?.h1||0,c6h=p.priceChange?.h6||0,c24h=p.priceChange?.h24||0,m5=p.priceChange?.m5||0;
-  if(c1h<-35)return null;
+  const c1h=p.priceChange?.h1||0;
+  const c6h=p.priceChange?.h6||0;
+  const c24h=p.priceChange?.h24||0;
+  const m5=p.priceChange?.m5||0;
+
+  // Hard filter : sell ratio m5 < 52% = pas encore en vrai dump → ignorer
+  if(sellRm5<0.52)return null;
+
+  // ── SCORING DANGER (0–10) ────────────────────────────────────
   const signals=[];let danger=0;
-  if(c1h>50&&m5<=-4){signals.push(`🎯 STAIRCASE: +${c1h.toFixed(0)}%(1h) → m5 ${m5.toFixed(0)}%`);danger+=4;}
-  else if(c1h>20&&m5<=-7){signals.push(`📉 Pump +${c1h.toFixed(0)}% → drop m5 ${m5.toFixed(0)}%`);danger+=3;}
-  else if(c1h>10&&m5<=-10){signals.push(`Drop m5 ${m5.toFixed(0)}% après pump`);danger+=2;}
-  if(c1h>50&&sellRm5>=0.52&&m5<0){signals.push(`🔴 Pic +${c1h.toFixed(0)}% + sells m5 ${(sellRm5*100).toFixed(0)}%`);danger+=3;}
-  else if(c1h>20&&sellRm5>=0.58){signals.push(`Pump +${c1h.toFixed(0)}% + sells m5 ${(sellRm5*100).toFixed(0)}%`);danger+=2;}
-  if(m5<-30){signals.push(`🚨 Crash m5 ${m5.toFixed(0)}%`);danger+=4;}
-  else if(m5<-15){signals.push(`⚠️ Chute m5 ${m5.toFixed(0)}%`);danger+=2;}
-  if(sellRm5>0.75){signals.push(`🚨 Sell m5 ${(sellRm5*100).toFixed(0)}%`);danger+=3;}
-  else if(sellRm5>0.62&&m5<-3){signals.push(`Sell m5 ${(sellRm5*100).toFixed(0)}%`);danger+=1;}
-  if(c6h>50&&c1h<-5&&m5<-5){signals.push(`Staircase +${c6h.toFixed(0)}%(6h) → ${c1h.toFixed(0)}%(1h)`);danger+=3;}
-  if(liq>0&&liq<3000&&vol1>3000){signals.push(`LP $${fmtNum(liq)} quasi-vide`);danger+=3;}
-  const volMcapRatio=mcap>0?vol1/mcap:0;
-  if(volMcapRatio>0.8&&m5<-3&&ageMin>10){signals.push(`🔥 Vol/Mcap ${(volMcapRatio*100).toFixed(0)}% + drop m5 ${m5.toFixed(0)}%`);danger+=3;}
-  else if(volMcapRatio>0.5&&sellRm5>0.58&&m5<-3){signals.push(`Gros vol + sells m5 ${(sellRm5*100).toFixed(0)}%`);danger+=2;}
-  if(ageMin<60&&vol1>mcap*0.3&&sellRm5>0.58&&m5<-5){signals.push(`Jeune (<1h) + vol fort + sell m5 ${(sellRm5*100).toFixed(0)}%`);danger+=3;}
-  if(c1h>5&&c1h<80&&m5<-10&&sellRm5>0.60){signals.push(`Conso +${c1h.toFixed(0)}%(1h) → dump m5 ${m5.toFixed(0)}%`);danger+=3;}
-  else if(c1h>=-5&&c1h<=5&&m5<-15&&sellRm5>0.62){signals.push(`Flat → dump m5 ${m5.toFixed(0)}%`);danger+=2;}
-  if(signals.length===0)return null;if(danger<3)return null;
-  const dangerLevel=danger>=6?'critical':'high';
+
+  // 1. STAIRCASE classique : gros pump récent MAIS prix qui stagne/baisse
+  //    c24h ou c6h > +250% MAIS c1h < +8% ou m5 < -10%
+  const bigPump=(c24h>250||c6h>250);
+  const staircaseFlat=(c1h<8);
+  const staircaseDrop=(m5<=-10);
+  if(bigPump&&(staircaseFlat||staircaseDrop)){
+    const ref=c24h>c6h?c24h:c6h;
+    if(staircaseDrop){
+      signals.push(`🎯 STAIRCASE: +${ref.toFixed(0)}% → m5 ${m5.toFixed(0)}%`);
+    } else {
+      signals.push(`📊 STAIRCASE: +${ref.toFixed(0)}% pump → flat (c1h +${c1h.toFixed(0)}%)`);
+    }
+    danger+=4;
+  } else if((c24h>100||c6h>100)&&m5<=-10){
+    // Pump modéré + grosse bougie m5 → staircase moins fort
+    signals.push(`📉 Pump +${Math.max(c24h,c6h).toFixed(0)}% → m5 ${m5.toFixed(0)}%`);
+    danger+=2;
+  }
+
+  // 2. GROSSE BOUGIE : crash brutal m5 ou c1h
+  if(m5<=-18){
+    signals.push(`🚨 Grosse bougie m5 ${m5.toFixed(0)}%`);
+    danger+=3;
+  } else if(m5<=-10&&danger===0){
+    // Compter uniquement si pas déjà dans staircase
+    signals.push(`⚠️ Chute m5 ${m5.toFixed(0)}%`);
+    danger+=2;
+  }
+  if(c1h<=-22){
+    signals.push(`🚨 Crash 1h ${c1h.toFixed(0)}%`);
+    danger+=3;
+  } else if(c1h<=-12&&!signals.find(s=>s.includes('1h'))){
+    signals.push(`📉 Drop 1h ${c1h.toFixed(0)}%`);
+    danger+=1;
+  }
+
+  // 3. SELLS MASSIFS : les "SS" orange sur chart
+  if(sellRm5>=0.68){
+    signals.push(`🔴 Sell m5 ${(sellRm5*100).toFixed(0)}% — dump massif`);
+    danger+=3;
+  } else if(sellRm5>=0.58){
+    signals.push(`🟠 Sell m5 ${(sellRm5*100).toFixed(0)}%`);
+    danger+=1;
+  }
+  if(sellR1h>=0.60){
+    signals.push(`🟠 Sell h1 ${(sellR1h*100).toFixed(0)}%`);
+    danger+=1;
+  }
+
+  // 4. VOL/LIQ > 18x avec sells dominants = activité frénétique de dump
+  const volLiqRatio=liq>0?vol1/liq:0;
+  if(volLiqRatio>=18&&sellRm5>=0.55){
+    signals.push(`🔥 Vol/Liq ${volLiqRatio.toFixed(0)}x + sells ${(sellRm5*100).toFixed(0)}%`);
+    danger+=2;
+  }
+
+  // 5. AGE sweet spot 30–90min : rug frais, encore temps d'agir
+  if(ageMin>=30&&ageMin<=90){
+    danger+=2; // bonus silencieux — pas de signal texte
+  }
+
+  // Filtre final : danger minimum 6
+  if(danger<6)return null;
+  if(signals.length===0)return null;
+
+  const dangerLevel=danger>=8?'critical':'high';
   const addr=p.baseToken?.address||'';
   const sym=(p.baseToken?.symbol||'?').toUpperCase().slice(0,12);
-  const peakMcapEst=c1h<-5?Math.round(mcap/Math.max(0.1,1+c1h/100)):mcap;
-  const urgency=c1h>50?'MAINTENANT':c1h>0?'DEBUT':'EN COURS';
-  return{sym,addr,signals,danger,dangerLevel,urgency,mcap,liq,ageH,ageMin,c1h,c6h,c24h,m5,sellR:sellR1h,peakMcapEst,callTime:Date.now(),dexUrl:p.url||`https://dexscreener.com/solana/${addr}`};
+  const urgency=m5<=-18||sellRm5>=0.68?'MAINTENANT':'DEBUT';
+
+  return{
+    sym,addr,signals,danger,dangerLevel,urgency,
+    mcap,liq,ageH,ageMin,c1h,c6h,c24h,m5,
+    sellR:sellR1h,sellRm5,
+    callTime:Date.now(),
+    dexUrl:p.url||`https://dexscreener.com/solana/${addr}`
+  };
 }
 
 // ============================================================
-// FETCH RUGS
+// FETCH RUGS — sources Pump.fun early uniquement
 // ============================================================
 async function fetchRugs(){
   const content=document.getElementById('rsTokenContent');
-  if(!isUnlocked){content.innerHTML=`<div class="rs-empty" style="padding:3rem 1rem"><div style="font-size:2rem;margin-bottom:.8rem">🔐</div><div style="font-family:'Syne',sans-serif;font-size:1rem;font-weight:700;color:rgba(255,100,120,.8);margin-bottom:.5rem">Accès réservé aux membres</div><div style="font-size:.75rem;color:rgba(255,100,120,.4);margin-bottom:1.2rem">Entre ton code pour accéder au RUG SNIP</div><button onclick="openCode()" style="background:rgba(255,40,80,.15);border:1px solid rgba(255,40,80,.4);color:#ff4466;padding:.5rem 1.4rem;border-radius:6px;font-family:'Space Mono',monospace;font-size:.8rem;font-weight:700;cursor:pointer;">Entrer mon code →</button></div>`;return;}
+  if(!isUnlocked){
+    content.innerHTML=`<div class="rs-empty" style="padding:3rem 1rem"><div style="font-size:2rem;margin-bottom:.8rem">🔐</div><div style="font-family:'Syne',sans-serif;font-size:1rem;font-weight:700;color:rgba(255,100,120,.8);margin-bottom:.5rem">Accès réservé aux membres</div><div style="font-size:.75rem;color:rgba(255,100,120,.4);margin-bottom:1.2rem">Entre ton code pour accéder au RUG SNIP</div><button onclick="openCode()" style="background:rgba(255,40,80,.15);border:1px solid rgba(255,40,80,.4);color:#ff4466;padding:.5rem 1.4rem;border-radius:6px;font-family:'Space Mono',monospace;font-size:.8rem;font-weight:700;cursor:pointer;">Entrer mon code →</button></div>`;
+    return;
+  }
 
+  // Affichage immédiat depuis localStorage
   let mergedRugs={};
   try{mergedRugs=JSON.parse(localStorage.getItem(RUGS_KEY)||'{}');}catch(e){}
 
   const showRugs=(rugs,fromFB)=>{
     const list=Object.values(rugs).sort((a,b)=>(b.danger||0)-(a.danger||0));
-    if(list.length>0){lastRugs=list;renderRugTokens(list);const vc=list.filter(r=>!hiddenRugs.has(r.addr)).length;document.getElementById('rsTokenCount').textContent=vc?`(${vc})`:'';document.getElementById('rsStatDetected').textContent=vc;}
-    else if(fromFB){content.innerHTML='<div class="rs-empty">✅ Aucun rug actif<br><span style="font-size:.7rem;opacity:.6">Refresh auto 60s</span></div>';}
-    else{content.innerHTML='<div class="rs-empty" style="font-size:.75rem;color:rgba(255,100,120,.5)">🔄 Synchronisation...</div>';}
+    if(list.length>0){
+      lastRugs=list;renderRugTokens(list);
+      const vc=list.filter(r=>!hiddenRugs.has(r.addr)).length;
+      document.getElementById('rsTokenCount').textContent=vc?`(${vc})`:'';
+      document.getElementById('rsStatDetected').textContent=vc;
+    } else if(fromFB){
+      content.innerHTML='<div class="rs-empty">✅ Aucun rug Pump.fun détecté<br><span style="font-size:.7rem;opacity:.6">Refresh auto 45s · fenêtre 20min–2h</span></div>';
+    } else {
+      content.innerHTML='<div class="rs-empty" style="font-size:.75rem;color:rgba(255,100,120,.5)">🔄 Scan Pump.fun en cours...</div>';
+    }
   };
   showRugs(mergedRugs,false);
 
+  // Firebase merge non-bloquant
   fetch(`${FB_URL}/rugs.json`).then(r=>r.json()).then(fbData=>{
-    if(fbData&&typeof fbData==='object'&&!Array.isArray(fbData)&&Object.keys(fbData).length>0){mergedRugs={...fbData,...mergedRugs};try{localStorage.setItem(RUGS_KEY,JSON.stringify(mergedRugs));}catch(e){}}
+    if(fbData&&typeof fbData==='object'&&!Array.isArray(fbData)&&Object.keys(fbData).length>0){
+      mergedRugs={...fbData,...mergedRugs};
+      try{localStorage.setItem(RUGS_KEY,JSON.stringify(mergedRugs));}catch(e){}
+    }
     showRugs(mergedRugs,true);
   }).catch(()=>{showRugs(mergedRugs,true);});
 
-  async function fetchP(url){try{const resp=await fetch(url,{signal:AbortSignal.timeout(9000)});const data=await resp.json();let raw=data;if(data.contents){try{raw=JSON.parse(data.contents);}catch(e){}}if(raw.pairs&&Array.isArray(raw.pairs))return raw.pairs;if(Array.isArray(raw))return raw;if(raw.data&&Array.isArray(raw.data))return raw.data;}catch(e){}return[];}
-  const ENDPOINTS=['https://api.dexscreener.com/latest/dex/search?q=pump.fun','https://api.dexscreener.com/latest/dex/search?q=solana+pump','https://api.dexscreener.com/latest/dex/search?q=pumpfun','https://api.dexscreener.com/latest/dex/search?q=solana+meme','https://api.dexscreener.com/token-profiles/latest/v1','https://api.dexscreener.com/token-boosts/latest/v1'];
-  function geckoToDex(pool){try{const a=pool.attributes;if(!a)return null;const addr=pool.relationships?.base_token?.data?.id?.split('_')[1]||'';return{chainId:'solana',pairCreatedAt:a.pool_created_at?new Date(a.pool_created_at).getTime():Date.now()-3600000,baseToken:{symbol:a.name?.split('/')[0]||'UNK',address:addr},liquidity:{usd:parseFloat(a.reserve_in_usd||0)},marketCap:parseFloat(a.market_cap_usd||a.fdv_usd||0),fdv:parseFloat(a.fdv_usd||0),volume:{h1:parseFloat(a.volume_usd?.h1||0),h6:parseFloat(a.volume_usd?.h6||0),h24:parseFloat(a.volume_usd?.h24||0)},priceChange:{m5:parseFloat(a.price_change_percentage?.m5||0),h1:parseFloat(a.price_change_percentage?.h1||0),h6:parseFloat(a.price_change_percentage?.h6||0),h24:parseFloat(a.price_change_percentage?.h24||0)},txns:{h1:{buys:parseInt(a.transactions?.h1?.buys||0),sells:parseInt(a.transactions?.h1?.sells||0)}},url:`https://dexscreener.com/solana/${addr}`};}catch(e){return null;}}
+  // ── Fetch Pump.fun tokens frais ────────────────────────────
+  async function fetchP(url){
+    try{
+      const resp=await fetch(url,{signal:AbortSignal.timeout(9000)});
+      const data=await resp.json();
+      let raw=data;
+      if(data.contents){try{raw=JSON.parse(data.contents);}catch(e){}}
+      if(raw.pairs&&Array.isArray(raw.pairs))return raw.pairs;
+      if(Array.isArray(raw))return raw;
+      if(raw.data&&Array.isArray(raw.data))return raw.data;
+    }catch(e){}
+    return[];
+  }
+
+  // Endpoints ciblés Pump.fun — tokens frais 20min–2h
+  const ENDPOINTS=[
+    'https://api.dexscreener.com/latest/dex/search?q=pump.fun',
+    'https://api.dexscreener.com/latest/dex/search?q=pumpfun+solana',
+    'https://api.dexscreener.com/latest/dex/search?q=pump+solana+new',
+    'https://api.dexscreener.com/token-profiles/latest/v1',
+    'https://api.dexscreener.com/token-boosts/latest/v1',
+  ];
+
   const results=await Promise.allSettled(ENDPOINTS.map(fetchP));
   const seen=new Set();let pairs=[];
-  const SIX_HOURS=6*3600000,now=Date.now();
-  for(const r of results){if(r.status!=='fulfilled')continue;for(const p of r.value){const conv=p.attributes?geckoToDex(p):p;if(!conv||!conv.chainId||conv.chainId!=='solana')continue;const ageMs=now-(conv.pairCreatedAt||0);if(ageMs>SIX_HOURS||ageMs<60000)continue;const mcap=conv.marketCap||conv.fdv||0;if(mcap<10000)continue;const addr=conv.baseToken?.address||conv.pairAddress||Math.random().toString();if(seen.has(addr))continue;seen.add(addr);pairs.push(conv);}}
+  const TWO_HOURS=2*3600000,now=Date.now();
+
+  for(const r of results){
+    if(r.status!=='fulfilled')continue;
+    for(const p of r.value){
+      if(!p||!p.chainId||p.chainId!=='solana')continue;
+      const ageMs=now-(p.pairCreatedAt||0);
+      // Fenêtre stricte : 20min → 2h
+      if(ageMs<20*60000||ageMs>TWO_HOURS)continue;
+      const mcap=p.marketCap||p.fdv||0;
+      if(mcap<10000||mcap>350000)continue;
+      // Rejeter si déjà migré Raydium
+      const liq=p.liquidity?.usd||0;
+      if(liq>45000)continue;
+      const addr=p.baseToken?.address||p.pairAddress||'';
+      if(!addr||seen.has(addr))continue;
+      seen.add(addr);pairs.push(p);
+    }
+  }
+
   const freshRugs=pairs.map(p=>detectRug(p)).filter(Boolean);
+
+  // Merge + persistance
   let storedRugs={};
   try{storedRugs=JSON.parse(localStorage.getItem(RUGS_KEY)||'{}');}catch(e){}
+
   for(const r of freshRugs){
-    if(r.addr&&!storedRugs[r.addr]){storedRugs[r.addr]={...r,firstSeen:Date.now(),callMcap:r.mcap,athMcap:r.mcap};checkAndAddRugger(r);}
-    else if(r.addr&&storedRugs[r.addr]){if(r.mcap>(storedRugs[r.addr].athMcap||0))storedRugs[r.addr].athMcap=r.mcap;if(r.danger>storedRugs[r.addr].danger)storedRugs[r.addr]={...storedRugs[r.addr],...r,firstSeen:storedRugs[r.addr].firstSeen||Date.now(),callMcap:storedRugs[r.addr].callMcap||r.mcap,athMcap:storedRugs[r.addr].athMcap||r.mcap};}
+    if(!r.addr)continue;
+    if(!storedRugs[r.addr]){
+      storedRugs[r.addr]={...r,firstSeen:Date.now(),callMcap:r.mcap,athMcap:r.mcap};
+      checkAndAddRugger(r);
+    } else {
+      if(r.mcap>(storedRugs[r.addr].athMcap||0))storedRugs[r.addr].athMcap=r.mcap;
+      if(r.danger>storedRugs[r.addr].danger){
+        storedRugs[r.addr]={...storedRugs[r.addr],...r,
+          firstSeen:storedRugs[r.addr].firstSeen||Date.now(),
+          callMcap:storedRugs[r.addr].callMcap||r.mcap,
+          athMcap:storedRugs[r.addr].athMcap||r.mcap};
+      }
+    }
   }
+
   try{localStorage.setItem(RUGS_KEY,JSON.stringify(storedRugs));}catch(e){}
   fetch(`${FB_URL}/rugs.json`,{method:'PUT',body:JSON.stringify(storedRugs)}).catch(()=>{});
+
   const allRugs=Object.values(storedRugs).sort((a,b)=>(b.danger||0)-(a.danger||0));
   lastRugs=allRugs;
+
+  // Stats bar
   let dynCount=0;try{dynCount=Object.keys(JSON.parse(localStorage.getItem(RUGGERS_KEY)||'{}')).length;}catch(e){}
   document.getElementById('rsStatRuggers').textContent=KNOWN_RUGGERS.length+dynCount;
-  if(allRugs.length){const avgDump=allRugs.reduce((s,r)=>s+(r.c1h||0),0)/allRugs.length;const avgAge=allRugs.reduce((s,r)=>s+(r.ageH||0),0)/allRugs.length;document.getElementById('rsStatAvgDump').textContent=avgDump.toFixed(0)+'%';document.getElementById('rsStatAvgAge').textContent=avgAge.toFixed(1)+'h';}
+  if(allRugs.length){
+    const avgDump=allRugs.reduce((s,r)=>s+(r.c1h||0),0)/allRugs.length;
+    const avgAge=allRugs.reduce((s,r)=>s+(r.ageH||0),0)/allRugs.length;
+    document.getElementById('rsStatAvgDump').textContent=avgDump.toFixed(0)+'%';
+    document.getElementById('rsStatAvgAge').textContent=avgAge.toFixed(1)+'h';
+  }
   document.getElementById('rsLastUpdate').textContent='Updated '+new Date().toLocaleTimeString();
   const visibleCount=allRugs.filter(r=>!hiddenRugs.has(r.addr)).length;
   document.getElementById('rsTokenCount').textContent=visibleCount?`(${visibleCount})`:'';
   document.getElementById('rsStatDetected').textContent=visibleCount;
   renderRugTokens(allRugs);renderRuggers();
+
   if(rugRefreshTimer)clearTimeout(rugRefreshTimer);
-  rugRefreshTimer=setTimeout(fetchRugs,60000);
+  rugRefreshTimer=setTimeout(fetchRugs,45000); // 45s au lieu de 60s — plus réactif
 }
 
 // ============================================================
