@@ -1578,7 +1578,7 @@ async function fetchRugs(){
   for(const r of freshRugs){
     if(!r.addr)continue;
     if(!storedRugs[r.addr]){
-      storedRugs[r.addr]={...r,firstSeen:Date.now(),callMcap:r.mcap,athMcap:r.mcap};
+      storedRugs[r.addr]={...r,firstSeen:Date.now(),callMcap:r.mcap,nowMcap:r.mcap,athMcap:r.mcap};
       checkAndAddRugger(r);
     } else {
       if(r.mcap>(storedRugs[r.addr].athMcap||0))storedRugs[r.addr].athMcap=r.mcap;
@@ -1586,6 +1586,7 @@ async function fetchRugs(){
         storedRugs[r.addr]={...storedRugs[r.addr],...r,
           firstSeen:storedRugs[r.addr].firstSeen||Date.now(),
           callMcap:storedRugs[r.addr].callMcap||r.mcap,
+          nowMcap:storedRugs[r.addr].nowMcap||r.mcap,
           athMcap:storedRugs[r.addr].athMcap||r.mcap};
       }
     }
@@ -1640,8 +1641,11 @@ async function refreshRugPrices(){
         if(!key)return;
         const liveMcap=pair.marketCap||pair.fdv||0;
         if(liveMcap>0){
-          storedRugs[key].mcap=liveMcap; // ← FIX PRINCIPAL : toujours mettre à jour mcap
-          if(liveMcap>(storedRugs[key].athMcap||0)){storedRugs[key].athMcap=liveMcap;}
+          // nowMcap = prix live actualisé — callMcap et mcap restent intacts
+          storedRugs[key].nowMcap=liveMcap;
+          // ATH = max de callMcap, athMcap précédent, et nowMcap
+          const prevAth=storedRugs[key].athMcap||storedRugs[key].callMcap||storedRugs[key].mcap||0;
+          if(liveMcap>prevAth)storedRugs[key].athMcap=liveMcap;
           storedRugs[key].c1h=pair.priceChange?.h1??storedRugs[key].c1h??0;
           storedRugs[key].c6h=pair.priceChange?.h6??storedRugs[key].c6h??0;
           storedRugs[key].c24h=pair.priceChange?.h24??storedRugs[key].c24h??0;
@@ -1687,10 +1691,13 @@ function renderRugTokens(rugs){
     if(!r||!r.addr)return'';
     const addrShort=r.addr?r.addr.slice(0,6)+'...'+r.addr.slice(-4):'—';
     const ageStr=(r.ageMin||0)<60?`${Math.round(r.ageMin||0)}min`:`${(r.ageH||0).toFixed(1)}h`;
+    // callMcap = prix au moment du call — jamais écrasé
     const callMcap=r.callMcap||r.mcap||0;
-    const athMcap=r.athMcap||callMcap;
-    // ← FIX : nowMcap vient de r.mcap qui est mis à jour par refreshRugPrices
-    const nowMcap=r.mcap||0;
+    // nowMcap = prix live mis à jour par refreshRugPrices (champ nowMcap)
+    // fallback sur r.mcap uniquement si nowMcap absent
+    const nowMcap=r.nowMcap||r.mcap||callMcap;
+    // athMcap = plus haut depuis le call
+    const athMcap=r.athMcap||Math.max(callMcap,nowMcap);
     const signals=Array.isArray(r.signals)?r.signals:[];
     const xAth=callMcap>0?(athMcap/callMcap):1;
     const xNow=callMcap>0&&nowMcap>0?(nowMcap/callMcap):1;
