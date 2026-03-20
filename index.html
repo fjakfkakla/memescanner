@@ -1129,8 +1129,6 @@ function checkSession() {
     const s = JSON.parse(localStorage.getItem(SESSION_KEY));
     if (s && s.expires > Date.now()) {
       isUnlocked = true;
-      // Sync les codes depuis Firebase en arrière-plan pour avoir les derniers
-      loadCodesFromFB().catch(()=>{});
       onUnlock(s.plan);
     }
   } catch(e) {}
@@ -2067,13 +2065,13 @@ async function fetchRugs() {
 
   // Firebase — charge et affiche dès que disponible
   fetch(`${FB_URL}/rugs.json`).then(r => r.json()).then(fbData => {
-    if (fbData && typeof fbData === 'object' && !Array.isArray(fbData)) {
+    if (fbData && typeof fbData === 'object' && !Array.isArray(fbData) && Object.keys(fbData).length > 0) {
       mergedRugs = { ...fbData, ...mergedRugs };
       try { localStorage.setItem(RUGS_KEY, JSON.stringify(mergedRugs)); } catch(e) {}
     }
-    showRugs(mergedRugs, true); // true = Firebase a répondu
+    showRugs(mergedRugs, true);
   }).catch(() => {
-    showRugs(mergedRugs, true); // Firebase KO → afficher ce qu'on a
+    showRugs(mergedRugs, true);
   });
 
   // ── Scanner de nouveaux rugs ───────────────────────────────────
