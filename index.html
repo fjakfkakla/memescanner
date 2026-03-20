@@ -1199,7 +1199,15 @@ function checkPw() {
   if (v === getAdminPw()) {
     document.getElementById('adminPwScreen').style.display = 'none';
     document.getElementById('adminContent').style.display = 'block';
-    isAdminMode = true; renderCodes();
+    isAdminMode = true;
+    // Sync Firebase → si Firebase vide, uploader les codes locaux
+    loadCodesFromFB().then(fbCodes => {
+      if (!fbCodes || fbCodes.length === 0) {
+        const local = loadCodes();
+        if (local.length > 0) { saveCodesFB(local); }
+      }
+    });
+    renderCodes();
     document.getElementById('debugToggleBtn').style.display = 'inline-block';
   } else {
     document.getElementById('pwErr').style.display = 'block';
@@ -1220,17 +1228,20 @@ function genCode(plan) {
   const s = (n) => Array.from({length:n},()=>c[Math.floor(Math.random()*c.length)]).join('');
   return plan + '-' + s(4) + '-' + s(4);
 }
-function genCodes() {
+async function genCodes() {
   const plan = document.getElementById('planSel').value;
   const n = Math.min(parseInt(document.getElementById('genCount').value)||1, 50);
   const created = [];
-  const codes = loadCodes();
+  // Charger depuis Firebase pour avoir la liste à jour
+  const codes = await loadCodesFromFB();
   for(let i=0;i<n;i++) { const code=genCode(plan); codes.push({code,plan,used:false,ts:Date.now()}); created.push(code); }
-  saveCodes(codes); renderCodes();
+  // Sauvegarder sur Firebase ET attendre la confirmation
+  await saveCodesFB(codes);
+  renderCodes();
   const m = document.getElementById('genOkMsg');
-  m.textContent = '✓ ' + n + ' code(s) généré(s)' + (n===1?' : '+created[0]:'');
+  m.textContent = '✓ ' + n + ' code(s) généré(s) et synchronisé' + (n===1?' : '+created[0]:'');
   m.style.display = 'block';
-  setTimeout(() => m.style.display = 'none', 4000);
+  setTimeout(() => m.style.display = 'none', 5000);
 }
 async function renderCodes() {
   const codes = await loadCodesFromFB(); // Toujours depuis Firebase pour l'admin
@@ -1291,10 +1302,10 @@ function cpCode(code, btn) {
     setTimeout(()=>{btn.textContent=o;btn.style.borderColor='';btn.style.color='';},1200);
   }).catch(()=>{});
 }
-function delCode(idx) { const codes=loadCodes(); codes.splice(idx,1); saveCodes(codes); renderCodes(); }
+function delCode(idx) { const codes=loadCodes(); codes.splice(idx,1); saveCodes(codes); renderCodes(); saveCodesFB(codes); }
 function clearUsed() {
   if(!confirm('Supprimer tous les codes utilisés ?')) return;
-  saveCodes(loadCodes().filter(c=>!c.used)); renderCodes();
+  const filtered=loadCodes().filter(c=>!c.used); saveCodes(filtered); saveCodesFB(filtered); renderCodes();
 }
 function exportCodes() {
   const codes = loadCodes();
