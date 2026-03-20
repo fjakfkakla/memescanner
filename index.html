@@ -593,7 +593,7 @@ section{scroll-margin-top:70px;}
     </div>
     <div class="scanner-controls">
       <span style="font-size:.75rem;color:var(--muted);font-family:var(--font-mono)" id="rsLastUpdate"></span>
-      <button class="scan-btn" style="background:transparent;border:1px solid rgba(255,68,102,.3);color:#ff4466;" onclick="fetchRugs()">↻ Refresh</button>
+      <button class="scan-btn" style="background:transparent;border:1px solid rgba(255,68,102,.3);color:#ff4466;" onclick="if(isUnlocked)fetchRugs();else openCode()">↻ Refresh</button>
     </div>
   </div>
 
@@ -2029,6 +2029,17 @@ function detectRug(p) {
 // ============================================================
 async function fetchRugs() {
   const content = document.getElementById('rsTokenContent');
+  // Guard : seuls les membres connectés ont accès
+  if (!isUnlocked) {
+    content.innerHTML = `
+      <div class="rs-empty" style="padding:3rem 1rem">
+        <div style="font-size:2rem;margin-bottom:.8rem">🔐</div>
+        <div style="font-family:'Syne',sans-serif;font-size:1rem;font-weight:700;color:rgba(255,100,120,.8);margin-bottom:.5rem">Accès réservé aux membres</div>
+        <div style="font-size:.75rem;color:rgba(255,100,120,.4);margin-bottom:1.2rem">Entre ton code pour accéder au RUG SNIP</div>
+        <button onclick="openCode()" style="background:rgba(255,40,80,.15);border:1px solid rgba(255,40,80,.4);color:#ff4466;padding:.5rem 1.4rem;border-radius:6px;font-family:'Space Mono',monospace;font-size:.8rem;font-weight:700;cursor:pointer;">Entrer mon code →</button>
+      </div>`;
+    return;
+  }
   // ── Étape 1 : Afficher immédiatement les rugs déjà stockés ──
   // Charger Firebase + localStorage et afficher TOUT DE SUITE
   try {
@@ -2189,6 +2200,7 @@ async function fetchRugs() {
 // ── Mise à jour des prix en temps réel (toutes les 15s) ────────
 // Indépendant du scan complet — juste les prix Now + ATH
 async function refreshRugPrices() {
+  if (!isUnlocked) { rugPriceTimer = setTimeout(refreshRugPrices, 15000); return; }
   let storedRugs = {};
   try { storedRugs = JSON.parse(localStorage.getItem(RUGS_KEY) || '{}'); } catch(e) {}
   const addrs = Object.values(storedRugs)
@@ -2585,8 +2597,14 @@ window.addEventListener('DOMContentLoaded', () => {
           <button onclick="openCode()" style="background:var(--green);color:#000;border:none;padding:.6rem 1.5rem;border-radius:8px;font-weight:700;cursor:pointer;font-family:var(--font);font-size:.88rem">Entrer mon code d'accès</button>
         </div>
       </div>`;
-    // RUG SNIP visible sans connexion — les rugs sont publics
-    fetchRugs();
+    // RUG SNIP verrouillé — code d'accès requis
+    document.getElementById('rsTokenContent').innerHTML = `
+      <div class="rs-empty" style="padding:3rem 1rem">
+        <div style="font-size:2rem;margin-bottom:.8rem">🔐</div>
+        <div style="font-family:'Syne',sans-serif;font-size:1rem;font-weight:700;color:rgba(255,100,120,.8);margin-bottom:.5rem">Accès réservé aux membres</div>
+        <div style="font-size:.75rem;color:rgba(255,100,120,.4);margin-bottom:1.2rem">Entre ton code pour accéder au RUG SNIP</div>
+        <button onclick="openCode()" style="background:rgba(255,40,80,.15);border:1px solid rgba(255,40,80,.4);color:#ff4466;padding:.5rem 1.4rem;border-radius:6px;font-family:'Space Mono',monospace;font-size:.8rem;font-weight:700;cursor:pointer;">Entrer mon code →</button>
+      </div>`;
   }
   document.getElementById('codeModal').addEventListener('click', e => { if(e.target.id==='codeModal') closeCode(); });
   document.getElementById('adminOverlay').addEventListener('click', e => { if(e.target.id==='adminOverlay') closeAdmin(); });
