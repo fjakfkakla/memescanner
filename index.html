@@ -880,6 +880,16 @@ section{scroll-margin-top:70px;}
 </div>
 
 <script>
+// ── Défense contre SES/Lockdown (extensions wallet Solana/MetaMask) ──
+// Certaines extensions comme Phantom injectent SES qui retire des globaux
+// On les capture AVANT que SES puisse les modifier
+const _DateNow = Date.now.bind(Date);
+const _JSONparse = JSON.parse.bind(JSON);
+const _JSONstringify = JSON.stringify.bind(JSON);
+const _fetch = typeof fetch !== 'undefined' ? fetch.bind(window) : null;
+// Override Date.now pour le rendre SES-safe
+if (typeof Date.now !== 'function') { Date.now = _DateNow; }
+
 window.addEventListener('error', function(e) {
   console.error('ERREUR JS:', e.message, 'à', e.filename, 'ligne', e.lineno);
   setTimeout(() => {
@@ -1367,10 +1377,12 @@ async function renderTokenTable(tokens){
 // ============================================================
 function isPumpFunToken(p){
   const dexId=(p.dexId||p.dex||'').toLowerCase();
+  const url=(p.url||'').toLowerCase();
   const liq=p.liquidity?.usd||0;
-  if(dexId.includes('pump'))return true;
-  if(dexId.includes('raydium')&&liq>=45000)return false;
-  return liq<45000;
+  if(dexId.includes('pump')||url.includes('pump'))return true;
+  // Raydium migré = dexId raydium ET liq > 85K
+  if(dexId.includes('raydium')&&liq>=85000)return false;
+  return liq<85000; // Sous 85K = encore sur bonding curve Pump.fun
 }
 
 // ============================================================
@@ -1393,15 +1405,16 @@ function detectRug(p){
   // Fenêtre large : 1min → 90min
   // XCAT = 2min, CHIBUCK = 15min → on ne peut pas commencer à 20min
   if(ageMin<1)return null;
-  if(ageMin>90)return null;  // au-delà de 90min, trop tard pour la majorité des rugs pump.fun
+  if(ageMin>120)return null; // au-delà de 2h, trop tard
 
   const liq=p.liquidity?.usd||0;
   const mcap=p.marketCap||p.fdv||0;
 
-  // Rejette si migré Raydium (liq > 45K) ou taille incohérente
-  if(liq>45000)return null;           // déjà migré Raydium
+  // Rejette si migré Raydium. Migration = ~69K liq (85 SOL à ~$180/SOL)
+  // On monte à 85K pour ne pas rater les tokens encore sur bonding curve
+  if(liq>85000)return null;           // clairement migré Raydium
   if(liq<3000)return null;            // trop peu de liquidité = données nulles
-  if(mcap>350000)return null;         // trop gros
+  if(mcap>700000)return null;         // trop gros (post-migration Raydium)
   if(mcap<8000)return null;           // trop petit
 
   // Pump.fun uniquement
@@ -1418,7 +1431,7 @@ function detectRug(p){
   const m5=p.priceChange?.m5||0;
 
   // Vol minimum : token doit avoir une activité réelle
-  if(vol1<1000&&(buys1+sells1)<5)return null;
+  if(vol1<500&&(buys1+sells1)<3)return null;
 
   // ── SCORING DANGER (0–12) ────────────────────────────────────
   const signals=[];let danger=0;
@@ -1426,18 +1439,17 @@ function detectRug(p){
   // 1. PUMP FORT = signal principal
   // Le token a pumpé fort récemment — c'est le setup du staircase
   const bigPump=Math.max(c24h,c6h,c1h);
-  const hasBigPump=bigPump>=150; // +150% minimum pour être intéressant
+  const hasBigPump=bigPump>=80; // +80% suffit — beaucoup de rugs pump moins fort
 
   // 2. STAIRCASE en cours : big pump MAIS distribution visible
   //    Pattern XCAT/CHIBUCK : pump +500%–+5000%, SS orange partout
-  if(c24h>=200&&c1h<15){
-    // Gros pump 24h mais 1h qui ralentit = distribution par paliers
+  if(c24h>=150&&c1h<20){
     signals.push(`🎯 STAIRCASE: +${c24h.toFixed(0)}%(24h) → c1h +${c1h.toFixed(0)}%`);
     danger+=4;
-  } else if(c6h>=200&&c1h<15){
+  } else if(c6h>=150&&c1h<20){
     signals.push(`🎯 STAIRCASE: +${c6h.toFixed(0)}%(6h) → c1h +${c1h.toFixed(0)}%`);
     danger+=4;
-  } else if(c1h>=150&&m5<5){
+  } else if(c1h>=100&&m5<8){
     // Pump très récent (1h) + m5 qui ralentit = début du staircase
     signals.push(`📊 Pump 1h +${c1h.toFixed(0)}% → m5 ${m5.toFixed(0)}%`);
     danger+=3;
@@ -1448,17 +1460,22 @@ function detectRug(p){
   }
 
   // 3. SELLS SS orange : distribution pendant la montée
-  //    C'est exactement ce qu'on voit sur XCAT et CHIBUCK
   if(sellRm5>=0.65){
     signals.push(`🔴 SS massifs m5 ${(sellRm5*100).toFixed(0)}% — distribution`);
     danger+=3;
   } else if(sellRm5>=0.55){
     signals.push(`🟠 SS m5 ${(sellRm5*100).toFixed(0)}%`);
     danger+=2;
+  } else if(sellRm5>=0.48&&hasBigPump&&m5<=2){
+    // SS qui commencent pendant pump fort = staircase très early
+    signals.push(`🟡 SS début m5 ${(sellRm5*100).toFixed(0)}%`);
+    danger+=1;
   }
-  if(sellR1h>=0.58&&sellRm5>=0.50){
+  if(sellR1h>=0.58){
     signals.push(`🟠 Sell h1 ${(sellR1h*100).toFixed(0)}%`);
     danger+=1;
+  } else if(sellR1h>=0.52&&hasBigPump){
+    danger+=1; // sell h1 modéré sur pump = signal silencieux
   }
 
   // 4. GROSSE BOUGIE négative = dump en cours
@@ -1501,7 +1518,7 @@ function detectRug(p){
   }
 
   // Filtre final : danger minimum 5 (abaissé pour catcher plus de tokens)
-  if(danger<5)return null;
+  if(danger<4)return null;   // seuil 4 pour ne pas rater les early
   if(signals.length===0)return null;
 
   const dangerLevel=danger>=8?'critical':'high';
@@ -1571,20 +1588,26 @@ async function fetchRugs(){
     return[];
   }
 
-  // Endpoints ciblés Pump.fun — priorité aux tokens trending/boostés
-  // qui ont de l'activité = plus de chance d'avoir les SS orange
+  // 12 sources pour maximiser la couverture des tokens Pump.fun frais
+  // DexScreener retourne ~30 paires par requête, on multiplie les termes
   const ENDPOINTS=[
     'https://api.dexscreener.com/token-boosts/latest/v1',
     'https://api.dexscreener.com/token-profiles/latest/v1',
     'https://api.dexscreener.com/latest/dex/search?q=pump.fun',
-    'https://api.dexscreener.com/latest/dex/search?q=pumpfun+solana',
+    'https://api.dexscreener.com/latest/dex/search?q=pumpfun',
     'https://api.dexscreener.com/latest/dex/search?q=pump+solana',
-    'https://api.dexscreener.com/latest/dex/search?q=solana+new+token',
+    'https://api.dexscreener.com/latest/dex/search?q=solana+meme',
+    'https://api.dexscreener.com/latest/dex/search?q=solana+new',
+    'https://api.dexscreener.com/latest/dex/search?q=cat+solana',
+    'https://api.dexscreener.com/latest/dex/search?q=dog+solana',
+    'https://api.dexscreener.com/latest/dex/search?q=pepe+solana',
+    'https://api.dexscreener.com/latest/dex/search?q=ai+solana',
+    'https://api.dexscreener.com/latest/dex/search?q=trump+solana',
   ];
 
   const results=await Promise.allSettled(ENDPOINTS.map(fetchP));
   const seen=new Set();let pairs=[];
-  const NINETY_MIN=90*60000,now=Date.now();
+  const TWO_HOURS_MS=120*60000,now=Date.now();
 
   for(const r of results){
     if(r.status!=='fulfilled')continue;
@@ -1592,11 +1615,11 @@ async function fetchRugs(){
       if(!p||!p.chainId||p.chainId!=='solana')continue;
       const ageMs=now-(p.pairCreatedAt||0);
       // Fenêtre 1min → 90min
-      if(ageMs<60000||ageMs>NINETY_MIN)continue;
+      if(ageMs<60000||ageMs>TWO_HOURS_MS)continue;
       const mcap=p.marketCap||p.fdv||0;
-      if(mcap<8000||mcap>350000)continue;
+      if(mcap<8000||mcap>700000)continue;
       const liq=p.liquidity?.usd||0;
-      if(liq>45000)continue; // Raydium migré
+      if(liq>85000)continue; // clairement Raydium migré (>85K liq)
       const addr=p.baseToken?.address||p.pairAddress||'';
       if(!addr||seen.has(addr))continue;
       seen.add(addr);pairs.push(p);
@@ -1648,7 +1671,7 @@ async function fetchRugs(){
   renderRugTokens(allRugs);renderRuggers();
 
   if(rugRefreshTimer)clearTimeout(rugRefreshTimer);
-  rugRefreshTimer=setTimeout(fetchRugs,30000); // 30s — plus réactif pour les tokens 2-15min
+  rugRefreshTimer=setTimeout(fetchRugs,20000); // 20s — détection plus rapide
 }
 
 // ============================================================
@@ -1751,7 +1774,7 @@ function hideRug(addr){hiddenRugs.add(addr);try{localStorage.setItem('ms_hidden_
 // ============================================================
 function renderRugTokens(rugs){
   const el=document.getElementById('rsTokenContent');
-  if(!rugs.length){el.innerHTML='<div class="rs-empty">✅ Aucun rug détecté<br><span style="font-size:.7rem;opacity:.6">Refresh auto 60s</span></div>';return;}
+  if(!rugs.length){el.innerHTML='<div class="rs-empty">✅ Aucun rug détecté<br><span style="font-size:.7rem;opacity:.6">Refresh auto 30s</span></div>';return;}
   const activeRugs=sortRugs(rugs.filter(r=>r&&r.addr&&!hiddenRugs.has(r.addr)));
   if(!activeRugs.length){el.innerHTML='<div class="rs-empty">✅ Aucun rug actif<br><span style="font-size:.7rem;opacity:.6">Refresh pour de nouveaux signaux</span></div>';return;}
 
