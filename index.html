@@ -2432,20 +2432,17 @@ function scoreTokenV2(p,walletData={count:0,wallets:[],clustered:false}){
   let socialScore = 0;
   const secSocials = sec;
 
-  if (secSocials) {
-    // TWEET (non cumulable — proxy via âge du token)
-    if (secSocials.hasTwitter) {
-      socialScore += ageH < 1 ? 10 : 5; // <1h = tweet récent probable, sinon tweet du jour
-    }
-    // COMMUNAUTÉ (+8) — Telegram = communauté active sur X/Telegram
-    if (secSocials.hasTelegram) socialScore += 8;
-    // PROFIL ACTIF (+8) — 3 socials = projet structuré avec présence active
-    if (secSocials.hasTwitter && secSocials.hasTelegram && secSocials.hasWebsite) socialScore += 8;
+  // Enrichir avec données DexScreener si Helius n'a rien retourné
+  const dexSocials = p.info?.socials || [];
+  const dexHasTwitter  = secSocials?.hasTwitter  || dexSocials.some(s=>(s.type||'').toLowerCase().includes('twitter') || (s.url||'').includes('twitter.com') || (s.url||'').includes('x.com'));
+  const dexHasTelegram = secSocials?.hasTelegram || dexSocials.some(s=>(s.type||'').toLowerCase().includes('telegram') || (s.url||'').includes('t.me'));
+  const dexHasWebsite  = secSocials?.hasWebsite  || !!(p.info?.websites?.length) || dexSocials.some(s=>!(s.url||'').includes('twitter') && !(s.url||'').includes('t.me'));
 
-  } else if (hasSocials) {
-    // Fallback DexScreener (moins précis)
-    socialScore += hasSocials ? 5 : 0;
+  if (dexHasTwitter) {
+    socialScore += ageH < 1 ? 10 : 5;
   }
+  if (dexHasTelegram) socialScore += 8;
+  if (dexHasTwitter && dexHasTelegram && dexHasWebsite) socialScore += 8;
   score += socialScore;
 
   // ── 👥 HOLDERS ────────────────────────────────────────────────────────────
@@ -2454,20 +2451,26 @@ function scoreTokenV2(p,walletData={count:0,wallets:[],clustered:false}){
   if (top10pct > 0) { // données disponibles
     if      (top10pct <= 25)               holderScore += 10;
     else if (top10pct <= 40)               holderScore +=  5;
-    else if (top10pct > 50)                holderScore -=  5;
+    else if (top10pct > 65)                holderScore -=  5; // seuil 65% (50% trop strict sur Bonk/LP)
+    // entre 40-65% = 0 (ni bonus ni malus)
   }
   // Proxy "pro traders présents" : axiomCount ≥ 3 OU (holderCount ≥ 200 ET top10 ≤ 40)
-  const hasProTraders = axiomCount >= 3 || (holderCount >= 200 && top10pct <= 40);
+  // hasProTraders : Axiom direct OU holders nombreux avec concentration raisonnable
+  const hasProTraders = axiomCount >= 3 || (holderCount >= 100 && top10pct <= 60) || (holderCount >= 50 && top10pct <= 30);
   if (hasProTraders) holderScore += 10;
   score += holderScore;
 
   // ── 🪙 TOKEN PLATFORM ─────────────────────────────────────────────────────
   let platformScore = 0;
-  if (dexId.includes('pump') || dexId.includes('bonk') || dexId.includes('raydium')) {
-    platformScore += 5; // Pump.fun / Bonk / Raydium graduated
+  const pairUrl = (p.url || '').toLowerCase();
+  const isPumpFun  = dexId.includes('pump') || pairUrl.includes('pump');
+  const isBonk     = dexId.includes('bonk') || dexId.includes('launchlab') || pairUrl.includes('bonk') || (p.labels||[]).some(l=>(l.label||l||'').toLowerCase().includes('bonk'));
+  const isRaydium  = dexId.includes('raydium');
+  if (isPumpFun || isBonk || isRaydium) {
+    platformScore += 5;
   }
-  // TODO: +10 si Dex paid (labels inclut "paid" ou banner/logo payé)
-  // if (p.labels?.includes('paid') || p.info?.header) platformScore += 10;
+  // +10 si Dex Paid (bannière ou profil payé sur DexScreener)
+  if ((p.labels||[]).some(l=>(l.label||l||'').toLowerCase().includes('paid'))) platformScore += 10;
   score += platformScore;
 
   // ── ⭐ MCAP ───────────────────────────────────────────────────────────────
