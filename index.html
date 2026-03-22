@@ -2179,7 +2179,7 @@ async function checkAndAddRugger(rugToken) {
 // ============================================================
 const heliusCache = {};
 
-async function checkTokenSecurity(mintAddr) {
+async function checkTokenSecurity(mintAddr, pairAddress = null) {
   if (!mintAddr || mintAddr.length < 32) return null;
   const now = Date.now();
   if (heliusCache[mintAddr] && now - heliusCache[mintAddr].ts < 600000) {
@@ -2224,6 +2224,8 @@ async function checkTokenSecurity(mintAddr) {
       '675kPX9MHTjS2zt1qfr1NYHuzeLXfQM9H24wFSUt1Mp8',
       'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJe8bXP',
     ]);
+    // Exclure aussi l'adresse LP pool spécifique à ce token (= la liquidité)
+    if (pairAddress) KNOWN_PROGRAMS.add(pairAddress);
     const holders = holdersRaw.filter(h => !KNOWN_PROGRAMS.has(h.address));
     const holderCount = holders.length;
     const supplyNum = supply / Math.pow(10, decimals);
@@ -2845,7 +2847,7 @@ async function debugCA(){
     }catch(e){}
 
     // 2. Helius security
-    const sec = await checkTokenSecurity(addr);
+    const sec = await checkTokenSecurity(addr, pairData?.pairAddress || null);
 
     // 3. Axiom wallets
     const wData = await checkAxiomWallets(addr);
@@ -2970,7 +2972,7 @@ async function fetchTokens(){
   for(const t of preScored){
     try{
       // Helius security check — rejet immédiat si mint/freeze active ou concentration élevée
-      const sec = await checkTokenSecurity(t.addr);
+      const sec = await checkTokenSecurity(t.addr, t.pairAddress || null);
       if(sec){
         if(sec.mintAuthority!==null){rejected['mint authority active']=(rejected['mint authority active']||0)+1;continue;}
         if(sec.freezeAuthority!==null){rejected['freeze authority active']=(rejected['freeze authority active']||0)+1;continue;}
