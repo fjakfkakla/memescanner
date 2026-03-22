@@ -2186,17 +2186,28 @@ async function checkTokenSecurity(mintAddr) {
     return heliusCache[mintAddr].data;
   }
   try {
-    // 1. Mint + Freeze authority via getAccountInfo
-    const accResp = await fetch(HELIUS_RPC, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        jsonrpc: '2.0', id: 1,
-        method: 'getAccountInfo',
-        params: [mintAddr, { encoding: 'jsonParsed' }]
-      }),
-      signal: AbortSignal.timeout(5000)
-    }).then(r => r.json());
+    // 3 appels PARALLÈLES pour réduire la latence (avant : 3x5s = 15s max, maintenant : 8s max)
+    const [accRes, holdRes, dasRes] = await Promise.allSettled([
+      fetch(HELIUS_RPC, {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({jsonrpc:'2.0',id:1,method:'getAccountInfo',params:[mintAddr,{encoding:'jsonParsed'}]}),
+        signal:AbortSignal.timeout(8000)
+      }).then(r=>r.json()),
+      fetch(HELIUS_RPC, {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({jsonrpc:'2.0',id:2,method:'getTokenLargestAccounts',params:[mintAddr]}),
+        signal:AbortSignal.timeout(8000)
+      }).then(r=>r.json()),
+      fetch(HELIUS_RPC, {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({jsonrpc:'2.0',id:3,method:'getAsset',params:{id:mintAddr}}),
+        signal:AbortSignal.timeout(8000)
+      }).then(r=>r.json())
+    ]);
+
+    const accResp  = accRes.status==='fulfilled'  ? accRes.value  : null;
+    const holdResp = holdRes.status==='fulfilled' ? holdRes.value : null;
+    const dasResp  = dasRes.status==='fulfilled'  ? dasRes.value  : null;
 
     const info = accResp?.result?.value?.data?.parsed?.info;
     const mintAuthority   = info?.mintAuthority   ?? null;
@@ -2204,47 +2215,29 @@ async function checkTokenSecurity(mintAddr) {
     const supply          = parseFloat(info?.supply || 0);
     const decimals        = info?.decimals ?? 6;
 
-    // 2. Top holders
-    const holdResp = await fetch(HELIUS_RPC, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        jsonrpc: '2.0', id: 2,
-        method: 'getTokenLargestAccounts',
-        params: [mintAddr]
-      }),
-      signal: AbortSignal.timeout(5000)
-    }).then(r => r.json());
-
     const holders = holdResp?.result?.value || [];
     const supplyNum = supply / Math.pow(10, decimals);
     const top1Pct  = supplyNum > 0 && holders[0]  ? (parseFloat(holders[0].uiAmount)  / supplyNum) * 100 : 0;
     const top5Pct  = supplyNum > 0 ? holders.slice(0,5).reduce((s,h)=>s+parseFloat(h.uiAmount||0),0)/supplyNum*100 : 0;
     const top10Pct = supplyNum > 0 ? holders.slice(0,10).reduce((s,h)=>s+parseFloat(h.uiAmount||0),0)/supplyNum*100 : 0;
 
-    // 3. Metadonnees Metaplex via Helius DAS API getAsset
-    // C'est exactement ce qu'affichent Axiom / Terminal / DexScreener
+    // Socials depuis DAS getAsset — même source qu'Axiom/Terminal
     let twitter = null, telegram = null, website = null;
-    try {
-      const dasResp = await fetch(HELIUS_RPC, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          jsonrpc: '2.0', id: 3,
-          method: 'getAsset',
-          params: { id: mintAddr }
-        }),
-        signal: AbortSignal.timeout(5000)
-      }).then(r => r.json());
-
-      const links = dasResp?.result?.content?.links || {};
-      const meta  = dasResp?.result?.content?.metadata || {};
-      const ext   = meta.extensions || {};
-      // Pump.fun stocke les socials dans content.links
-      twitter  = links.twitter  || ext.twitter  || null;
-      telegram = links.telegram || ext.telegram || null;
-      website  = links.website  || ext.website  || null;
-    } catch(e) { /* DAS optionnel */ }
+    if (dasResp) {
+      const rd = dasResp?.result || {};
+      const links = rd?.content?.links || {};
+      const meta  = rd?.content?.metadata || {};
+      const ext   = meta?.extensions || {};
+      twitter  = links.twitter  || links['twitter']  || ext.twitter  || meta?.twitter || null;
+      telegram = links.telegram || links['telegram'] || ext.telegram || meta?.telegram || null;
+      website  = links.website  || links['external_url'] || ext.website || meta?.external_url || null;
+      const attrs = meta?.attributes || [];
+      for(const attr of attrs){
+        if(attr.trait_type==='twitter'||attr.trait_type==='Twitter')   twitter=twitter||attr.value;
+        if(attr.trait_type==='telegram'||attr.trait_type==='Telegram') telegram=telegram||attr.value;
+        if(attr.trait_type==='website'||attr.trait_type==='Website')   website=website||attr.value;
+      }
+    }
 
     const result = {
       mintAuthority, freezeAuthority,
@@ -2275,29 +2268,90 @@ async function checkAxiomWallets(tokenAddr) {
   const now = Date.now();
   const cached = swCache[tokenAddr];
   if (cached && now - cached.ts < 120000) return cached.result;
+
+  // Stratégie : Helius getTokenAccounts (DAS) → retourne {owner, amount}
+  // owner = le vrai wallet qui détient le token
   try {
-    // Utilise Helius getTokenLargestAccounts (déjà disponible)
-    const resp = await fetch(HELIUS_RPC, {
+    // 1. Helius DAS getTokenAccounts — API dédiée aux holders
+    const dasResp = await fetch(
+      `https://mainnet.helius-rpc.com/?api-key=${HELIUS_KEY}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          jsonrpc: '2.0', id: 'axiom-check',
+          method: 'getTokenAccounts',
+          params: {
+            mint: tokenAddr,
+            limit: 1000,
+            cursor: undefined,
+            displayOptions: {}
+          }
+        }),
+        signal: AbortSignal.timeout(8000)
+      }
+    ).then(r => r.json());
+
+    const accounts = dasResp?.result?.token_accounts || [];
+    // owner = wallet réel (pas le token account SPL)
+    const matching = accounts.filter(a => a.owner && AXIOM_WALLETS.has(a.owner));
+
+    if (accounts.length > 0 || matching.length > 0) {
+      const count = matching.length;
+      const wallets = matching.slice(0, 4).map(w => w.owner.slice(0, 8) + '…');
+      const result = { count, wallets, clustered: count >= 2 };
+      swCache[tokenAddr] = { ts: now, result };
+      return result;
+    }
+
+    // 2. Fallback : getTokenLargestAccounts → puis getAccountInfo pour chaque owner
+    const holdResp = await fetch(HELIUS_RPC, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        jsonrpc: '2.0', id: 1,
+        jsonrpc: '2.0', id: 'largest',
         method: 'getTokenLargestAccounts',
         params: [tokenAddr]
       }),
       signal: AbortSignal.timeout(5000)
     }).then(r => r.json());
 
-    const holders = resp?.result?.value || [];
-    const matching = holders.filter(h => AXIOM_WALLETS.has(h.address));
-    const count = matching.length;
-    let buyTs = [];
-    const wallets = matching.slice(0, 4).map(w => w.address.slice(0, 8) + '…');
-    const clustered = count >= 2;
-    const result = { count, wallets, clustered };
+    const largestAccounts = holdResp?.result?.value || [];
+    if (!largestAccounts.length) {
+      const result = { count: 0, wallets: [], clustered: false };
+      swCache[tokenAddr] = { ts: now, result };
+      return result;
+    }
+
+    // Résoudre les owners via getMultipleAccounts
+    const tokenAcctAddrs = largestAccounts.map(a => a.address).slice(0, 20);
+    const multiResp = await fetch(HELIUS_RPC, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        jsonrpc: '2.0', id: 'multi',
+        method: 'getMultipleAccounts',
+        params: [tokenAcctAddrs, { encoding: 'jsonParsed' }]
+      }),
+      signal: AbortSignal.timeout(6000)
+    }).then(r => r.json());
+
+    const acctInfos = multiResp?.result?.value || [];
+    const owners = acctInfos
+      .map(a => a?.data?.parsed?.info?.owner)
+      .filter(Boolean);
+
+    const matchingOwners = owners.filter(o => AXIOM_WALLETS.has(o));
+    const count = matchingOwners.length;
+    const wallets = matchingOwners.slice(0, 4).map(w => w.slice(0, 8) + '…');
+    const result = { count, wallets, clustered: count >= 2 };
     swCache[tokenAddr] = { ts: now, result };
     return result;
-  } catch(e) { return { count: 0, wallets: [], clustered: false }; }
+
+  } catch(e) {
+    console.warn('checkAxiomWallets error:', e.message);
+    return { count: 0, wallets: [], clustered: false };
+  }
 }
 
 function hardFilterV2(p){
@@ -2726,6 +2780,9 @@ async function debugCA(){
   const addr = document.getElementById('dcaInput').value.trim();
   const result = document.getElementById('dcaResult');
   if(!addr || addr.length < 32){ result.innerHTML='<div class="dca-loading" style="color:var(--red)">⚠️ CA invalide</div>'; return; }
+  // Vider les caches pour forcer un fresh fetch
+  delete swCache[addr];
+  delete heliusCache[addr];
   result.innerHTML='<div class="dca-loading"><div class="spinner"></div>Analyse en cours...<br><span style="font-size:.65rem;opacity:.6">Helius + DexScreener</span></div>';
   try{
     // 1. Fetch pair data depuis DexScreener
