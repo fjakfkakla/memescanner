@@ -2421,6 +2421,10 @@ function scoreTokenV2(p,walletData={count:0,wallets:[],clustered:false}){
   }
   if (dexHasTelegram) socialScore += 8;
   if (dexHasTwitter && dexHasTelegram && dexHasWebsite) socialScore += 8;
+
+  // Proxy "communauté active" si Helius holders > 300 (token populaire)
+  // Remplace la détection sociale manquante pour Raydium/tokens migrés
+  if (socialScore === 0 && holderCount >= 300) socialScore += 5;
   score += socialScore;
 
   // ── 👥 HOLDERS ────────────────────────────────────────────────────────────
@@ -2443,7 +2447,7 @@ function scoreTokenV2(p,walletData={count:0,wallets:[],clustered:false}){
   const pairUrl = (p.url || '').toLowerCase();
   const isPumpFun  = dexId.includes('pump') || pairUrl.includes('pump');
   const isBonk     = dexId.includes('bonk') || dexId.includes('launchlab') || pairUrl.includes('bonk') || (p.labels||[]).some(l=>(l.label||l||'').toLowerCase().includes('bonk'));
-  const isRaydium  = dexId.includes('raydium');
+  const isRaydium  = dexId.includes('raydium') || dexId.includes('cpmm') || dexId.includes('clmm');
   if (isPumpFun || isBonk || isRaydium) {
     platformScore += 5;
   }
@@ -2853,6 +2857,7 @@ AXIOM WALLETS  : ${wData.count} détectés${wData.wallets.length?' → '+wData.w
 SOCIALS DEX    : ${dbHasX?'𝕏 ':''  }${dbHasTG?'TG ':''  }${dbHasWEB?'WEB ':''  }${!dbHasX&&!dbHasTG&&!dbHasWEB?'aucun':''}
 SOCIALS RAW    : ${dbRawSocials}
 HELIUS SEC     : ${sec?'✅ chargé':'❌ indisponible (Bonk/LaunchLab normal)'}
+DEX ID         : ${pairData?.dexId||'?'}
 PAIRE DEXSCR   : ${pairData?'✅ trouvée':'❌ non trouvée'}`;
 
     result.innerHTML=`
