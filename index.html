@@ -2270,49 +2270,59 @@ async function checkAxiomWallets(tokenAddr) {
   if (cached && now - cached.ts < 120000) return cached.result;
 
   try {
-    // Stratégie FIABLE : getTokenLargestAccounts → getMultipleAccounts pour résoudre owners
-    // C'est la seule méthode qui donne les vrais wallets owners
-    // (getTokenAccounts DAS retourne parfois des programme accounts, pas les vrais owners)
+    // DOUBLE STRATÉGIE pour maximiser la détection :
+    // A) Top 20 holders actuels (via getTokenLargestAccounts + getMultipleAccounts)
+    // B) Tous les holders avec balance > 0 (via Helius DAS getTokenAccounts)
+    //    → capture les traders qui ont acheté puis vendu partiellement
 
-    // 1. Top 20 token accounts par balance
-    const holdResp = await fetch(HELIUS_RPC, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        jsonrpc: '2.0', id: 'largest',
-        method: 'getTokenLargestAccounts',
-        params: [tokenAddr]
-      }),
-      signal: AbortSignal.timeout(8000)
-    }).then(r => r.json());
+    const [largestRes, dasRes] = await Promise.allSettled([
+      // A) Top 20 par balance
+      fetch(HELIUS_RPC, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ jsonrpc: '2.0', id: 'largest',
+          method: 'getTokenLargestAccounts', params: [tokenAddr] }),
+        signal: AbortSignal.timeout(8000)
+      }).then(r => r.json()),
+      // B) Tous les holders via DAS
+      fetch(`https://mainnet.helius-rpc.com/?api-key=${HELIUS_KEY}`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ jsonrpc: '2.0', id: 'das-accounts',
+          method: 'getTokenAccounts',
+          params: { mint: tokenAddr, limit: 1000, displayOptions: {} } }),
+        signal: AbortSignal.timeout(8000)
+      }).then(r => r.json())
+    ]);
 
-    const largestAccounts = holdResp?.result?.value || [];
-    if (!largestAccounts.length) {
-      const result = { count: 0, wallets: [], clustered: false };
-      swCache[tokenAddr] = { ts: now, result };
-      return result;
+    const allOwners = new Set();
+
+    // B) DAS owners directs (méthode la plus complète)
+    if (dasRes.status === 'fulfilled') {
+      const dasAccounts = dasRes.value?.result?.token_accounts || [];
+      dasAccounts.forEach(a => { if (a.owner) allOwners.add(a.owner); });
     }
 
-    // 2. Résoudre le vrai owner wallet de chaque token account via getMultipleAccounts
-    const tokenAcctAddrs = largestAccounts.map(a => a.address).slice(0, 20);
-    const multiResp = await fetch(HELIUS_RPC, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        jsonrpc: '2.0', id: 'multi',
-        method: 'getMultipleAccounts',
-        params: [tokenAcctAddrs, { encoding: 'jsonParsed' }]
-      }),
-      signal: AbortSignal.timeout(8000)
-    }).then(r => r.json());
+    // A) Top 20 → résoudre owners via getMultipleAccounts
+    if (largestRes.status === 'fulfilled') {
+      const largestAccounts = largestRes.value?.result?.value || [];
+      if (largestAccounts.length > 0) {
+        try {
+          const addrs = largestAccounts.map(a => a.address).slice(0, 20);
+          const multiResp = await fetch(HELIUS_RPC, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ jsonrpc: '2.0', id: 'multi',
+              method: 'getMultipleAccounts',
+              params: [addrs, { encoding: 'jsonParsed' }] }),
+            signal: AbortSignal.timeout(8000)
+          }).then(r => r.json());
+          (multiResp?.result?.value || []).forEach(a => {
+            const owner = a?.data?.parsed?.info?.owner;
+            if (owner) allOwners.add(owner);
+          });
+        } catch(e) { /* fallback silencieux */ }
+      }
+    }
 
-    const acctInfos = multiResp?.result?.value || [];
-    const owners = acctInfos
-      .map(a => a?.data?.parsed?.info?.owner)
-      .filter(Boolean);
-
-    // 3. Vérifier si des owners sont dans notre liste Axiom
-    const matchingOwners = [...new Set(owners)].filter(o => AXIOM_WALLETS.has(o));
+    const matchingOwners = [...allOwners].filter(o => AXIOM_WALLETS.has(o));
     const count = matchingOwners.length;
     const wallets = matchingOwners.slice(0, 4).map(w => w.slice(0, 8) + '…');
     const result = { count, wallets, clustered: count >= 2 };
@@ -2422,9 +2432,15 @@ function scoreTokenV2(p,walletData={count:0,wallets:[],clustered:false}){
   if (dexHasTelegram) socialScore += 8;
   if (dexHasTwitter && dexHasTelegram && dexHasWebsite) socialScore += 8;
 
-  // Proxy "communauté active" si Helius holders > 300 (token populaire)
-  // Remplace la détection sociale manquante pour Raydium/tokens migrés
-  if (socialScore === 0 && holderCount >= 300) socialScore += 5;
+  // Proxy social pour tokens Raydium migrés (DexScreener ne retourne pas toujours les socials)
+  // Si Helius est chargé + holderCount élevé = token avec communauté probable
+  if (socialScore === 0) {
+    if (holderCount >= 400) socialScore += 10; // grosse communauté = tweet récent probable
+    else if (holderCount >= 200) socialScore += 5;  // communauté modérée
+    else if (holderCount >= 100) socialScore += 3;  // signal faible
+  } else if (socialScore < 10 && holderCount >= 400) {
+    socialScore = Math.max(socialScore, 10); // si holders élevé, garantir au moins +10
+  }
   score += socialScore;
 
   // ── 👥 HOLDERS ────────────────────────────────────────────────────────────
@@ -2849,11 +2865,15 @@ async function debugCA(){
     const dbLiq   = pairData?.liquidity?.usd || 0;
     const dbRawSocials = dbDexSocials.map(s=>s.type||s.url||'?').join(', ') || 'aucun';
 
+    const dbHolderCount = sec?.holderCount || 0;
+    const dbTop10 = sec ? parseFloat(sec.top10Pct||0) : 0;
+
     const details=`TOKEN          : ${sym}
 CA             : ${addr.slice(0,12)}...${addr.slice(-6)}
 MCAP           : $${fmtNum(mcap)} | LIQ : $${fmtNum(dbLiq||liq)}
 AGE            : ${ageH.toFixed(1)}h (${ageMin.toFixed(0)}min)
 AXIOM WALLETS  : ${wData.count} détectés${wData.wallets.length?' → '+wData.wallets.join(' '):''}
+HOLDERS HELIUS : ${dbHolderCount} comptes · top10 = ${dbTop10.toFixed(1)}%
 SOCIALS DEX    : ${dbHasX?'𝕏 ':''  }${dbHasTG?'TG ':''  }${dbHasWEB?'WEB ':''  }${!dbHasX&&!dbHasTG&&!dbHasWEB?'aucun':''}
 SOCIALS RAW    : ${dbRawSocials}
 HELIUS SEC     : ${sec?'✅ chargé':'❌ indisponible (Bonk/LaunchLab normal)'}
