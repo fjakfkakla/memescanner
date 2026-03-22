@@ -2487,37 +2487,32 @@ function scoreTokenV2(p,walletData={count:0,wallets:[],clustered:false}){
   // Présence communauté X → +8 (proxy : Telegram présent)
   // Profil Twitter actif  → +8 (proxy : Twitter + Telegram + Website)
   let socialScore = 0;
-  const secSocials = sec;
 
-  // Enrichir avec données DexScreener si Helius n'a rien retourné
-  // DexScreener socials: p.info.socials[{type,url}] + p.info.websites[{url}]
-  // LaunchLab/Bonk peut aussi mettre les socials dans p.baseToken.info ou p.profile
-  const dexSocials = [
-    ...(p.info?.socials || []),
-    ...(p.baseToken?.info?.socials || []),
-    ...(p.profile?.socials || []),
-  ];
-  const allWebsites = [...(p.info?.websites || []), ...(p.baseToken?.info?.websites || [])];
-  const dexHasTwitter  = secSocials?.hasTwitter  || dexSocials.some(s=>(s.type||'').toLowerCase().includes('twitter') || (s.url||'').includes('twitter.com') || (s.url||'').includes('x.com'));
-  const dexHasTelegram = secSocials?.hasTelegram || dexSocials.some(s=>(s.type||'').toLowerCase().includes('telegram') || (s.url||'').includes('t.me'));
-  const dexHasWebsite  = secSocials?.hasWebsite  || !!(allWebsites.length) || dexSocials.some(s=>{ const u=(s.url||''); return u.length>0 && !u.includes('twitter') && !u.includes('x.com') && !u.includes('t.me'); });
+  // Source 1 : Helius getAsset on-chain (hasTwitter/hasTelegram/hasWebsite)
+  const hasX   = sec?.hasTwitter  || false;
+  const hasTG  = sec?.hasTelegram || false;
+  const hasWEB = sec?.hasWebsite  || false;
 
-  if (dexHasTwitter) {
-    socialScore += ageH < 1 ? 10 : 5;
-  }
-  if (dexHasTelegram) socialScore += 8;
-  if (dexHasTwitter && dexHasTelegram && dexHasWebsite) socialScore += 8;
+  // Source 2 : DexScreener p.info.socials [{type, url}]
+  const dexSocials = [...(p.info?.socials||[]),...(p.baseToken?.info?.socials||[])];
+  const dexX   = dexSocials.some(s=>(s.type||'').toLowerCase().includes('twitter')||(s.url||'').includes('twitter.com')||(s.url||'').includes('x.com'));
+  const dexTG  = dexSocials.some(s=>(s.type||'').toLowerCase().includes('telegram')||(s.url||'').includes('t.me'));
+  const dexWEB = !!(p.info?.websites?.length)||dexSocials.some(s=>{const u=s.url||'';return u.length>5&&!u.includes('twitter')&&!u.includes('x.com')&&!u.includes('t.me');});
 
-  // Proxy social — plusieurs sources
+  const gotX   = hasX   || dexX;
+  const gotTG  = hasTG  || dexTG;
+  const gotWEB = hasWEB || dexWEB;
+
+  if (gotX)  socialScore += ageH < 1 ? 10 : 5;
+  if (gotTG) socialScore += 8;
+  if (gotX && gotTG && gotWEB) socialScore += 8;
+
+  // Proxy : token < 5min avec achats actifs = lancé avec tweet (pas encore indexé)
   if (socialScore === 0) {
-    // Token très récent < 10min → DexScreener pas encore indexé les socials
-    // mais le tweet est souvent posté au lancement
-    if (ageMin < 10 && mcap > 5000) socialScore += 8; // bonus "token frais lancé avec tweet"
-    else if (holderCount >= 400) socialScore += 10;
-    else if (holderCount >= 200) socialScore += 5;
-    else if (holderCount >= 100) socialScore += 3;
-  } else if (socialScore < 10 && holderCount >= 400) {
-    socialScore = Math.max(socialScore, 10);
+    const buys1 = p.txns?.h1?.buys || 0;
+    if      (ageMin < 5 && buys1 >= 5)  socialScore += 8;
+    else if (holderCount >= 300)         socialScore += 10;
+    else if (holderCount >= 150)         socialScore += 5;
   }
   score += socialScore;
 
@@ -2867,9 +2862,9 @@ async function debugCA(){
   delete heliusCache[addr];
   result.innerHTML='<div class="dca-loading"><div class="spinner"></div>Analyse en cours...<br><span style="font-size:.65rem;opacity:.6">Helius + DexScreener</span></div>';
   try{
-    // Vider le cache pour ce CA (forcer refresh à chaque analyse manuelle)
+    // Vider le cache Helius (pour forcer refresh sécurité)
+    // NE PAS vider swCache (Axiom wallets) — garder le max historique
     delete heliusCache[addr];
-    delete swCache[addr];
     // 1. Fetch pair data depuis DexScreener
     let pairData = null;
     try{
@@ -3010,8 +3005,9 @@ async function fetchTokens(){
         if(sec.freezeAuthority!==null){rejected['freeze authority active']=(rejected['freeze authority active']||0)+1;continue;}
         if(parseFloat(sec.top1Pct)>25){rejected[`top1 holder ${sec.top1Pct}%`]=(rejected[`top1 holder ${sec.top1Pct}%`]||0)+1;continue;}
         if(parseFloat(sec.top5Pct)>55){rejected[`top5 holders ${sec.top5Pct}%`]=(rejected[`top5 holders ${sec.top5Pct}%`]||0)+1;continue;}
-        // Attacher les données de sécurité au token pour affichage
+        // Attacher les données de sécurité au token pour affichage ET pour rescoring
         t.security = sec;
+        if (t.raw) t.raw.security = sec; // CRUCIAL : scoreTokenV2 lit p.security
       }
       const wData=await checkAxiomWallets(t.addr);
       const rescored=scoreTokenV2(t.raw,wData);
