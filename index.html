@@ -2215,7 +2215,17 @@ async function checkTokenSecurity(mintAddr) {
     const supply          = parseFloat(info?.supply || 0);
     const decimals        = info?.decimals ?? 6;
 
-    const holders = holdResp?.result?.value || [];
+    const holdersRaw = holdResp?.result?.value || [];
+    // Filtrer LP/burn/program accounts qui gonflent artificiellement la concentration
+    const KNOWN_PROGRAMS = new Set([
+      '11111111111111111111111111111111',
+      'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
+      'So11111111111111111111111111111111111111112',
+      '675kPX9MHTjS2zt1qfr1NYHuzeLXfQM9H24wFSUt1Mp8',
+      'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJe8bXP',
+    ]);
+    const holders = holdersRaw.filter(h => !KNOWN_PROGRAMS.has(h.address));
+    const holderCount = holders.length;
     const supplyNum = supply / Math.pow(10, decimals);
     const top1Pct  = supplyNum > 0 && holders[0]  ? (parseFloat(holders[0].uiAmount)  / supplyNum) * 100 : 0;
     const top5Pct  = supplyNum > 0 ? holders.slice(0,5).reduce((s,h)=>s+parseFloat(h.uiAmount||0),0)/supplyNum*100 : 0;
@@ -2244,7 +2254,7 @@ async function checkTokenSecurity(mintAddr) {
       top1Pct:  top1Pct.toFixed(1),
       top5Pct:  top5Pct.toFixed(1),
       top10Pct: top10Pct.toFixed(1),
-      holderCount: holders.length,
+      holderCount: holderCount,
       safe: mintAuthority === null && freezeAuthority === null && top1Pct < 15 && top5Pct < 40,
       // Socials on-chain (lus depuis Metaplex / Pump.fun metadata)
       twitter, telegram, website,
@@ -2479,17 +2489,19 @@ function scoreTokenV2(p,walletData={count:0,wallets:[],clustered:false}){
   score += socialScore;
 
   // ── 👥 HOLDERS ────────────────────────────────────────────────────────────
-  // Données Helius (top10Pct depuis checkTokenSecurity)
+  // Données Helius — utiliser top5Pct (plus fiable, moins affecté par LP accounts)
+  const top5pct  = sec ? parseFloat(sec.top5Pct||0)  : 0;
   let holderScore = 0;
-  if (top10pct > 0) { // données disponibles
-    if      (top10pct <= 25)               holderScore += 10;
-    else if (top10pct <= 40)               holderScore +=  5;
-    else if (top10pct > 65)                holderScore -=  5; // seuil 65% (50% trop strict sur Bonk/LP)
-    // entre 40-65% = 0 (ni bonus ni malus)
+  if (top5pct > 0 || top10pct > 0) {
+    // top5 = signal principal (exclut les LP qui gonflent top10)
+    const t5 = top5pct || top10pct * 0.6; // estimation si top5 manquant
+    if      (t5 <= 15)  holderScore += 10; // très bien distribué
+    else if (t5 <= 25)  holderScore +=  5; // bien distribué
+    else if (t5 <= 40)  holderScore +=  0; // neutre
+    else if (t5 >  55)  holderScore -=  5; // trop concentré
   }
-  // Proxy "pro traders présents" : axiomCount ≥ 3 OU (holderCount ≥ 200 ET top10 ≤ 40)
-  // hasProTraders : Axiom direct OU holders nombreux avec concentration raisonnable
-  const hasProTraders = axiomCount >= 3 || (holderCount >= 100 && top10pct <= 60) || (holderCount >= 50 && top10pct <= 30);
+  // Bonus "pro traders" : Axiom direct OU holders nombreux
+  const hasProTraders = axiomCount >= 3 || (holderCount >= 100 && top5pct <= 50) || (holderCount >= 50 && top5pct <= 25);
   if (hasProTraders) holderScore += 10;
   score += holderScore;
 
@@ -2901,6 +2913,7 @@ async function debugCA(){
     const dbRawSocials = dbDexSocials.map(s=>s.type||s.url||'?').join(', ') || 'aucun';
 
     const dbHolderCount = sec?.holderCount || 0;
+    const dbTop5  = sec ? parseFloat(sec.top5Pct||0)  : 0;
     const dbTop10 = sec ? parseFloat(sec.top10Pct||0) : 0;
 
     const details=`TOKEN          : ${sym}
@@ -2908,7 +2921,7 @@ CA             : ${addr.slice(0,12)}...${addr.slice(-6)}
 MCAP           : $${fmtNum(mcap)} | LIQ : $${fmtNum(dbLiq||liq)}
 AGE            : ${ageH.toFixed(1)}h (${ageMin.toFixed(0)}min)
 AXIOM WALLETS  : ${wData.count} détectés${wData.wallets.length?' → '+wData.wallets.join(' '):''}
-HOLDERS HELIUS : ${dbHolderCount} comptes · top10 = ${dbTop10.toFixed(1)}%
+HOLDERS HELIUS : ${dbHolderCount} comptes · top5 = ${dbTop5.toFixed(1)}% · top10 = ${dbTop10.toFixed(1)}%
 SOCIALS DEX    : ${dbHasX?'𝕏 ':''  }${dbHasTG?'TG ':''  }${dbHasWEB?'WEB ':''  }${!dbHasX&&!dbHasTG&&!dbHasWEB?'aucun':''}
 SOCIALS RAW    : ${dbRawSocials}
 HELIUS SEC     : ${sec?'✅ chargé':'❌ indisponible (Bonk/LaunchLab normal)'}
