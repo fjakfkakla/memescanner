@@ -563,6 +563,27 @@ section{scroll-margin-top:70px;}
 /* Axiom wallets tag */
 .sc-axiom{font-family:'Space Mono',monospace;font-size:.6rem;background:rgba(255,215,0,.12);
   border:1px solid rgba(255,215,0,.25);color:var(--gold);padding:.18rem .45rem;border-radius:4px;}
+
+/* ── DEBUG CA PANEL ─── */
+.dca-panel{background:var(--bg2);border:1px solid rgba(0,255,136,.15);border-radius:12px;padding:1.5rem;margin-top:.5rem;}
+.dca-input-row{display:flex;gap:.6rem;margin-bottom:1.2rem;}
+.dca-inp{flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:.65rem 1rem;color:var(--green);font-family:var(--font-mono);font-size:.82rem;letter-spacing:.04em;}
+.dca-inp:focus{outline:none;border-color:var(--green);}
+.dca-btn{padding:.65rem 1.4rem;background:var(--green);color:#000;border:none;border-radius:8px;font-family:var(--font-mono);font-size:.78rem;font-weight:700;cursor:pointer;white-space:nowrap;}
+.dca-btn:hover{background:var(--green2);}
+.dca-score-display{text-align:center;margin-bottom:1.2rem;}
+.dca-score-num{font-family:'Syne',sans-serif;font-size:4rem;font-weight:800;line-height:1;}
+.dca-score-label{font-size:.8rem;font-family:var(--font-mono);margin-top:.3rem;}
+.dca-cats{display:flex;flex-direction:column;gap:.6rem;margin-bottom:1.2rem;}
+.dca-cat-row{display:flex;align-items:center;gap:.8rem;}
+.dca-cat-name{font-family:var(--font-mono);font-size:.68rem;color:var(--muted);width:100px;flex-shrink:0;}
+.dca-cat-bar{flex:1;background:var(--bg3);border-radius:4px;height:8px;overflow:hidden;}
+.dca-cat-fill{height:100%;border-radius:4px;background:var(--green);transition:.6s;}
+.dca-cat-val{font-family:var(--font-mono);font-size:.7rem;color:var(--text);width:40px;text-align:right;flex-shrink:0;}
+.dca-details{font-family:var(--font-mono);font-size:.72rem;color:var(--muted);background:var(--bg3);padding:.9rem 1rem;border-radius:8px;line-height:1.9;white-space:pre;}
+.dca-loading{text-align:center;padding:2rem;color:var(--muted);font-family:var(--font-mono);font-size:.8rem;}
+.dca-sec-row{display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:.8rem;}
+
 </style>
 </head>
 <body>
@@ -689,6 +710,7 @@ section{scroll-margin-top:70px;}
     <div style="display:flex;">
       <button class="s-tab active" id="tabLive" onclick="switchTab('live')">📡 Live <span id="liveCount" class="hist-count"></span></button>
       <button class="s-tab" id="tabHistory" onclick="switchTab('history')">📋 Historique <span id="histCount" class="hist-count"></span></button>
+      <button class="s-tab" id="tabDebugCA" onclick="switchTab('debugca')" style="display:none">🔬 Debug CA</button>
     </div>
     <div style="display:flex;gap:.4rem;padding:.3rem 0;">
       <button class="btn-reset" id="btnResetLive" onclick="resetLive()" style="display:none">🗑 Vider Live</button>
@@ -713,6 +735,16 @@ section{scroll-margin-top:70px;}
     </div>
     <div id="historyContent"><div class="hist-empty"><div class="hist-empty-icon">📭</div><div>Chargement...</div></div></div>
   </div>
+</div>
+<div id="panelDebugCA" style="display:none">
+  <div class="dca-panel">
+    <div class="dca-input-row">
+      <input type="text" class="dca-inp" id="dcaInput" placeholder="Colle un Contract Address Solana..." maxlength="44">
+      <button class="dca-btn" onclick="debugCA()">🔬 Analyser</button>
+    </div>
+    <div id="dcaResult"></div>
+  </div>
+</div>
 </div>
 </section>
 
@@ -2244,27 +2276,23 @@ async function checkAxiomWallets(tokenAddr) {
   const cached = swCache[tokenAddr];
   if (cached && now - cached.ts < 120000) return cached.result;
   try {
-
-    const resp = await fetch(`https://mainnet.helius-rpc.com/?api-key=${HELIUS_KEY}`, {
+    // Utilise Helius getTokenLargestAccounts (déjà disponible)
+    const resp = await fetch(HELIUS_RPC, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         jsonrpc: '2.0', id: 1,
-        method: 'getTokenAccounts',
-        params: {
-          mint: tokenAddr,
-          limit: 1000,
-          displayOptions: { showZeroBalance: false }
-        }
+        method: 'getTokenLargestAccounts',
+        params: [tokenAddr]
       }),
-      signal: AbortSignal.timeout(6000)
+      signal: AbortSignal.timeout(5000)
     }).then(r => r.json());
 
-  const accounts = resp?.result?.token_accounts || [];
- const matching = accounts.filter(a => a.owner && AXIOM_WALLETS.has(a.owner));
+    const holders = resp?.result?.value || [];
+    const matching = holders.filter(h => AXIOM_WALLETS.has(h.address));
     const count = matching.length;
-   
-  const wallets = matching.slice(0, 4).map(w => w.owner.slice(0, 8) + '…');
+    let buyTs = [];
+    const wallets = matching.slice(0, 4).map(w => w.address.slice(0, 8) + '…');
     const clustered = count >= 2;
     const result = { count, wallets, clustered };
     swCache[tokenAddr] = { ts: now, result };
@@ -2546,6 +2574,7 @@ function checkPw(){
     isAdminMode=true;
     loadCodesFromFB().then(fbCodes=>{if(!fbCodes||fbCodes.length===0){const local=loadCodes();if(local.length>0){saveCodesFB(local);}}});
     renderCodes();document.getElementById('debugToggleBtn').style.display='inline-block';
+    document.getElementById('tabDebugCA').style.display='inline-block';
   }else{document.getElementById('pwErr').style.display='block';document.getElementById('adminPwInp').value='';}
 }
 function changePw(){const v=document.getElementById('newPwInp').value.trim();if(v.length<4)return;setAdminPw(v);ADMIN_PW=v;document.getElementById('newPwInp').value='';const m=document.getElementById('pwOkMsg');m.style.display='block';setTimeout(()=>m.style.display='none',2500);}
@@ -2632,8 +2661,10 @@ function switchTab(tab){
   currentTab=tab;
   document.getElementById('panelLive').style.display=tab==='live'?'block':'none';
   document.getElementById('panelHistory').style.display=tab==='history'?'block':'none';
+  document.getElementById('panelDebugCA').style.display=tab==='debugca'?'block':'none';
   document.getElementById('tabLive').classList.toggle('active',tab==='live');
   document.getElementById('tabHistory').classList.toggle('active',tab==='history');
+  document.getElementById('tabDebugCA').classList.toggle('active',tab==='debugca');
   document.getElementById('btnResetLive').style.display=tab==='live'?'inline-block':'none';
   document.getElementById('btnResetHistory').style.display=tab==='history'?'inline-block':'none';
   if(tab==='history')renderHistory();
@@ -2687,6 +2718,105 @@ function toggleLang(){
 // ============================================================
 function resetLive(){if(!confirm('Vider tous les calls live ?'))return;lastScored=[];document.getElementById('scannerContent').innerHTML='<div class="empty-state"><div class="empty-icon">🗑</div><div class="empty-title">Liste vidée</div><div class="empty-sub">Refresh pour recharger</div></div>';const lc=document.getElementById('liveCount');if(lc)lc.textContent='';}
 function resetHistory(){if(!confirm('Supprimer tout l\'historique des calls ? Cette action est irréversible.'))return;try{localStorage.removeItem(STORAGE_KEY);}catch(e){}try{fetch(`${FB_URL}/calls.json`,{method:'DELETE'}).catch(()=>{});}catch(e){}const hc=document.getElementById('histCount');if(hc)hc.textContent='';const container=document.getElementById('historyContent');if(container)container.innerHTML='<div class="hist-empty"><div class="hist-empty-icon">🗑</div><div>Historique supprimé</div></div>';}
+
+// ============================================================
+// DEBUG CA — Outil admin pour analyser n'importe quel token
+// ============================================================
+async function debugCA(){
+  const addr = document.getElementById('dcaInput').value.trim();
+  const result = document.getElementById('dcaResult');
+  if(!addr || addr.length < 32){ result.innerHTML='<div class="dca-loading" style="color:var(--red)">⚠️ CA invalide</div>'; return; }
+  result.innerHTML='<div class="dca-loading"><div class="spinner"></div>Analyse en cours...<br><span style="font-size:.65rem;opacity:.6">Helius + DexScreener</span></div>';
+  try{
+    // 1. Fetch pair data depuis DexScreener
+    let pairData = null;
+    try{
+      const dex = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${addr}`,{signal:AbortSignal.timeout(8000)}).then(r=>r.json());
+      pairData = (dex.pairs||[]).sort((a,b)=>(b.volume?.h1||0)-(a.volume?.h1||0))[0] || null;
+    }catch(e){}
+
+    // 2. Helius security
+    const sec = await checkTokenSecurity(addr);
+
+    // 3. Axiom wallets
+    const wData = await checkAxiomWallets(addr);
+
+    // 4. Score
+    let score=0,traderScore=0,socialScore=0,holderScore=0,platformScore=0,mcapScore=0,ageScore=0,patternScore=0;
+    let sym=addr.slice(0,8)+'...',mcap=0,liq=0,ageH=0,ageMin=0;
+
+    if(pairData){
+      pairData.security = sec;
+      const scored = scoreTokenV2(pairData, wData);
+      score=scored.score; sym=scored.symbol; mcap=scored.mcap; liq=scored.liq;
+      traderScore=scored.debug.traderScore; socialScore=scored.debug.socialScore;
+      holderScore=scored.debug.holderScore; platformScore=scored.debug.platformScore;
+      mcapScore=scored.debug.mcapScore; ageScore=scored.debug.ageScore;
+      patternScore=scored.debug.patternScore;
+      ageH=scored.debug.ageH; ageMin=ageH*60;
+    }
+
+    const scoreColor=score>=110?'var(--gold)':score>=80?'var(--green)':score>=55?'var(--blue)':'var(--red)';
+    const label=getLabel(score);
+    const labelText=label?label.text:'❌ SOUS SEUIL (< 55)';
+
+    const cats=[
+      {name:'🎯 Axiom',    val:traderScore,  max:20},
+      {name:'🌐 Social',   val:socialScore,  max:26},
+      {name:'👥 Holders',  val:holderScore,  max:20},
+      {name:'🪙 Platform', val:platformScore,max:5},
+      {name:'⭐ Mcap',     val:mcapScore,    max:15},
+      {name:'⏱ Age',       val:ageScore,     max:10},
+      {name:'📈 Pattern',  val:patternScore, max:30},
+    ];
+
+    const bars=cats.map(c=>{
+      const pct=Math.max(0,Math.min(100,(Math.max(0,c.val)/c.max)*100));
+      const color=c.val<0?'var(--red)':c.val>c.max*.7?'var(--green)':'#ffaa00';
+      return `<div class="dca-cat-row">
+        <div class="dca-cat-name">${c.name}</div>
+        <div class="dca-cat-bar"><div class="dca-cat-fill" style="width:${pct}%;background:${color}"></div></div>
+        <div class="dca-cat-val" style="color:${color}">${c.val>=0?'+':''}${c.val}</div>
+      </div>`;
+    }).join('');
+
+    let secHtml='<div style="color:var(--muted);font-family:var(--font-mono);font-size:.7rem">Données Helius indisponibles</div>';
+    if(sec){
+      const mc=sec.mintAuthority===null,fc=sec.freezeAuthority===null;
+      secHtml=`<div class="dca-sec-row">
+        <span class="sc-sec-chip" style="background:${mc?'rgba(0,255,136,.12)':'rgba(255,68,102,.15)'};color:${mc?'#00ff88':'#ff4466'}">MINT ${mc?'✅':'❌'}</span>
+        <span class="sc-sec-chip" style="background:${fc?'rgba(0,255,136,.12)':'rgba(255,68,102,.15)'};color:${fc?'#00ff88':'#ff4466'}">FREEZE ${fc?'✅':'❌'}</span>
+        <span class="sc-sec-chip" style="background:rgba(255,255,255,.05);color:${parseFloat(sec.top1Pct)<10?'#00ff88':parseFloat(sec.top1Pct)<15?'#ffaa00':'#ff4466'}">TOP1 ${sec.top1Pct}%</span>
+        <span class="sc-sec-chip" style="background:rgba(255,255,255,.05);color:${parseFloat(sec.top5Pct)<30?'#00ff88':parseFloat(sec.top5Pct)<40?'#ffaa00':'#ff4466'}">TOP5 ${sec.top5Pct}%</span>
+        <span class="sc-sec-chip" style="background:rgba(255,255,255,.05);color:rgba(200,200,255,.7)">TOP10 ${sec.top10Pct}%</span>
+        ${sec.hasTwitter?'<span class="sc-sec-chip" style="background:rgba(29,161,242,.12);color:#1da1f2">𝕏</span>':''}
+        ${sec.hasTelegram?'<span class="sc-sec-chip" style="background:rgba(0,136,204,.12);color:#08c">TG</span>':''}
+        ${sec.hasWebsite?'<span class="sc-sec-chip" style="background:rgba(255,255,255,.05);color:rgba(255,255,255,.5)">WEB</span>':''}
+      </div>`;
+    }
+
+    const details=`TOKEN          : ${sym}
+CA             : ${addr.slice(0,12)}...${addr.slice(-6)}
+MCAP           : $${fmtNum(mcap)} | LIQ : $${fmtNum(liq)}
+AGE            : ${ageH.toFixed(1)}h (${ageMin.toFixed(0)}min)
+AXIOM WALLETS  : ${wData.count} détectés${wData.wallets.length?' → '+wData.wallets.join(' '):''}
+PAIRE DEXSCR   : ${pairData?'✅ trouvée':'❌ non trouvée'}`;
+
+    result.innerHTML=`
+      <div class="dca-score-display">
+        <div class="dca-score-num" style="color:${scoreColor}">${score}</div>
+        <div class="dca-score-label" style="color:${scoreColor}">${labelText}</div>
+        <div style="font-size:.65rem;color:var(--muted);margin-top:.3rem;font-family:var(--font-mono)">/ 150 pts max</div>
+      </div>
+      ${secHtml}
+      <div class="dca-cats">${bars}</div>
+      <div class="dca-details">${details}</div>
+      ${pairData?`<div style="margin-top:.8rem;text-align:center"><a href="${pairData.url||'https://dexscreener.com/solana/'+addr}" target="_blank" class="sc-btn-dex" style="display:inline-block">Voir sur DexScreener →</a></div>`:''}
+    `;
+  }catch(e){
+    result.innerHTML=`<div class="dca-loading" style="color:var(--red)">⚠️ Erreur: ${e.message}</div>`;
+  }
+}
 
 // ============================================================
 // FETCH TOKENS v2
