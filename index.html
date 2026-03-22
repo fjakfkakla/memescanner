@@ -2131,51 +2131,170 @@ function hardFilterV2(p){
 // SCORER v2
 // ============================================================
 function scoreTokenV2(p,walletData={count:0,wallets:[],clustered:false}){
-  const ageH=(Date.now()-(p.pairCreatedAt||0))/3600000;
-  const liq=p.liquidity?.usd||0,mcap=p.marketCap||p.fdv||0;
-  const buys1=p.txns?.h1?.buys||0,sells1=p.txns?.h1?.sells||0,total1=buys1+sells1||1;
-  const buyR=buys1/total1,vol1=p.volume?.h1||0,vol6=p.volume?.h6||0;
-  const c1h=p.priceChange?.h1||0,c6h=p.priceChange?.h6||0,m5=p.priceChange?.m5||0;
-  const hasSocials=!!(p.info?.socials?.length||p.info?.websites?.length);
-  const volAvgH=(vol6/6)||(vol1||1),volAccel=vol1/volAvgH;
-  let score=0;
-  // Boost AXIOM wallets (tes traders trackés sur Axiom)
-  let walletScore = 0;
-  if (walletData.count >= 4)      walletScore = 55;
-  else if (walletData.count === 3) walletScore = 40;
-  else if (walletData.count === 2) walletScore = 28;
-  else if (walletData.count === 1) walletScore = 15;
-  if (walletData.clustered && walletData.count >= 2) walletScore += 12;
-  score += walletScore;
-  let momentumScore=0;
-  if(m5>8&&m5<120)momentumScore+=12;else if(m5>3)momentumScore+=5;else if(m5<-15)momentumScore-=8;
-  if(c1h>15&&c1h<150)momentumScore+=14;else if(c1h>5)momentumScore+=6;else if(c1h>0)momentumScore+=2;else if(c1h<-15)momentumScore-=10;
-  if(c6h>20)momentumScore+=6;else if(c6h>5)momentumScore+=3;
-  score+=momentumScore;
-  let buyScore=buyR>0.75?20:buyR>0.65?13:buyR>0.55?6:buyR>0.48?-5:-15;
-  score+=buyScore;
-  let volScore=volAccel>3?20:volAccel>2?14:volAccel>1.3?8:volAccel>0.7?2:-8;
-  score+=volScore;
-  let ageScore=(ageH>=0.5&&ageH<=4)?15:(ageH>4&&ageH<=8)?10:(ageH>8&&ageH<=16)?5:0;
-  score+=ageScore;
-  let mcapScore=(mcap>=20000&&mcap<=60000)?15:(mcap>60000&&mcap<=100000)?10:(mcap>100000)?4:2;
-  score+=mcapScore;
-  score+=hasSocials?8:0;
-  score+=liq>30000?5:liq>15000?3:liq>6000?1:0;
-  let rugPts=0;
-  if(buyR<0.52)rugPts+=3;if(volAccel<0.5)rugPts++;if(c1h<-5)rugPts++;if(!hasSocials)rugPts++;if(liq<6000)rugPts+=2;if(ageH<0.5)rugPts++;if(walletData.count>=1)rugPts=Math.max(0,rugPts-2);
-  const rugRisk=rugPts>=5?'HIGH':rugPts>=3?'MEDIUM':'LOW';
-  const emoji=EMOJIS[Math.floor(Math.random()*EMOJIS.length)];
-  const sym=(p.baseToken?.symbol||'UNKNOWN').toUpperCase().slice(0,12);
-  const addr=p.baseToken?.address||'';
-  return{score:Math.max(0,Math.min(120,Math.round(score))),symbol:sym,emoji,addr,mcap,liq,socials:hasSocials,rugRisk,walletData,pairUrl:p.url||`https://dexscreener.com/solana/${addr}`,raw:p,debug:{walletScore,momentumScore,buyScore,volScore,ageScore,mcapScore,walletCount:walletData.count,clustered:walletData.clustered,buyRatio:buyR,volAccel,c1h,m5,ageH}};
+  const ageMs  = Date.now()-(p.pairCreatedAt||0);
+  const ageH   = ageMs/3600000;
+  const ageMin = ageMs/60000;
+  const liq    = p.liquidity?.usd||0;
+  const mcap   = p.marketCap||p.fdv||0;
+  const buys1  = p.txns?.h1?.buys||0, sells1=p.txns?.h1?.sells||0, total1=buys1+sells1||1;
+  const buyR   = buys1/total1;
+  const vol1   = p.volume?.h1||0, vol6=p.volume?.h6||0;
+  const c1h    = p.priceChange?.h1||0;
+  const c6h    = p.priceChange?.h6||0;
+  const m5     = p.priceChange?.m5||0;
+  const m1     = p.priceChange?.m1||0; // si dispo
+  const hasSocials = !!(p.info?.socials?.length||p.info?.websites?.length);
+  const volAvgH = (vol6/6)||(vol1||1);
+  const volAccel = vol1/volAvgH;
+  const dexId   = (p.dexId||p.dex||'').toLowerCase();
+
+  // Données sécurité Helius (attachées par checkTokenSecurity)
+  const sec = p.security || null;
+  const top10pct = sec ? parseFloat(sec.top10Pct||0) : 0;
+  const holderCount = sec?.holderCount || 0;
+
+  let score = 0;
+
+  // ── 🎯 TRADERS AXIOM ──────────────────────────────────────────────────────
+  // Basé sur axiomData.count (wallets de ta liste Axiom détectés en top holders)
+  let traderScore = 0;
+  const axiomCount = walletData.count || 0;
+  if      (axiomCount >= 5) traderScore = 20;
+  else if (axiomCount === 4) traderScore = 15;
+  else if (axiomCount === 3) traderScore = 10;
+  else if (axiomCount === 2) traderScore =  8;
+  else if (axiomCount === 1) traderScore =  5;
+  score += traderScore;
+
+  // ── 🌐 SOCIAL ─────────────────────────────────────────────────────────────
+  // Max possible : +26 (tweet récent +10 / communauté +8 / profil actif +8)
+  // API X ($100/mois) ou Birdeye premium nécessaire pour données réelles
+  // Structure en place — score = 0 jusqu'à intégration API
+  let socialScore = 0;
+  // TWEET (non cumulable — on prend le plus élevé)
+  // const tweetRecent  = checkTweetLastHour(tokenAddr);  // TODO API X
+  // const tweetToday   = checkTweetToday(tokenAddr);     // TODO API X
+  // socialScore += tweetRecent ? 10 : (tweetToday ? 5 : 0);
+  //
+  // COMMUNAUTÉ (compte avec posts récents, replies, mentions)
+  // const hasCommunity = checkXCommunity(tokenAddr);     // TODO API X / Birdeye social
+  // if (hasCommunity) socialScore += 8;
+  //
+  // PROFIL ACTIF (posts récents du compte token/dev)
+  // const profileActive = checkXProfileActive(tokenAddr); // TODO API X
+  // if (profileActive) socialScore += 8;
+  //
+  // Fallback minimal jusqu'à implémentation
+  if (hasSocials) socialScore += 3;
+  score += socialScore;
+
+  // ── 👥 HOLDERS ────────────────────────────────────────────────────────────
+  // Données Helius (top10Pct depuis checkTokenSecurity)
+  let holderScore = 0;
+  if (top10pct > 0) { // données disponibles
+    if      (top10pct <= 25)               holderScore += 10;
+    else if (top10pct <= 40)               holderScore +=  5;
+    else if (top10pct > 50)                holderScore -=  5;
+  }
+  // Proxy "pro traders présents" : axiomCount ≥ 3 OU (holderCount ≥ 200 ET top10 ≤ 40)
+  const hasProTraders = axiomCount >= 3 || (holderCount >= 200 && top10pct <= 40);
+  if (hasProTraders) holderScore += 10;
+  score += holderScore;
+
+  // ── 🪙 TOKEN PLATFORM ─────────────────────────────────────────────────────
+  let platformScore = 0;
+  if (dexId.includes('pump') || dexId.includes('bonk') || dexId.includes('raydium')) {
+    platformScore += 5; // Pump.fun / Bonk / Raydium graduated
+  }
+  // TODO: +10 si Dex paid (labels inclut "paid" ou banner/logo payé)
+  // if (p.labels?.includes('paid') || p.info?.header) platformScore += 10;
+  score += platformScore;
+
+  // ── ⭐ MCAP ───────────────────────────────────────────────────────────────
+  let mcapScore = 0;
+  if      (mcap >= 15000 && mcap <= 30000)  mcapScore = 15;
+  else if (mcap >  30000 && mcap <= 60000)  mcapScore = 10;
+  else if (mcap > 100000)                   mcapScore = -5;
+  score += mcapScore;
+
+  // ── ⏱ AGE ─────────────────────────────────────────────────────────────────
+  let ageScore = 0;
+  if      (ageMin >= 1  && ageMin <= 5)   ageScore = 10;
+  else if (ageMin >  5  && ageMin <= 15)  ageScore =  5;
+  score += ageScore;
+
+  // ── 📈 CORRECTION / PATTERN ───────────────────────────────────────────────
+  let patternScore = 0;
+
+  // Pattern escalier : m5 positif + c1h > 30% + pas de gros dump
+  const isStaircase = m5 > 0 && c1h > 30 && m5 > -30;
+  if (isStaircase) patternScore += 15;
+
+  // Correction saine depuis ATH (c1h > -20 = pas trop dumped)
+  if (c1h > -20 && c1h <= 0) patternScore += 10;
+
+  // Correction trop forte
+  if (c1h < -40) patternScore -= 10;
+
+  // Détection de pumps successifs (approximation avec c6h + c1h)
+  const pump1 = c1h > 10;
+  const pump2 = c6h > 10 && c1h > 5;  // 2 periodes positives
+  const pump3 = c6h > 30 && c1h > 15; // 3 pumps estimés
+  if      (pump3)       patternScore += 15;
+  else if (pump2)       patternScore += 10;
+  else if (pump1)       patternScore +=  5; // 1 seul pump visible
+
+  // Consolidation courte (variation faible sur m5/m1)
+  const isConsolidating = Math.abs(m5) < 5 && (m1 === 0 || Math.abs(m1) < 5);
+  if (isConsolidating && c1h > 0) patternScore += 10; // consolidation après montée
+
+  // Pas de dump violent
+  if (m5 > -30) patternScore += 5;
+
+  score += patternScore;
+
+  // ── CALCUL FINAL ──────────────────────────────────────────────────────────
+  const finalScore = Math.min(150, Math.max(0, Math.round(score)));
+
+  // Rug risk inchangé (basé sur données disponibles)
+  let rugPts = 0;
+  if(buyR<0.52)rugPts+=3;
+  if(volAccel<0.5)rugPts++;
+  if(c1h<-5)rugPts++;
+  if(!hasSocials)rugPts++;
+  if(liq<6000)rugPts+=2;
+  if(ageH<0.5)rugPts++;
+  if(axiomCount>=1)rugPts=Math.max(0,rugPts-2);
+  const rugRisk = rugPts>=5?'HIGH':rugPts>=3?'MEDIUM':'LOW';
+
+  const emoji = EMOJIS[Math.floor(Math.random()*EMOJIS.length)];
+  const sym   = (p.baseToken?.symbol||'UNKNOWN').toUpperCase().slice(0,12);
+  const addr  = p.baseToken?.address||'';
+
+  return {
+    score: finalScore,
+    symbol: sym, emoji, addr, mcap, liq,
+    socials: hasSocials, rugRisk, walletData,
+    pairUrl: p.url||`https://dexscreener.com/solana/${addr}`,
+    raw: p,
+    debug: {
+      traderScore, socialScore, holderScore, platformScore,
+      mcapScore, ageScore, patternScore,
+      walletScore: traderScore, // alias pour debug panel
+      momentumScore: patternScore,
+      buyScore: 0, volScore: 0, // non utilisés dans ce scoring
+      walletCount: axiomCount, clustered: walletData.clustered,
+      buyRatio: buyR, volAccel, c1h, m5, ageH,
+      top10pct, axiomCount
+    }
+  };
 }
 function getLabel(score){
-  if(score>=80)return{text:'🔥 ALPHA CALL',cls:'score-god-gem'};
-  if(score>=65)return{text:'⚡ HIGH SIGNAL',cls:'score-high-pot'};
-  if(score>=50)return{text:'💎 WATCHLIST',cls:'score-solid'};
-  if(score>=35)return{text:'🌱 EARLY RADAR',cls:'score-solid'};
-  return null;
+  if(score>=130)return{text:'☢️ NUCLEAR SEND',   cls:'score-god-gem'};
+  if(score>=110)return{text:'💎 DIAMOND RADAR',  cls:'score-god-gem'};
+  if(score>=95) return{text:'🚀 EARLY RUNNER',   cls:'score-high-pot'};
+  if(score>=80) return{text:'👁 WATCHLIST',       cls:'score-solid'};
+  return null; // sous 80 = pas affiché
 }
 
 // ============================================================
@@ -2425,8 +2544,8 @@ async function fetchTokens(){
       }
       const wData=await checkAxiomWallets(t.addr);
       const rescored=scoreTokenV2(t.raw,wData);
-      if(rescored.score>=55){rescored.security=sec;finalScored.push(rescored);}
-    }catch(e){if(t.score>=55)finalScored.push(t);}
+      if(rescored.score>=80){rescored.security=sec;finalScored.push(rescored);}
+    }catch(e){if(t.score>=80)finalScored.push(t);}
   }
   finalScored.sort((a,b)=>b.score-a.score);
   for(const t of finalScored){const existing=await getCallData(t.addr);if(!existing)await saveCall(t.addr,t.mcap,Date.now(),t.symbol);else if(t.mcap>(existing.athMcap||0))await updateAth(t.addr,t.mcap);}
