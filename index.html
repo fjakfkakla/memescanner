@@ -2386,7 +2386,7 @@ function scoreTokenV2(p,walletData={count:0,wallets:[],clustered:false}){
   const ageMs  = Date.now()-(p.pairCreatedAt||0);
   const ageH   = ageMs/3600000;
   const ageMin = ageMs/60000;
-  const liq    = p.liquidity?.usd||0;
+  const liq    = p.liquidity?.usd || (p.liquidity?.base||0)*(p.priceNative||0) || 0;
   const mcap   = p.marketCap||p.fdv||0;
   const buys1  = p.txns?.h1?.buys||0, sells1=p.txns?.h1?.sells||0, total1=buys1+sells1||1;
   const buyR   = buys1/total1;
@@ -2788,6 +2788,9 @@ async function debugCA(){
   delete heliusCache[addr];
   result.innerHTML='<div class="dca-loading"><div class="spinner"></div>Analyse en cours...<br><span style="font-size:.65rem;opacity:.6">Helius + DexScreener</span></div>';
   try{
+    // Vider le cache pour ce CA (forcer refresh à chaque analyse manuelle)
+    delete heliusCache[addr];
+    delete swCache[addr];
     // 1. Fetch pair data depuis DexScreener
     let pairData = null;
     try{
@@ -2855,11 +2858,20 @@ async function debugCA(){
       </div>`;
     }
 
+    // Socials depuis DexScreener pour debug (indépendant de Helius)
+    const dbDexSocials = pairData?.info?.socials||[];
+    const dbHasX  = dbDexSocials.some(s=>(s.url||'').includes('twitter.com')||(s.url||'').includes('x.com'));
+    const dbHasTG = dbDexSocials.some(s=>(s.url||'').includes('t.me'));
+    const dbHasWEB= !!(pairData?.info?.websites?.length);
+    const dbLiq   = pairData?.liquidity?.usd || 0;
+
     const details=`TOKEN          : ${sym}
 CA             : ${addr.slice(0,12)}...${addr.slice(-6)}
-MCAP           : $${fmtNum(mcap)} | LIQ : $${fmtNum(liq)}
+MCAP           : $${fmtNum(mcap)} | LIQ : $${fmtNum(dbLiq||liq)}
 AGE            : ${ageH.toFixed(1)}h (${ageMin.toFixed(0)}min)
 AXIOM WALLETS  : ${wData.count} détectés${wData.wallets.length?' → '+wData.wallets.join(' '):''}
+SOCIALS DEX    : ${dbHasX?'𝕏 ':''  }${dbHasTG?'TG ':''  }${dbHasWEB?'WEB ':''  }${!dbHasX&&!dbHasTG&&!dbHasWEB?'aucun':''}
+HELIUS SEC     : ${sec?'✅ chargé':'❌ indisponible (Bonk/LaunchLab normal)'}
 PAIRE DEXSCR   : ${pairData?'✅ trouvée':'❌ non trouvée'}`;
 
     result.innerHTML=`
