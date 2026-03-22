@@ -2244,23 +2244,27 @@ async function checkAxiomWallets(tokenAddr) {
   const cached = swCache[tokenAddr];
   if (cached && now - cached.ts < 120000) return cached.result;
   try {
-    // Utilise Helius getTokenLargestAccounts (déjà disponible)
-    const resp = await fetch(HELIUS_RPC, {
+
+    const resp = await fetch(`https://mainnet.helius-rpc.com/?api-key=${HELIUS_KEY}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         jsonrpc: '2.0', id: 1,
-        method: 'getTokenLargestAccounts',
-        params: [tokenAddr]
+        method: 'getTokenAccounts',
+        params: {
+          mint: tokenAddr,
+          limit: 1000,
+          displayOptions: { showZeroBalance: false }
+        }
       }),
-      signal: AbortSignal.timeout(5000)
+      signal: AbortSignal.timeout(6000)
     }).then(r => r.json());
 
-    const holders = resp?.result?.value || [];
-    const matching = holders.filter(h => AXIOM_WALLETS.has(h.address));
+  const accounts = resp?.result?.token_accounts || [];
+ const matching = accounts.filter(a => a.owner && AXIOM_WALLETS.has(a.owner));
     const count = matching.length;
-    let buyTs = [];
-    const wallets = matching.slice(0, 4).map(w => w.address.slice(0, 8) + '…');
+   
+  const wallets = matching.slice(0, 4).map(w => w.owner.slice(0, 8) + '…');
     const clustered = count >= 2;
     const result = { count, wallets, clustered };
     swCache[tokenAddr] = { ts: now, result };
