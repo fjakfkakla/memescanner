@@ -2269,42 +2269,12 @@ async function checkAxiomWallets(tokenAddr) {
   const cached = swCache[tokenAddr];
   if (cached && now - cached.ts < 120000) return cached.result;
 
-  // Stratégie : Helius getTokenAccounts (DAS) → retourne {owner, amount}
-  // owner = le vrai wallet qui détient le token
   try {
-    // 1. Helius DAS getTokenAccounts — API dédiée aux holders
-    const dasResp = await fetch(
-      `https://mainnet.helius-rpc.com/?api-key=${HELIUS_KEY}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          jsonrpc: '2.0', id: 'axiom-check',
-          method: 'getTokenAccounts',
-          params: {
-            mint: tokenAddr,
-            limit: 1000,
-            cursor: undefined,
-            displayOptions: {}
-          }
-        }),
-        signal: AbortSignal.timeout(8000)
-      }
-    ).then(r => r.json());
+    // Stratégie FIABLE : getTokenLargestAccounts → getMultipleAccounts pour résoudre owners
+    // C'est la seule méthode qui donne les vrais wallets owners
+    // (getTokenAccounts DAS retourne parfois des programme accounts, pas les vrais owners)
 
-    const accounts = dasResp?.result?.token_accounts || [];
-    // owner = wallet réel (pas le token account SPL)
-    const matching = accounts.filter(a => a.owner && AXIOM_WALLETS.has(a.owner));
-
-    if (accounts.length > 0 || matching.length > 0) {
-      const count = matching.length;
-      const wallets = matching.slice(0, 4).map(w => w.owner.slice(0, 8) + '…');
-      const result = { count, wallets, clustered: count >= 2 };
-      swCache[tokenAddr] = { ts: now, result };
-      return result;
-    }
-
-    // 2. Fallback : getTokenLargestAccounts → puis getAccountInfo pour chaque owner
+    // 1. Top 20 token accounts par balance
     const holdResp = await fetch(HELIUS_RPC, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -2313,7 +2283,7 @@ async function checkAxiomWallets(tokenAddr) {
         method: 'getTokenLargestAccounts',
         params: [tokenAddr]
       }),
-      signal: AbortSignal.timeout(5000)
+      signal: AbortSignal.timeout(8000)
     }).then(r => r.json());
 
     const largestAccounts = holdResp?.result?.value || [];
@@ -2323,7 +2293,7 @@ async function checkAxiomWallets(tokenAddr) {
       return result;
     }
 
-    // Résoudre les owners via getMultipleAccounts
+    // 2. Résoudre le vrai owner wallet de chaque token account via getMultipleAccounts
     const tokenAcctAddrs = largestAccounts.map(a => a.address).slice(0, 20);
     const multiResp = await fetch(HELIUS_RPC, {
       method: 'POST',
@@ -2333,7 +2303,7 @@ async function checkAxiomWallets(tokenAddr) {
         method: 'getMultipleAccounts',
         params: [tokenAcctAddrs, { encoding: 'jsonParsed' }]
       }),
-      signal: AbortSignal.timeout(6000)
+      signal: AbortSignal.timeout(8000)
     }).then(r => r.json());
 
     const acctInfos = multiResp?.result?.value || [];
@@ -2341,7 +2311,8 @@ async function checkAxiomWallets(tokenAddr) {
       .map(a => a?.data?.parsed?.info?.owner)
       .filter(Boolean);
 
-    const matchingOwners = owners.filter(o => AXIOM_WALLETS.has(o));
+    // 3. Vérifier si des owners sont dans notre liste Axiom
+    const matchingOwners = [...new Set(owners)].filter(o => AXIOM_WALLETS.has(o));
     const count = matchingOwners.length;
     const wallets = matchingOwners.slice(0, 4).map(w => w.slice(0, 8) + '…');
     const result = { count, wallets, clustered: count >= 2 };
