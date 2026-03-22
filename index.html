@@ -2491,19 +2491,19 @@ function scoreTokenV2(p,walletData={count:0,wallets:[],clustered:false}){
   score += socialScore;
 
   // ── 👥 HOLDERS ────────────────────────────────────────────────────────────
-  // Données Helius — utiliser top5Pct (plus fiable, moins affecté par LP accounts)
-  const top5pct  = sec ? parseFloat(sec.top5Pct||0)  : 0;
+  // Holders — top10pct après exclusion LP pool (pairAddress exclu dans checkTokenSecurity)
+  const top5pct = sec ? parseFloat(sec.top5Pct||0) : 0;
   let holderScore = 0;
-  if (top5pct > 0 || top10pct > 0) {
-    // top5 = signal principal (exclut les LP qui gonflent top10)
-    const t5 = top5pct || top10pct * 0.6; // estimation si top5 manquant
-    if      (t5 <= 15)  holderScore += 10; // très bien distribué
-    else if (t5 <= 25)  holderScore +=  5; // bien distribué
-    else if (t5 <= 40)  holderScore +=  0; // neutre
-    else if (t5 >  55)  holderScore -=  5; // trop concentré
+  if (top10pct > 0) {
+    // top10 après exclusion LP = vraie distribution retail
+    if      (top10pct <= 20)  holderScore += 10; // excellent
+    else if (top10pct <= 35)  holderScore +=  8; // très bien
+    else if (top10pct <= 50)  holderScore +=  5; // bien
+    else if (top10pct <= 65)  holderScore +=  0; // neutre
+    else                      holderScore -=  5; // trop concentré
   }
-  // Bonus "pro traders" : Axiom direct OU holders nombreux
-  const hasProTraders = axiomCount >= 3 || (holderCount >= 100 && top5pct <= 50) || (holderCount >= 50 && top5pct <= 25);
+  // Bonus pro traders
+  const hasProTraders = axiomCount >= 3 || (holderCount >= 100 && top10pct <= 60) || (holderCount >= 50 && top10pct <= 30);
   if (hasProTraders) holderScore += 10;
   score += holderScore;
 
