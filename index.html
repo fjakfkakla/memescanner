@@ -2270,38 +2270,79 @@ async function checkAxiomWallets(tokenAddr) {
   if (cached && now - cached.ts < 120000) return cached.result;
 
   try {
-    // DOUBLE STRATÉGIE pour maximiser la détection :
-    // A) Top 20 holders actuels (via getTokenLargestAccounts + getMultipleAccounts)
-    // B) Tous les holders avec balance > 0 (via Helius DAS getTokenAccounts)
-    //    → capture les traders qui ont acheté puis vendu partiellement
+    // TRIPLE STRATÉGIE — du plus complet au plus ciblé :
+    // A) Transactions récentes du token (signers = tous ceux qui ont tradé, même vendus)
+    // B) DAS getTokenAccounts (holders actuels avec balance > 0)
+    // C) Top 20 holders → resolve owners
 
-    const [largestRes, dasRes] = await Promise.allSettled([
-      // A) Top 20 par balance
+    const [sigRes, dasRes, largestRes] = await Promise.allSettled([
+      // A) 100 dernières signatures sur le token mint → signers = traders récents
+      fetch(HELIUS_RPC, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ jsonrpc: '2.0', id: 'sigs',
+          method: 'getSignaturesForAddress',
+          params: [tokenAddr, { limit: 100 }] }),
+        signal: AbortSignal.timeout(8000)
+      }).then(r => r.json()),
+      // B) DAS tous les holders actuels
+      fetch(`https://mainnet.helius-rpc.com/?api-key=${HELIUS_KEY}`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ jsonrpc: '2.0', id: 'das',
+          method: 'getTokenAccounts',
+          params: { mint: tokenAddr, limit: 1000, displayOptions: {} } }),
+        signal: AbortSignal.timeout(8000)
+      }).then(r => r.json()),
+      // C) Top 20 par balance
       fetch(HELIUS_RPC, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ jsonrpc: '2.0', id: 'largest',
           method: 'getTokenLargestAccounts', params: [tokenAddr] }),
-        signal: AbortSignal.timeout(8000)
-      }).then(r => r.json()),
-      // B) Tous les holders via DAS
-      fetch(`https://mainnet.helius-rpc.com/?api-key=${HELIUS_KEY}`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ jsonrpc: '2.0', id: 'das-accounts',
-          method: 'getTokenAccounts',
-          params: { mint: tokenAddr, limit: 1000, displayOptions: {} } }),
         signal: AbortSignal.timeout(8000)
       }).then(r => r.json())
     ]);
 
     const allOwners = new Set();
 
-    // B) DAS owners directs (méthode la plus complète)
-    if (dasRes.status === 'fulfilled') {
-      const dasAccounts = dasRes.value?.result?.token_accounts || [];
-      dasAccounts.forEach(a => { if (a.owner) allOwners.add(a.owner); });
+    // A) Extraire les signers des transactions (= tous les traders récents)
+    if (sigRes.status === 'fulfilled') {
+      const sigs = sigRes.value?.result || [];
+      // Chaque signature a un champ "err" et pas directement le signer
+      // On doit fetch les transactions pour avoir les signers
+      // Mais getSignaturesForAddress ne donne pas les signers directement
+      // → On utilise getTransaction sur les 20 premières pour extraire les fee payers
+      const recentSigs = sigs.slice(0, 30).map(s => s.signature).filter(Boolean);
+      if (recentSigs.length > 0) {
+        try {
+          const txRes = await fetch(HELIUS_RPC, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              jsonrpc: '2.0', id: 'txs',
+              method: 'getTransactions',
+              params: [recentSigs, { encoding: 'jsonParsed', maxSupportedTransactionVersion: 0 }]
+            }),
+            signal: AbortSignal.timeout(10000)
+          }).then(r => r.json());
+          // getTransactions = méthode Helius Enhanced API
+          const txs = txRes?.result || [];
+          txs.forEach(tx => {
+            if (!tx) return;
+            // fee payer = premier signer = le wallet qui a fait la transaction
+            const feePayer = tx?.transaction?.message?.accountKeys?.[0]?.pubkey
+                          || tx?.transaction?.message?.accountKeys?.[0];
+            if (feePayer && typeof feePayer === 'string') allOwners.add(feePayer);
+          });
+        } catch(e) { /* fallback */ }
+      }
     }
 
-    // A) Top 20 → résoudre owners via getMultipleAccounts
+    // B) DAS holders actuels
+    if (dasRes.status === 'fulfilled') {
+      (dasRes.value?.result?.token_accounts || []).forEach(a => {
+        if (a.owner) allOwners.add(a.owner);
+      });
+    }
+
+    // C) Top 20 → resolve owners
     if (largestRes.status === 'fulfilled') {
       const largestAccounts = largestRes.value?.result?.value || [];
       if (largestAccounts.length > 0) {
@@ -2318,7 +2359,7 @@ async function checkAxiomWallets(tokenAddr) {
             const owner = a?.data?.parsed?.info?.owner;
             if (owner) allOwners.add(owner);
           });
-        } catch(e) { /* fallback silencieux */ }
+        } catch(e) {}
       }
     }
 
