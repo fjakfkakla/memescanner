@@ -2310,29 +2310,23 @@ async function checkAxiomWallets(tokenAddr) {
       // On doit fetch les transactions pour avoir les signers
       // Mais getSignaturesForAddress ne donne pas les signers directement
       // → On utilise getTransaction sur les 20 premières pour extraire les fee payers
-      const recentSigs = sigs.slice(0, 30).map(s => s.signature).filter(Boolean);
-      if (recentSigs.length > 0) {
-        try {
-          const txRes = await fetch(HELIUS_RPC, {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              jsonrpc: '2.0', id: 'txs',
-              method: 'getTransactions',
-              params: [recentSigs, { encoding: 'jsonParsed', maxSupportedTransactionVersion: 0 }]
-            }),
-            signal: AbortSignal.timeout(10000)
-          }).then(r => r.json());
-          // getTransactions = méthode Helius Enhanced API
-          const txs = txRes?.result || [];
-          txs.forEach(tx => {
-            if (!tx) return;
-            // fee payer = premier signer = le wallet qui a fait la transaction
-            const feePayer = tx?.transaction?.message?.accountKeys?.[0]?.pubkey
-                          || tx?.transaction?.message?.accountKeys?.[0];
-            if (feePayer && typeof feePayer === 'string') allOwners.add(feePayer);
+      // Helius Enhanced Transactions API → retourne directement feePayer de chaque tx
+      try {
+        const enhancedTxs = await fetch(
+          `https://api.helius.xyz/v0/addresses/${tokenAddr}/transactions?api-key=${HELIUS_KEY}&limit=100`,
+          { signal: AbortSignal.timeout(10000) }
+        ).then(r => r.json());
+        if (Array.isArray(enhancedTxs)) {
+          enhancedTxs.forEach(tx => {
+            // feePayer = wallet qui a initié la transaction (le trader)
+            if (tx?.feePayer) allOwners.add(tx.feePayer);
+            // aussi checker les accountData (wallets impliqués dans la tx)
+            (tx?.accountData || []).forEach(ad => {
+              if (ad?.account) allOwners.add(ad.account);
+            });
           });
-        } catch(e) { /* fallback */ }
-      }
+        }
+      } catch(e) { /* fallback silencieux */ }
     }
 
     // B) DAS holders actuels
