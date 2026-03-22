@@ -2362,7 +2362,7 @@ function hardFilterV2(p){
   const c1h=p.priceChange?.h1||0,m5=p.priceChange?.m5||0,c24h=p.priceChange?.h24||0;
   const sellR=sells1/total1;
   if(mcap<15000)return{pass:false,reason:`mcap $${fmtNum(mcap)} < $15K`};
-  if(mcap>120000)return{pass:false,reason:`mcap $${fmtNum(mcap)} > $120K`};
+  if(mcap>200000)return{pass:false,reason:`mcap $${fmtNum(mcap)} > $200K`};
   if(liq<4000)return{pass:false,reason:`liq $${fmtNum(liq)} < $4K`};
   if(ageH<0.08)return{pass:false,reason:`trop frais ${(ageH*60).toFixed(0)}min`};
   if(ageH>24)return{pass:false,reason:`trop vieux ${ageH.toFixed(0)}h`};
@@ -2395,7 +2395,7 @@ function scoreTokenV2(p,walletData={count:0,wallets:[],clustered:false}){
   const c6h    = p.priceChange?.h6||0;
   const m5     = p.priceChange?.m5||0;
   const m1     = p.priceChange?.m1||0; // si dispo
-  const hasSocials = !!(p.info?.socials?.length||p.info?.websites?.length);
+  const hasSocials = !!(p.info?.socials?.length||p.info?.websites?.length||p.baseToken?.info?.socials?.length||p.profile?.socials?.length);
   const volAvgH = (vol6/6)||(vol1||1);
   const volAccel = vol1/volAvgH;
   const dexId   = (p.dexId||p.dex||'').toLowerCase();
@@ -2433,10 +2433,17 @@ function scoreTokenV2(p,walletData={count:0,wallets:[],clustered:false}){
   const secSocials = sec;
 
   // Enrichir avec données DexScreener si Helius n'a rien retourné
-  const dexSocials = p.info?.socials || [];
+  // DexScreener socials: p.info.socials[{type,url}] + p.info.websites[{url}]
+  // LaunchLab/Bonk peut aussi mettre les socials dans p.baseToken.info ou p.profile
+  const dexSocials = [
+    ...(p.info?.socials || []),
+    ...(p.baseToken?.info?.socials || []),
+    ...(p.profile?.socials || []),
+  ];
+  const allWebsites = [...(p.info?.websites || []), ...(p.baseToken?.info?.websites || [])];
   const dexHasTwitter  = secSocials?.hasTwitter  || dexSocials.some(s=>(s.type||'').toLowerCase().includes('twitter') || (s.url||'').includes('twitter.com') || (s.url||'').includes('x.com'));
   const dexHasTelegram = secSocials?.hasTelegram || dexSocials.some(s=>(s.type||'').toLowerCase().includes('telegram') || (s.url||'').includes('t.me'));
-  const dexHasWebsite  = secSocials?.hasWebsite  || !!(p.info?.websites?.length) || dexSocials.some(s=>!(s.url||'').includes('twitter') && !(s.url||'').includes('t.me'));
+  const dexHasWebsite  = secSocials?.hasWebsite  || !!(allWebsites.length) || dexSocials.some(s=>{ const u=(s.url||''); return u.length>0 && !u.includes('twitter') && !u.includes('x.com') && !u.includes('t.me'); });
 
   if (dexHasTwitter) {
     socialScore += ageH < 1 ? 10 : 5;
@@ -2477,7 +2484,8 @@ function scoreTokenV2(p,walletData={count:0,wallets:[],clustered:false}){
   let mcapScore = 0;
   if      (mcap >= 15000 && mcap <= 30000)  mcapScore = 15;
   else if (mcap >  30000 && mcap <= 60000)  mcapScore = 10;
-  else if (mcap > 100000)                   mcapScore = -5;
+  else if (mcap >  60000 && mcap <= 120000) mcapScore =  5; // plus large, encore intéressant
+  else if (mcap > 150000)                   mcapScore = -5; // trop gros
   score += mcapScore;
 
   // ── ⏱ AGE ─────────────────────────────────────────────────────────────────
@@ -2859,11 +2867,12 @@ async function debugCA(){
     }
 
     // Socials depuis DexScreener pour debug (indépendant de Helius)
-    const dbDexSocials = pairData?.info?.socials||[];
+    const dbDexSocials = [...(pairData?.info?.socials||[]), ...(pairData?.baseToken?.info?.socials||[])];
     const dbHasX  = dbDexSocials.some(s=>(s.url||'').includes('twitter.com')||(s.url||'').includes('x.com'));
     const dbHasTG = dbDexSocials.some(s=>(s.url||'').includes('t.me'));
-    const dbHasWEB= !!(pairData?.info?.websites?.length);
+    const dbHasWEB= !!(pairData?.info?.websites?.length||pairData?.baseToken?.info?.websites?.length);
     const dbLiq   = pairData?.liquidity?.usd || 0;
+    const dbRawSocials = dbDexSocials.map(s=>s.type||s.url||'?').join(', ') || 'aucun';
 
     const details=`TOKEN          : ${sym}
 CA             : ${addr.slice(0,12)}...${addr.slice(-6)}
@@ -2871,6 +2880,7 @@ MCAP           : $${fmtNum(mcap)} | LIQ : $${fmtNum(dbLiq||liq)}
 AGE            : ${ageH.toFixed(1)}h (${ageMin.toFixed(0)}min)
 AXIOM WALLETS  : ${wData.count} détectés${wData.wallets.length?' → '+wData.wallets.join(' '):''}
 SOCIALS DEX    : ${dbHasX?'𝕏 ':''  }${dbHasTG?'TG ':''  }${dbHasWEB?'WEB ':''  }${!dbHasX&&!dbHasTG&&!dbHasWEB?'aucun':''}
+SOCIALS RAW    : ${dbRawSocials}
 HELIUS SEC     : ${sec?'✅ chargé':'❌ indisponible (Bonk/LaunchLab normal)'}
 PAIRE DEXSCR   : ${pairData?'✅ trouvée':'❌ non trouvée'}`;
 
