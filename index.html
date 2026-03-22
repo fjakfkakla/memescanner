@@ -2255,6 +2255,17 @@ async function checkTokenSecurity(mintAddr, pairAddress = null) {
         if(attr.trait_type==='telegram'||attr.trait_type==='Telegram') telegram=telegram||attr.value;
         if(attr.trait_type==='website'||attr.trait_type==='Website')   website=website||attr.value;
       }
+      // Fetch JSON URI (metadata on-chain Pump.fun/Bonk) — source la plus fiable
+      // Le créateur y renseigne twitter/telegram directement au moment du mint
+      const jsonUri = rd?.content?.json_uri;
+      if (jsonUri && jsonUri.startsWith('http') && !twitter && !telegram) {
+        try {
+          const mj = await fetch(jsonUri, { signal: AbortSignal.timeout(5000) }).then(r => r.json());
+          twitter  = twitter  || mj?.twitter  || mj?.extensions?.twitter  || mj?.properties?.twitter  || null;
+          telegram = telegram || mj?.telegram || mj?.extensions?.telegram || mj?.properties?.telegram || null;
+          website  = website  || mj?.website  || mj?.extensions?.website  || mj?.external_url || null;
+        } catch(e) { /* optionnel */ }
+      }
     }
 
     const result = {
