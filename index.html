@@ -494,6 +494,75 @@ section{scroll-margin-top:70px;}
 .pnl-btn-dl:hover{background:#00e87a;transform:translateY(-1px);}
 .pnl-btn-close{padding:.65rem 1.2rem;background:transparent;border:1px solid rgba(255,255,255,.15);color:rgba(255,255,255,.5);border-radius:8px;font-family:var(--font);font-size:.82rem;cursor:pointer;transition:.2s;}
 .pnl-btn-close:hover{border-color:rgba(255,255,255,.3);color:rgba(255,255,255,.8);}
+
+/* ── SCANNER CARDS — style inspiré Rug Snip ─────────────────────── */
+.scanner-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:1.1rem;padding:.5rem 0;}
+.sc-card{
+  position:relative;overflow:hidden;border-radius:14px;
+  background:linear-gradient(145deg,#080c08 0%,#0d140d 50%,#080c08 100%);
+  border:1.5px solid rgba(0,255,136,.2);
+  padding:0;transition:.25s;cursor:default;
+}
+.sc-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,transparent,var(--green),#88ff44,var(--green),transparent);
+  background-size:300%;animation:shimmer-green 2.5s linear infinite;}
+@keyframes shimmer-green{0%{background-position:200%}100%{background-position:-100%}}
+.sc-card:hover{border-color:rgba(0,255,136,.5);transform:translateY(-3px);
+  box-shadow:0 8px 32px rgba(0,255,136,.15);}
+/* Header */
+.sc-header{display:flex;align-items:center;justify-content:space-between;
+  padding:.75rem 1rem .55rem;border-bottom:1px solid rgba(0,255,136,.08);
+  background:rgba(0,0,0,.25);gap:.4rem;min-width:0;}
+.sc-sym{font-family:'Syne',sans-serif;font-size:1.05rem;font-weight:800;color:#fff;
+  letter-spacing:-.3px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  text-shadow:0 0 10px rgba(0,255,136,.35);}
+.sc-badge{font-family:'Space Mono',monospace;font-size:.6rem;font-weight:700;
+  padding:.22rem .55rem;border-radius:5px;white-space:nowrap;letter-spacing:.04em;}
+.sc-badge.nuclear{background:rgba(255,50,50,.25);color:#ff5544;border:1px solid rgba(255,50,50,.5);
+  text-shadow:0 0 8px rgba(255,50,50,.7);animation:badge-glow-red 1s ease-in-out infinite alternate;}
+.sc-badge.diamond{background:rgba(0,200,255,.2);color:#44ddff;border:1px solid rgba(0,200,255,.4);}
+.sc-badge.runner{background:rgba(0,255,136,.15);color:#00ff88;border:1px solid rgba(0,255,136,.3);}
+.sc-badge.watchlist{background:rgba(100,100,255,.15);color:#8888ff;border:1px solid rgba(100,100,255,.3);}
+.sc-badge.radar{background:rgba(100,100,120,.12);color:#9999bb;border:1px solid rgba(100,100,120,.25);}
+@keyframes badge-glow-red{from{box-shadow:0 0 4px rgba(255,50,50,.4)}to{box-shadow:0 0 14px rgba(255,50,50,.8)}}
+/* Call time */
+.sc-calltime{font-family:'Space Mono',monospace;font-size:.62rem;color:rgba(0,255,136,.6);
+  padding:.32rem 1rem;background:rgba(0,255,136,.03);border-bottom:1px solid rgba(0,255,136,.06);
+  display:flex;align-items:center;gap:.4rem;}
+/* Security row */
+.sc-security{display:flex;gap:.35rem;flex-wrap:wrap;padding:.35rem 1rem;
+  border-bottom:1px solid rgba(0,255,136,.06);background:rgba(0,0,0,.15);}
+.sc-sec-chip{font-size:.56rem;font-family:'Space Mono',monospace;padding:.1rem .35rem;border-radius:3px;}
+/* Stats grid */
+.sc-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:.4rem;
+  padding:.55rem 1rem;background:rgba(0,0,0,.15);border-bottom:1px solid rgba(0,255,136,.06);}
+.sc-stat{text-align:center;background:rgba(0,255,136,.05);border:1px solid rgba(0,255,136,.08);border-radius:6px;padding:.3rem .15rem;}
+.sc-stat-lbl{font-size:.5rem;color:rgba(0,255,136,.5);text-transform:uppercase;letter-spacing:.06em;line-height:1.2;}
+.sc-stat-val{font-family:'Space Mono',monospace;font-size:.74rem;font-weight:700;line-height:1.3;color:#fff;}
+.sc-stat.gold{background:rgba(255,215,0,.07);border-color:rgba(255,215,0,.15);}
+.sc-stat.gold .sc-stat-lbl{color:rgba(255,215,0,.5);}
+/* Socials row */
+.sc-socials{display:flex;gap:.4rem;align-items:center;padding:.3rem 1rem;
+  border-bottom:1px solid rgba(0,255,136,.06);font-size:.62rem;font-family:'Space Mono',monospace;}
+/* Footer */
+.sc-footer{display:flex;align-items:center;justify-content:space-between;
+  padding:.45rem 1rem .6rem;gap:.35rem;flex-wrap:wrap;}
+.sc-addr{font-family:'Space Mono',monospace;font-size:.58rem;color:rgba(0,255,136,.4);cursor:pointer;transition:.15s;}
+.sc-addr:hover{color:var(--green);}
+.sc-btn-ca{padding:.22rem .55rem;background:transparent;border:1px solid rgba(0,255,136,.2);
+  color:rgba(0,255,136,.6);border-radius:4px;font-size:.6rem;font-family:'Space Mono',monospace;cursor:pointer;transition:.2s;}
+.sc-btn-ca:hover{border-color:var(--green);color:var(--green);}
+.sc-btn-dex{padding:.26rem .65rem;background:rgba(0,255,136,.1);border:1px solid rgba(0,255,136,.25);
+  color:var(--green);border-radius:5px;font-size:.62rem;font-weight:600;text-decoration:none;
+  transition:.2s;font-family:'Space Mono',monospace;}
+.sc-btn-dex:hover{background:rgba(0,255,136,.22);}
+.sc-btn-pnl{padding:.26rem .65rem;background:linear-gradient(135deg,rgba(255,170,0,.15),rgba(255,120,0,.1));
+  border:1px solid rgba(255,170,0,.4);color:#ffcc44;border-radius:5px;font-size:.62rem;
+  font-family:'Space Mono',monospace;cursor:pointer;transition:.2s;font-weight:700;}
+.sc-btn-pnl:hover{background:linear-gradient(135deg,rgba(255,170,0,.28),rgba(255,120,0,.2));}
+/* Axiom wallets tag */
+.sc-axiom{font-family:'Space Mono',monospace;font-size:.6rem;background:rgba(255,215,0,.12);
+  border:1px solid rgba(255,215,0,.25);color:var(--gold);padding:.18rem .45rem;border-radius:4px;}
 </style>
 </head>
 <body>
@@ -2069,9 +2138,106 @@ async function checkAndAddRugger(rugToken) {
   }
 }
 
+// ============================================================
+// HELIUS — Sécurité on-chain + Métadonnées Metaplex (socials)
+// Les socials (Twitter/Telegram/website) sont stockés dans les
+// métadonnées on-chain du token — lisibles gratuitement via Helius
+// C'est ce qu'affichent Axiom, Terminal, DexScreener etc.
+// Cache 10min pour économiser le quota
+// ============================================================
+const heliusCache = {};
+
+async function checkTokenSecurity(mintAddr) {
+  if (!mintAddr || mintAddr.length < 32) return null;
+  const now = Date.now();
+  if (heliusCache[mintAddr] && now - heliusCache[mintAddr].ts < 600000) {
+    return heliusCache[mintAddr].data;
+  }
+  try {
+    // 1. Mint + Freeze authority via getAccountInfo
+    const accResp = await fetch(HELIUS_RPC, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        jsonrpc: '2.0', id: 1,
+        method: 'getAccountInfo',
+        params: [mintAddr, { encoding: 'jsonParsed' }]
+      }),
+      signal: AbortSignal.timeout(5000)
+    }).then(r => r.json());
+
+    const info = accResp?.result?.value?.data?.parsed?.info;
+    const mintAuthority   = info?.mintAuthority   ?? null;
+    const freezeAuthority = info?.freezeAuthority ?? null;
+    const supply          = parseFloat(info?.supply || 0);
+    const decimals        = info?.decimals ?? 6;
+
+    // 2. Top holders
+    const holdResp = await fetch(HELIUS_RPC, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        jsonrpc: '2.0', id: 2,
+        method: 'getTokenLargestAccounts',
+        params: [mintAddr]
+      }),
+      signal: AbortSignal.timeout(5000)
+    }).then(r => r.json());
+
+    const holders = holdResp?.result?.value || [];
+    const supplyNum = supply / Math.pow(10, decimals);
+    const top1Pct  = supplyNum > 0 && holders[0]  ? (parseFloat(holders[0].uiAmount)  / supplyNum) * 100 : 0;
+    const top5Pct  = supplyNum > 0 ? holders.slice(0,5).reduce((s,h)=>s+parseFloat(h.uiAmount||0),0)/supplyNum*100 : 0;
+    const top10Pct = supplyNum > 0 ? holders.slice(0,10).reduce((s,h)=>s+parseFloat(h.uiAmount||0),0)/supplyNum*100 : 0;
+
+    // 3. Metadonnees Metaplex via Helius DAS API getAsset
+    // C'est exactement ce qu'affichent Axiom / Terminal / DexScreener
+    let twitter = null, telegram = null, website = null;
+    try {
+      const dasResp = await fetch(HELIUS_RPC, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          jsonrpc: '2.0', id: 3,
+          method: 'getAsset',
+          params: { id: mintAddr }
+        }),
+        signal: AbortSignal.timeout(5000)
+      }).then(r => r.json());
+
+      const links = dasResp?.result?.content?.links || {};
+      const meta  = dasResp?.result?.content?.metadata || {};
+      const ext   = meta.extensions || {};
+      // Pump.fun stocke les socials dans content.links
+      twitter  = links.twitter  || ext.twitter  || null;
+      telegram = links.telegram || ext.telegram || null;
+      website  = links.website  || ext.website  || null;
+    } catch(e) { /* DAS optionnel */ }
+
+    const result = {
+      mintAuthority, freezeAuthority,
+      top1Pct:  top1Pct.toFixed(1),
+      top5Pct:  top5Pct.toFixed(1),
+      top10Pct: top10Pct.toFixed(1),
+      holderCount: holders.length,
+      safe: mintAuthority === null && freezeAuthority === null && top1Pct < 15 && top5Pct < 40,
+      // Socials on-chain (lus depuis Metaplex / Pump.fun metadata)
+      twitter, telegram, website,
+      hasTwitter:  !!twitter,
+      hasTelegram: !!telegram,
+      hasWebsite:  !!website,
+      socialCount: (twitter?1:0) + (telegram?1:0) + (website?1:0)
+    };
+    heliusCache[mintAddr] = { ts: now, data: result };
+    return result;
+  } catch(e) {
+    return null;
+  }
+}
+
 const swCache = {};
 
-// ── AXIOM wallet tracker — vérifie si des wallets AXIOM sont top holders ──
+// -- AXIOM wallet tracker -- verifie si des wallets AXIOM sont top holders --
 async function checkAxiomWallets(tokenAddr) {
   if (!tokenAddr) return { count: 0, wallets: [], clustered: false };
   const now = Date.now();
@@ -2166,26 +2332,34 @@ function scoreTokenV2(p,walletData={count:0,wallets:[],clustered:false}){
   else if (axiomCount === 1) traderScore =  5;
   score += traderScore;
 
-  // ── 🌐 SOCIAL ─────────────────────────────────────────────────────────────
-  // Max possible : +26 (tweet récent +10 / communauté +8 / profil actif +8)
-  // API X ($100/mois) ou Birdeye premium nécessaire pour données réelles
-  // Structure en place — score = 0 jusqu'à intégration API
+  // ── 🌐 SOCIAL (max +26) ───────────────────────────────────────────────────
+  // Socials lus depuis métadonnées Metaplex on-chain (Helius getAsset)
+  // Même source qu'Axiom / Terminal / DexScreener
+  //
+  // Règle tweet (non cumulable, max +10) :
+  //   Twitter présent ET token < 1h → proxy "tweet récent dans l'heure" → +10
+  //   Twitter présent ET token > 1h → proxy "tweet du jour"              → +5
+  //   → (distinction exacte nécessiterait API Twitter payante)
+  //
+  // Présence communauté X → +8 (proxy : Telegram présent)
+  // Profil Twitter actif  → +8 (proxy : Twitter + Telegram + Website)
   let socialScore = 0;
-  // TWEET (non cumulable — on prend le plus élevé)
-  // const tweetRecent  = checkTweetLastHour(tokenAddr);  // TODO API X
-  // const tweetToday   = checkTweetToday(tokenAddr);     // TODO API X
-  // socialScore += tweetRecent ? 10 : (tweetToday ? 5 : 0);
-  //
-  // COMMUNAUTÉ (compte avec posts récents, replies, mentions)
-  // const hasCommunity = checkXCommunity(tokenAddr);     // TODO API X / Birdeye social
-  // if (hasCommunity) socialScore += 8;
-  //
-  // PROFIL ACTIF (posts récents du compte token/dev)
-  // const profileActive = checkXProfileActive(tokenAddr); // TODO API X
-  // if (profileActive) socialScore += 8;
-  //
-  // Fallback minimal jusqu'à implémentation
-  if (hasSocials) socialScore += 3;
+  const secSocials = sec;
+
+  if (secSocials) {
+    // TWEET (non cumulable — proxy via âge du token)
+    if (secSocials.hasTwitter) {
+      socialScore += ageH < 1 ? 10 : 5; // <1h = tweet récent probable, sinon tweet du jour
+    }
+    // COMMUNAUTÉ (+8) — Telegram = communauté active sur X/Telegram
+    if (secSocials.hasTelegram) socialScore += 8;
+    // PROFIL ACTIF (+8) — 3 socials = projet structuré avec présence active
+    if (secSocials.hasTwitter && secSocials.hasTelegram && secSocials.hasWebsite) socialScore += 8;
+
+  } else if (hasSocials) {
+    // Fallback DexScreener (moins précis)
+    socialScore += hasSocials ? 5 : 0;
+  }
   score += socialScore;
 
   // ── 👥 HOLDERS ────────────────────────────────────────────────────────────
@@ -2294,7 +2468,8 @@ function getLabel(score){
   if(score>=110)return{text:'💎 DIAMOND RADAR',  cls:'score-god-gem'};
   if(score>=95) return{text:'🚀 EARLY RUNNER',   cls:'score-high-pot'};
   if(score>=80) return{text:'👁 WATCHLIST',       cls:'score-solid'};
-  return null; // sous 80 = pas affiché
+  if(score>=55) return{text:'📡 ON RADAR',        cls:'score-solid'};
+  return null; // sous 55 = pas affiché
 }
 
 // ============================================================
@@ -2524,7 +2699,9 @@ async function fetchTokens(){
   const ENDPOINTS=['https://api.dexscreener.com/latest/dex/search?q=solana%20pump','https://api.dexscreener.com/latest/dex/search?q=pump.fun+solana','https://api.dexscreener.com/latest/dex/search?q=solana+meme+new','https://api.dexscreener.com/token-profiles/latest/v1','https://api.dexscreener.com/token-boosts/latest/v1'];
   const results=await Promise.allSettled(ENDPOINTS.map(fetchPairs));
   const seen=new Set();let pairs=[];
-  for(const r of results){if(r.status!=='fulfilled')continue;for(const p of r.value){const conv=p.attributes?geckoToDex(p):p;if(!conv)continue;if(!conv.chainId||conv.chainId!=='solana')continue;const m=conv.marketCap||conv.fdv||0;if(m>150000||m<5000)continue;const addr=conv.baseToken?.address||conv.pairAddress||Math.random().toString();if(seen.has(addr))continue;seen.add(addr);pairs.push(conv);}}
+  const _48H=48*3600000,_now=Date.now();
+  for(const r of results){if(r.status!=='fulfilled')continue;for(const p of r.value){const conv=p.attributes?geckoToDex(p):p;if(!conv)continue;if(!conv.chainId||conv.chainId!=='solana')continue;const m=conv.marketCap||conv.fdv||0;if(m>150000||m<5000)continue;// Rejeter les paires vieilles de plus de 48h dès le parsing
+  if(conv.pairCreatedAt&&(_now-conv.pairCreatedAt)>_48H)continue;const addr=conv.baseToken?.address||conv.pairAddress||Math.random().toString();if(seen.has(addr))continue;seen.add(addr);pairs.push(conv);}}
   const rejected={};const passed=[];
   for(const p of pairs){const f=hardFilterV2(p);if(f.pass)passed.push(p);else rejected[f.reason]=(rejected[f.reason]||0)+1;}
   let preScored=passed.map(p=>scoreTokenV2(p)).filter(t=>t.score>=45);
@@ -2544,8 +2721,8 @@ async function fetchTokens(){
       }
       const wData=await checkAxiomWallets(t.addr);
       const rescored=scoreTokenV2(t.raw,wData);
-      if(rescored.score>=80){rescored.security=sec;finalScored.push(rescored);}
-    }catch(e){if(t.score>=80)finalScored.push(t);}
+      if(rescored.score>=55){rescored.security=sec;finalScored.push(rescored);}
+    }catch(e){if(t.score>=55)finalScored.push(t);}
   }
   finalScored.sort((a,b)=>b.score-a.score);
   for(const t of finalScored){const existing=await getCallData(t.addr);if(!existing)await saveCall(t.addr,t.mcap,Date.now(),t.symbol);else if(t.mcap>(existing.athMcap||0))await updateAth(t.addr,t.mcap);}
@@ -2567,25 +2744,133 @@ async function fetchTokens(){
 // ============================================================
 // RENDER TOKEN TABLE
 // ============================================================
+// Emoji par catégorie de score
+function getScoreEmoji(score){
+  if(score>=130) return '☢️';
+  if(score>=110) return '💎';
+  if(score>=95)  return '🚀';
+  if(score>=80)  return '👁';
+  return '📡';
+}
+
 async function renderTokenTable(tokens){
-  const content=document.getElementById('scannerContent');let rows='';
+  const content=document.getElementById('scannerContent');
+  const cards=[];
   for(let i=0;i<tokens.length;i++){
-    const t=tokens[i];const label=getLabel(t.score);if(!label)continue;
+    const t=tokens[i];
+    const label=getLabel(t.score);
+    if(!label)continue;
     const callData=await getCallData(t.addr);
-    const callMcap=callData?.callMcap||t.mcap,callTime=callData?.callTime||Date.now(),athMcap=callData?.athMcap||t.mcap;
-    const mult=callMcap>0?t.mcap/callMcap:1,athMult=callMcap>0?athMcap/callMcap:1;
-    const rugBadge=t.rugRisk==='LOW'?'rug-low':t.rugRisk==='MEDIUM'?'rug-med':'rug-high';
+    const callMcap=callData?.callMcap||t.mcap;
+    const callTime=callData?.callTime||Date.now();
+    const athMcap=callData?.athMcap||t.mcap;
+    const mult=callMcap>0?t.mcap/callMcap:1;
+    const athMult=callMcap>0?athMcap/callMcap:1;
     const d=t.debug;
-    const walletBadge=t.walletData?.count>0?`<span style="font-family:var(--font-mono);font-size:.62rem;background:rgba(255,215,0,.15);border:1px solid rgba(255,215,0,.3);color:var(--gold);padding:.15rem .4rem;border-radius:3px;margin-left:.3rem">🎯 ${t.walletData.count} alpha wallet${t.walletData.count>1?'s':''}</span>`:'';
-    const bkChips=[['WLT',d.walletScore],['MM',d.momentumScore],['BP',d.buyScore],['VA',d.volScore],['AG',d.ageScore]].map(([l,v])=>`<span class="bk-chip" style="color:${v<0?'var(--red)':v>0?'var(--green)':'var(--muted)'}">${l}:${v>0?'+':''}${v}</span>`).join('');
-    const debugBtn=debugModeOn?`<button onclick="showDebug(${i})" style="margin-left:.4rem;padding:.15rem .4rem;background:rgba(255,170,0,.15);border:1px solid rgba(255,170,0,.3);color:#ffaa00;border-radius:4px;font-size:.6rem;cursor:pointer;font-family:var(--font-mono)">DEBUG</button>`:'';
-    rows+=`<tr><td><div class="tok-name-cell"><span class="tok-emoji">${t.emoji}</span><div><div class="tok-sym"><a href="${t.pairUrl}" target="_blank" style="color:inherit;text-decoration:none">${t.symbol}</a>${walletBadge}${debugBtn}</div><div class="tok-addr" onclick="copyAddr('${t.addr}',this)" style="cursor:pointer" title="Copier CA">${t.addr.slice(0,8)}...${t.addr.slice(-4)} 📋</div>
-${t.security?`<div style="font-size:.58rem;margin-top:2px;display:flex;gap:.3rem;flex-wrap:wrap"><span style="color:${t.security.mintAuthority===null?'#00ff88':'#ff4466'}">MINT ${t.security.mintAuthority===null?'✅':'❌'}</span><span style="color:${t.security.freezeAuthority===null?'#00ff88':'#ff4466'}">FREEZE ${t.security.freezeAuthority===null?'✅':'❌'}</span><span style="color:${parseFloat(t.security.top1Pct)<10?'#00ff88':parseFloat(t.security.top1Pct)<15?'#ffaa00':'#ff4466'}">TOP1 ${t.security.top1Pct}%</span><span style="color:${parseFloat(t.security.top5Pct)<30?'#00ff88':parseFloat(t.security.top5Pct)<40?'#ffaa00':'#ff4466'}">TOP5 ${t.security.top5Pct}%</span></div>`:''}
-</div></div></td><td><span class="score-badge ${label.cls}">${label.text} ${t.score}</span><div class="breakdown-mini">${bkChips}</div></td><td class="mcap-cell"><div class="mcap-call">📍 Call $${fmtNum(callMcap)} · ${fmtTime(callTime)} · ${timeAgo(callTime)}</div><div class="mcap-now">⬆ Now $${fmtNum(t.mcap)} <span class="mcap-mult ${mult>=1?'up':'down'}">(${mult.toFixed(2)}x)</span></div><div style="font-size:.7rem">🏆 ATH $${fmtNum(athMcap)} <span class="ath-val">(${athMult.toFixed(2)}x)</span></div></td><td class="mcap-cell" style="font-size:.72rem"><div style="color:var(--muted)">Age : <span style="color:var(--text)">${d.ageH.toFixed(1)}h</span></div><div style="color:var(--muted)">Liq : <span style="color:var(--text)">$${fmtNum(t.liq)}</span></div><div style="color:var(--muted)">Vol acc : <span style="color:${d.volAccel>1.5?'var(--green)':'var(--muted)'}">${d.volAccel.toFixed(1)}x</span></div></td><td><span class="rug-badge ${rugBadge}">${t.rugRisk}</span></td></tr>`;
+    const callHeure=fmtTimeSeconds(callTime);
+    const scoreEmoji=getScoreEmoji(t.score);
+    const badgeCls=t.score>=130?'nuclear':t.score>=110?'diamond':t.score>=95?'runner':t.score>=80?'watchlist':'radar';
+    // Couleur Now selon perf
+    const nowColor=t.mcap<=0?'rgba(255,255,255,.3)':t.mcap>callMcap?'#44ff88':t.mcap<callMcap*0.7?'#ff5577':'#ffcc44';
+    const athColor='#ffaa44';
+    const xAth=callMcap>0&&athMcap>callMcap?(athMcap/callMcap):1;
+    const xColor=xAth>=3?'#00ff88':xAth>=2?'#88ff44':xAth>=1.5?'#ffcc44':'#ff8866';
+    // Axiom wallets badge
+    const axiomBadge=t.walletData?.count>0?`<span class="sc-axiom">🎯 ${t.walletData.count} Axiom</span>`:'';
+    // Debug btn
+    const debugBtn=debugModeOn?`<button onclick="showDebug(${i})" style="padding:.15rem .4rem;background:rgba(255,170,0,.15);border:1px solid rgba(255,170,0,.3);color:#ffaa00;border-radius:4px;font-size:.6rem;cursor:pointer;font-family:var(--font-mono)">DBG</button>`:'';
+    // Security chips
+    let secHtml='';
+    if(t.security){
+      const s=t.security;
+      const mc=s.mintAuthority===null;
+      const fc=s.freezeAuthority===null;
+      const t1=parseFloat(s.top1Pct||0);
+      const t5=parseFloat(s.top5Pct||0);
+      secHtml=`<div class="sc-security">
+        <span class="sc-sec-chip" style="background:${mc?'rgba(0,255,136,.12)':'rgba(255,68,102,.15)'};color:${mc?'#00ff88':'#ff4466'}">MINT ${mc?'✅':'❌'}</span>
+        <span class="sc-sec-chip" style="background:${fc?'rgba(0,255,136,.12)':'rgba(255,68,102,.15)'};color:${fc?'#00ff88':'#ff4466'}">FREEZE ${fc?'✅':'❌'}</span>
+        <span class="sc-sec-chip" style="background:rgba(255,255,255,.05);color:${t1<10?'#00ff88':t1<15?'#ffaa00':'#ff4466'}">TOP1 ${s.top1Pct}%</span>
+        <span class="sc-sec-chip" style="background:rgba(255,255,255,.05);color:${t5<30?'#00ff88':t5<40?'#ffaa00':'#ff4466'}">TOP5 ${s.top5Pct}%</span>
+        ${s.hasTwitter?'<span class="sc-sec-chip" style="background:rgba(29,161,242,.12);color:#1da1f2">𝕏</span>':''}
+        ${s.hasTelegram?'<span class="sc-sec-chip" style="background:rgba(0,136,204,.12);color:#08c">TG</span>':''}
+        ${s.hasWebsite?'<span class="sc-sec-chip" style="background:rgba(255,255,255,.05);color:rgba(255,255,255,.5)">WEB</span>':''}
+      </div>`;
+    }
+    cards.push(`<div class="sc-card">
+      <div class="sc-header">
+        <span style="font-size:1.2rem;flex-shrink:0">${scoreEmoji}</span>
+        <span class="sc-sym">${t.symbol}</span>
+        <div style="display:flex;gap:.3rem;align-items:center;flex-shrink:0">
+          ${axiomBadge}${debugBtn}
+          <span class="sc-badge ${badgeCls}">${label.text} ${t.score}</span>
+        </div>
+      </div>
+      <div class="sc-calltime">
+        <span style="opacity:.5">⏰</span>
+        <span>CALLED AT: ${callHeure}</span>
+        <span style="margin-left:auto;opacity:.5;font-size:.56rem">${timeAgo(callTime)} ago</span>
+      </div>
+      ${secHtml}
+      <div class="sc-stats">
+        <div class="sc-stat">
+          <div class="sc-stat-lbl">📍 CALL</div>
+          <div class="sc-stat-val" style="color:#ffaa44">$${fmtNum(callMcap)}</div>
+        </div>
+        <div class="sc-stat">
+          <div class="sc-stat-lbl">⏰ NOW</div>
+          <div class="sc-stat-val" style="color:${nowColor}">$${fmtNum(t.mcap)}</div>
+        </div>
+        <div class="sc-stat">
+          <div class="sc-stat-lbl">🏆 ATH</div>
+          <div class="sc-stat-val" style="color:${athColor}">$${fmtNum(athMcap)}</div>
+        </div>
+        <div class="sc-stat gold">
+          <div class="sc-stat-lbl">🎯 × ATH</div>
+          <div class="sc-stat-val" style="color:${xColor};font-size:.82rem">${xAth.toFixed(2)}x</div>
+        </div>
+      </div>
+      <div class="sc-footer">
+        <div style="display:flex;gap:.35rem;align-items:center;flex-wrap:wrap;flex:1;min-width:0">
+          <span class="sc-addr" data-addr="${t.addr}" onclick="copyHistCA(this)" title="Copier CA">${t.addr.slice(0,6)}...${t.addr.slice(-4)} 📋</span>
+          <span style="font-family:var(--font-mono);font-size:.56rem;color:rgba(0,255,136,.35)">${(d.ageH*60).toFixed(0)}min · $${fmtNum(t.liq)} liq</span>
+        </div>
+        <div style="display:flex;gap:.32rem;align-items:center;flex-shrink:0">
+          <button class="sc-btn-pnl" onclick="openScannerPnl('${t.addr}','${t.symbol}',${callMcap},${athMcap},${t.score})">📤 PnL</button>
+          <a href="${t.pairUrl}" target="_blank" class="sc-btn-dex">DEX →</a>
+        </div>
+      </div>
+    </div>`);
   }
-  if(!rows){content.innerHTML=`<div class="empty-state"><div class="empty-icon">📡</div><div class="empty-title">Aucun signal qualifié</div><div class="empty-sub">Refresh auto 45s</div></div>`;return;}
-  const lc=document.getElementById('liveCount');if(lc)lc.textContent=tokens.length?`(${tokens.length})`:'';
-  content.innerHTML=`<table class="token-table"><thead><tr><th>Token</th><th>Signal</th><th>McAp Call / Now / ATH</th><th>Données</th><th>Rug Risk</th></tr></thead><tbody>${rows}</tbody></table>`;
+  if(!cards.length){
+    content.innerHTML=`<div class="empty-state"><div class="empty-icon">📡</div><div class="empty-title">Aucun signal qualifié</div><div class="empty-sub">Refresh auto 45s</div></div>`;
+    return;
+  }
+  const lc=document.getElementById('liveCount');
+  if(lc)lc.textContent=tokens.length?`(${tokens.length})`:'';
+  content.innerHTML=`<div class="scanner-grid">${cards.join('')}</div>`;
+}
+
+// PnL pour le scanner (même style que rug snip)
+function openScannerPnl(addr,sym,callMcap,athMcap,score){
+  const xAth=callMcap>0?(athMcap/callMcap):1;
+  const scoreEmoji=getScoreEmoji(score);
+  const multEl=document.getElementById('pnlMult');
+  const xStr=xAth>=10?xAth.toFixed(1)+'x':xAth.toFixed(2)+'x';
+  multEl.textContent=xStr;
+  multEl.className='pnl-mult'+(xAth>=5?' big-mult':'');
+  if(xAth>=5){multEl.style.background='linear-gradient(135deg,#00ff88,#00ffcc)';}
+  else if(xAth>=2){multEl.style.background='linear-gradient(135deg,#88ff44,#ccff00)';}
+  else if(xAth>=1){multEl.style.background='linear-gradient(135deg,#ffcc44,#ff8844)';}
+  else{multEl.style.background='linear-gradient(135deg,#ff4466,#ff2244)';}
+  multEl.style['-webkit-background-clip']='text';
+  multEl.style['-webkit-text-fill-color']='transparent';
+  document.getElementById('pnlSym').textContent=scoreEmoji+' '+sym;
+  document.getElementById('pnlCalled').textContent='called at $'+fmtNum(callMcap);
+  document.getElementById('pnlCallVal').textContent='$'+fmtNum(callMcap);
+  document.getElementById('pnlAthVal').textContent='$'+fmtNum(athMcap);
+  document.getElementById('pnlSub').textContent='ATH depuis le call · '+new Date().toLocaleDateString('fr-FR');
+  document.getElementById('pnlOverlay').classList.add('open');
 }
 
 // ============================================================
