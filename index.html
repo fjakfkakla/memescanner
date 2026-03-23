@@ -2409,26 +2409,12 @@ async function checkAxiomWallets(tokenAddr) {
 
 function hardFilterV2(p){
   const ageH=(Date.now()-(p.pairCreatedAt||0))/3600000;
-  const liq=p.liquidity?.usd||0,mcap=p.marketCap||p.fdv||0,fdv=p.fdv||mcap;
-  const buys1=p.txns?.h1?.buys||0,sells1=p.txns?.h1?.sells||0,total1=buys1+sells1||1;
-  const vol1=p.volume?.h1||0,vol6=p.volume?.h6||0;
-  const c1h=p.priceChange?.h1||0,m5=p.priceChange?.m5||0,c24h=p.priceChange?.h24||0;
-  const sellR=sells1/total1;
-  if(mcap<15000)return{pass:false,reason:`mcap $${fmtNum(mcap)} < $15K`};
-  if(mcap>200000)return{pass:false,reason:`mcap $${fmtNum(mcap)} > $200K`};
-  if(liq<4000)return{pass:false,reason:`liq $${fmtNum(liq)} < $4K`};
-  if(ageH<0.08)return{pass:false,reason:`trop frais ${(ageH*60).toFixed(0)}min`};
-  if(ageH>24)return{pass:false,reason:`trop vieux ${ageH.toFixed(0)}h`};
-  if(buys1+sells1<8)return{pass:false,reason:`txns ${buys1+sells1} < 8`};
-  if(buys1<4)return{pass:false,reason:`buys ${buys1} < 4`};
-  if(vol1<300&&vol6<1500)return{pass:false,reason:`vol faible`};
-  if(sellR>0.68)return{pass:false,reason:`sell ${(sellR*100).toFixed(0)}%`};
-  if(m5<-25)return{pass:false,reason:`crash m5 ${m5.toFixed(0)}%`};
-  if(c1h<-20)return{pass:false,reason:`crash 1h ${c1h.toFixed(0)}%`};
-  if(fdv>0&&mcap>0&&fdv/mcap>12)return{pass:false,reason:`fdv/mcap`};
-  if(c24h>200&&c1h<5)return{pass:false,reason:`staircase: +${c24h.toFixed(0)}% puis plat`};
-  if(c24h>100&&c1h<-5)return{pass:false,reason:`P&D: +${c24h.toFixed(0)}% → ${c1h.toFixed(0)}%`};
-  if(m5<-10&&c1h>50)return{pass:false,reason:`staircase actif m5=${m5.toFixed(0)}%`};
+  const mcap=p.marketCap||p.fdv||0;
+  const liq=p.liquidity?.usd||(p.liquidity?.base&&p.priceNative?(p.liquidity.base*parseFloat(p.priceNative||0)):0)||0;
+  const sellR=((p.txns?.h1?.sells||0)/Math.max(1,(p.txns?.h1?.buys||0)+(p.txns?.h1?.sells||0)));
+  // Seuls filtres maintenus : âge raisonnable + pas complètement mort
+  if(mcap<3000)return{pass:false,reason:`mcap $${fmtNum(mcap)} < $3K`};
+  if(ageH>48)return{pass:false,reason:`trop vieux ${ageH.toFixed(0)}h`};
   return{pass:true,ageH,sellR};
 }
 
@@ -2499,9 +2485,9 @@ function scoreTokenV2(p,walletData={count:0,wallets:[],clustered:false}){
   const gotTG  = hasTG  || dexTG;
   const gotWEB = hasWEB || dexWEB;
 
-  if (gotX)  socialScore += ageH < 1 ? 10 : 5;
-  if (gotTG) socialScore += 8;
-  if (gotX && gotTG && gotWEB) socialScore += 8;
+  if (gotX)  socialScore += ageH < 1 ? 10 : 5;  // tweet récent ou du jour
+  if (gotTG || gotWEB) socialScore += 8;           // site OU telegram OU github
+  if (gotX && (gotTG || gotWEB)) socialScore += 8; // communauté X active
 
   // Proxy : token < 5min avec achats actifs = lancé avec tweet (pas encore indexé)
   if (socialScore === 0) {
@@ -3013,7 +2999,7 @@ async function fetchTokens(){
   if(conv.pairCreatedAt&&(_now-conv.pairCreatedAt)>_48H)continue;const addr=conv.baseToken?.address||conv.pairAddress||Math.random().toString();if(seen.has(addr))continue;seen.add(addr);pairs.push(conv);}}
   const rejected={};const passed=[];
   for(const p of pairs){const f=hardFilterV2(p);if(f.pass)passed.push(p);else rejected[f.reason]=(rejected[f.reason]||0)+1;}
-  let preScored=passed.map(p=>scoreTokenV2(p)).filter(t=>t.score>=45);
+  let preScored=passed.map(p=>scoreTokenV2(p)).filter(t=>t.score>=60);
   preScored.sort((a,b)=>b.score-a.score);preScored=preScored.slice(0,25);
   const finalScored=[];
   for(const t of preScored){
@@ -3046,16 +3032,26 @@ async function fetchTokens(){
         maxAxiom:  stickyAxiom,
         maxSocial: stickySocial,
       };
-      if(rescored.score>=55){rescored.security=sec;finalScored.push(rescored);}
+      if(rescored.score>=80){rescored.security=sec;finalScored.push(rescored);}
     }catch(e){if(t.score>=55)finalScored.push(t);}
   }
   finalScored.sort((a,b)=>b.score-a.score);
-  for(const t of finalScored){const existing=await getCallData(t.addr);if(!existing)await saveCall(t.addr,t.mcap,Date.now(),t.symbol);else if(t.mcap>(existing.athMcap||0))await updateAth(t.addr,t.mcap);}
+  const _now5 = Date.now();
+  for(const t of finalScored){
+    const existing=await getCallData(t.addr);
+    if(!existing){ await saveCall(t.addr,t.mcap,_now5,t.symbol); t._callTime=_now5; }
+    else{ if(t.mcap>(existing.athMcap||0))await updateAth(t.addr,t.mcap); t._callTime=existing.callTime||_now5; }
+  }
   const newAddrs=new Set(finalScored.map(t=>t.addr));
   for(const prev of lastScored){
     if(!newAddrs.has(prev.addr)){
-      prev._sticky=true;
-      finalScored.push(prev);
+      const age = _now5 - (prev._callTime||_now5);
+      // Garder en Live minimum 5 minutes après le premier call
+      if(age < 300000){
+        prev._sticky=true;
+        finalScored.push(prev);
+      }
+      // Après 5 min : passe en historique (déjà sauvegardé via saveCall)
     }
   }
   finalScored.sort((a,b)=>b.score-a.score);
