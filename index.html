@@ -2997,43 +2997,62 @@ async function fetchTokens(){
   const _48H=48*3600000,_now=Date.now();
   for(const r of results){if(r.status!=='fulfilled')continue;for(const p of r.value){const conv=p.attributes?geckoToDex(p):p;if(!conv)continue;if(!conv.chainId||conv.chainId!=='solana')continue;const m=conv.marketCap||conv.fdv||0;if(m>200000||m<5000)continue;// Rejeter les paires vieilles de plus de 48h dès le parsing
   if(conv.pairCreatedAt&&(_now-conv.pairCreatedAt)>_48H)continue;const addr=conv.baseToken?.address||conv.pairAddress||Math.random().toString();if(seen.has(addr))continue;seen.add(addr);pairs.push(conv);}}
-  const rejected={};const passed=[];
-  for(const p of pairs){const f=hardFilterV2(p);if(f.pass)passed.push(p);else rejected[f.reason]=(rejected[f.reason]||0)+1;}
-  let preScored=passed.map(p=>scoreTokenV2(p)).filter(t=>t.score>=60);
+  const rejected={};
+  // ── ÉTAPE 1 : Score TOUS les tokens <1h (sans hardFilter en amont) ─
+  const candidates=pairs.filter(p=>{const ah=(Date.now()-(p.pairCreatedAt||0))/3600000;return ah>=0.02&&ah<=1;});
+  let preScored=candidates.map(p=>scoreTokenV2(p)).filter(t=>t.score>=30);
   preScored.sort((a,b)=>b.score-a.score);preScored=preScored.slice(0,25);
   const finalScored=[];
   for(const t of preScored){
     try{
-      // Helius security check — rejet immédiat si mint/freeze active ou concentration élevée
       const sec = await checkTokenSecurity(t.addr, t.pairAddress || null);
       if(sec){
         if(sec.mintAuthority!==null){rejected['mint authority active']=(rejected['mint authority active']||0)+1;continue;}
         if(sec.freezeAuthority!==null){rejected['freeze authority active']=(rejected['freeze authority active']||0)+1;continue;}
-        if(parseFloat(sec.top1Pct)>25){rejected[`top1 holder ${sec.top1Pct}%`]=(rejected[`top1 holder ${sec.top1Pct}%`]||0)+1;continue;}
-        if(parseFloat(sec.top5Pct)>55){rejected[`top5 holders ${sec.top5Pct}%`]=(rejected[`top5 holders ${sec.top5Pct}%`]||0)+1;continue;}
-        // Attacher les données de sécurité au token pour affichage ET pour rescoring
-        t.security = sec;
-        if (t.raw) t.raw.security = sec; // CRUCIAL : scoreTokenV2 lit p.security
+        if(parseFloat(sec.top1Pct)>25){rejected[`top1 ${sec.top1Pct}%`]=(rejected[`top1 ${sec.top1Pct}%`]||0)+1;continue;}
+        if(parseFloat(sec.top5Pct)>55){rejected[`top5 ${sec.top5Pct}%`]=(rejected[`top5 ${sec.top5Pct}%`]||0)+1;continue;}
+        t.security=sec;
+        if(t.raw)t.raw.security=sec;
       }
       const wData=await checkAxiomWallets(t.addr);
       const rescored=scoreTokenV2(t.raw,wData);
-      // Sticky Axiom + Social : jamais diminuer
-      const hist = scoreHistory[rescored.addr] || {};
-      const stickyAxiom  = Math.max(rescored.debug.traderScore, hist.maxAxiom  || 0);
-      const stickySocial = Math.max(rescored.debug.socialScore, hist.maxSocial || 0);
-      const axiomDiff  = stickyAxiom  - rescored.debug.traderScore;
-      const socialDiff = stickySocial - rescored.debug.socialScore;
-      if (axiomDiff > 0 || socialDiff > 0) {
-        rescored.score = Math.min(150, rescored.score + axiomDiff + socialDiff);
-        rescored.debug.traderScore = stickyAxiom;
-        rescored.debug.socialScore = stickySocial;
-      }
-      scoreHistory[rescored.addr] = {
-        maxAxiom:  stickyAxiom,
-        maxSocial: stickySocial,
-      };
+      const hist=scoreHistory[rescored.addr]||{};
+      const stickyAxiom=Math.max(rescored.debug.traderScore,hist.maxAxiom||0);
+      const stickySocial=Math.max(rescored.debug.socialScore,hist.maxSocial||0);
+      const axiomDiff=stickyAxiom-rescored.debug.traderScore;
+      const socialDiff=stickySocial-rescored.debug.socialScore;
+      if(axiomDiff>0||socialDiff>0){rescored.score=Math.min(150,rescored.score+axiomDiff+socialDiff);rescored.debug.traderScore=stickyAxiom;rescored.debug.socialScore=stickySocial;}
+      scoreHistory[rescored.addr]={maxAxiom:stickyAxiom,maxSocial:stickySocial};
+
+      // ── ÉTAPE 2 : Hard filters POST-score ────────────────────────
+      // Appliqués APRÈS le score — ne bloquent plus les bons tokens en amont
+      const rp=rescored.raw;
+      const rdex=(rp?.dexId||'').toLowerCase();
+      const rurl=(rp?.url||'').toLowerCase();
+      const raddr=(rp?.baseToken?.address||'');
+
+      // HARD FILTER 1 — Platform : pump.fun, bonk ou bags uniquement
+      const isPump=rdex.includes('pump')||rurl.includes('pump')||raddr.endsWith('pump');
+      const isBonk=rdex.includes('bonk')||rdex.includes('launchlab');
+      const isBags=rdex.includes('bags')||rurl.includes('bags');
+      if(!isPump&&!isBonk&&!isBags){rejected[`platform:${rdex||'?'}`]=(rejected[`platform:${rdex||'?'}`]||0)+1;continue;}
+
+      // HARD FILTER 2 — Mcap : 15K → 100K
+      const rmc=rescored.mcap||0;
+      if(rmc<15000){rejected[`mcap $${fmtNum(rmc)}<15K`]=(rejected[`mcap $${fmtNum(rmc)}<15K`]||0)+1;continue;}
+      if(rmc>100000){rejected[`mcap $${fmtNum(rmc)}>100K`]=(rejected[`mcap $${fmtNum(rmc)}>100K`]||0)+1;continue;}
+
+      // HARD FILTER 3 — Âge < 1h
+      const rage=(Date.now()-(rp?.pairCreatedAt||0))/3600000;
+      if(rage>1){rejected[`age ${rage.toFixed(1)}h>1h`]=(rejected[`age ${rage.toFixed(1)}h>1h`]||0)+1;continue;}
+
+      // HARD FILTER 4 — Axiom : au moins 1 trader
+      if((rescored.walletData?.count||0)<1){rejected['0 Axiom trader']=(rejected['0 Axiom trader']||0)+1;continue;}
+
+      // Seuil score final : 80+
       if(rescored.score>=80){rescored.security=sec;finalScored.push(rescored);}
-    }catch(e){if(t.score>=55)finalScored.push(t);}
+      else{rejected[`score ${rescored.score}<80`]=(rejected[`score ${rescored.score}<80`]||0)+1;}
+    }catch(e){if(t.score>=80)finalScored.push(t);}
   }
   finalScored.sort((a,b)=>b.score-a.score);
   const _now5 = Date.now();
@@ -3060,7 +3079,7 @@ async function fetchTokens(){
   document.getElementById('scanDot').style.background='var(--green)';
   document.getElementById('lastUpdate').textContent='Updated '+new Date().toLocaleTimeString();
   document.getElementById('debugToggleBtn').style.display=isAdminMode?'inline-block':'none';
-  if(finalScored.length===0){const rejSorted=Object.entries(rejected).sort((a,b)=>b[1]-a[1]);const rejRows=rejSorted.slice(0,8).map(([r,n])=>`<tr><td style="color:var(--muted);padding:.2rem .5rem;font-size:.72rem">${r}</td><td style="color:var(--red);padding:.2rem .5rem;font-size:.72rem;text-align:right">×${n}</td></tr>`).join('');const allSc=passed.map(p=>scoreTokenV2(p)).sort((a,b)=>b.score-a.score);const near=allSc.slice(0,5).map(t=>`<tr><td style="color:var(--text);font-size:.72rem;padding:.2rem .5rem">${t.symbol}</td><td style="color:#ffaa00;font-size:.72rem;padding:.2rem .5rem;text-align:right">${t.score}pts</td><td style="color:var(--muted);font-size:.72rem;padding:.2rem .5rem">$${fmtNum(t.mcap)}</td></tr>`).join('');content.innerHTML=`<div class="empty-state" style="text-align:left;max-width:600px;margin:0 auto"><div style="text-align:center;margin-bottom:1.2rem"><div class="empty-icon">🔍</div><div class="empty-title">0 signal · ${pairs.length} paires analysées · ${passed.length} passent filtres</div></div>${pairs.length===0?'<div style="color:var(--red);font-size:.85rem;text-align:center;padding:1rem;background:rgba(255,60,60,.08);border-radius:8px;margin-bottom:1rem">⚠️ FETCH ÉCHOUÉ — API indisponible</div>':''}<div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem"><div><div style="font-size:.72rem;color:var(--green);font-weight:700;margin-bottom:.4rem;text-transform:uppercase">Rejets (${pairs.length-passed.length})</div><table style="width:100%;border-collapse:collapse">${rejRows||'<tr><td style="color:var(--muted);font-size:.72rem;padding:.3rem">—</td></tr>'}</table></div><div><div style="font-size:.72rem;color:#ffaa00;font-weight:700;margin-bottom:.4rem;text-transform:uppercase">Proches du seuil</div><table style="width:100%;border-collapse:collapse">${near||'<tr><td style="color:var(--muted);font-size:.72rem">—</td></tr>'}</table></div></div><div style="text-align:center;margin-top:1rem;font-size:.7rem;color:var(--muted)">Refresh auto 45s</div></div>`;}
+  if(finalScored.length===0){const rejSorted=Object.entries(rejected).sort((a,b)=>b[1]-a[1]);const rejRows=rejSorted.slice(0,8).map(([r,n])=>`<tr><td style="color:var(--muted);padding:.2rem .5rem;font-size:.72rem">${r}</td><td style="color:var(--red);padding:.2rem .5rem;font-size:.72rem;text-align:right">×${n}</td></tr>`).join('');const allSc=candidates.map(p=>scoreTokenV2(p)).sort((a,b)=>b.score-a.score);const near=allSc.slice(0,5).map(t=>`<tr><td style="color:var(--text);font-size:.72rem;padding:.2rem .5rem">${t.symbol}</td><td style="color:#ffaa00;font-size:.72rem;padding:.2rem .5rem;text-align:right">${t.score}pts</td><td style="color:var(--muted);font-size:.72rem;padding:.2rem .5rem">$${fmtNum(t.mcap)}</td></tr>`).join('');content.innerHTML=`<div class="empty-state" style="text-align:left;max-width:600px;margin:0 auto"><div style="text-align:center;margin-bottom:1.2rem"><div class="empty-icon">🔍</div><div class="empty-title">0 signal · ${pairs.length} paires analysées · ${candidates.length} dans fenêtre 1h</div></div>${pairs.length===0?'<div style="color:var(--red);font-size:.85rem;text-align:center;padding:1rem;background:rgba(255,60,60,.08);border-radius:8px;margin-bottom:1rem">⚠️ FETCH ÉCHOUÉ — API indisponible</div>':''}<div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem"><div><div style="font-size:.72rem;color:var(--green);font-weight:700;margin-bottom:.4rem;text-transform:uppercase">Rejets (${pairs.length-candidates.length})</div><table style="width:100%;border-collapse:collapse">${rejRows||'<tr><td style="color:var(--muted);font-size:.72rem;padding:.3rem">—</td></tr>'}</table></div><div><div style="font-size:.72rem;color:#ffaa00;font-weight:700;margin-bottom:.4rem;text-transform:uppercase">Proches du seuil</div><table style="width:100%;border-collapse:collapse">${near||'<tr><td style="color:var(--muted);font-size:.72rem">—</td></tr>'}</table></div></div><div style="text-align:center;margin-top:1rem;font-size:.7rem;color:var(--muted)">Refresh auto 45s</div></div>`;}
   else{await renderTokenTable(finalScored);}
   if(currentTab==='history')renderHistory();
   if(refreshTimer)clearTimeout(refreshTimer);
