@@ -2987,11 +2987,29 @@ async function fetchTokens(){
     try{const resp=await fetch(url,{signal:AbortSignal.timeout(9000)});const data=await resp.json();let raw=data;if(data.contents){try{raw=JSON.parse(data.contents);}catch(e){}}if(raw.pairs&&Array.isArray(raw.pairs))return raw.pairs;if(Array.isArray(raw))return raw;if(raw.data&&Array.isArray(raw.data))return raw.data;if(raw.tokenAddresses||(Array.isArray(raw)&&raw[0]?.tokenAddress)){const addrs=(raw.tokenAddresses||raw.map(x=>x.tokenAddress)).slice(0,30).join(',');if(addrs){const r2=await fetch(`https://api.dexscreener.com/latest/dex/tokens/${addrs}`,{signal:AbortSignal.timeout(9000)}).then(x=>x.json()).catch(()=>({}));return r2.pairs||[];}}}catch(e){}return[];
   }
   function geckoToDex(pool){try{const a=pool.attributes;if(!a)return null;const mcap=parseFloat(a.market_cap_usd||a.fdv_usd||0),liq=parseFloat(a.reserve_in_usd||0);const created=a.pool_created_at?new Date(a.pool_created_at).getTime():Date.now()-3600000;const addr=pool.relationships?.base_token?.data?.id?.split('_')[1]||'';return{chainId:'solana',pairCreatedAt:created,baseToken:{symbol:a.name?.split('/')[0]||'UNK',address:addr},liquidity:{usd:liq},marketCap:mcap,fdv:mcap,volume:{h1:parseFloat(a.volume_usd?.h1||0),h6:parseFloat(a.volume_usd?.h6||0),h24:parseFloat(a.volume_usd?.h24||0)},priceChange:{m5:parseFloat(a.price_change_percentage?.m5||0),h1:parseFloat(a.price_change_percentage?.h1||0),h6:parseFloat(a.price_change_percentage?.h6||0),h24:parseFloat(a.price_change_percentage?.h24||0)},txns:{h1:{buys:parseInt(a.transactions?.h1?.buys||0),sells:parseInt(a.transactions?.h1?.sells||0)}},info:{socials:a.websites?[{url:a.websites[0]}]:[],websites:[]},url:`https://dexscreener.com/solana/${addr}`};}catch(e){return null;}}
-  const ENDPOINTS=['https://api.dexscreener.com/latest/dex/search?q=solana%20pump','https://api.dexscreener.com/latest/dex/search?q=pump.fun+solana','https://api.dexscreener.com/latest/dex/search?q=solana+meme+new','https://api.dexscreener.com/latest/dex/search?q=launchlab+solana','https://api.dexscreener.com/latest/dex/search?q=bonk+solana+new','https://api.dexscreener.com/token-profiles/latest/v1','https://api.dexscreener.com/token-boosts/latest/v1'];
+  const ENDPOINTS=[
+    // Pump.fun — source principale nouveaux tokens
+    'https://api.dexscreener.com/latest/dex/search?q=pump.fun',
+    'https://api.dexscreener.com/latest/dex/search?q=solana+pump',
+    // LaunchLab / Bonk
+    'https://api.dexscreener.com/latest/dex/search?q=launchlab',
+    'https://api.dexscreener.com/latest/dex/search?q=bonk+launchlab',
+    // Raydium nouveaux tokens
+    'https://api.dexscreener.com/latest/dex/search?q=raydium+solana+new',
+    // Meme tokens Solana
+    'https://api.dexscreener.com/latest/dex/search?q=solana+meme',
+    'https://api.dexscreener.com/latest/dex/search?q=solana+cat',
+    'https://api.dexscreener.com/latest/dex/search?q=solana+dog',
+    'https://api.dexscreener.com/latest/dex/search?q=solana+pepe',
+    'https://api.dexscreener.com/latest/dex/search?q=solana+ai',
+    // Profiles et boosts (tokens avec metadata = qualité)
+    'https://api.dexscreener.com/token-profiles/latest/v1',
+    'https://api.dexscreener.com/token-boosts/latest/v1',
+  ];
   const results=await Promise.allSettled(ENDPOINTS.map(fetchPairs));
   const seen=new Set();let pairs=[];
   const _48H=48*3600000,_now=Date.now();
-  for(const r of results){if(r.status!=='fulfilled')continue;for(const p of r.value){const conv=p.attributes?geckoToDex(p):p;if(!conv)continue;if(!conv.chainId||conv.chainId!=='solana')continue;const m=conv.marketCap||conv.fdv||0;if(m>150000||m<5000)continue;// Rejeter les paires vieilles de plus de 48h dès le parsing
+  for(const r of results){if(r.status!=='fulfilled')continue;for(const p of r.value){const conv=p.attributes?geckoToDex(p):p;if(!conv)continue;if(!conv.chainId||conv.chainId!=='solana')continue;const m=conv.marketCap||conv.fdv||0;if(m>200000||m<5000)continue;// Rejeter les paires vieilles de plus de 48h dès le parsing
   if(conv.pairCreatedAt&&(_now-conv.pairCreatedAt)>_48H)continue;const addr=conv.baseToken?.address||conv.pairAddress||Math.random().toString();if(seen.has(addr))continue;seen.add(addr);pairs.push(conv);}}
   const rejected={};const passed=[];
   for(const p of pairs){const f=hardFilterV2(p);if(f.pass)passed.push(p);else rejected[f.reason]=(rejected[f.reason]||0)+1;}
