@@ -2357,13 +2357,20 @@ async function checkAxiomWallets(tokenAddr) {
         const enhancedTxs = await enhancedResp.json();
         console.log('[AXIOM] Enhanced API status:', enhancedResp.status, 'txs count:', Array.isArray(enhancedTxs)?enhancedTxs.length:'ERROR', typeof enhancedTxs==='object'&&!Array.isArray(enhancedTxs)?JSON.stringify(enhancedTxs).slice(0,200):'');
         if (Array.isArray(enhancedTxs)) {
+          // FIX FAUX POSITIFS : ne garder QUE les feePayer (= signataires humains réels)
+          // accountData inclut tous les comptes touchés (AMM, pools, PDAs) → faux matches
           enhancedTxs.forEach(tx => {
-            if (tx?.feePayer) allOwners.add(tx.feePayer);
-            (tx?.accountData || []).forEach(ad => {
-              if (ad?.account) allOwners.add(ad.account);
+            // feePayer = seul vrai humain qui a signé et payé la tx
+            if (tx?.feePayer && tx.feePayer.length >= 32) allOwners.add(tx.feePayer);
+            // instructions signers si présents (multi-sig)
+            (tx?.instructions || []).forEach(ix => {
+              (ix?.accounts || []).forEach(acc => {
+                // Exclure les program accounts (généralement < 32 chars ou connus)
+                if (acc && acc.length >= 32) allOwners.add(acc);
+              });
             });
           });
-          console.log('[AXIOM] Total owners from Enhanced:', allOwners.size);
+          console.log('[AXIOM] Total owners from Enhanced (feePayer only):', allOwners.size);
         }
       } catch(e) { console.warn('[AXIOM] Enhanced API error:', e.message); }
     }
@@ -2398,10 +2405,24 @@ async function checkAxiomWallets(tokenAddr) {
       }
     }
 
-    const allOwnersList = [...allOwners];
-    console.log('[AXIOM] Total unique owners collected:', allOwnersList.length);
-    // Afficher les 10 premiers owners pour debug
-    console.log('[AXIOM] Sample owners:', allOwnersList.slice(0,10));
+    // Exclure les adresses système/programme connues avant le match
+    // Ces adresses ne sont JAMAIS des vrais traders humains
+    const KNOWN_PROGRAMS = new Set([
+      '11111111111111111111111111111111',
+      'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
+      'So11111111111111111111111111111111111111112',
+      '675kPX9MHTjS2zt1qfr1NYHuzeLXfQM9H24wFSUt1Mp8',
+      'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJe8bXP',
+      '6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P',
+      'ComputeBudget111111111111111111111111111111',
+      'JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4',
+      'TSLvdd1pWpHVjahSpsvCXUbgwsL3JAcvokwaKt1eokM',
+      'SysvarRent111111111111111111111111111111111',
+      'SysvarC1ock11111111111111111111111111111111',
+      'BQ72nSv9f3PRyRKCBnHLVrerrv37CYTHm5h3s9VSGQDV',
+    ]);
+    const allOwnersList = [...allOwners].filter(o => !KNOWN_PROGRAMS.has(o));
+    console.log('[AXIOM] Total unique owners (excl. programs):', allOwnersList.length);
     const matchingOwners = allOwnersList.filter(o => AXIOM_WALLETS.has(o));
     console.log('[AXIOM] Matching Axiom wallets:', matchingOwners.length, matchingOwners);
     const newCount = matchingOwners.length;
@@ -3111,6 +3132,12 @@ async function fetchTokens(){
   const content=document.getElementById('scannerContent');
   if(loadEl)loadEl.style.display='block';
   document.getElementById('scanDot').style.background='var(--gold)';
+  // Invalider le cache Axiom des tokens qui ne sont PLUS dans lastScored
+  // pour éviter que des faux positifs restent bloqués 30min en cache
+  const activeAddrs=new Set(lastScored.map(t=>t.addr));
+  Object.keys(swCache).forEach(addr=>{
+    if(!activeAddrs.has(addr))delete swCache[addr];
+  });
   async function fetchPairs(url){
     try{const resp=await fetch(url,{signal:AbortSignal.timeout(9000)});const data=await resp.json();let raw=data;if(data.contents){try{raw=JSON.parse(data.contents);}catch(e){}}if(raw.pairs&&Array.isArray(raw.pairs))return raw.pairs;if(Array.isArray(raw))return raw;if(raw.data&&Array.isArray(raw.data))return raw.data;if(raw.tokenAddresses||(Array.isArray(raw)&&raw[0]?.tokenAddress)){const addrs=(raw.tokenAddresses||raw.map(x=>x.tokenAddress)).slice(0,30).join(',');if(addrs){const r2=await fetch(`https://api.dexscreener.com/latest/dex/tokens/${addrs}`,{signal:AbortSignal.timeout(9000)}).then(x=>x.json()).catch(()=>({}));return r2.pairs||[];}}}catch(e){}return[];
   }
