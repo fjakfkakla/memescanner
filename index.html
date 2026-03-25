@@ -2292,7 +2292,9 @@ async function checkAxiomWallets(tokenAddr) {
   if (!tokenAddr) return { count: 0, wallets: [], clustered: false };
   const now = Date.now();
   const cached = swCache[tokenAddr];
-  if (cached && now - cached.ts < 600000) return cached.result; // cache 10min
+  // Cache 30min pour Axiom — évite les re-checks qui pourraient baisser le count
+  // Le MAX historique est aussi stocké dans maxEver pour double sécurité
+  if (cached && now - cached.ts < 1800000) return cached.result;
 
   try {
     // TRIPLE STRATÉGIE — du plus complet au plus ciblé :
@@ -2393,12 +2395,17 @@ async function checkAxiomWallets(tokenAddr) {
     console.log('[AXIOM] Matching Axiom wallets:', matchingOwners.length, matchingOwners);
     const newCount = matchingOwners.length;
     const newWallets = matchingOwners.slice(0, 4).map(w => w.slice(0, 8) + '…');
-    // Ne jamais diminuer : garder le MAX historique (un trader qui a vendu reste compté)
+    // JAMAIS DIMINUER — garder le MAX historique absolu
+    // Un trader qui a vendu reste compté définitivement
     const prevResult = swCache[tokenAddr]?.result;
-    const count = Math.max(newCount, prevResult?.count || 0);
-    const wallets = count > newCount ? (prevResult?.wallets || newWallets) : newWallets;
+    const prevCount = prevResult?.count || 0;
+    const count = Math.max(newCount, prevCount);
+    const wallets = count > newCount && prevResult?.wallets?.length
+      ? prevResult.wallets  // conserver les wallets de la meilleure détection
+      : newWallets;
     const result = { count, wallets, clustered: count >= 2 };
-    swCache[tokenAddr] = { ts: now, result };
+    // Garder le cache plus longtemps (30min) pour éviter les re-checks qui baissent
+    swCache[tokenAddr] = { ts: now, result, maxEver: count };
     return result;
 
   } catch(e) {
@@ -2749,8 +2756,8 @@ function showDebug(idx){
 // ============================================================
 // PERSISTENT CALLS
 // ============================================================
-async function saveCall(addr,callMcap,callTime,symbol=''){
-  const entry={callMcap,callTime,athMcap:callMcap,addr,symbol};
+async function saveCall(addr,callMcap,callTime,symbol='',score=0){
+  const entry={callMcap,callTime,athMcap:callMcap,addr,symbol,score};
   try{const all=JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}');if(!all[addr]){all[addr]=entry;localStorage.setItem(STORAGE_KEY,JSON.stringify(all));}}catch(e){}
   try{const key=addr.replace(/[.#$\/\[\]]/g,'_');const ex=await fetch(`${FB_URL}/calls/${key}.json`).then(r=>r.json()).catch(()=>null);if(!ex)await fetch(`${FB_URL}/calls/${key}.json`,{method:'PUT',body:JSON.stringify(entry)});}catch(e){}
 }
@@ -2802,24 +2809,76 @@ async function renderHistory(){
   const hc=document.getElementById('histCount');if(hc)hc.textContent=entries.length?`(${entries.length})`:'';
   if(!entries.length){container.innerHTML='<div class="hist-empty"><div class="hist-empty-icon">📭</div><div>Aucun call encore</div></div>';return;}
   entries.sort((a,b)=>(b[1].callTime||0)-(a[1].callTime||0));
-  const recentAddrs=entries.filter(([,v])=>v.addr||v.address).map(([,v])=>v.addr||v.address).filter(Boolean).slice(0,20);
+  // Fetch prix live pour tous les tokens
+  const recentAddrs=entries.map(([,v])=>v.addr||v.address||'').filter(Boolean).slice(0,20);
   let liveMap={};
-  if(recentAddrs.length){try{const res=await fetch(`https://api.dexscreener.com/latest/dex/tokens/${recentAddrs.slice(0,20).join(',')}`,{signal:AbortSignal.timeout(8000)}).then(r=>r.json());(res.pairs||[]).forEach(p=>{const a=p.baseToken?.address;if(a)liveMap[a]=p.marketCap||p.fdv||0;});}catch(e){}}
-  const EL=['🐸','🚀','💎','🌙','🔥','⚡','🦊','🐉','🦁','🎯','👾','🤖'];
-  function xC(x){return x>=2?'up':x>=1?'neutral':'down';}
-  let cards='';
+  if(recentAddrs.length){try{const res=await fetch(`https://api.dexscreener.com/latest/dex/tokens/${recentAddrs.join(',')}`,{signal:AbortSignal.timeout(8000)}).then(r=>r.json());(res.pairs||[]).forEach(p=>{const a=p.baseToken?.address;if(a)liveMap[a]=p.marketCap||p.fdv||0;});}catch(e){}}
+  const cards=[];
   for(const [key,v] of entries){
-    const addr=v.addr||v.address||'',callMcap=v.callMcap||0,athMcap=v.athMcap||callMcap,callTime=v.callTime||0;
-    const sym=(v.symbol||key.slice(0,8).toUpperCase()),curMcap=liveMap[addr]||0;
-    const highX=callMcap>0?athMcap/callMcap:1,latX=callMcap>0?(curMcap>0?curMcap/callMcap:highX):1;
+    const addr=v.addr||v.address||'';
+    if(!addr)continue;
+    const callMcap=v.callMcap||0;
+    const athMcap=v.athMcap||callMcap;
+    const callTime=v.callTime||0;
+    const sym=(v.symbol||key.slice(0,8).toUpperCase());
+    const curMcap=liveMap[addr]||0;
     const isLive=curMcap>0;
-    const age=Date.now()-callTime,h=Math.floor(age/3600000),m=Math.floor(age/60000)%60;
-    const ts=h>0?`il y a ${h}h${m>0?m+'m':''}`:`il y a ${m}m`;
-    const emoji=EL[Math.abs(addr.charCodeAt(0)||0)%EL.length];
-    const addrShort=addr?addr.slice(0,10)+'...'+addr.slice(-4):'—';
-    cards+=`<div class="hist-card"><div class="hist-card-header"><div class="hist-tok-icon">${emoji}</div><div style="flex:1;min-width:0"><div style="display:flex;align-items:center;gap:.4rem;flex-wrap:wrap"><span class="hist-tok-name">${sym}</span><span class="hist-badge ${isLive?'hist-badge-live':'hist-badge-dead'}">${isLive?'🟢 LIVE':'⚫ PASSÉ'}</span></div><div class="hist-tok-sub" data-addr="${addr}" onclick="copyHistCA(this)" title="Cliquer pour copier le CA">${addr?addrShort+' 📋':'—'}</div></div></div><div class="hist-xrow"><div class="hist-x-cell"><div class="hist-x-label">High X</div><div class="hist-x-val ${xC(highX)}">${highX.toFixed(1)}x</div></div><div class="hist-x-cell"><div class="hist-x-label">Now X</div><div class="hist-x-val ${xC(latX)}">${latX.toFixed(1)}x</div></div><div class="hist-x-cell"><div class="hist-x-label">ATH</div><div class="hist-x-val neutral">$${fmtNum(athMcap)}</div></div></div><div class="hist-mcap-row"><div class="hist-mcap-line"><span>Initial</span><span style="color:var(--green)">$${fmtNum(callMcap)}</span></div><div class="hist-mcap-line"><span>Actuel</span><span>${curMcap>0?'$'+fmtNum(curMcap):'—'}</span></div></div><div class="hist-footer"><span>${ts}</span><div style="display:flex;gap:.4rem">${addr?`<button class="hist-copy-ca" data-addr="${addr}" onclick="copyHistCA(this)">COPY CA</button>`:''}<a href="https://dexscreener.com/solana/${addr}" target="_blank" class="hist-dex-btn">DEX →</a></div></div></div>`;
+    const xAth=callMcap>0&&athMcap>callMcap?(athMcap/callMcap):1;
+    const xNow=callMcap>0&&curMcap>0?(curMcap/callMcap):xAth;
+    const xColor=xAth>=3?'#00ff88':xAth>=2?'#88ff44':xAth>=1.5?'#ffcc44':'#ff8866';
+    const nowColor=curMcap<=0?'rgba(255,255,255,.3)':curMcap>callMcap?'#44ff88':curMcap<callMcap*0.7?'#ff5577':'#ffcc44';
+    const callHeure=fmtTimeSeconds(callTime);
+    const addrShort=addr.slice(0,6)+'...'+addr.slice(-4);
+    // Score et label depuis les données sauvegardées (si disponibles)
+    const savedScore=v.score||0;
+    const scoreEmoji=savedScore>=130?'☢️':savedScore>=110?'💎':savedScore>=95?'🚀':savedScore>=80?'👁':'📡';
+    const badgeCls=savedScore>=130?'nuclear':savedScore>=110?'diamond':savedScore>=95?'runner':savedScore>=80?'watchlist':'radar';
+    const labelTxt=savedScore>=130?'☢️ NUCLEAR':savedScore>=110?'💎 DIAMOND':savedScore>=95?'🚀 RUNNER':savedScore>=80?'👁 WATCHLIST':'📋 CALL';
+    cards.push(`<div class="sc-card" style="opacity:${isLive?1:.75}">
+      <div class="sc-header">
+        <span style="font-size:1.2rem;flex-shrink:0">${scoreEmoji}</span>
+        <span class="sc-sym">${sym}</span>
+        <div style="display:flex;gap:.3rem;align-items:center;flex-shrink:0">
+          <span class="hist-badge ${isLive?'hist-badge-live':'hist-badge-dead'}">${isLive?'🟢 LIVE':'⚫ PASSÉ'}</span>
+          ${savedScore?`<span class="sc-badge ${badgeCls}">${labelTxt} ${savedScore}</span>`:''}
+        </div>
+      </div>
+      <div class="sc-calltime">
+        <span style="opacity:.5">⏰</span>
+        <span>CALLED AT: ${callHeure}</span>
+        <span style="margin-left:auto;opacity:.5;font-size:.56rem">${timeAgo(callTime)} ago</span>
+      </div>
+      <div class="sc-stats">
+        <div class="sc-stat">
+          <div class="sc-stat-lbl">📍 CALL</div>
+          <div class="sc-stat-val" style="color:#ffaa44">$${fmtNum(callMcap)}</div>
+        </div>
+        <div class="sc-stat">
+          <div class="sc-stat-lbl">⏰ NOW</div>
+          <div class="sc-stat-val" style="color:${nowColor}">${curMcap>0?'$'+fmtNum(curMcap):'—'}</div>
+        </div>
+        <div class="sc-stat">
+          <div class="sc-stat-lbl">🏆 ATH</div>
+          <div class="sc-stat-val" style="color:#ffaa44">$${fmtNum(athMcap)}</div>
+        </div>
+        <div class="sc-stat gold">
+          <div class="sc-stat-lbl">🎯 × ATH</div>
+          <div class="sc-stat-val" style="color:${xColor};font-size:.82rem">${xAth.toFixed(2)}x</div>
+        </div>
+      </div>
+      <div class="sc-footer">
+        <div style="display:flex;gap:.35rem;align-items:center;flex-wrap:wrap;flex:1;min-width:0">
+          <span class="sc-addr" data-addr="${addr}" onclick="copyHistCA(this)" title="Copier CA">${addrShort} 📋</span>
+        </div>
+        <div style="display:flex;gap:.32rem;align-items:center;flex-shrink:0">
+          <button class="sc-btn-pnl" onclick="openScannerPnl('${addr}','${sym}',${callMcap},${athMcap},${savedScore})">📤 PnL</button>
+          <a href="https://dexscreener.com/solana/${addr}" target="_blank" class="sc-btn-dex">DEX →</a>
+        </div>
+      </div>
+    </div>`);
   }
-  container.innerHTML=`<div class="history-grid">${cards}</div>`;
+  const lc=document.getElementById('histCount');if(lc)lc.textContent=cards.length?`(${cards.length})`:'';
+  container.innerHTML=`<div class="scanner-grid">${cards.join('')}</div>`;
 }
 
 // ============================================================
@@ -3058,7 +3117,7 @@ async function fetchTokens(){
   const _now5 = Date.now();
   for(const t of finalScored){
     const existing=await getCallData(t.addr);
-    if(!existing){ await saveCall(t.addr,t.mcap,_now5,t.symbol); t._callTime=_now5; }
+    if(!existing){ await saveCall(t.addr,t.mcap,_now5,t.symbol,t.score||0); t._callTime=_now5; }
     else{ if(t.mcap>(existing.athMcap||0))await updateAth(t.addr,t.mcap); t._callTime=existing.callTime||_now5; }
   }
   const newAddrs=new Set(finalScored.map(t=>t.addr));
