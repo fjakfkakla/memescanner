@@ -2889,35 +2889,47 @@ async function renderHistory(){
       Object.entries(bestPair).forEach(([a,p])=>{
         const now=p.marketCap||p.fdv||0;
         if(!now)return;
-        // Reconstruire l'ATH le plus précis possible depuis DexScreener
-        // priceChange.hX = variation DEPUIS le prix il y a X heures
-        //   ex: -90.2% sur 24h → le token valait now/(1-0.902) = now*10.2x il y a 24h
-        //   ex: -73% sur 24h → now/(0.27) = 3.7x il y a 24h
+        // ATH estimé depuis priceChange — avec plafond anti-MEV bot
+        // priceChange.hX = variation depuis il y a X heures
+        // Si négatif : le token était plus haut → on recalcule
+        // PLAFOND : max 50x le prix now pour éviter les spikes MEV aberrants
         const c24=p.priceChange?.h24||0;
         const c6=p.priceChange?.h6||0;
         const c1=p.priceChange?.h1||0;
+        const MAX_MULT=50; // un token ne peut pas avoir fait 50x sans qu'on le sache
         let athEst=now;
-        // Pour chaque période : si c < 0, le prix ÉTAIT plus haut
-        // Prix d'il y a Xh = now / (1 + cXh/100)
-        // ex: c24=-90.2 → now/0.098 = vrai ATH 24h
-        const calc24 = c24 < -5  ? now / Math.max(0.01, 1 + c24/100) : now * Math.max(1, 1 + c24/100);
-        const calc6  = c6  < -5  ? now / Math.max(0.01, 1 + c6/100)  : now * Math.max(1, 1 + c6/100);
-        const calc1  = c1  < -5  ? now / Math.max(0.01, 1 + c1/100)  : now * Math.max(1, 1 + c1/100);
-        athEst = Math.max(now, calc24, calc6, calc1);
-        liveMap[a]={now, athEst:Math.round(athEst)};
+        // Formule inverse : si c=-90% → maintenant vaut 10% du max → max = now/0.10
+        // Plafond anti-MEV : ne jamais dépasser now * MAX_MULT
+        const cap=now*MAX_MULT;
+        if(c24<-10){const est=now/Math.max(0.001,1+c24/100);if(est<cap)athEst=Math.max(athEst,est);}
+        if(c6 <-10){const est=now/Math.max(0.001,1+c6/100); if(est<cap)athEst=Math.max(athEst,est);}
+        if(c1 <-10){const est=now/Math.max(0.001,1+c1/100); if(est<cap)athEst=Math.max(athEst,est);}
+        // Si positif : now est déjà un ATH potentiel
+        if(c24>0)athEst=Math.max(athEst,now);
+        liveMap[a]={now, athEst:Math.round(athEst), c24, c6, c1};
       });
     }catch(e){}
   }
 
-  // Mettre à jour ATH si le prix calculé est supérieur — sauvegarder Firebase
+  // Mettre à jour ATH — avec correction des valeurs aberrantes
   const athUpdates=[];
   for(const [key,v] of entries){
     const addr=v.addr||v.address||'';if(!addr)continue;
     const live=liveMap[addr];
     if(!live)continue;
-    // Comparer à la fois le prix now ET l'ATH estimé
+    const callMcap=v.callMcap||0;
     const bestKnown=Math.max(live.now||0, live.athEst||0);
-    if(bestKnown>0&&bestKnown>(v.athMcap||0)){
+
+    // CORRECTION valeur aberrante stockée (spike MEV bot)
+    // Si athStored > max(bestKnown * 5, callMcap * 100) → c'est sûrement faux
+    // On le corrige par le meilleur connu
+    const athStored=v.athMcap||0;
+    const isAberrant = athStored>0 && bestKnown>0 && athStored > Math.max(bestKnown*5, callMcap*100);
+    if(isAberrant){
+      // Corriger : remplacer par la meilleure valeur connue
+      v.athMcap=bestKnown;
+      athUpdates.push({key,addr,athMcap:bestKnown});
+    } else if(bestKnown>0&&bestKnown>athStored){
       v.athMcap=bestKnown;
       athUpdates.push({key,addr,athMcap:bestKnown});
     }
