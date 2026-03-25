@@ -2378,26 +2378,9 @@ async function checkAxiomWallets(tokenAddr) {
       console.warn('[AXIOM] DAS failed:', dasRes.reason);
     }
 
-    // C) Top 20 → resolve owners
-    if (largestRes.status === 'fulfilled') {
-      const largestAccounts = largestRes.value?.result?.value || [];
-      if (largestAccounts.length > 0) {
-        try {
-          const addrs = largestAccounts.map(a => a.address).slice(0, 20);
-          const multiResp = await fetch(HELIUS_RPC, {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ jsonrpc: '2.0', id: 'multi',
-              method: 'getMultipleAccounts',
-              params: [addrs, { encoding: 'jsonParsed' }] }),
-            signal: AbortSignal.timeout(8000)
-          }).then(r => r.json());
-          (multiResp?.result?.value || []).forEach(a => {
-            const owner = a?.data?.parsed?.info?.owner;
-            if (owner) allOwners.add(owner);
-          });
-        } catch(e) {}
-      }
-    }
+    // Méthode C (getMultipleAccounts) supprimée — retournait des owners AMM/pools
+    // qui causaient des faux positifs Axiom
+    // On garde uniquement feePayer (signataires humains) + DAS owners (vrais holders)
 
     // Exclure les adresses système/programme connues avant le match
     // Ces adresses ne sont JAMAIS des vrais traders humains
@@ -2977,14 +2960,13 @@ async function renderHistory(){
 
     // Pour les tokens callés il y a <24h : calcul ATH via priceChange (fiable)
     // Pour les plus vieux : garder max(now, athStored) — pas de recalcul risqué
-    const oneDayAgo=Date.now()-24*3600000;
-    const isLast24h=(v.callTime||0)>oneDayAgo;
-    if(isLast24h){
-      try{
-        const realAth=await fetchRealAth(v.pairAddress||'',addr);
-        if(realAth>0) bestKnown=Math.max(bestKnown,realAth);
-      }catch(e){}
-    }
+    // Appliquer fetchRealAth pour tous les tokens < 7 jours
+    // La formule priceChange h24 est utile même pour tokens >24h
+    // car elle donne le range du dernier jour (souvent contient l'ATH ou proche)
+    try{
+      const realAth=await fetchRealAth(v.pairAddress||'',addr);
+      if(realAth>0) bestKnown=Math.max(bestKnown,realAth);
+    }catch(e){}
 
     if(bestKnown>0&&bestKnown>(v.athMcap||0)){
       v.athMcap=bestKnown;
@@ -3056,7 +3038,7 @@ async function renderHistory(){
         </div>
         <div class="sc-stat">
           <div class="sc-stat-lbl">⏰ NOW</div>
-          <div class="sc-stat-val" style="color:${nowColor}">${curMcap>0?'$'+fmtNum(curMcap):'—'}</div>
+          <div class="sc-stat-val" style="color:${nowColor}">$${fmtNum(nowMcap||t.mcap)}</div>
         </div>
         <div class="sc-stat">
           <div class="sc-stat-lbl">🏆 ATH</div>
@@ -3474,6 +3456,25 @@ function getScoreEmoji(score){
 async function renderTokenTable(tokens){
   const content=document.getElementById('scannerContent');
   const cards=[];
+
+  // Fetch prix live pour tous les tokens du Live — même fiabilité que Historique
+  const liveAddrs=tokens.map(t=>t.addr).filter(Boolean).slice(0,20);
+  let livePriceMap={};
+  if(liveAddrs.length){
+    try{
+      const res=await fetch(`https://api.dexscreener.com/latest/dex/tokens/${liveAddrs.join(',')}`,
+        {signal:AbortSignal.timeout(8000)}).then(r=>r.json());
+      const best={};
+      (res.pairs||[]).forEach(p=>{
+        const a=p.baseToken?.address;if(!a)return;
+        if(!best[a]||(p.volume?.h24||0)>(best[a].volume?.h24||0))best[a]=p;
+      });
+      Object.entries(best).forEach(([a,p])=>{
+        livePriceMap[a]=p.marketCap||p.fdv||0;
+      });
+    }catch(e){}
+  }
+
   for(let i=0;i<tokens.length;i++){
     const t=tokens[i];
     const label=getLabel(t.score);
@@ -3481,6 +3482,8 @@ async function renderTokenTable(tokens){
     const callData=await getCallData(t.addr);
     const callMcap=callData?.callMcap||t.mcap;
     const callTime=callData?.callTime||Date.now();
+    // nowMcap = prix live (DexScreener) ou fallback sur mcap du scan
+    const nowMcap=livePriceMap[t.addr]||t.mcap||0;
     // ATH Live : prendre le max entre ATH stocké ET estimation via priceChange
     let athMcap=callData?.athMcap||t.mcap;
     // Recalcul ATH via priceChange du token live (même logique que Historique)
@@ -3505,7 +3508,7 @@ async function renderTokenTable(tokens){
     const scoreEmoji=getScoreEmoji(t.score);
     const badgeCls=t.score>=130?'nuclear':t.score>=110?'diamond':t.score>=95?'runner':t.score>=80?'watchlist':'radar';
     // Couleur Now selon perf
-    const nowColor=t.mcap<=0?'rgba(255,255,255,.3)':t.mcap>callMcap?'#44ff88':t.mcap<callMcap*0.7?'#ff5577':'#ffcc44';
+    const nowColor=nowMcap<=0?'rgba(255,255,255,.3)':nowMcap>callMcap?'#44ff88':nowMcap<callMcap*0.7?'#ff5577':'#ffcc44';
     const athColor='#ffaa44';
     const xAth=callMcap>0&&athMcap>callMcap?(athMcap/callMcap):1;
     const xColor=xAth>=3?'#00ff88':xAth>=2?'#88ff44':xAth>=1.5?'#ffcc44':'#ff8866';
@@ -3553,7 +3556,7 @@ async function renderTokenTable(tokens){
         </div>
         <div class="sc-stat">
           <div class="sc-stat-lbl">⏰ NOW</div>
-          <div class="sc-stat-val" style="color:${nowColor}">$${fmtNum(t.mcap)}</div>
+          <div class="sc-stat-val" style="color:${nowColor}">$${fmtNum(nowMcap||t.mcap)}</div>
         </div>
         <div class="sc-stat">
           <div class="sc-stat-lbl">🏆 ATH</div>
@@ -4225,9 +4228,37 @@ function resetRuggers(){if(!confirm('Supprimer toute la liste des ruggeurs ?'))r
 // ============================================================
 // INIT
 // ============================================================
+// Relancer fetchTokens si on revient sur la page après une absence
+document.addEventListener('visibilitychange',()=>{
+  if(document.visibilityState==='visible'&&isUnlocked){
+    // Si le refresh timer est mort (page en arrière-plan tue les timers)
+    // ou si lastScored est vide → relancer immédiatement
+    if(!refreshTimer||lastScored.length===0){
+      if(refreshTimer)clearTimeout(refreshTimer);
+      fetchTokens();
+    }
+  }
+});
+
 window.addEventListener('DOMContentLoaded',()=>{
   try{
     checkSession();loadReviews();
+
+    // FIX RETOUR APRÈS ABSENCE : relancer le scan si tab inactif
+    let lastActiveTime = Date.now();
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') {
+        const away = Date.now() - lastActiveTime;
+        // Si absent > 2 minutes ET connecté → relancer immédiatement
+        if (away > 120000 && isUnlocked) {
+          console.log(`[Scanner] Retour après ${Math.round(away/60000)}min → relance scan`);
+          if (refreshTimer) clearTimeout(refreshTimer);
+          fetchTokens();
+        }
+      } else {
+        lastActiveTime = Date.now();
+      }
+    });
     if(!isUnlocked){
       document.getElementById('loadingEl').style.display='none';
       document.getElementById('scannerContent').innerHTML=`<div class="empty-state"><div class="empty-icon">🔐</div><div class="empty-title">Accès réservé aux membres</div><div class="empty-sub" style="margin-top:1rem"><button onclick="openCode()" style="background:var(--green);color:#000;border:none;padding:.6rem 1.5rem;border-radius:8px;font-weight:700;cursor:pointer;font-family:var(--font);font-size:.88rem">Entrer mon code d'accès</button></div></div>`;
