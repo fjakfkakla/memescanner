@@ -2873,25 +2873,53 @@ async function renderHistory(){
 
   // Fetch prix live TOUS les tokens (par batch de 20 — DexScreener limite)
   const allAddrs=entries.map(([,v])=>v.addr||v.address||'').filter(Boolean);
+  // liveMap stocke {now, athEst} — now = mcap actuel, athEst = ATH estimé depuis DexScreener
   let liveMap={};
-  // Fetch par chunks de 20
   for(let i=0;i<allAddrs.length;i+=20){
     try{
       const chunk=allAddrs.slice(i,i+20);
       const res=await fetch(`https://api.dexscreener.com/latest/dex/tokens/${chunk.join(',')}`,
         {signal:AbortSignal.timeout(10000)}).then(r=>r.json());
-      (res.pairs||[]).forEach(p=>{const a=p.baseToken?.address;if(a)liveMap[a]=p.marketCap||p.fdv||0;});
+      // Grouper par token address, garder la paire avec le plus grand volume
+      const bestPair={};
+      (res.pairs||[]).forEach(p=>{
+        const a=p.baseToken?.address;if(!a)return;
+        if(!bestPair[a]||(p.volume?.h24||0)>(bestPair[a].volume?.h24||0))bestPair[a]=p;
+      });
+      Object.entries(bestPair).forEach(([a,p])=>{
+        const now=p.marketCap||p.fdv||0;
+        if(!now)return;
+        // Reconstruire l'ATH le plus précis possible depuis DexScreener
+        // priceChange.hX = variation DEPUIS le prix il y a X heures
+        //   ex: -90.2% sur 24h → le token valait now/(1-0.902) = now*10.2x il y a 24h
+        //   ex: -73% sur 24h → now/(0.27) = 3.7x il y a 24h
+        const c24=p.priceChange?.h24||0;
+        const c6=p.priceChange?.h6||0;
+        const c1=p.priceChange?.h1||0;
+        let athEst=now;
+        // Pour chaque période : si c < 0, le prix ÉTAIT plus haut
+        // Prix d'il y a Xh = now / (1 + cXh/100)
+        // ex: c24=-90.2 → now/0.098 = vrai ATH 24h
+        const calc24 = c24 < -5  ? now / Math.max(0.01, 1 + c24/100) : now * Math.max(1, 1 + c24/100);
+        const calc6  = c6  < -5  ? now / Math.max(0.01, 1 + c6/100)  : now * Math.max(1, 1 + c6/100);
+        const calc1  = c1  < -5  ? now / Math.max(0.01, 1 + c1/100)  : now * Math.max(1, 1 + c1/100);
+        athEst = Math.max(now, calc24, calc6, calc1);
+        liveMap[a]={now, athEst:Math.round(athEst)};
+      });
     }catch(e){}
   }
 
-  // Mettre à jour ATH si le prix live est supérieur — et sauvegarder dans Firebase
+  // Mettre à jour ATH si le prix calculé est supérieur — sauvegarder Firebase
   const athUpdates=[];
   for(const [key,v] of entries){
     const addr=v.addr||v.address||'';if(!addr)continue;
-    const curMcap=liveMap[addr]||0;
-    if(curMcap>0&&curMcap>(v.athMcap||0)){
-      v.athMcap=curMcap;
-      athUpdates.push({key,addr,athMcap:curMcap});
+    const live=liveMap[addr];
+    if(!live)continue;
+    // Comparer à la fois le prix now ET l'ATH estimé
+    const bestKnown=Math.max(live.now||0, live.athEst||0);
+    if(bestKnown>0&&bestKnown>(v.athMcap||0)){
+      v.athMcap=bestKnown;
+      athUpdates.push({key,addr,athMcap:bestKnown});
     }
   }
   // Sauvegarder les nouveaux ATH en Firebase en batch (non bloquant)
@@ -2926,7 +2954,7 @@ async function renderHistory(){
     const athMcap=v.athMcap||callMcap;
     const callTime=v.callTime||0;
     const sym=(v.symbol||key.slice(0,8).toUpperCase());
-    const curMcap=liveMap[addr]||0;
+    const curMcap=(liveMap[addr]?.now)||0;
     const isLive=curMcap>0;
     // xATH = ATH / call (le vrai multiple)
     const xAth=callMcap>0?Math.max(athMcap/callMcap,1):1;
