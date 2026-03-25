@@ -2894,7 +2894,7 @@ async function renderHistory(){
   container.innerHTML='<div class="hist-empty"><div class="hist-empty-icon">⏳</div><div style="color:var(--muted)">Chargement...</div></div>';
   // Charger depuis Firebase + localStorage, garder le meilleur ATH des 2
   let calls={};
-  try{const fb=await fetch(`${FB_URL}/calls.json`).then(r=>r.json());
+ try{const fb=await fetch(`${FB_URL}/calls.json`,{signal:AbortSignal.timeout(5000)}).then(r=>r.json());
     if(fb&&typeof fb==='object')Object.entries(fb).forEach(([k,v])=>{if(v&&v.callTime)calls[k]=v;});}catch(e){}
   try{const local=JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}');
     Object.entries(local).forEach(([addr,val])=>{
