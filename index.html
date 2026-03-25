@@ -2846,15 +2846,13 @@ async function fetchRealAth(pairAddress, tokenAddr) {
     return athCandleCache[cacheKey].athMcap;
   }
 
-  // Etape 1 : récupérer la paire avec pairAddress + mcap/prix actuels
-  let pairAddr = pairAddress;
-  let currentMcap = 0, currentPrice = 0;
+  // Fetch la paire pour avoir mcap + priceChange sur toutes les périodes
+  // api.dexscreener.com = pas de CORS, public
   try {
-    const endpoint = pairAddr
-      ? `https://api.dexscreener.com/latest/dex/pairs/solana/${pairAddr}`
+    const endpoint = pairAddress
+      ? `https://api.dexscreener.com/latest/dex/pairs/solana/${pairAddress}`
       : `https://api.dexscreener.com/latest/dex/tokens/${tokenAddr}`;
     const dex = await fetch(endpoint, { signal: AbortSignal.timeout(7000) }).then(r => r.json());
-    // Normaliser : /pairs retourne {pair:...} ou {pairs:[...]}, /tokens retourne {pairs:[...]}
     const pairsArr = dex.pairs
       ? (Array.isArray(dex.pairs) ? dex.pairs : [dex.pairs])
       : (dex.pair ? [dex.pair] : []);
@@ -2862,50 +2860,35 @@ async function fetchRealAth(pairAddress, tokenAddr) {
       .filter(p => p?.chainId === 'solana')
       .sort((a,b) => (b.volume?.h24||0) - (a.volume?.h24||0))[0];
     if (!best) return 0;
-    pairAddr = pairAddr || best.pairAddress || '';
-    currentMcap = best.marketCap || best.fdv || 0;
-    currentPrice = parseFloat(best.priceUsd || 0);
-  } catch(e) { return 0; }
 
-  if (!pairAddr || !currentMcap || !currentPrice) return 0;
+    const mcap = best.marketCap || best.fdv || 0;
+    if (!mcap) return 0;
 
-  // Etape 2 : candles DexScreener — plusieurs formats selon le type de paire
-  // Essayer les 3 variantes connues de l'endpoint
-  const candleUrls = [
-    `https://io.dexscreener.com/dex/chart/amm/v3/solana/${pairAddr}?res=1D&cb=1`,
-    `https://io.dexscreener.com/dex/chart/amm/v2/solana/${pairAddr}?res=1D&cb=1`,
-    `https://io.dexscreener.com/dex/chart/pump/solana/${pairAddr}?res=1D&cb=1`,
-  ];
+    // Reconstruire l'ATH depuis les priceChange
+    // priceChange.hX = variation depuis il y a X heures
+    // Si négatif : mcap était plus haut → ATH = mcap / (1 + c/100)
+    const c24 = best.priceChange?.h24 || 0;
+    const c6  = best.priceChange?.h6  || 0;
+    const c1  = best.priceChange?.h1  || 0;
 
-  let bars = [];
-  for (const url of candleUrls) {
-    try {
-      const resp = await fetch(url, {
-        signal: AbortSignal.timeout(7000),
-        headers: { 'Origin': 'https://dexscreener.com', 'Referer': 'https://dexscreener.com/' }
-      }).then(r => r.json());
-      // Le format peut être {bars:[...]} ou {data:{bars:[...]}} ou directement [...]
-      const b = resp?.bars || resp?.data?.bars || (Array.isArray(resp) ? resp : []);
-      if (b.length > 0) { bars = b; break; }
-    } catch(e) {}
-  }
+    let athEst = mcap;
+    // Formule inverse : si c=-91.7% → mcap/(1-0.917) = mcap/0.083 = ATH
+    // Plafond : 200x mcap pour éviter les spikes MEV aberrants
+    // Plafond anti-spike : max 30x le mcap actuel
+    // Un vrai ATH > 30x le prix actuel dans les 24h est extrêmement rare
+    const cap = mcap * 30;
+    if (c24 < -5) { const e = mcap / Math.max(0.001, 1 + c24/100); if(e < cap) athEst = Math.max(athEst, e); }
+    if (c6  < -5) { const e = mcap / Math.max(0.001, 1 + c6/100);  if(e < cap) athEst = Math.max(athEst, e); }
+    if (c1  < -5) { const e = mcap / Math.max(0.001, 1 + c1/100);  if(e < cap) athEst = Math.max(athEst, e); }
+    if (c24 > 0)  athEst = Math.max(athEst, mcap); // en hausse = now est potentiellement l'ATH
 
-  if (!bars.length) {
-    // Fallback : utiliser priceChange DexScreener pour estimer l'ATH
-    // Déjà fait dans liveMap — retourner 0 pour laisser liveMap gérer
-    athCandleCache[cacheKey] = { athMcap: 0, ts: now };
+    const athMcap = Math.round(athEst);
+    console.log(`[ATH] ${tokenAddr?.slice(0,8)||pairAddress?.slice(0,8)} mcap=$${fmtNum(mcap)} c24=${c24}% → ATH=$${fmtNum(athMcap)}`);
+    athCandleCache[cacheKey] = { athMcap, ts: now };
+    return athMcap;
+  } catch(e) {
     return 0;
   }
-
-  // Etape 3 : ATH = max(high) de toutes les bougies × ratio mcap/prix
-  const mcapPerPrice = currentMcap / currentPrice;
-  const maxHigh = Math.max(...bars.map(b => Math.max(b.h||0, b.c||0, b.o||0)));
-  const athMcap = Math.round(maxHigh * mcapPerPrice);
-
-  console.log(`[ATH] ${tokenAddr?.slice(0,8)} pairAddr=${pairAddr?.slice(0,8)} bars=${bars.length} maxHigh=${maxHigh} ratio=${mcapPerPrice.toFixed(0)} → ATH=$${athMcap.toLocaleString()}`);
-
-  athCandleCache[cacheKey] = { athMcap, ts: now };
-  return athMcap;
 }
 
 // ── Tri historique ─────────────────────────────────────────
@@ -2998,9 +2981,11 @@ async function renderHistory(){
     const nowMcap=live?.now||0;
     let bestKnown=Math.max(nowMcap,live?.athEst||0,v.athMcap||0);
 
-    // Pour les tokens < 7 jours : fetch le vrai ATH via candles DexScreener
-    const isRecent=(v.callTime||0)>sevenDaysAgo;
-    if(isRecent){
+    // Pour les tokens callés il y a <24h : calcul ATH via priceChange (fiable)
+    // Pour les plus vieux : garder max(now, athStored) — pas de recalcul risqué
+    const oneDayAgo=Date.now()-24*3600000;
+    const isLast24h=(v.callTime||0)>oneDayAgo;
+    if(isLast24h){
       try{
         const realAth=await fetchRealAth(v.pairAddress||'',addr);
         if(realAth>0) bestKnown=Math.max(bestKnown,realAth);
