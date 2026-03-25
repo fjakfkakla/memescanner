@@ -2963,10 +2963,7 @@ async function renderHistory(){
     // Appliquer fetchRealAth pour tous les tokens < 7 jours
     // La formule priceChange h24 est utile même pour tokens >24h
     // car elle donne le range du dernier jour (souvent contient l'ATH ou proche)
-    try{
-      const realAth=await fetchRealAth(v.pairAddress||'',addr);
-      if(realAth>0) bestKnown=Math.max(bestKnown,realAth);
-    }catch(e){}
+   // fetchRealAth skippé — ATH calculé depuis liveMap déjà fetchée en batch
 
     if(bestKnown>0&&bestKnown>(v.athMcap||0)){
       v.athMcap=bestKnown;
