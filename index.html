@@ -2920,16 +2920,16 @@ async function renderHistory(){
     const callMcap=v.callMcap||0;
     const bestKnown=Math.max(live.now||0, live.athEst||0);
 
-    // CORRECTION valeur aberrante stockée (spike MEV bot)
-    // Si athStored > max(bestKnown * 5, callMcap * 100) → c'est sûrement faux
-    // On le corrige par le meilleur connu
     const athStored=v.athMcap||0;
-    const isAberrant = athStored>0 && bestKnown>0 && athStored > Math.max(bestKnown*5, callMcap*100);
+    // CORRECTION valeur aberrante (spike MEV bot) :
+    // Si l'ATH stocké est > 3x notre meilleure estimation actuelle → faux positif MEV
+    // ex : SALARY stocké $444K mais estimation $36K → 444K > 36K*3=108K → corrigé
+    const isAberrant = athStored>0 && bestKnown>0 && athStored > bestKnown*3;
     if(isAberrant){
-      // Corriger : remplacer par la meilleure valeur connue
       v.athMcap=bestKnown;
       athUpdates.push({key,addr,athMcap:bestKnown});
     } else if(bestKnown>0&&bestKnown>athStored){
+      // ATH réel plus haut que ce qu'on a stocké → mettre à jour
       v.athMcap=bestKnown;
       athUpdates.push({key,addr,athMcap:bestKnown});
     }
