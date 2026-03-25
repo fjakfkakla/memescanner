@@ -726,9 +726,20 @@ section{scroll-margin-top:70px;}
     </div>
   </div>
   <div id="panelHistory" style="display:none">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
-      <div style="font-size:.8rem;color:var(--muted)">Tous les tokens callés · persistants</div>
-      <div style="display:flex;gap:.4rem;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:.5rem;">
+      <div style="font-size:.8rem;color:var(--muted)">Tous les tokens callés · ATH mis à jour en continu</div>
+      <div style="display:flex;gap:.4rem;align-items:center;flex-wrap:wrap;">
+        <!-- Tri historique -->
+        <div style="position:relative;">
+          <button id="histSortBtn" onclick="toggleHistSort()" style="background:rgba(0,255,136,.08);border:1px solid rgba(0,255,136,.2);color:var(--green);padding:.32rem .8rem;border-radius:6px;font-family:'Space Mono',monospace;font-size:.68rem;cursor:pointer;display:flex;align-items:center;gap:.4rem;">
+            <span id="histSortIcon">↕</span> <span id="histSortLabel">Trier</span>
+          </button>
+          <div id="histSortMenu" style="display:none;position:absolute;right:0;top:calc(100% + 4px);background:var(--card);border:1px solid var(--border);border-radius:8px;min-width:200px;z-index:100;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.5);">
+            <div onclick="setHistSort('recent')" class="rug-sort-opt" id="hsort-recent" style="color:var(--muted);">🕐 Plus récent d'abord</div>
+            <div onclick="setHistSort('old')" class="rug-sort-opt" id="hsort-old" style="color:var(--muted);">⏳ Plus vieux d'abord</div>
+            <div onclick="setHistSort('xbest')" class="rug-sort-opt" id="hsort-xbest" style="color:var(--muted);">🏆 Meilleur × ATH d'abord</div>
+          </div>
+        </div>
         <button class="btn-reset" onclick="resetHistory()">🗑 Tout supprimer</button>
         <button class="scan-btn scan-btn-outline" onclick="renderHistory()" style="font-size:.72rem">↻ Refresh</button>
       </div>
@@ -2799,42 +2810,114 @@ function switchTab(tab){
 // ============================================================
 // RENDER HISTORY
 // ============================================================
+// ── Tri historique ─────────────────────────────────────────
+let currentHistSort='recent';
+function toggleHistSort(){
+  const menu=document.getElementById('histSortMenu');
+  menu.style.display=menu.style.display==='none'?'block':'none';
+  setTimeout(()=>{document.addEventListener('click',function close(e){
+    if(!e.target.closest('#histSortBtn')&&!e.target.closest('#histSortMenu')){
+      menu.style.display='none';document.removeEventListener('click',close);
+    }
+  });},10);
+}
+function setHistSort(mode){
+  currentHistSort=mode;
+  document.getElementById('histSortMenu').style.display='none';
+  const labels={recent:'🕐 Récent',old:'⏳ Vieux',xbest:'🏆 Meilleur ×'};
+  document.getElementById('histSortLabel').textContent=labels[mode];
+  document.querySelectorAll('#histSortMenu .rug-sort-opt').forEach(el=>el.classList.remove('active'));
+  const el=document.getElementById('hsort-'+mode);if(el)el.classList.add('active');
+  renderHistory();
+}
+
 async function renderHistory(){
   const container=document.getElementById('historyContent');
   container.innerHTML='<div class="hist-empty"><div class="hist-empty-icon">⏳</div><div style="color:var(--muted)">Chargement...</div></div>';
+  // Charger depuis Firebase + localStorage, garder le meilleur ATH des 2
   let calls={};
-  try{const fb=await fetch(`${FB_URL}/calls.json`).then(r=>r.json());if(fb&&typeof fb==='object')Object.entries(fb).forEach(([k,v])=>{if(v&&v.callTime)calls[k]=v;});}catch(e){}
-  try{const local=JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}');Object.entries(local).forEach(([addr,val])=>{const key=addr.replace(/[.#$\/\[\]]/g,'_');if(!calls[key])calls[key]={...val,addr};else{if(!calls[key].addr)calls[key].addr=addr;if((val.athMcap||0)>(calls[key].athMcap||0))calls[key].athMcap=val.athMcap;}});}catch(e){}
+  try{const fb=await fetch(`${FB_URL}/calls.json`).then(r=>r.json());
+    if(fb&&typeof fb==='object')Object.entries(fb).forEach(([k,v])=>{if(v&&v.callTime)calls[k]=v;});}catch(e){}
+  try{const local=JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}');
+    Object.entries(local).forEach(([addr,val])=>{
+      const key=addr.replace(/[.#$\/\[\]]/g,'_');
+      if(!calls[key])calls[key]={...val,addr};
+      else{if(!calls[key].addr)calls[key].addr=addr;
+        if((val.athMcap||0)>(calls[key].athMcap||0))calls[key].athMcap=val.athMcap;}
+    });}catch(e){}
   const entries=Object.entries(calls);
-  const hc=document.getElementById('histCount');if(hc)hc.textContent=entries.length?`(${entries.length})`:'';
-  if(!entries.length){container.innerHTML='<div class="hist-empty"><div class="hist-empty-icon">📭</div><div>Aucun call encore</div></div>';return;}
-  entries.sort((a,b)=>(b[1].callTime||0)-(a[1].callTime||0));
-  // Fetch prix live pour tous les tokens
-  const recentAddrs=entries.map(([,v])=>v.addr||v.address||'').filter(Boolean).slice(0,20);
+  if(!entries.length){
+    const hc=document.getElementById('histCount');if(hc)hc.textContent='';
+    container.innerHTML='<div class="hist-empty"><div class="hist-empty-icon">📭</div><div>Aucun call encore</div></div>';return;}
+
+  // Fetch prix live TOUS les tokens (par batch de 20 — DexScreener limite)
+  const allAddrs=entries.map(([,v])=>v.addr||v.address||'').filter(Boolean);
   let liveMap={};
-  if(recentAddrs.length){try{const res=await fetch(`https://api.dexscreener.com/latest/dex/tokens/${recentAddrs.join(',')}`,{signal:AbortSignal.timeout(8000)}).then(r=>r.json());(res.pairs||[]).forEach(p=>{const a=p.baseToken?.address;if(a)liveMap[a]=p.marketCap||p.fdv||0;});}catch(e){}}
-  const cards=[];
+  // Fetch par chunks de 20
+  for(let i=0;i<allAddrs.length;i+=20){
+    try{
+      const chunk=allAddrs.slice(i,i+20);
+      const res=await fetch(`https://api.dexscreener.com/latest/dex/tokens/${chunk.join(',')}`,
+        {signal:AbortSignal.timeout(10000)}).then(r=>r.json());
+      (res.pairs||[]).forEach(p=>{const a=p.baseToken?.address;if(a)liveMap[a]=p.marketCap||p.fdv||0;});
+    }catch(e){}
+  }
+
+  // Mettre à jour ATH si le prix live est supérieur — et sauvegarder dans Firebase
+  const athUpdates=[];
   for(const [key,v] of entries){
-    const addr=v.addr||v.address||'';
-    if(!addr)continue;
+    const addr=v.addr||v.address||'';if(!addr)continue;
+    const curMcap=liveMap[addr]||0;
+    if(curMcap>0&&curMcap>(v.athMcap||0)){
+      v.athMcap=curMcap;
+      athUpdates.push({key,addr,athMcap:curMcap});
+    }
+  }
+  // Sauvegarder les nouveaux ATH en Firebase en batch (non bloquant)
+  if(athUpdates.length){
+    athUpdates.forEach(({key,athMcap})=>{
+      fetch(`${FB_URL}/calls/${key}.json`,{method:'PATCH',body:JSON.stringify({athMcap})}).catch(()=>{});
+    });
+    // Mettre à jour localStorage aussi
+    try{
+      const local=JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}');
+      athUpdates.forEach(({addr,athMcap})=>{if(local[addr])local[addr].athMcap=athMcap;});
+      localStorage.setItem(STORAGE_KEY,JSON.stringify(local));
+    }catch(e){}
+  }
+
+  // Trier selon le mode actuel
+  let sorted=[...entries];
+  if(currentHistSort==='recent') sorted.sort((a,b)=>(b[1].callTime||0)-(a[1].callTime||0));
+  else if(currentHistSort==='old') sorted.sort((a,b)=>(a[1].callTime||0)-(b[1].callTime||0));
+  else if(currentHistSort==='xbest'){
+    sorted.sort((a,b)=>{
+      const xA=(a[1].callMcap>0&&a[1].athMcap>0)?(a[1].athMcap/a[1].callMcap):1;
+      const xB=(b[1].callMcap>0&&b[1].athMcap>0)?(b[1].athMcap/b[1].callMcap):1;
+      return xB-xA;
+    });
+  }
+
+  const cards=[];
+  for(const [key,v] of sorted){
+    const addr=v.addr||v.address||'';if(!addr)continue;
     const callMcap=v.callMcap||0;
     const athMcap=v.athMcap||callMcap;
     const callTime=v.callTime||0;
     const sym=(v.symbol||key.slice(0,8).toUpperCase());
     const curMcap=liveMap[addr]||0;
     const isLive=curMcap>0;
-    const xAth=callMcap>0&&athMcap>callMcap?(athMcap/callMcap):1;
-    const xNow=callMcap>0&&curMcap>0?(curMcap/callMcap):xAth;
-    const xColor=xAth>=3?'#00ff88':xAth>=2?'#88ff44':xAth>=1.5?'#ffcc44':'#ff8866';
+    // xATH = ATH / call (le vrai multiple)
+    const xAth=callMcap>0?Math.max(athMcap/callMcap,1):1;
+    const xColor=xAth>=5?'#00ff88':xAth>=3?'#88ff44':xAth>=2?'#ffcc44':'#ff8866';
     const nowColor=curMcap<=0?'rgba(255,255,255,.3)':curMcap>callMcap?'#44ff88':curMcap<callMcap*0.7?'#ff5577':'#ffcc44';
     const callHeure=fmtTimeSeconds(callTime);
     const addrShort=addr.slice(0,6)+'...'+addr.slice(-4);
-    // Score et label depuis les données sauvegardées (si disponibles)
     const savedScore=v.score||0;
     const scoreEmoji=savedScore>=130?'☢️':savedScore>=110?'💎':savedScore>=95?'🚀':savedScore>=80?'👁':'📡';
     const badgeCls=savedScore>=130?'nuclear':savedScore>=110?'diamond':savedScore>=95?'runner':savedScore>=80?'watchlist':'radar';
     const labelTxt=savedScore>=130?'☢️ NUCLEAR':savedScore>=110?'💎 DIAMOND':savedScore>=95?'🚀 RUNNER':savedScore>=80?'👁 WATCHLIST':'📋 CALL';
-    cards.push(`<div class="sc-card" style="opacity:${isLive?1:.75}">
+    cards.push(`<div class="sc-card" style="opacity:${isLive?1:.8}">
       <div class="sc-header">
         <span style="font-size:1.2rem;flex-shrink:0">${scoreEmoji}</span>
         <span class="sc-sym">${sym}</span>
@@ -2863,7 +2946,7 @@ async function renderHistory(){
         </div>
         <div class="sc-stat gold">
           <div class="sc-stat-lbl">🎯 × ATH</div>
-          <div class="sc-stat-val" style="color:${xColor};font-size:.82rem">${xAth.toFixed(2)}x</div>
+          <div class="sc-stat-val" style="color:${xColor};font-size:.88rem">${xAth.toFixed(2)}x</div>
         </div>
       </div>
       <div class="sc-footer">
@@ -2877,7 +2960,7 @@ async function renderHistory(){
       </div>
     </div>`);
   }
-  const lc=document.getElementById('histCount');if(lc)lc.textContent=cards.length?`(${cards.length})`:'';
+  const hc=document.getElementById('histCount');if(hc)hc.textContent=cards.length?`(${cards.length})`:'';
   container.innerHTML=`<div class="scanner-grid">${cards.join('')}</div>`;
 }
 
@@ -3031,6 +3114,69 @@ async function fetchTokens(){
   async function fetchPairs(url){
     try{const resp=await fetch(url,{signal:AbortSignal.timeout(9000)});const data=await resp.json();let raw=data;if(data.contents){try{raw=JSON.parse(data.contents);}catch(e){}}if(raw.pairs&&Array.isArray(raw.pairs))return raw.pairs;if(Array.isArray(raw))return raw;if(raw.data&&Array.isArray(raw.data))return raw.data;if(raw.tokenAddresses||(Array.isArray(raw)&&raw[0]?.tokenAddress)){const addrs=(raw.tokenAddresses||raw.map(x=>x.tokenAddress)).slice(0,30).join(',');if(addrs){const r2=await fetch(`https://api.dexscreener.com/latest/dex/tokens/${addrs}`,{signal:AbortSignal.timeout(9000)}).then(x=>x.json()).catch(()=>({}));return r2.pairs||[];}}}catch(e){}return[];
   }
+
+  // ── HELIUS : nouveaux tokens Pump.fun via transactions recentes ──────────
+  // Recupere les 100 dernieres signatures du programme Pump.fun,
+  // extrait les mint addresses, fetch DexScreener.
+  // Couvre TOUS les tokens crees dans la derniere heure sans keyword.
+  async function fetchNewPumpTokens(){
+    const PUMP_PROGRAM='6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P';
+    const now=Date.now();
+    const oneHourAgo=Math.floor((now-3600000)/1000);
+    try{
+      // Etape 1 : signatures recentes du programme Pump.fun
+      const sigsResp=await fetch(HELIUS_RPC,{
+        method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({jsonrpc:'2.0',id:'pump-sigs',method:'getSignaturesForAddress',
+          params:[PUMP_PROGRAM,{limit:100}]}),
+        signal:AbortSignal.timeout(9000)
+      }).then(r=>r.json());
+      const sigs=(sigsResp?.result||[])
+        .filter(s=>s.blockTime&&s.blockTime>=oneHourAgo&&!s.err)
+        .map(s=>s.signature);
+      if(!sigs.length)return[];
+
+      // Etape 2 : Enhanced API Helius -> mint addresses des tokens crees
+      const txResp=await fetch(
+        `https://api.helius.xyz/v0/transactions?api-key=${HELIUS_KEY}`,
+        {method:'POST',headers:{'Content-Type':'application/json'},
+         body:JSON.stringify({transactions:sigs.slice(0,50)}),
+         signal:AbortSignal.timeout(12000)}
+      ).then(r=>r.json());
+      if(!Array.isArray(txResp))return[];
+
+      const mintAddrs=new Set();
+      for(const tx of txResp){
+        if(!tx)continue;
+        // tokenTransfers : mint = adresse du nouveau token
+        for(const t of(tx.tokenTransfers||[])){
+          if(t?.mint&&t.mint.length>30)mintAddrs.add(t.mint);
+        }
+        // accountData : comptes crees (rent paye = solChange negatif)
+        for(const a of(tx.accountData||[])){
+          if(a?.account&&a.account.length>30&&(a.nativeBalanceChange||0)<0)mintAddrs.add(a.account);
+        }
+      }
+      if(!mintAddrs.size)return[];
+
+      // Etape 3 : DexScreener batch pour tous ces mints
+      const addrsArr=[...mintAddrs].slice(0,30);
+      const allPairs=[];
+      for(let i=0;i<addrsArr.length;i+=15){
+        try{
+          const dex=await fetch(
+            `https://api.dexscreener.com/latest/dex/tokens/${addrsArr.slice(i,i+15).join(',')}`,
+            {signal:AbortSignal.timeout(9000)}
+          ).then(r=>r.json());
+          if(dex.pairs)allPairs.push(...dex.pairs);
+        }catch(e){}
+      }
+      return allPairs;
+    }catch(e){
+      console.warn('[HeliusPump] error:',e.message);
+      return[];
+    }
+  }
   function geckoToDex(pool){try{const a=pool.attributes;if(!a)return null;const mcap=parseFloat(a.market_cap_usd||a.fdv_usd||0),liq=parseFloat(a.reserve_in_usd||0);const created=a.pool_created_at?new Date(a.pool_created_at).getTime():Date.now()-3600000;const addr=pool.relationships?.base_token?.data?.id?.split('_')[1]||'';return{chainId:'solana',pairCreatedAt:created,baseToken:{symbol:a.name?.split('/')[0]||'UNK',address:addr},liquidity:{usd:liq},marketCap:mcap,fdv:mcap,volume:{h1:parseFloat(a.volume_usd?.h1||0),h6:parseFloat(a.volume_usd?.h6||0),h24:parseFloat(a.volume_usd?.h24||0)},priceChange:{m5:parseFloat(a.price_change_percentage?.m5||0),h1:parseFloat(a.price_change_percentage?.h1||0),h6:parseFloat(a.price_change_percentage?.h6||0),h24:parseFloat(a.price_change_percentage?.h24||0)},txns:{h1:{buys:parseInt(a.transactions?.h1?.buys||0),sells:parseInt(a.transactions?.h1?.sells||0)}},info:{socials:a.websites?[{url:a.websites[0]}]:[],websites:[]},url:`https://dexscreener.com/solana/${addr}`};}catch(e){return null;}}
   const ENDPOINTS=[
     // ── Sources "new pools" — TOUS les nouveaux tokens chronologiquement ──
@@ -3050,12 +3196,28 @@ async function fetchTokens(){
     'https://api.dexscreener.com/latest/dex/search?q=solana+launch',
     'https://api.dexscreener.com/latest/dex/search?q=solana+token+2025',
   ];
-  const results=await Promise.allSettled(ENDPOINTS.map(fetchPairs));
+  // Lancer DexScreener endpoints ET Helius Pump.fun en parallele
+  const [dexResults, heliusPairs] = await Promise.all([
+    Promise.allSettled(ENDPOINTS.map(fetchPairs)),
+    fetchNewPumpTokens()
+  ]);
   const seen=new Set();let pairs=[];
   const _48H=48*3600000,_now=Date.now();
-  for(const r of results){if(r.status!=='fulfilled')continue;for(const p of r.value){const conv=p.attributes?geckoToDex(p):p;if(!conv)continue;if(!conv.chainId||conv.chainId!=='solana')continue;const m=conv.marketCap||conv.fdv||0;if(m>200000||m<5000)continue;
-  // Rejeter les paires vieilles de plus de 48h dès le parsing
+  // 1. Integrer les tokens DexScreener
+  for(const r of dexResults){if(r.status!=='fulfilled')continue;for(const p of r.value){const conv=p.attributes?geckoToDex(p):p;if(!conv)continue;if(!conv.chainId||conv.chainId!=='solana')continue;const m=conv.marketCap||conv.fdv||0;if(m>200000||m<5000)continue;
   if(conv.pairCreatedAt&&(_now-conv.pairCreatedAt)>_48H)continue;const addr=conv.baseToken?.address||conv.pairAddress||Math.random().toString();if(seen.has(addr))continue;seen.add(addr);pairs.push(conv);}}
+  // 2. Integrer les tokens Helius (couvre TOUS les tokens Pump.fun recents)
+  // Ces tokens sont absents des endpoints search car leur nom ne match aucun keyword
+  for(const p of(heliusPairs||[])){
+    if(!p||p.chainId!=='solana')continue;
+    const m=p.marketCap||p.fdv||0;
+    if(m>200000||m<5000)continue;
+    if(p.pairCreatedAt&&(_now-p.pairCreatedAt)>_48H)continue;
+    const addr=p.baseToken?.address||p.pairAddress||'';
+    if(!addr||seen.has(addr))continue;
+    seen.add(addr);pairs.push(p);
+  }
+  console.log(`[Scanner] ${pairs.length} paires total (dont ${(heliusPairs||[]).filter(p=>p?.chainId==='solana').length} via Helius Pump.fun)`);
   const rejected={};
   // ── ÉTAPE 1 : Score TOUS les tokens <1h (sans hardFilter en amont) ─
   const candidates=pairs.filter(p=>{const ah=(Date.now()-(p.pairCreatedAt||0))/3600000;return ah>=0.02&&ah<=1;});
