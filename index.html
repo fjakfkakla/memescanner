@@ -2788,8 +2788,8 @@ function showDebug(idx){
 // ============================================================
 // PERSISTENT CALLS
 // ============================================================
-async function saveCall(addr,callMcap,callTime,symbol='',score=0){
-  const entry={callMcap,callTime,athMcap:callMcap,addr,symbol,score};
+async function saveCall(addr,callMcap,callTime,symbol='',score=0,pairAddress=''){
+  const entry={callMcap,callTime,athMcap:callMcap,addr,symbol,score,pairAddress};
   try{const all=JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}');if(!all[addr]){all[addr]=entry;localStorage.setItem(STORAGE_KEY,JSON.stringify(all));}}catch(e){}
   try{const key=addr.replace(/[.#$\/\[\]]/g,'_');const ex=await fetch(`${FB_URL}/calls/${key}.json`).then(r=>r.json()).catch(()=>null);if(!ex)await fetch(`${FB_URL}/calls/${key}.json`,{method:'PUT',body:JSON.stringify(entry)});}catch(e){}
 }
@@ -2831,6 +2831,72 @@ function switchTab(tab){
 // ============================================================
 // RENDER HISTORY
 // ============================================================
+// ══════════════════════════════════════════════════════════
+// VRAI ATH via DexScreener candles (même source que GMGN/Axiom)
+// Endpoint non documenté mais public — retourne les bougies OHLCV
+// ATH = max(high) de toutes les bougies depuis la création
+// ══════════════════════════════════════════════════════════
+const athCandleCache = {}; // addr → {athMcap, ts}
+
+async function fetchRealAth(pairAddress, tokenAddr) {
+  if (!pairAddress && !tokenAddr) return 0;
+  const cacheKey = tokenAddr || pairAddress;
+  const now = Date.now();
+  // Cache 10min — l'ATH ne change pas souvent
+  if (athCandleCache[cacheKey] && now - athCandleCache[cacheKey].ts < 600000) {
+    return athCandleCache[cacheKey].athMcap;
+  }
+  // Si on n'a pas le pairAddress, fetch d'abord la paire
+  let pairAddr = pairAddress;
+  if (!pairAddr && tokenAddr) {
+    try {
+      const dex = await fetch(
+        `https://api.dexscreener.com/latest/dex/tokens/${tokenAddr}`,
+        { signal: AbortSignal.timeout(6000) }
+      ).then(r => r.json());
+      // Prendre la paire avec le plus grand volume
+      const pairs = (dex.pairs || []).filter(p => p.chainId === 'solana');
+      pairs.sort((a,b) => (b.volume?.h24||0) - (a.volume?.h24||0));
+      pairAddr = pairs[0]?.pairAddress || '';
+    } catch(e) { return 0; }
+  }
+  if (!pairAddr) return 0;
+  try {
+    // Endpoint candles DexScreener — bougies journalières depuis la création
+    // Retourne les bars OHLCV : {o, h, l, c, v, time}
+    // "h" = high price × supply = ATH mcap de la bougie
+    const resp = await fetch(
+      `https://io.dexscreener.com/dex/chart/amm/v3/solana/${pairAddr}?res=1D&cb=1`,
+      { signal: AbortSignal.timeout(8000) }
+    ).then(r => r.json());
+    const bars = resp?.bars || resp?.data?.bars || [];
+    if (!bars.length) return 0;
+    // Chaque bar.h = prix au high de la bougie
+    // Pour convertir en mcap : on a besoin du ratio mcap/prix
+    // On utilise la dernière bougie connue comme référence
+    const lastBar = bars[bars.length - 1];
+    const lastPrice = lastBar?.c || lastBar?.h || 0;
+    // Fetch mcap actuel pour avoir le ratio
+    const dex2 = await fetch(
+      `https://api.dexscreener.com/latest/dex/pairs/solana/${pairAddr}`,
+      { signal: AbortSignal.timeout(6000) }
+    ).then(r => r.json());
+    const pairInfo = dex2?.pair || dex2?.pairs?.[0] || null;
+    const currentMcap = pairInfo?.marketCap || pairInfo?.fdv || 0;
+    const currentPrice = parseFloat(pairInfo?.priceUsd || 0);
+    if (!currentMcap || !currentPrice || !lastPrice) return 0;
+    // Ratio mcap/prix (supply × 1)
+    const mcapPerPrice = currentMcap / currentPrice;
+    // ATH = max high de toutes les bougies × ratio
+    const maxHigh = Math.max(...bars.map(b => b.h || b.c || 0));
+    const athMcap = Math.round(maxHigh * mcapPerPrice);
+    athCandleCache[cacheKey] = { athMcap, ts: now };
+    return athMcap;
+  } catch(e) {
+    return 0;
+  }
+}
+
 // ── Tri historique ─────────────────────────────────────────
 let currentHistSort='recent';
 function toggleHistSort(){
@@ -2911,25 +2977,26 @@ async function renderHistory(){
     }catch(e){}
   }
 
-  // Mettre à jour ATH — avec correction des valeurs aberrantes
+  // Mettre a jour ATH via vrai ATH candles DexScreener (meme source GMGN/Axiom)
   const athUpdates=[];
+  const sevenDaysAgo=Date.now()-7*24*3600000;
   for(const [key,v] of entries){
     const addr=v.addr||v.address||'';if(!addr)continue;
     const live=liveMap[addr];
-    if(!live)continue;
     const callMcap=v.callMcap||0;
-    const bestKnown=Math.max(live.now||0, live.athEst||0);
+    const nowMcap=live?.now||0;
+    let bestKnown=Math.max(nowMcap,live?.athEst||0,v.athMcap||0);
 
-    const athStored=v.athMcap||0;
-    // CORRECTION valeur aberrante (spike MEV bot) :
-    // Si l'ATH stocké est > 3x notre meilleure estimation actuelle → faux positif MEV
-    // ex : SALARY stocké $444K mais estimation $36K → 444K > 36K*3=108K → corrigé
-    const isAberrant = athStored>0 && bestKnown>0 && athStored > bestKnown*3;
-    if(isAberrant){
-      v.athMcap=bestKnown;
-      athUpdates.push({key,addr,athMcap:bestKnown});
-    } else if(bestKnown>0&&bestKnown>athStored){
-      // ATH réel plus haut que ce qu'on a stocké → mettre à jour
+    // Pour les tokens < 7 jours : fetch le vrai ATH via candles DexScreener
+    const isRecent=(v.callTime||0)>sevenDaysAgo;
+    if(isRecent){
+      try{
+        const realAth=await fetchRealAth(v.pairAddress||'',addr);
+        if(realAth>0) bestKnown=Math.max(bestKnown,realAth);
+      }catch(e){}
+    }
+
+    if(bestKnown>0&&bestKnown>(v.athMcap||0)){
       v.athMcap=bestKnown;
       athUpdates.push({key,addr,athMcap:bestKnown});
     }
@@ -3346,7 +3413,7 @@ async function fetchTokens(){
   const _now5 = Date.now();
   for(const t of finalScored){
     const existing=await getCallData(t.addr);
-    if(!existing){ await saveCall(t.addr,t.mcap,_now5,t.symbol,t.score||0); t._callTime=_now5; }
+    if(!existing){ await saveCall(t.addr,t.mcap,_now5,t.symbol,t.score||0,t.raw?.pairAddress||''); t._callTime=_now5; }
     else{ if(t.mcap>(existing.athMcap||0))await updateAth(t.addr,t.mcap); t._callTime=existing.callTime||_now5; }
   }
   const newAddrs=new Set(finalScored.map(t=>t.addr));
