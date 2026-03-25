@@ -2360,15 +2360,9 @@ async function checkAxiomWallets(tokenAddr) {
           // FIX FAUX POSITIFS : ne garder QUE les feePayer (= signataires humains réels)
           // accountData inclut tous les comptes touchés (AMM, pools, PDAs) → faux matches
           enhancedTxs.forEach(tx => {
-            // feePayer = seul vrai humain qui a signé et payé la tx
+            // UNIQUEMENT feePayer = seul vrai humain signataire de la tx
+            // ix.accounts supprimé car inclut programs/PDAs → faux positifs
             if (tx?.feePayer && tx.feePayer.length >= 32) allOwners.add(tx.feePayer);
-            // instructions signers si présents (multi-sig)
-            (tx?.instructions || []).forEach(ix => {
-              (ix?.accounts || []).forEach(acc => {
-                // Exclure les program accounts (généralement < 32 chars ou connus)
-                if (acc && acc.length >= 32) allOwners.add(acc);
-              });
-            });
           });
           console.log('[AXIOM] Total owners from Enhanced (feePayer only):', allOwners.size);
         }
@@ -3236,11 +3230,39 @@ async function fetchTokens(){
   if(loadEl)loadEl.style.display='block';
   document.getElementById('scanDot').style.background='var(--gold)';
   // Invalider le cache Axiom des tokens qui ne sont PLUS dans lastScored
-  // pour éviter que des faux positifs restent bloqués 30min en cache
   const activeAddrs=new Set(lastScored.map(t=>t.addr));
   Object.keys(swCache).forEach(addr=>{
     if(!activeAddrs.has(addr))delete swCache[addr];
   });
+  // PROBLÈME 4 FIX : si lastScored est vide (retour après absence)
+  // recharger les calls récents depuis Firebase pour les afficher en Live
+  if(lastScored.length===0){
+    try{
+      const fb=await fetch(`${FB_URL}/calls.json`,{signal:AbortSignal.timeout(5000)}).then(r=>r.json());
+      if(fb&&typeof fb==='object'){
+        const twoHoursAgo=Date.now()-2*3600000;
+        const recentCalls=Object.values(fb)
+          .filter(v=>v&&v.callTime&&v.callTime>twoHoursAgo&&v.addr)
+          .sort((a,b)=>(b.callTime||0)-(a.callTime||0))
+          .slice(0,10);
+        if(recentCalls.length>0){
+          // Reconstruire des entrées minimales pour le Live
+          lastScored=recentCalls.map(v=>({
+            addr:v.addr, symbol:v.symbol||'?', score:v.score||80,
+            mcap:v.athMcap||v.callMcap||0, liq:0,
+            walletData:{count:0,wallets:[],clustered:false},
+            _callTime:v.callTime, _fromCache:true,
+            pairUrl:`https://dexscreener.com/solana/${v.addr}`,
+            emoji:'📋', rugRisk:'LOW', socials:false,
+            debug:{ageH:0,traderScore:0,socialScore:0,holderScore:0,
+                   platformScore:0,mcapScore:0,ageScore:0,patternScore:0},
+            raw:{}
+          }));
+          console.log(`[fetchTokens] Rechargé ${lastScored.length} calls récents depuis Firebase`);
+        }
+      }
+    }catch(e){}
+  }
   async function fetchPairs(url){
     try{const resp=await fetch(url,{signal:AbortSignal.timeout(9000)});const data=await resp.json();let raw=data;if(data.contents){try{raw=JSON.parse(data.contents);}catch(e){}}if(raw.pairs&&Array.isArray(raw.pairs))return raw.pairs;if(Array.isArray(raw))return raw;if(raw.data&&Array.isArray(raw.data))return raw.data;if(raw.tokenAddresses||(Array.isArray(raw)&&raw[0]?.tokenAddress)){const addrs=(raw.tokenAddresses||raw.map(x=>x.tokenAddress)).slice(0,30).join(',');if(addrs){const r2=await fetch(`https://api.dexscreener.com/latest/dex/tokens/${addrs}`,{signal:AbortSignal.timeout(9000)}).then(x=>x.json()).catch(()=>({}));return r2.pairs||[];}}}catch(e){}return[];
   }
@@ -3459,7 +3481,23 @@ async function renderTokenTable(tokens){
     const callData=await getCallData(t.addr);
     const callMcap=callData?.callMcap||t.mcap;
     const callTime=callData?.callTime||Date.now();
-    const athMcap=callData?.athMcap||t.mcap;
+    // ATH Live : prendre le max entre ATH stocké ET estimation via priceChange
+    let athMcap=callData?.athMcap||t.mcap;
+    // Recalcul ATH via priceChange du token live (même logique que Historique)
+    if(t.mcap>0){
+      const rp=t.raw||{};
+      const c24=rp.priceChange?.h24||0;
+      const c6=rp.priceChange?.h6||0;
+      const c1=rp.priceChange?.h1||0;
+      const cap=t.mcap*30;
+      let athEst=t.mcap;
+      if(c24<-5){const e=t.mcap/Math.max(0.001,1+c24/100);if(e<cap)athEst=Math.max(athEst,e);}
+      if(c6<-5) {const e=t.mcap/Math.max(0.001,1+c6/100); if(e<cap)athEst=Math.max(athEst,e);}
+      if(c1<-5) {const e=t.mcap/Math.max(0.001,1+c1/100); if(e<cap)athEst=Math.max(athEst,e);}
+      athMcap=Math.max(athMcap,Math.round(athEst));
+      // Sauvegarder si meilleur
+      if(athMcap>(callData?.athMcap||0))updateAth(t.addr,athMcap).catch(()=>{});
+    }
     const mult=callMcap>0?t.mcap/callMcap:1;
     const athMult=callMcap>0?athMcap/callMcap:1;
     const d=t.debug;
