@@ -286,6 +286,9 @@ section{scroll-margin-top:70px;}
 .hist-count{font-size:.72rem;color:var(--muted);margin-left:.5rem;}
 .btn-reset{font-family:var(--font-mono);font-size:.68rem;padding:.28rem .7rem;border-radius:5px;cursor:pointer;border:1px solid rgba(255,68,102,.3);background:transparent;color:rgba(255,68,102,.7);transition:.2s;white-space:nowrap;}
 .btn-reset:hover{border-color:#ff4466;color:#ff4466;background:rgba(255,68,102,.08);}
+.wr-btn{font-family:var(--font-mono);font-size:.65rem;padding:.22rem .6rem;border-radius:5px;cursor:pointer;border:1px solid rgba(255,255,255,.1);background:transparent;color:var(--muted);transition:.2s;white-space:nowrap;}
+.wr-btn:hover{border-color:rgba(0,255,136,.3);color:var(--green);}
+.wr-btn.active{border-color:rgba(0,255,136,.4);background:rgba(0,255,136,.1);color:var(--green);}
 
 /* ══════════════════════════════════════════════════════════════
    RUG SNIP — Style Gaming / Rugs.fun
@@ -726,6 +729,31 @@ section{scroll-margin-top:70px;}
     </div>
   </div>
   <div id="panelHistory" style="display:none">
+    <!-- WINRATE BANNER -->
+    <div id="histWinrateBanner" style="background:rgba(0,255,136,.04);border:1px solid rgba(0,255,136,.12);border-radius:10px;padding:.65rem 1rem;margin-bottom:.75rem;display:flex;align-items:center;justify-content:space-between;gap:.8rem;flex-wrap:wrap;">
+      <div style="display:flex;gap:1.4rem;align-items:center;flex-wrap:wrap;">
+        <div style="text-align:center;">
+          <div id="wrWinrate" style="font-size:1.25rem;font-weight:700;color:var(--green);font-family:'Space Mono',monospace;line-height:1">—</div>
+          <div style="font-size:.6rem;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-top:.2rem">Winrate</div>
+        </div>
+        <div style="width:1px;height:26px;background:rgba(255,255,255,.08)"></div>
+        <div style="text-align:center;">
+          <div id="wrAvg" style="font-size:1.25rem;font-weight:700;color:#ffaa00;font-family:'Space Mono',monospace;line-height:1">—</div>
+          <div style="font-size:.6rem;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-top:.2rem">Moy. × ATH</div>
+        </div>
+        <div style="width:1px;height:26px;background:rgba(255,255,255,.08)"></div>
+        <div style="text-align:center;">
+          <div id="wrWins" style="font-size:1.25rem;font-weight:700;color:#3b82f6;font-family:'Space Mono',monospace;line-height:1">—</div>
+          <div style="font-size:.6rem;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-top:.2rem">Wins / Calls</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:.3rem;align-items:center;">
+        <button onclick="setWrPeriod('5m')"  id="wrBtn5m"  class="wr-btn">5m</button>
+        <button onclick="setWrPeriod('1h')"  id="wrBtn1h"  class="wr-btn">1h</button>
+        <button onclick="setWrPeriod('day')" id="wrBtnDay" class="wr-btn">Jour</button>
+        <button onclick="setWrPeriod('all')" id="wrBtnAll" class="wr-btn active">All</button>
+      </div>
+    </div>
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:.5rem;">
       <div style="font-size:.8rem;color:var(--muted)">Tous les tokens callés · ATH mis à jour en continu</div>
       <div style="display:flex;gap:.4rem;align-items:center;flex-wrap:wrap;">
@@ -2886,6 +2914,54 @@ async function fetchRealAth(pairAddress, tokenAddr) {
   }
 }
 
+// ── Winrate Banner ─────────────────────────────────────────
+let _wrPeriod='all';
+let _wrCalls=null; // cache des calls pour la bannière
+
+function setWrPeriod(p){
+  _wrPeriod=p;
+  ['5m','1h','day','all'].forEach(k=>{
+    const btn=document.getElementById('wrBtn'+k.charAt(0).toUpperCase()+k.slice(1));
+    if(btn)btn.classList.toggle('active',k===p);
+  });
+  if(_wrCalls)updateWrStats(_wrCalls);
+}
+
+function updateWrStats(calls){
+  _wrCalls=calls;
+  const now=Date.now();
+  const limits={'5m':5*60000,'1h':3600000,'day':86400000,'all':Infinity};
+  const limit=limits[_wrPeriod]||Infinity;
+  const filtered=Object.values(calls).filter(v=>{
+    if(!v.callTime)return false;
+    return (now-v.callTime)<=limit;
+  });
+  const total=filtered.length;
+  if(!total){
+    document.getElementById('wrWinrate').textContent='—';
+    document.getElementById('wrAvg').textContent='—';
+    document.getElementById('wrWins').textContent='0 / 0';
+    return;
+  }
+  let wins=0,sumX=0;
+  filtered.forEach(v=>{
+    const xAth=v.callMcap>0&&v.athMcap>0?v.athMcap/v.callMcap:1;
+    if(xAth>=1.2)wins++;
+    sumX+=xAth;
+  });
+  const wr=Math.round(wins/total*100);
+  const avg=(sumX/total).toFixed(2);
+  const wrEl=document.getElementById('wrWinrate');
+  const avgEl=document.getElementById('wrAvg');
+  if(wrEl){
+    wrEl.textContent=wr+'%';
+    wrEl.style.color=wr>=60?'var(--green)':wr>=40?'#ffaa00':'var(--red)';
+  }
+  if(avgEl){avgEl.textContent=avg+'x';}
+  const winsEl=document.getElementById('wrWins');
+  if(winsEl)winsEl.textContent=wins+' / '+total;
+}
+
 // ── Tri historique ─────────────────────────────────────────
 let currentHistSort='recent';
 function toggleHistSort(){
@@ -2926,6 +3002,9 @@ async function renderHistory(){
     const hc=document.getElementById('histCount');if(hc)hc.textContent='';
     container.innerHTML='<div class="hist-empty"><div class="hist-empty-icon">📭</div><div>Aucun call encore</div></div>';return;}
 
+  // Mettre à jour la bannière winrate dès le chargement initial
+  updateWrStats(calls);
+
   // Fetch prix live TOUS les tokens (par batch de 20 — DexScreener limite)
   const allAddrs=entries.map(([,v])=>v.addr||v.address||'').filter(Boolean);
   // liveMap stocke {now, athEst} — now = mcap actuel, athEst = ATH estimé depuis DexScreener
@@ -2951,16 +3030,14 @@ async function renderHistory(){
         const c24=p.priceChange?.h24||0;
         const c6=p.priceChange?.h6||0;
         const c1=p.priceChange?.h1||0;
-        const MAX_MULT=50; // un token ne peut pas avoir fait 50x sans qu'on le sache
+        const MAX_MULT=50;
         let athEst=now;
-        // Formule inverse : si c=-90% → maintenant vaut 10% du max → max = now/0.10
-        // Plafond anti-MEV : ne jamais dépasser now * MAX_MULT
+        // Seuil abaissé à -3% : capture les dips récents même faibles
+        // Plafond anti-MEV : max now * MAX_MULT
         const cap=now*MAX_MULT;
-        if(c24<-10){const est=now/Math.max(0.001,1+c24/100);if(est<cap)athEst=Math.max(athEst,est);}
-        if(c6 <-10){const est=now/Math.max(0.001,1+c6/100); if(est<cap)athEst=Math.max(athEst,est);}
-        if(c1 <-10){const est=now/Math.max(0.001,1+c1/100); if(est<cap)athEst=Math.max(athEst,est);}
-        // Si positif : now est déjà un ATH potentiel
-        if(c24>0)athEst=Math.max(athEst,now);
+        if(c24<-3){const est=now/Math.max(0.001,1+c24/100);if(est<cap)athEst=Math.max(athEst,est);}
+        if(c6 <-3){const est=now/Math.max(0.001,1+c6/100); if(est<cap)athEst=Math.max(athEst,est);}
+        if(c1 <-3){const est=now/Math.max(0.001,1+c1/100); if(est<cap)athEst=Math.max(athEst,est);}
         liveMap[a]={now, athEst:Math.round(athEst), c24, c6, c1};
       });
     }catch(e){}
@@ -3000,6 +3077,9 @@ async function renderHistory(){
       localStorage.setItem(STORAGE_KEY,JSON.stringify(local));
     }catch(e){}
   }
+
+  // Refresh bannière winrate avec ATH mis à jour
+  updateWrStats(calls);
 
   // Trier selon le mode actuel
   let sorted=[...entries];
