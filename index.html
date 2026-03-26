@@ -2465,48 +2465,51 @@ function hardFilterV2(p){
 // ============================================================
 // SCORER v2
 // ============================================================
-// ── calculatePatternScore ─────────────────────────────────────────────────
-// Remplace l'ancien scoring Pattern (trop permissif, ~35pts même sur rugs).
-// Nouveaux critères stricts : staircase propre, correction saine, multi-pumps
-// structurés, consolidation, volume organique. Max 45pts. Pénalités anti-rug.
+// ── calculatePatternScore v3 ───────────────────────────────────────────────
+// Scoring Pattern strict : favorise vrais staircase (higher highs + higher lows,
+// consolidation, multi-pumps), pénalise fortement faux pumps/bundles/triangles.
+// Seuils resserrés : staircase c5m>5/c1h>30/c6h>48, pénalités plus lourdes.
 function calculatePatternScore(p) {
+  const c5m     = p.priceChange?.m5  || 0;
   const c1h     = p.priceChange?.h1  || 0;
   const c6h     = p.priceChange?.h6  || 0;
-  const m5      = p.priceChange?.m5  || 0;
   const m1      = p.priceChange?.m1  || 0;
   const buysM5  = p.txns?.m5?.buys   || 0;
   const sellsM5 = p.txns?.m5?.sells  || 0;
 
   let score = 0;
 
-  // 1. Vrai Staircase (+15) : higher highs + higher lows sur ~20min
-  if (m5 > 4 && c1h > 28 && c6h > 45) score += 15;
+  // 1. Vrai Staircase (+15) : structure montante confirmée sur 3 timeframes
+  if (c5m > 5 && c1h > 30 && c6h > 48) score += 15;
 
-  // 2. Correction saine (+10) : recul entre -5% et -22% depuis le high
-  if (c1h >= -22 && c1h <= -5) score += 10;
+  // 2. Correction saine (+10) : recul entre -6% et -22% (ni trop ni trop peu)
+  if (c1h >= -22 && c1h <= -6) score += 10;
 
-  // 3. Multi-pumps confirmés (+10) : au moins 2 vagues distinctes
-  if (c1h > 28 && c6h > 45) score += 10;
+  // 3. Multi-pumps confirmés (+10) : 2 vagues distinctes
+  if (c1h > 32 && c6h > 50) score += 10;
 
   // 4. 3ème pump ou plus (+5)
-  if (c6h > 65) score += 5;
+  if (c6h > 72) score += 5;
 
-  // 5. Consolidation propre (+8) : faible variation m5 après pump
-  if (Math.abs(m5) < 7 && c1h > 18) score += 8;
+  // 5. Consolidation propre (+8) : pause saine après pump
+  if (Math.abs(c5m) < 7.5 && c1h > 20) score += 8;
 
-  // 6. Pas de dump violent (+5) : pas de bougie m5 < -28% ET m1 < -18%
-  if (!(m5 < -28 && m1 < -18)) score += 5;
+  // 6. Pas de dump violent (+5)
+  if (c5m > -27 && m1 > -17) score += 5;
 
-  // 7. Volume organique (+7) : buy/sell ratio > 1.45 sur m5
-  if (buysM5 > sellsM5 * 1.45) score += 7;
+  // 7. Volume organique anti-bundle (+7) : ratio buy/sell > 1.5 sur m5
+  if (buysM5 > sellsM5 * 1.5) score += 7;
 
-  // Pénalité : gros pump suivi dump immédiat (pattern rug classique)
-  if (c1h > 80 && m5 < -25) score -= 12;
+  // Pénalité forte : spike + dump immédiat (rug classique)
+  if (c1h > 85 && c5m < -26) score -= 15;
 
-  // Pénalité : pump très fort sans structure (triangle/bundle)
-  if (c6h > 120 && c1h < 10) score -= 10;
+  // Pénalité forte : pump sans structure (triangle / bundle)
+  if (c6h > 130 && c1h < 18) score -= 12;
 
-  return Math.max(0, Math.min(45, score));
+  // Pénalité : trop de sells pendant le pump
+  if (sellsM5 > buysM5 * 1.65 && c1h > 40) score -= 10;
+
+  return Math.max(0, Math.min(45, Math.round(score)));
 }
 
 function scoreTokenV2(p,walletData={count:0,wallets:[],clustered:false}){
@@ -2759,6 +2762,30 @@ function checkPw(){
   }else{document.getElementById('pwErr').style.display='block';document.getElementById('adminPwInp').value='';}
 }
 function changePw(){const v=document.getElementById('newPwInp').value.trim();if(v.length<4)return;setAdminPw(v);ADMIN_PW=v;document.getElementById('newPwInp').value='';const m=document.getElementById('pwOkMsg');m.style.display='block';setTimeout(()=>m.style.display='none',2500);}
+
+async function adminEditAth(key,addr,sym){
+  const raw=prompt(`✏️ ATH manuel pour ${sym}\n\nNouvelle valeur en $ (ex: 258000) :`);
+  if(!raw)return;
+  const athMcap=Math.round(parseFloat(raw.replace(/[^0-9.]/g,'')));
+  if(isNaN(athMcap)||athMcap<=0){alert('Valeur invalide');return;}
+  // Mise à jour Firebase (visible par tous)
+  try{await fetch(`${FB_URL}/calls/${key}.json`,{method:'PATCH',body:JSON.stringify({athMcap})});}catch(e){}
+  // Mise à jour localStorage
+  try{
+    const local=JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}');
+    if(local[addr])local[addr].athMcap=athMcap;
+    localStorage.setItem(STORAGE_KEY,JSON.stringify(local));
+  }catch(e){}
+  // Mise à jour inline sans re-render complet
+  const athEl=document.getElementById('ath-val-'+key);
+  const xEl=document.getElementById('xath-val-'+key);
+  if(athEl)athEl.textContent='$'+fmtNum(athMcap);
+  // Recalcul xATH
+  const callMcapEl=athEl?.closest('.sc-stats')?.querySelector('.sc-stat-val');
+  const callMcapRaw=callMcapEl?parseFloat(callMcapEl.textContent.replace(/[^0-9.]/g,''))*1000:0;
+  // Re-render complet pour cohérence (winrate + xATH recalculé)
+  renderHistory();
+}
 function genCode(plan){const c='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';const s=(n)=>Array.from({length:n},()=>c[Math.floor(Math.random()*c.length)]).join('');return plan+'-'+s(4)+'-'+s(4);}
 async function genCodes(){
   const plan=document.getElementById('planSel').value;
@@ -3136,12 +3163,12 @@ async function renderHistory(){
           <div class="sc-stat-val" style="color:${nowColor}">$${fmtNum(curMcap||0)}</div>
         </div>
         <div class="sc-stat">
-          <div class="sc-stat-lbl">🏆 ATH</div>
-          <div class="sc-stat-val" style="color:#ffaa44">$${fmtNum(athMcap)}</div>
+          <div class="sc-stat-lbl">🏆 ATH${isAdminMode?` <button onclick="adminEditAth('${key}','${addr}','${sym}')" style="background:rgba(255,170,0,.15);border:1px solid rgba(255,170,0,.3);color:#ffaa00;border-radius:3px;font-size:.55rem;padding:.08rem .28rem;cursor:pointer;vertical-align:middle">✏️</button>`:''}</div>
+          <div class="sc-stat-val" style="color:#ffaa44" id="ath-val-${key}">$${fmtNum(athMcap)}</div>
         </div>
         <div class="sc-stat gold">
           <div class="sc-stat-lbl">🎯 × ATH</div>
-          <div class="sc-stat-val" style="color:${xColor};font-size:.88rem">${xAth.toFixed(2)}x</div>
+          <div class="sc-stat-val" style="color:${xColor};font-size:.88rem" id="xath-val-${key}">${xAth.toFixed(2)}x</div>
         </div>
       </div>
       <div class="sc-footer">
