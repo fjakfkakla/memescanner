@@ -2437,6 +2437,50 @@ function hardFilterV2(p){
 // ============================================================
 // SCORER v2
 // ============================================================
+// ── calculatePatternScore ─────────────────────────────────────────────────
+// Remplace l'ancien scoring Pattern (trop permissif, ~35pts même sur rugs).
+// Nouveaux critères stricts : staircase propre, correction saine, multi-pumps
+// structurés, consolidation, volume organique. Max 45pts. Pénalités anti-rug.
+function calculatePatternScore(p) {
+  const c1h     = p.priceChange?.h1  || 0;
+  const c6h     = p.priceChange?.h6  || 0;
+  const m5      = p.priceChange?.m5  || 0;
+  const m1      = p.priceChange?.m1  || 0;
+  const buysM5  = p.txns?.m5?.buys   || 0;
+  const sellsM5 = p.txns?.m5?.sells  || 0;
+
+  let score = 0;
+
+  // 1. Vrai Staircase (+15) : higher highs + higher lows sur ~20min
+  if (m5 > 4 && c1h > 28 && c6h > 45) score += 15;
+
+  // 2. Correction saine (+10) : recul entre -5% et -22% depuis le high
+  if (c1h >= -22 && c1h <= -5) score += 10;
+
+  // 3. Multi-pumps confirmés (+10) : au moins 2 vagues distinctes
+  if (c1h > 28 && c6h > 45) score += 10;
+
+  // 4. 3ème pump ou plus (+5)
+  if (c6h > 65) score += 5;
+
+  // 5. Consolidation propre (+8) : faible variation m5 après pump
+  if (Math.abs(m5) < 7 && c1h > 18) score += 8;
+
+  // 6. Pas de dump violent (+5) : pas de bougie m5 < -28% ET m1 < -18%
+  if (!(m5 < -28 && m1 < -18)) score += 5;
+
+  // 7. Volume organique (+7) : buy/sell ratio > 1.45 sur m5
+  if (buysM5 > sellsM5 * 1.45) score += 7;
+
+  // Pénalité : gros pump suivi dump immédiat (pattern rug classique)
+  if (c1h > 80 && m5 < -25) score -= 12;
+
+  // Pénalité : pump très fort sans structure (triangle/bundle)
+  if (c6h > 120 && c1h < 10) score -= 10;
+
+  return Math.max(0, Math.min(45, score));
+}
+
 function scoreTokenV2(p,walletData={count:0,wallets:[],clustered:false}){
   const ageMs  = Date.now()-(p.pairCreatedAt||0);
   const ageH   = ageMs/3600000;
@@ -2564,34 +2608,8 @@ function scoreTokenV2(p,walletData={count:0,wallets:[],clustered:false}){
   else if (ageMin >  5  && ageMin <= 15)  ageScore =  5;
   score += ageScore;
 
-  // ── 📈 CORRECTION / PATTERN ───────────────────────────────────────────────
-  let patternScore = 0;
-
-  // Pattern escalier : m5 positif + c1h > 30% + pas de gros dump
-  const isStaircase = m5 > 0 && c1h > 30 && m5 > -30;
-  if (isStaircase) patternScore += 15;
-
-  // Correction saine depuis ATH (c1h > -20 = pas trop dumped)
-  if (c1h > -20 && c1h <= 0) patternScore += 10;
-
-  // Correction trop forte
-  if (c1h < -40) patternScore -= 10;
-
-  // Détection de pumps successifs (approximation avec c6h + c1h)
-  const pump1 = c1h > 10;
-  const pump2 = c6h > 10 && c1h > 5;  // 2 periodes positives
-  const pump3 = c6h > 30 && c1h > 15; // 3 pumps estimés
-  if      (pump3)       patternScore += 15;
-  else if (pump2)       patternScore += 10;
-  else if (pump1)       patternScore +=  5; // 1 seul pump visible
-
-  // Consolidation courte (variation faible sur m5/m1)
-  const isConsolidating = Math.abs(m5) < 5 && (m1 === 0 || Math.abs(m1) < 5);
-  if (isConsolidating && c1h > 0) patternScore += 10; // consolidation après montée
-
-  // Pas de dump violent
-  if (m5 > -30) patternScore += 5;
-
+  // ── 📈 PATTERN (via calculatePatternScore) ────────────────────────────────
+  const patternScore = calculatePatternScore(p);
   score += patternScore;
 
   // ── CALCUL FINAL ──────────────────────────────────────────────────────────
@@ -3131,7 +3149,7 @@ async function debugCA(){
       {name:'🪙 Platform', val:platformScore,max:5},
       {name:'⭐ Mcap',     val:mcapScore,    max:15},
       {name:'⏱ Age',       val:ageScore,     max:10},
-      {name:'📈 Pattern',  val:patternScore, max:30},
+      {name:'📈 Pattern',  val:patternScore, max:45},
     ];
 
     const bars=cats.map(c=>{
