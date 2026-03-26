@@ -3479,10 +3479,29 @@ async function fetchTokens(){
   const candidates=pairs.filter(p=>{const ah=(Date.now()-(p.pairCreatedAt||0))/3600000;return ah>=0.02&&ah<=1;});
   let preScored=candidates.map(p=>scoreTokenV2(p)).filter(t=>t.score>=30);
   preScored.sort((a,b)=>b.score-a.score);preScored=preScored.slice(0,25);
+  // ── PARALLÉLISATION : security + axiom en même temps pour tous les tokens ──
+  // Au lieu de 25 tokens × (8s security + 8s axiom) en série = ~6min
+  // On lance tout en parallèle = ~10s max
+  const parallelResults = await Promise.allSettled(
+    preScored.map(async t => {
+      const [sec, wData] = await Promise.allSettled([
+        checkTokenSecurity(t.addr, t.raw?.pairAddress || null),
+        checkAxiomWallets(t.addr)
+      ]);
+      return {
+        t,
+        sec: sec.status==='fulfilled' ? sec.value : null,
+        wData: wData.status==='fulfilled' ? wData.value : {count:0,wallets:[],clustered:false}
+      };
+    })
+  );
+
   const finalScored=[];
-  for(const t of preScored){
+  for(const res of parallelResults){
+    if(res.status!=='fulfilled')continue;
+    const {t, sec, wData} = res.value;
     try{
-      const sec = await checkTokenSecurity(t.addr, t.pairAddress || null);
+      // Filtres sécurité
       if(sec){
         if(sec.mintAuthority!==null){rejected['mint authority active']=(rejected['mint authority active']||0)+1;continue;}
         if(sec.freezeAuthority!==null){rejected['freeze authority active']=(rejected['freeze authority active']||0)+1;continue;}
@@ -3491,8 +3510,8 @@ async function fetchTokens(){
         t.security=sec;
         if(t.raw)t.raw.security=sec;
       }
-      const wData=await checkAxiomWallets(t.addr);
-      const rescored=scoreTokenV2(t.raw,wData);
+
+      const rescored=scoreTokenV2(t.raw, wData);
       const hist=scoreHistory[rescored.addr]||{};
       const stickyAxiom=Math.max(rescored.debug.traderScore,hist.maxAxiom||0);
       const stickySocial=Math.max(rescored.debug.socialScore,hist.maxSocial||0);
@@ -3501,14 +3520,13 @@ async function fetchTokens(){
       if(axiomDiff>0||socialDiff>0){rescored.score=Math.min(150,rescored.score+axiomDiff+socialDiff);rescored.debug.traderScore=stickyAxiom;rescored.debug.socialScore=stickySocial;}
       scoreHistory[rescored.addr]={maxAxiom:stickyAxiom,maxSocial:stickySocial};
 
-      // ── ÉTAPE 2 : Hard filters POST-score ────────────────────────
-      // Appliqués APRÈS le score — ne bloquent plus les bons tokens en amont
+      // Hard filters POST-score
       const rp=rescored.raw;
       const rdex=(rp?.dexId||'').toLowerCase();
       const rurl=(rp?.url||'').toLowerCase();
       const raddr=(rp?.baseToken?.address||'');
 
-      // HARD FILTER 1 — Platform : pump.fun, bonk ou bags uniquement
+      // HARD FILTER 1 — Platform
       const isPump=rdex.includes('pump')||rurl.includes('pump')||raddr.endsWith('pump');
       const isBonk=rdex.includes('bonk')||rdex.includes('launchlab');
       const isBags=rdex.includes('bags')||rurl.includes('bags');
@@ -3516,19 +3534,16 @@ async function fetchTokens(){
 
       // HARD FILTER 2 — Mcap : 15K → 100K
       const rmc=rescored.mcap||0;
-      if(rmc<15000){rejected[`mcap $${fmtNum(rmc)}<15K`]=(rejected[`mcap $${fmtNum(rmc)}<15K`]||0)+1;continue;}
-      if(rmc>100000){rejected[`mcap $${fmtNum(rmc)}>100K`]=(rejected[`mcap $${fmtNum(rmc)}>100K`]||0)+1;continue;}
+      if(rmc<15000){rejected[`mcap<15K`]=(rejected['mcap<15K']||0)+1;continue;}
+      if(rmc>100000){rejected[`mcap>100K`]=(rejected['mcap>100K']||0)+1;continue;}
 
       // HARD FILTER 3 — Âge < 1h
       const rage=(Date.now()-(rp?.pairCreatedAt||0))/3600000;
-      if(rage>1){rejected[`age ${rage.toFixed(1)}h>1h`]=(rejected[`age ${rage.toFixed(1)}h>1h`]||0)+1;continue;}
+      if(rage>1){rejected[`age>1h`]=(rejected['age>1h']||0)+1;continue;}
 
-      // HARD FILTER 4 — Axiom : au moins 1 trader
-      if((rescored.walletData?.count||0)<1){rejected['0 Axiom trader']=(rejected['0 Axiom trader']||0)+1;continue;}
-
-      // Seuil score final : 80+
+      // Seuil score : 80+
       if(rescored.score>=80){rescored.security=sec;finalScored.push(rescored);}
-      else{rejected[`score ${rescored.score}<80`]=(rejected[`score ${rescored.score}<80`]||0)+1;}
+      else{rejected[`score<80`]=(rejected['score<80']||0)+1;}
     }catch(e){if(t.score>=80)finalScored.push(t);}
   }
   finalScored.sort((a,b)=>b.score-a.score);
