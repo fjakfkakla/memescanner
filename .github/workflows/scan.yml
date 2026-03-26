@@ -20,4 +20,4 @@ jobs:
           node-version: '22'
 
       - name: Run scan
-        run: node scripts/scan.js
+        run: run: node scan.js
