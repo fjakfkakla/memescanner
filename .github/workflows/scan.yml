@@ -2,8 +2,8 @@ name: Meme Scanner Background
 
 on:
   schedule:
-    - cron: '*/10 * * * *'   # toutes les 10 minutes
-  workflow_dispatch:           # bouton manuel dans GitHub Actions
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
 
 jobs:
   scan:
@@ -20,4 +20,4 @@ jobs:
           node-version: '22'
 
       - name: Run scan
-        run: run: node scan.js
+        run: node scan.js
