@@ -1180,9 +1180,8 @@ async function checkAxiomWallets(tokenAddr) {
   const cached = swCache[tokenAddr];
   if (cached && now - cached.ts < 1800000) return cached.result;
   try {
-    const [sigRes, largestRes] = await Promise.allSettled([
+    const [sigRes] = await Promise.allSettled([
       fetch(HELIUS_RPC, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ jsonrpc: '2.0', id: 'sigs', method: 'getSignaturesForAddress', params: [tokenAddr, { limit: 100 }] }), signal: AbortSignal.timeout(8000) }).then(r => r.json()),
-      fetch(HELIUS_RPC, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ jsonrpc: '2.0', id: 'largest', method: 'getTokenLargestAccounts', params: [tokenAddr] }), signal: AbortSignal.timeout(8000) }).then(r => r.json()),
     ]);
     const allOwners = new Set();
     // A) Enhanced API (feePayer = tous les traders y compris vendeurs)
@@ -1207,16 +1206,6 @@ async function checkAxiomWallets(tokenAddr) {
             const keys = resp.result.transaction?.message?.accountKeys || [];
             keys.forEach(k => { const addr = typeof k === 'string' ? k : k?.pubkey; const isSigner = typeof k !== 'string' && k?.signer; if ((isSigner || keys.indexOf(k) === 0) && addr && addr.length >= 32) allOwners.add(addr); });
           });
-        } catch(e) {}
-      }
-    }
-    // C) top holders temps réel → owners via getMultipleAccounts (pas de lag d'indexation)
-    if (largestRes.status === 'fulfilled') {
-      const tokenAccts = (largestRes.value?.result?.value || []).map(a => a.address).filter(a => a && a.length > 30);
-      if (tokenAccts.length > 0) {
-        try {
-          const multiResp = await fetch(HELIUS_RPC, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ jsonrpc: '2.0', id: 'multi', method: 'getMultipleAccounts', params: [tokenAccts, { encoding: 'jsonParsed' }] }), signal: AbortSignal.timeout(8000) }).then(r => r.json());
-          (multiResp?.result?.value || []).forEach(a => { const owner = a?.data?.parsed?.info?.owner; if (owner && owner.length > 30) allOwners.add(owner); });
         } catch(e) {}
       }
     }
@@ -1435,4 +1424,16 @@ async function runScan() {
       if (!rdex.includes('pump') && !rurl.includes('pump') && !raddr.endsWith('pump') &&
           !rdex.includes('bonk') && !rdex.includes('launchlab') &&
           !rdex.includes('bags') && !rurl.includes('bags')) { console.log(`[SKIP] ${t.symbol} platform`); continue; }
-    
+      const rmc = rescored.mcap || 0;
+      if (rmc < 15000 || rmc > 100000) { console.log(`[SKIP] ${t.symbol} mcap=${Math.round(rmc/1000)}K`); continue; }
+      if ((Date.now() - (rp?.pairCreatedAt || 0)) / 3600000 > 1) { console.log(`[SKIP] ${t.symbol} age>1h`); continue; }
+      if ((rescored.walletData?.count || 0) < 1) { console.log(`[SKIP] ${t.symbol} 0 Axiom`); continue; }
+      if (rescored.score < 80) { console.log(`[SKIP] ${t.symbol} score=${rescored.score}<80`); continue; }
+      await saveCall(rescored.addr, rescored.mcap, Date.now(), rescored.symbol, rescored.score, rp?.pairAddress || '');
+      saved++;
+    } catch(e) { console.warn(`[ERROR] ${t.symbol || '?'}:`, e.message); }
+  }
+  console.log(`[SCAN] Done - ${saved} nouveau(x) call(s)`);
+}
+
+runScan().catch(e => { console.error('[FATAL]', e); process.exit(1); });
