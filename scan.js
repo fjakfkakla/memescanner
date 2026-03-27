@@ -1296,14 +1296,37 @@ function scoreTokenV2(p, walletData = { count: 0, wallets: [], clustered: false 
   else if (ageMin >  5 && ageMin <= 15) ageScore =  5;
   score += ageScore;
   let patternScore = 0;
-  if (m5 > 0 && c1h > 30 && m5 > -30) patternScore += 15;
-  if (c1h > -20 && c1h <= 0) patternScore += 10;
-  if (c1h < -40) patternScore -= 10;
-  if      (c6h > 30 && c1h > 15) patternScore += 15;
-  else if (c6h > 10 && c1h >  5) patternScore += 10;
-  else if (c1h > 10)              patternScore +=  5;
-  if (Math.abs(m5) < 5 && (m1 === 0 || Math.abs(m1) < 5) && c1h > 0) patternScore += 10;
-  if (m5 > -30) patternScore += 5;
+  const c24h    = p.priceChange?.h24 || 0;
+  const sells1  = p.txns?.h1?.sells || 0;
+  const total1  = buys1 + sells1 || 1;
+  const sellR1h = sells1 / total1;
+
+  // STRUCTURE
+  const higher_lows   = c6h > 0 && c1h > 0 && m5 > -20;
+  const multiple_legs = c6h > 15 && c1h > 5;
+  // ACCUMULATION
+  const no_early_dump = m5 > -20 && c1h > -10;
+  // QUALITÉ
+  const clean_pullbacks = m5 > -20 && m5 < 0 && c1h > 5;
+  const consolidation   = Math.abs(m5) < 5 && c1h > 0;
+  const holds_gains     = c1h > 0 && m5 > -15;
+  // MALUS
+  const reset              = c1h < -40 || c6h < -30;
+  const aggressive_selling = sellR1h > 0.65 || m5 < -25;
+  const single_pump        = c6h < 10 && c24h < 20 && c1h > 20;
+  const fake_staircase     = c6h > 30 && c1h < -5 && sellR1h > 0.5;
+
+  if (higher_lows)    patternScore += 10;
+  if (multiple_legs)  patternScore += 10;
+  if (no_early_dump)  patternScore += 10;
+  if (clean_pullbacks)  patternScore += 5;
+  if (consolidation)    patternScore += 5;
+  if (holds_gains)      patternScore += 5;
+  if (reset)              patternScore -= 30;
+  if (aggressive_selling) patternScore -= 20;
+  if (single_pump)        patternScore -= 20;
+  if (fake_staircase)     patternScore -= 15;
+  patternScore = Math.max(0, Math.min(45, patternScore));
   score += patternScore;
   const finalScore = Math.min(150, Math.max(0, Math.round(score)));
   const sym  = (p.baseToken?.symbol || 'UNKNOWN').toUpperCase().slice(0, 12);
@@ -1412,16 +1435,4 @@ async function runScan() {
       if (!rdex.includes('pump') && !rurl.includes('pump') && !raddr.endsWith('pump') &&
           !rdex.includes('bonk') && !rdex.includes('launchlab') &&
           !rdex.includes('bags') && !rurl.includes('bags')) { console.log(`[SKIP] ${t.symbol} platform`); continue; }
-      const rmc = rescored.mcap || 0;
-      if (rmc < 15000 || rmc > 100000) { console.log(`[SKIP] ${t.symbol} mcap=${Math.round(rmc/1000)}K`); continue; }
-      if ((Date.now() - (rp?.pairCreatedAt || 0)) / 3600000 > 1) { console.log(`[SKIP] ${t.symbol} age>1h`); continue; }
-      if ((rescored.walletData?.count || 0) < 1) { console.log(`[SKIP] ${t.symbol} 0 Axiom`); continue; }
-      if (rescored.score < 80) { console.log(`[SKIP] ${t.symbol} score=${rescored.score}<80`); continue; }
-      await saveCall(rescored.addr, rescored.mcap, Date.now(), rescored.symbol, rescored.score, rp?.pairAddress || '');
-      saved++;
-    } catch(e) { console.warn(`[ERROR] ${t.symbol || '?'}:`, e.message); }
-  }
-  console.log(`[SCAN] Done - ${saved} nouveau(x) call(s)`);
-}
-
-runScan().catch(e => { console.error('[FATAL]', e); process.exit(1); });
+    
