@@ -1151,7 +1151,7 @@ async function checkTokenSecurity(mintAddr, pairAddress = null) {
       telegram = links.telegram || ext.telegram || meta?.telegram || null;
       website  = links.website  || links['external_url'] || ext.website || meta?.external_url || null;
       const jsonUri = rd?.content?.json_uri;
-      if (jsonUri && jsonUri.startsWith('http') && !twitter && !telegram) {
+      if (jsonUri && jsonUri.startsWith('http') && (!twitter || !telegram || !website)) {
         try {
           const mj = await fetch(jsonUri, { signal: AbortSignal.timeout(5000) }).then(r => r.json());
           twitter  = twitter  || mj?.twitter  || mj?.extensions?.twitter  || null;
@@ -1180,20 +1180,35 @@ async function checkAxiomWallets(tokenAddr) {
   const cached = swCache[tokenAddr];
   if (cached && now - cached.ts < 1800000) return cached.result;
   try {
-    const [sigRes, dasRes, largestRes] = await Promise.allSettled([
+    const [sigRes, largestRes] = await Promise.allSettled([
       fetch(HELIUS_RPC, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ jsonrpc: '2.0', id: 'sigs', method: 'getSignaturesForAddress', params: [tokenAddr, { limit: 100 }] }), signal: AbortSignal.timeout(8000) }).then(r => r.json()),
-      fetch(`https://mainnet.helius-rpc.com/?api-key=${HELIUS_KEY}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ jsonrpc: '2.0', id: 'das', method: 'getTokenAccounts', params: { mint: tokenAddr, limit: 1000, displayOptions: {} } }), signal: AbortSignal.timeout(8000) }).then(r => r.json()),
       fetch(HELIUS_RPC, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ jsonrpc: '2.0', id: 'largest', method: 'getTokenLargestAccounts', params: [tokenAddr] }), signal: AbortSignal.timeout(8000) }).then(r => r.json()),
     ]);
     const allOwners = new Set();
+    // A) Enhanced API (feePayer = tous les traders y compris vendeurs)
     if (sigRes.status === 'fulfilled') {
       try {
         const et = await fetch(`https://api.helius.xyz/v0/addresses/${tokenAddr}/transactions?api-key=${HELIUS_KEY}&limit=100`, { signal: AbortSignal.timeout(10000) }).then(r => r.json());
         if (Array.isArray(et)) et.forEach(tx => { if (tx?.feePayer && tx.feePayer.length >= 32) allOwners.add(tx.feePayer); });
       } catch(e) {}
     }
-    if (dasRes.status === 'fulfilled') {
-      (dasRes.value?.result?.token_accounts || []).forEach(a => { if (a.owner) allOwners.add(a.owner); });
+    // A2) Fallback raw getTransaction si Enhanced API vide (lag pour tokens < 2-3 min)
+    if (allOwners.size === 0 && sigRes.status === 'fulfilled') {
+      const rawSigs = (sigRes.value?.result || []).slice(0, 15).map(s => s.signature).filter(Boolean);
+      if (rawSigs.length > 0) {
+        try {
+          const rawTxs = await Promise.all(rawSigs.map(sig =>
+            fetch(HELIUS_RPC, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ jsonrpc: '2.0', id: sig, method: 'getTransaction', params: [sig, { encoding: 'jsonParsed', commitment: 'confirmed', maxSupportedTransactionVersion: 0 }] }),
+              signal: AbortSignal.timeout(5000) }).then(r => r.json()).catch(() => null)
+          ));
+          rawTxs.forEach(resp => {
+            if (!resp?.result) return;
+            const keys = resp.result.transaction?.message?.accountKeys || [];
+            keys.forEach(k => { const addr = typeof k === 'string' ? k : k?.pubkey; const isSigner = typeof k !== 'string' && k?.signer; if ((isSigner || keys.indexOf(k) === 0) && addr && addr.length >= 32) allOwners.add(addr); });
+          });
+        } catch(e) {}
+      }
     }
     // C) top holders temps réel → owners via getMultipleAccounts (pas de lag d'indexation)
     if (largestRes.status === 'fulfilled') {
@@ -1394,4 +1409,19 @@ async function runScan() {
       const rdex  = (rp?.dexId || '').toLowerCase();
       const rurl  = (rp?.url   || '').toLowerCase();
       const raddr = (rp?.baseToken?.address || '');
-      if (!rdex.includes('p
+      if (!rdex.includes('pump') && !rurl.includes('pump') && !raddr.endsWith('pump') &&
+          !rdex.includes('bonk') && !rdex.includes('launchlab') &&
+          !rdex.includes('bags') && !rurl.includes('bags')) { console.log(`[SKIP] ${t.symbol} platform`); continue; }
+      const rmc = rescored.mcap || 0;
+      if (rmc < 15000 || rmc > 100000) { console.log(`[SKIP] ${t.symbol} mcap=${Math.round(rmc/1000)}K`); continue; }
+      if ((Date.now() - (rp?.pairCreatedAt || 0)) / 3600000 > 1) { console.log(`[SKIP] ${t.symbol} age>1h`); continue; }
+      if ((rescored.walletData?.count || 0) < 1) { console.log(`[SKIP] ${t.symbol} 0 Axiom`); continue; }
+      if (rescored.score < 80) { console.log(`[SKIP] ${t.symbol} score=${rescored.score}<80`); continue; }
+      await saveCall(rescored.addr, rescored.mcap, Date.now(), rescored.symbol, rescored.score, rp?.pairAddress || '');
+      saved++;
+    } catch(e) { console.warn(`[ERROR] ${t.symbol || '?'}:`, e.message); }
+  }
+  console.log(`[SCAN] Done - ${saved} nouveau(x) call(s)`);
+}
+
+runScan().catch(e => { console.error('[FATAL]', e); process.exit(1); });
