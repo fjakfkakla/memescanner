@@ -2264,7 +2264,7 @@ async function checkTokenSecurity(mintAddr, pairAddress = null) {
       // Fetch JSON URI (metadata on-chain Pump.fun/Bonk) — source la plus fiable
       // Le créateur y renseigne twitter/telegram directement au moment du mint
       const jsonUri = rd?.content?.json_uri;
-      if (jsonUri && jsonUri.startsWith('http') && !twitter && !telegram) {
+      if (jsonUri && jsonUri.startsWith('http') && (!twitter || !telegram || !website)) {
         try {
           const mj = await fetch(jsonUri, { signal: AbortSignal.timeout(5000) }).then(r => r.json());
           twitter  = twitter  || mj?.twitter  || mj?.extensions?.twitter  || mj?.properties?.twitter  || null;
@@ -2308,26 +2308,17 @@ async function checkAxiomWallets(tokenAddr) {
   if (cached && now - cached.ts < 1800000) return cached.result;
 
   try {
-    // TRIPLE STRATÉGIE — du plus complet au plus ciblé :
-    // A) Transactions récentes du token (signers = tous ceux qui ont tradé, même vendus)
-    // B) DAS getTokenAccounts (holders actuels avec balance > 0)
-    // C) Top 20 holders → resolve owners
+    // DOUBLE STRATÉGIE — traders réels uniquement :
+    // A) Transactions récentes du token (feePayer = signataires humains)
+    // C) Top 20 holders → resolve owners (temps réel, sans lag indexation)
 
-    const [sigRes, dasRes, largestRes] = await Promise.allSettled([
+    const [sigRes, largestRes] = await Promise.allSettled([
       // A) 100 dernières signatures sur le token mint → signers = traders récents
       fetch(HELIUS_RPC, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ jsonrpc: '2.0', id: 'sigs',
           method: 'getSignaturesForAddress',
           params: [tokenAddr, { limit: 100 }] }),
-        signal: AbortSignal.timeout(8000)
-      }).then(r => r.json()),
-      // B) DAS tous les holders actuels
-      fetch(`https://mainnet.helius-rpc.com/?api-key=${HELIUS_KEY}`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ jsonrpc: '2.0', id: 'das',
-          method: 'getTokenAccounts',
-          params: { mint: tokenAddr, limit: 1000, displayOptions: {} } }),
         signal: AbortSignal.timeout(8000)
       }).then(r => r.json()),
       // C) Top 20 par balance
@@ -2369,13 +2360,32 @@ async function checkAxiomWallets(tokenAddr) {
       } catch(e) { console.warn('[AXIOM] Enhanced API error:', e.message); }
     }
 
-    // B) DAS holders actuels
-    if (dasRes.status === 'fulfilled') {
-      const dasAccounts = dasRes.value?.result?.token_accounts || [];
-      console.log('[AXIOM] DAS accounts:', dasAccounts.length, dasRes.value?.error||'');
-      dasAccounts.forEach(a => { if (a.owner) allOwners.add(a.owner); });
-    } else {
-      console.warn('[AXIOM] DAS failed:', dasRes.reason);
+    // A2) Fallback raw getTransaction si Enhanced API vide (lag pour tokens < 2-3 min)
+    // Résout les false negatives : token très récent, lag indexation Enhanced API
+    if (allOwners.size === 0 && sigRes.status === 'fulfilled') {
+      const rawSigs = (sigRes.value?.result || []).slice(0, 15).map(s => s.signature).filter(Boolean);
+      if (rawSigs.length > 0) {
+        try {
+          const rawTxs = await Promise.all(rawSigs.map(sig =>
+            fetch(HELIUS_RPC, {
+              method: 'POST', headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ jsonrpc: '2.0', id: sig, method: 'getTransaction',
+                params: [sig, { encoding: 'jsonParsed', commitment: 'confirmed', maxSupportedTransactionVersion: 0 }] }),
+              signal: AbortSignal.timeout(5000)
+            }).then(r => r.json()).catch(() => null)
+          ));
+          rawTxs.forEach(resp => {
+            if (!resp?.result) return;
+            const keys = resp.result.transaction?.message?.accountKeys || [];
+            keys.forEach((k, i) => {
+              const addr = typeof k === 'string' ? k : k?.pubkey;
+              const isSigner = typeof k !== 'string' ? k?.signer : i === 0;
+              if (isSigner && addr && addr.length >= 32) allOwners.add(addr);
+            });
+          });
+          console.log('[AXIOM] Fallback raw tx:', allOwners.size, 'owners trouvés');
+        } catch(e) { console.warn('[AXIOM] Raw tx fallback error:', e.message); }
+      }
     }
 
     // C) top holders temps réel → owners via getMultipleAccounts (pas de lag d'indexation)
@@ -4276,13 +4286,4 @@ window.addEventListener('DOMContentLoaded',()=>{
     if(!isUnlocked){
       document.getElementById('loadingEl').style.display='none';
       document.getElementById('scannerContent').innerHTML=`<div class="empty-state"><div class="empty-icon">🔐</div><div class="empty-title">Accès réservé aux membres</div><div class="empty-sub" style="margin-top:1rem"><button onclick="openCode()" style="background:var(--green);color:#000;border:none;padding:.6rem 1.5rem;border-radius:8px;font-weight:700;cursor:pointer;font-family:var(--font);font-size:.88rem">Entrer mon code d'accès</button></div></div>`;
-      document.getElementById('rsTokenContent').innerHTML=`<div class="rs-empty" style="padding:3rem 1rem"><div style="font-size:2rem;margin-bottom:.8rem">🔐</div><div style="font-family:'Syne',sans-serif;font-size:1rem;font-weight:700;color:rgba(255,100,120,.8);margin-bottom:.5rem">Accès réservé aux membres</div><div style="font-size:.75rem;color:rgba(255,100,120,.4);margin-bottom:1.2rem">Entre ton code pour accéder au RUG SNIP</div><button onclick="openCode()" style="background:rgba(255,40,80,.15);border:1px solid rgba(255,40,80,.4);color:#ff4466;padding:.5rem 1.4rem;border-radius:6px;font-family:'Space Mono',monospace;font-size:.8rem;font-weight:700;cursor:pointer;">Entrer mon code →</button></div>`;
-    }
-    document.getElementById('codeModal').addEventListener('click',e=>{if(e.target.id==='codeModal')closeCode();});
-    document.getElementById('adminOverlay').addEventListener('click',e=>{if(e.target.id==='adminOverlay')closeAdmin();});
-    document.getElementById('debugOverlay').addEventListener('click',e=>{if(e.target.id==='debugOverlay')closeDebug();});
-  }catch(err){console.error('Erreur init:',err);document.body.style.cssText='background:#050508;color:#ff4466;padding:2rem;font-family:monospace';document.body.innerHTML='<h2>⚠️ Erreur init</h2><p>'+err.message+'</p>';}
-});
-</script>
-</body>
-</html>
+      document.getElementById('rsTokenContent').innerHTML=`<div class="rs-empty" style="padding:3rem 1rem"><div style="font-size:2rem;margin-bottom:.8rem">🔐</div><div style="font-family:'Syne',sans-serif;font-size:1rem;font-weight:700;color:rgba(255,100,120,.8);margin-bottom:.5rem">Accès réservé aux membres</div><div style="font-size:.75rem;color:rgba(255,100,120,.4);margin-bottom:1.2rem">Entre ton code pour accéder au RUG SNIP</div><button onclick="openCode()" style="background:rgba(255,40,80,.15);border:1px solid rgba(255,40,80,.4);color:#ff4466;padding:.5rem 1.4rem;border-radius:6px;font-family:'Space Mono',monospace;font-size:.8rem;font-weight:700;cursor:pointer;">Ent
