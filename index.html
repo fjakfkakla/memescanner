@@ -2312,8 +2312,8 @@ async function checkAxiomWallets(tokenAddr) {
     // A) Transactions récentes du token (feePayer = signataires humains)
     // C) Top 20 holders → resolve owners (temps réel, sans lag indexation)
 
-    const [sigRes, largestRes] = await Promise.allSettled([
-      // A) 100 dernières signatures sur le token mint → signers = traders récents
+    const [sigRes] = await Promise.allSettled([
+      // A) 100 dernières signatures sur le token mint → feePayer = traders réels
       fetch(HELIUS_RPC, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ jsonrpc: '2.0', id: 'sigs',
@@ -2321,13 +2321,6 @@ async function checkAxiomWallets(tokenAddr) {
           params: [tokenAddr, { limit: 100 }] }),
         signal: AbortSignal.timeout(8000)
       }).then(r => r.json()),
-      // C) Top 20 par balance
-      fetch(HELIUS_RPC, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ jsonrpc: '2.0', id: 'largest',
-          method: 'getTokenLargestAccounts', params: [tokenAddr] }),
-        signal: AbortSignal.timeout(8000)
-      }).then(r => r.json())
     ]);
 
     const allOwners = new Set();
@@ -2385,24 +2378,6 @@ async function checkAxiomWallets(tokenAddr) {
           });
           console.log('[AXIOM] Fallback raw tx:', allOwners.size, 'owners trouvés');
         } catch(e) { console.warn('[AXIOM] Raw tx fallback error:', e.message); }
-      }
-    }
-
-    // C) top holders temps réel → owners via getMultipleAccounts (pas de lag d'indexation)
-    if (largestRes.status === 'fulfilled') {
-      const tokenAccts = (largestRes.value?.result?.value || []).map(a => a.address).filter(a => a && a.length > 30);
-      if (tokenAccts.length > 0) {
-        try {
-          const multiResp = await fetch(HELIUS_RPC, {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ jsonrpc: '2.0', id: 'multi', method: 'getMultipleAccounts', params: [tokenAccts, { encoding: 'jsonParsed' }] }),
-            signal: AbortSignal.timeout(8000)
-          }).then(r => r.json());
-          (multiResp?.result?.value || []).forEach(a => {
-            const owner = a?.data?.parsed?.info?.owner;
-            if (owner && owner.length > 30) allOwners.add(owner);
-          });
-        } catch(e) {}
       }
     }
 
