@@ -2301,64 +2301,48 @@ const swCache = {};
 const scoreHistory = {}; // addr → {maxAxiom, maxSocial, maxHolder}
 
 // -- AXIOM wallet tracker -- verifie si des wallets AXIOM sont top holders --
-async function checkAxiomWallets(tokenAddr) {
+async function checkAxiomWallets(tokenAddr, pairAddr = null) {
   if (!tokenAddr) return { count: 0, wallets: [], clustered: false };
   const now = Date.now();
   const cached = swCache[tokenAddr];
-  // Cache 30min pour Axiom — évite les re-checks qui pourraient baisser le count
-  // Le MAX historique est aussi stocké dans maxEver pour double sécurité
   if (cached && now - cached.ts < 1800000) return cached.result;
 
   try {
-    // DOUBLE STRATÉGIE — traders réels uniquement :
-    // A) Transactions récentes du token (feePayer = signataires humains)
-    // C) Top 20 holders → resolve owners (temps réel, sans lag indexation)
-
-    const [sigRes] = await Promise.allSettled([
-      // A) 100 dernières signatures sur le token mint → feePayer = traders réels
-      fetch(HELIUS_RPC, {
+    // Interroger token mint ET pair address (bonding curve) pour maximiser la détection
+    const addrsToQuery = [tokenAddr, ...(pairAddr && pairAddr !== tokenAddr ? [pairAddr] : [])];
+    const sigResults = await Promise.allSettled(
+      addrsToQuery.map(a => fetch(HELIUS_RPC, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ jsonrpc: '2.0', id: 'sigs',
-          method: 'getSignaturesForAddress',
-          params: [tokenAddr, { limit: 100 }] }),
+        body: JSON.stringify({ jsonrpc: '2.0', id: 'sigs', method: 'getSignaturesForAddress', params: [a, { limit: 100 }] }),
         signal: AbortSignal.timeout(8000)
-      }).then(r => r.json()),
-    ]);
+      }).then(r => r.json()))
+    );
+    const sigRes = sigResults[0];
 
     const allOwners = new Set();
 
-    // A) Extraire les signers des transactions (= tous les traders récents)
-    if (sigRes.status === 'fulfilled') {
-      const sigs = sigRes.value?.result || [];
-      // Chaque signature a un champ "err" et pas directement le signer
-      // On doit fetch les transactions pour avoir les signers
-      // Mais getSignaturesForAddress ne donne pas les signers directement
-      // → On utilise getTransaction sur les 20 premières pour extraire les fee payers
-      // Helius Enhanced Transactions API → feePayer + accountData
+    // A) Enhanced API sur chaque adresse (token mint + pair) — feePayer = traders réels
+    for (const a of addrsToQuery) {
       try {
         const enhancedResp = await fetch(
-          `https://api.helius.xyz/v0/addresses/${tokenAddr}/transactions?api-key=${HELIUS_KEY}&limit=100`,
+          `https://api.helius.xyz/v0/addresses/${a}/transactions?api-key=${HELIUS_KEY}&limit=100`,
           { signal: AbortSignal.timeout(10000) }
         );
         const enhancedTxs = await enhancedResp.json();
-        console.log('[AXIOM] Enhanced API status:', enhancedResp.status, 'txs count:', Array.isArray(enhancedTxs)?enhancedTxs.length:'ERROR', typeof enhancedTxs==='object'&&!Array.isArray(enhancedTxs)?JSON.stringify(enhancedTxs).slice(0,200):'');
+        console.log(`[AXIOM] Enhanced ${a.slice(0,8)} status:`, enhancedResp.status, 'txs:', Array.isArray(enhancedTxs)?enhancedTxs.length:'ERROR');
         if (Array.isArray(enhancedTxs)) {
-          // FIX FAUX POSITIFS : ne garder QUE les feePayer (= signataires humains réels)
-          // accountData inclut tous les comptes touchés (AMM, pools, PDAs) → faux matches
           enhancedTxs.forEach(tx => {
-            // UNIQUEMENT feePayer = seul vrai humain signataire de la tx
-            // ix.accounts supprimé car inclut programs/PDAs → faux positifs
             if (tx?.feePayer && tx.feePayer.length >= 32) allOwners.add(tx.feePayer);
           });
-          console.log('[AXIOM] Total owners from Enhanced (feePayer only):', allOwners.size);
         }
       } catch(e) { console.warn('[AXIOM] Enhanced API error:', e.message); }
     }
+    console.log('[AXIOM] Total owners from Enhanced (feePayer only):', allOwners.size);
 
-    // A2) Raw getTransaction — toujours lancé pour compléter Enhanced API (qui a du lag)
-    // Résout les false negatives : token récent, Enhanced API n'a pas encore tout indexé
+    // A2) Raw getTransaction sur les signatures de toutes les adresses interrogées
+    const allRawSigs = sigResults.flatMap(r => r.status === 'fulfilled' ? (r.value?.result || []).map(s => s.signature).filter(Boolean) : []);
     if (sigRes.status === 'fulfilled') {
-      const rawSigs = (sigRes.value?.result || []).slice(0, 8).map(s => s.signature).filter(Boolean);
+      const rawSigs = allRawSigs.slice(0, 20);
       if (rawSigs.length > 0) {
         try {
           const rawTxs = await Promise.all(rawSigs.map(sig =>
@@ -3136,7 +3120,7 @@ async function debugCA(){
     const sec = await checkTokenSecurity(addr, pairData?.pairAddress || null);
 
     // 3. Axiom wallets
-    const wData = await checkAxiomWallets(addr);
+    const wData = await checkAxiomWallets(addr, pairData?.pairAddress || null);
 
     // 4. Score
     let score=0,traderScore=0,socialScore=0,holderScore=0,platformScore=0,mcapScore=0,ageScore=0,patternScore=0;

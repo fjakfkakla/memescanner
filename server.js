@@ -106,7 +106,7 @@ async function doScan() {
         }
 
         // checkAxiomWallets (Helius — caché 30min)
-        const wData = await scanner.checkAxiomWallets(t.addr);
+        const wData = await scanner.checkAxiomWallets(t.addr, t.raw?.pairAddress || null);
         const rescored = scanner.scoreTokenV2(t.raw, wData);
 
         // Hard filters
