@@ -110,16 +110,20 @@ async function doScan() {
         const rp   = rescored.raw;
         const rdex = (rp?.dexId || '').toLowerCase();
         const rurl = (rp?.url   || '').toLowerCase();
-        if (!rdex.includes('pump') && !rurl.includes('pump') &&
-            !(rp?.baseToken?.address||'').endsWith('pump') &&
-            !rdex.includes('bonk') && !rdex.includes('launchlab') &&
-            !rdex.includes('bags') && !rurl.includes('bags')) continue;
+        const isPump = rdex.includes('pump') || rurl.includes('pump') ||
+            (rp?.baseToken?.address||'').endsWith('pump') ||
+            rdex.includes('bonk') || rdex.includes('launchlab') ||
+            rdex.includes('bags') || rurl.includes('bags');
+        if (!isPump) { console.log(`[FILTER] ${rescored.symbol} éliminé: pas pump/bonk (dex=${rdex} url=${rurl})`); continue; }
 
         const rmc = rescored.mcap || 0;
-        if (rmc < 15000 || rmc > 100000) continue;
-        if ((_now - (rp?.pairCreatedAt || 0)) / 3600000 > 1) continue;
-        if ((rescored.walletData?.count || 0) < 1) continue;
-        if (rescored.score < 80) continue;
+        if (rmc < 15000 || rmc > 100000) { console.log(`[FILTER] ${rescored.symbol} éliminé: mcap ${rmc}`); continue; }
+        const ageH = (_now - (rp?.pairCreatedAt || 0)) / 3600000;
+        if (ageH > 1) { console.log(`[FILTER] ${rescored.symbol} éliminé: âge ${ageH.toFixed(2)}h`); continue; }
+        const wCount = rescored.walletData?.count || 0;
+        // Axiom non bloquant (déjà dans le score) — juste loggé
+        if (wCount < 1) console.log(`[INFO] ${rescored.symbol} 0 wallets Axiom (score=${rescored.score})`);
+        if (rescored.score < 65) { console.log(`[FILTER] ${rescored.symbol} éliminé: score ${rescored.score} < 65`); continue; }
 
         // Sauvegarder dans Firebase (même que scan.js)
         await scanner.saveCall(
