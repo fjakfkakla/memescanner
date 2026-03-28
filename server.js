@@ -5,6 +5,8 @@
 // ============================================================
 
 const http  = require('http');
+const fs    = require('fs');
+const path  = require('path');
 const PORT  = process.env.PORT || 3000;
 
 // Override HELIUS_KEY depuis env avant d'importer scan.js
@@ -195,6 +197,15 @@ const server = http.createServer((req, res) => {
       ageSeconds: age,
       tokens: scanCache.tokens.length,
     }));
+
+  } else if (url === '/' || url === '/index.html') {
+    // Servir le frontend HTML
+    const htmlPath = path.join(__dirname, 'index.html');
+    fs.readFile(htmlPath, (err, data) => {
+      if (err) { res.writeHead(404); res.end('index.html not found'); return; }
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+      res.end(data);
+    });
 
   } else {
     res.writeHead(404); res.end('Not found');
