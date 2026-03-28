@@ -1192,8 +1192,8 @@ async function checkAxiomWallets(tokenAddr) {
       } catch(e) {}
     }
     // A2) Fallback raw getTransaction si Enhanced API vide (lag pour tokens < 2-3 min)
-    if (allOwners.size === 0 && sigRes.status === 'fulfilled') {
-      const rawSigs = (sigRes.value?.result || []).slice(0, 15).map(s => s.signature).filter(Boolean);
+    if (sigRes.status === 'fulfilled') {
+      const rawSigs = (sigRes.value?.result || []).slice(0, 25).map(s => s.signature).filter(Boolean);
       if (rawSigs.length > 0) {
         try {
           const rawTxs = await Promise.all(rawSigs.map(sig =>
@@ -1290,31 +1290,42 @@ function scoreTokenV2(p, walletData = { count: 0, wallets: [], clustered: false 
   const total1  = buys1 + sells1 || 1;
   const sellR1h = sells1 / total1;
 
-  // STRUCTURE
-  const higher_lows   = c6h > 0 && c1h > 0 && m5 > -20;
-  const multiple_legs = c6h > 15 && c1h > 5;
-  // ACCUMULATION
-  const no_early_dump = m5 > -20 && c1h > -10;
-  // QUALITÉ
-  const clean_pullbacks = m5 > -20 && m5 < 0 && c1h > 5;
-  const consolidation   = Math.abs(m5) < 5 && c1h > 0;
-  const holds_gains     = c1h > 0 && m5 > -15;
-  // MALUS
-  const reset              = c1h < -40 || c6h < -30;
-  const aggressive_selling = sellR1h > 0.65 || m5 < -25;
-  const single_pump        = c6h < 10 && c24h < 20 && c1h > 20;
-  const fake_staircase     = c6h > 30 && c1h < -5 && sellR1h > 0.5;
+  // ── HARD FILTERS → 0 direct ──────────────────────────────────────────
+  const hardDump      = c1h < -50;
+  const pumpThenDump  = c1h > 60 && m5 < -20;
+  const returnToStart = (c6h > 50 && c1h < -40) || (c24h > 80 && c1h < -50);
 
-  if (higher_lows)    patternScore += 10;
-  if (multiple_legs)  patternScore += 10;
-  if (no_early_dump)  patternScore += 10;
-  if (clean_pullbacks)  patternScore += 5;
-  if (consolidation)    patternScore += 5;
-  if (holds_gains)      patternScore += 5;
-  if (reset)              patternScore -= 30;
-  if (aggressive_selling) patternScore -= 20;
-  if (single_pump)        patternScore -= 20;
-  if (fake_staircase)     patternScore -= 15;
+  if (!hardDump && !pumpThenDump && !returnToStart) {
+    // +10 Higher lows
+    if (c6h > 0 && c1h > 0 && m5 > -15)                 patternScore += 10;
+    // +10 Plusieurs legs
+    if (c24h > 10 && c6h > 8 && c1h > 3)                patternScore += 10;
+    // +10 Accumulation propre
+    if (c1h > -5 && m5 > -25 && sellR1h < 0.65)         patternScore += 10;
+    // +5 Pullback sain
+    if ((m5 >= -22 && m5 <= -8 && c1h > 5)
+     || (c1h >= -22 && c1h <= -5 && c6h > 15))           patternScore +=  5;
+    // +5 Consolidation réelle
+    if (Math.abs(m5) < 5 && (c1h > 0 || c6h > 10))      patternScore +=  5;
+    // +5 Hold après pump
+    if (c1h > 0 && m5 > -10 && c6h > 0)                 patternScore +=  5;
+
+    // -30 Reset complet
+    if (c1h < -35 || (c6h > 30 && c1h < -25))           patternScore -= 30;
+    // -20 Pression vendeuse forte
+    if (sellR1h > 0.62 && m5 < -8)                       patternScore -= 20;
+    // -20 Pump unique isolé
+    if (c1h > 30 && c24h < 20 && sellR1h > 0.55)        patternScore -= 20;
+    // -15 Pas de structure
+    if (c6h <= 0 && c1h <= 0)                            patternScore -= 15;
+    // -15 Fake staircase
+    if (c6h > 25 && c1h < -8 && sellR1h > 0.52)         patternScore -= 15;
+    // -10 Volatilité incohérente
+    if ((Math.abs(m5) > 30 && Math.abs(c1h) < 5)
+     || (m5 > 15 && c1h < -10))                         patternScore -= 10;
+    // -10 Hold quality faible
+    if (c1h > 15 && m5 < -20)                           patternScore -= 10;
+  }
   patternScore = Math.max(0, Math.min(45, patternScore));
   score += patternScore;
   const finalScore = Math.min(150, Math.max(0, Math.round(score)));
