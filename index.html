@@ -3241,232 +3241,43 @@ async function fetchTokens(){
   const content=document.getElementById('scannerContent');
   if(loadEl)loadEl.style.display='block';
   document.getElementById('scanDot').style.background='var(--gold)';
-  // Invalider le cache Axiom des tokens qui ne sont PLUS dans lastScored
-  const activeAddrs=new Set(lastScored.map(t=>t.addr));
-  Object.keys(swCache).forEach(addr=>{
-    if(!activeAddrs.has(addr))delete swCache[addr];
-  });
-  // PROBLÈME 4 FIX : si lastScored est vide (retour après absence)
-  // recharger les calls récents depuis Firebase pour les afficher en Live
-  if(lastScored.length===0){
-    try{
-      const fb=await fetch(`${FB_URL}/calls.json`,{signal:AbortSignal.timeout(5000)}).then(r=>r.json());
-      if(fb&&typeof fb==='object'){
-        const twoHoursAgo=Date.now()-2*3600000;
-        const recentCalls=Object.values(fb)
-          .filter(v=>v&&v.callTime&&v.callTime>twoHoursAgo&&v.addr)
-          .sort((a,b)=>(b.callTime||0)-(a.callTime||0))
-          .slice(0,10);
-        if(recentCalls.length>0){
-          // Reconstruire des entrées minimales pour le Live
-          lastScored=recentCalls.map(v=>({
-            addr:v.addr, symbol:v.symbol||'?', score:v.score||80,
-            mcap:v.athMcap||v.callMcap||0, liq:0,
-            walletData:{count:0,wallets:[],clustered:false},
-            _callTime:v.callTime, _fromCache:true,
-            pairUrl:`https://dexscreener.com/solana/${v.addr}`,
-            emoji:'📋', rugRisk:'LOW', socials:false,
-            debug:{ageH:0,traderScore:0,socialScore:0,holderScore:0,
-                   platformScore:0,mcapScore:0,ageScore:0,patternScore:0},
-            raw:{}
-          }));
-          console.log(`[fetchTokens] Rechargé ${lastScored.length} calls récents depuis Firebase`);
-        }
-      }
-    }catch(e){}
-  }
-  async function fetchPairs(url){
-    try{const resp=await fetch(url,{signal:AbortSignal.timeout(9000)});const data=await resp.json();let raw=data;if(data.contents){try{raw=JSON.parse(data.contents);}catch(e){}}if(raw.pairs&&Array.isArray(raw.pairs))return raw.pairs;if(Array.isArray(raw))return raw;if(raw.data&&Array.isArray(raw.data))return raw.data;if(raw.tokenAddresses||(Array.isArray(raw)&&raw[0]?.tokenAddress)){const addrs=(raw.tokenAddresses||raw.map(x=>x.tokenAddress)).slice(0,30).join(',');if(addrs){const r2=await fetch(`https://api.dexscreener.com/latest/dex/tokens/${addrs}`,{signal:AbortSignal.timeout(9000)}).then(x=>x.json()).catch(()=>({}));return r2.pairs||[];}}}catch(e){}return[];
-  }
-
-  // ── HELIUS : nouveaux tokens Pump.fun via transactions recentes ──────────
-  // Recupere les 100 dernieres signatures du programme Pump.fun,
-  // extrait les mint addresses, fetch DexScreener.
-  // Couvre TOUS les tokens crees dans la derniere heure sans keyword.
-  async function fetchNewPumpTokens(){
-    const PUMP_PROGRAM='6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P';
-    const now=Date.now();
-    const oneHourAgo=Math.floor((now-3600000)/1000);
-    try{
-      // Etape 1 : signatures recentes du programme Pump.fun
-      const sigsResp=await fetch(HELIUS_RPC,{
-        method:'POST',headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({jsonrpc:'2.0',id:'pump-sigs',method:'getSignaturesForAddress',
-          params:[PUMP_PROGRAM,{limit:100}]}),
-        signal:AbortSignal.timeout(9000)
-      }).then(r=>r.json());
-      const sigs=(sigsResp?.result||[])
-        .filter(s=>s.blockTime&&s.blockTime>=oneHourAgo&&!s.err)
-        .map(s=>s.signature);
-      if(!sigs.length)return[];
-
-      // Etape 2 : Enhanced API Helius -> mint addresses des tokens crees
-      const txResp=await fetch(
-        `https://api.helius.xyz/v0/transactions?api-key=${HELIUS_KEY}`,
-        {method:'POST',headers:{'Content-Type':'application/json'},
-         body:JSON.stringify({transactions:sigs.slice(0,50)}),
-         signal:AbortSignal.timeout(12000)}
-      ).then(r=>r.json());
-      if(!Array.isArray(txResp))return[];
-
-      const mintAddrs=new Set();
-      for(const tx of txResp){
-        if(!tx)continue;
-        // tokenTransfers : mint = adresse du nouveau token
-        for(const t of(tx.tokenTransfers||[])){
-          if(t?.mint&&t.mint.length>30)mintAddrs.add(t.mint);
-        }
-        // accountData : comptes crees (rent paye = solChange negatif)
-        for(const a of(tx.accountData||[])){
-          if(a?.account&&a.account.length>30&&(a.nativeBalanceChange||0)<0)mintAddrs.add(a.account);
-        }
-      }
-      if(!mintAddrs.size)return[];
-
-      // Etape 3 : DexScreener batch pour tous ces mints
-      const addrsArr=[...mintAddrs].slice(0,30);
-      const allPairs=[];
-      for(let i=0;i<addrsArr.length;i+=15){
-        try{
-          const dex=await fetch(
-            `https://api.dexscreener.com/latest/dex/tokens/${addrsArr.slice(i,i+15).join(',')}`,
-            {signal:AbortSignal.timeout(9000)}
-          ).then(r=>r.json());
-          if(dex.pairs)allPairs.push(...dex.pairs);
-        }catch(e){}
-      }
-      return allPairs;
-    }catch(e){
-      console.warn('[HeliusPump] error:',e.message);
-      return[];
+  try{
+    // ── Appel backend Railway ── 1 req au lieu de 75 appels Helius ──
+    const resp=await fetch(`${BACKEND_URL}/api/scan`,{signal:AbortSignal.timeout(20000)});
+    if(!resp.ok)throw new Error(`Backend HTTP ${resp.status}`);
+    const data=await resp.json();
+    const backendTokens=data.tokens||[];
+    const _now=Date.now();
+    // Sync Firebase : saves + ATH tracking
+    for(const t of backendTokens){
+      const existing=await getCallData(t.addr);
+      if(!existing){await saveCall(t.addr,t.mcap,_now,t.symbol,t.score||0,t.raw?.pairAddress||'');t._callTime=_now;}
+      else{if(t.mcap>(existing.athMcap||0))await updateAth(t.addr,t.mcap);t._callTime=existing.callTime||_now;}
     }
-  }
-  function geckoToDex(pool){try{const a=pool.attributes;if(!a)return null;const mcap=parseFloat(a.market_cap_usd||a.fdv_usd||0),liq=parseFloat(a.reserve_in_usd||0);const created=a.pool_created_at?new Date(a.pool_created_at).getTime():Date.now()-3600000;const addr=pool.relationships?.base_token?.data?.id?.split('_')[1]||'';return{chainId:'solana',pairCreatedAt:created,baseToken:{symbol:a.name?.split('/')[0]||'UNK',address:addr},liquidity:{usd:liq},marketCap:mcap,fdv:mcap,volume:{h1:parseFloat(a.volume_usd?.h1||0),h6:parseFloat(a.volume_usd?.h6||0),h24:parseFloat(a.volume_usd?.h24||0)},priceChange:{m5:parseFloat(a.price_change_percentage?.m5||0),h1:parseFloat(a.price_change_percentage?.h1||0),h6:parseFloat(a.price_change_percentage?.h6||0),h24:parseFloat(a.price_change_percentage?.h24||0)},txns:{h1:{buys:parseInt(a.transactions?.h1?.buys||0),sells:parseInt(a.transactions?.h1?.sells||0)}},info:{socials:a.websites?[{url:a.websites[0]}]:[],websites:[]},url:`https://dexscreener.com/solana/${addr}`};}catch(e){return null;}}
-  const ENDPOINTS=[
-    // ── Sources "new pools" — TOUS les nouveaux tokens chronologiquement ──
-    // C'est la seule façon d'attraper LIFE, SATURN, etc. qui n'ont pas de keyword meme
-    'https://api.dexscreener.com/token-profiles/latest/v1',
-    'https://api.dexscreener.com/token-boosts/latest/v1',
-    // Search par dexId pump.fun direct — plus précis que keyword
-    'https://api.dexscreener.com/latest/dex/search?q=pump.fun',
-    'https://api.dexscreener.com/latest/dex/search?q=pumpfun',
-    'https://api.dexscreener.com/latest/dex/search?q=pump+solana',
-    'https://api.dexscreener.com/latest/dex/search?q=bonk+launchlab',
-    'https://api.dexscreener.com/latest/dex/search?q=launchlab+solana',
-    // Meme themes — plus large coverage
-    'https://api.dexscreener.com/latest/dex/search?q=solana+new+token',
-    'https://api.dexscreener.com/latest/dex/search?q=solana+meme',
-    'https://api.dexscreener.com/latest/dex/search?q=solana+coin+new',
-    'https://api.dexscreener.com/latest/dex/search?q=solana+launch',
-    'https://api.dexscreener.com/latest/dex/search?q=solana+token+2025',
-  ];
-  // Lancer DexScreener endpoints ET Helius Pump.fun en parallele
-  const [dexResults, heliusPairs] = await Promise.all([
-    Promise.allSettled(ENDPOINTS.map(fetchPairs)),
-    fetchNewPumpTokens()
-  ]);
-  const seen=new Set();let pairs=[];
-  const _48H=48*3600000,_now=Date.now();
-  // 1. Integrer les tokens DexScreener
-  for(const r of dexResults){if(r.status!=='fulfilled')continue;for(const p of r.value){const conv=p.attributes?geckoToDex(p):p;if(!conv)continue;if(!conv.chainId||conv.chainId!=='solana')continue;const m=conv.marketCap||conv.fdv||0;if(m>200000||m<5000)continue;
-  if(conv.pairCreatedAt&&(_now-conv.pairCreatedAt)>_48H)continue;const addr=conv.baseToken?.address||conv.pairAddress||Math.random().toString();if(seen.has(addr))continue;seen.add(addr);pairs.push(conv);}}
-  // 2. Integrer les tokens Helius (couvre TOUS les tokens Pump.fun recents)
-  // Ces tokens sont absents des endpoints search car leur nom ne match aucun keyword
-  for(const p of(heliusPairs||[])){
-    if(!p||p.chainId!=='solana')continue;
-    const m=p.marketCap||p.fdv||0;
-    if(m>200000||m<5000)continue;
-    if(p.pairCreatedAt&&(_now-p.pairCreatedAt)>_48H)continue;
-    const addr=p.baseToken?.address||p.pairAddress||'';
-    if(!addr||seen.has(addr))continue;
-    seen.add(addr);pairs.push(p);
-  }
-  console.log(`[Scanner] ${pairs.length} paires total (dont ${(heliusPairs||[]).filter(p=>p?.chainId==='solana').length} via Helius Pump.fun)`);
-  const rejected={};
-  // ── ÉTAPE 1 : Score TOUS les tokens <1h (sans hardFilter en amont) ─
-  const candidates=pairs.filter(p=>{const ah=(Date.now()-(p.pairCreatedAt||0))/3600000;return ah>=0.02&&ah<=1;});
-  let preScored=candidates.map(p=>scoreTokenV2(p)).filter(t=>t.score>=30);
-  preScored.sort((a,b)=>b.score-a.score);preScored=preScored.slice(0,25);
-  const finalScored=[];
-  for(const t of preScored){
-    try{
-      const sec = await checkTokenSecurity(t.addr, t.pairAddress || null);
-      if(sec){
-        if(sec.mintAuthority!==null){rejected['mint authority active']=(rejected['mint authority active']||0)+1;continue;}
-        if(sec.freezeAuthority!==null){rejected['freeze authority active']=(rejected['freeze authority active']||0)+1;continue;}
-        if(parseFloat(sec.top1Pct)>25){rejected[`top1 ${sec.top1Pct}%`]=(rejected[`top1 ${sec.top1Pct}%`]||0)+1;continue;}
-        if(parseFloat(sec.top5Pct)>55){rejected[`top5 ${sec.top5Pct}%`]=(rejected[`top5 ${sec.top5Pct}%`]||0)+1;continue;}
-        t.security=sec;
-        if(t.raw)t.raw.security=sec;
+    // Sticky : garder les anciens tokens 5min en live
+    const newAddrs=new Set(backendTokens.map(t=>t.addr));
+    for(const prev of lastScored){
+      if(!newAddrs.has(prev.addr)){
+        const age=_now-(prev._callTime||_now);
+        if(age<300000){prev._sticky=true;backendTokens.push(prev);}
       }
-      const wData=await checkAxiomWallets(t.addr);
-      const rescored=scoreTokenV2(t.raw,wData);
-      const hist=scoreHistory[rescored.addr]||{};
-      const stickyAxiom=Math.max(rescored.debug.traderScore,hist.maxAxiom||0);
-      const stickySocial=Math.max(rescored.debug.socialScore,hist.maxSocial||0);
-      const axiomDiff=stickyAxiom-rescored.debug.traderScore;
-      const socialDiff=stickySocial-rescored.debug.socialScore;
-      if(axiomDiff>0||socialDiff>0){rescored.score=Math.min(150,rescored.score+axiomDiff+socialDiff);rescored.debug.traderScore=stickyAxiom;rescored.debug.socialScore=stickySocial;}
-      scoreHistory[rescored.addr]={maxAxiom:stickyAxiom,maxSocial:stickySocial};
-
-      // ── ÉTAPE 2 : Hard filters POST-score ────────────────────────
-      // Appliqués APRÈS le score — ne bloquent plus les bons tokens en amont
-      const rp=rescored.raw;
-      const rdex=(rp?.dexId||'').toLowerCase();
-      const rurl=(rp?.url||'').toLowerCase();
-      const raddr=(rp?.baseToken?.address||'');
-
-      // HARD FILTER 1 — Platform : pump.fun, bonk ou bags uniquement
-      const isPump=rdex.includes('pump')||rurl.includes('pump')||raddr.endsWith('pump');
-      const isBonk=rdex.includes('bonk')||rdex.includes('launchlab');
-      const isBags=rdex.includes('bags')||rurl.includes('bags');
-      if(!isPump&&!isBonk&&!isBags){rejected[`platform:${rdex||'?'}`]=(rejected[`platform:${rdex||'?'}`]||0)+1;continue;}
-
-      // HARD FILTER 2 — Mcap : 15K → 100K
-      const rmc=rescored.mcap||0;
-      if(rmc<15000){rejected[`mcap $${fmtNum(rmc)}<15K`]=(rejected[`mcap $${fmtNum(rmc)}<15K`]||0)+1;continue;}
-      if(rmc>100000){rejected[`mcap $${fmtNum(rmc)}>100K`]=(rejected[`mcap $${fmtNum(rmc)}>100K`]||0)+1;continue;}
-
-      // HARD FILTER 3 — Âge < 1h
-      const rage=(Date.now()-(rp?.pairCreatedAt||0))/3600000;
-      if(rage>1){rejected[`age ${rage.toFixed(1)}h>1h`]=(rejected[`age ${rage.toFixed(1)}h>1h`]||0)+1;continue;}
-
-      // HARD FILTER 4 — Axiom : au moins 1 trader
-      if((rescored.walletData?.count||0)<1){rejected['0 Axiom trader']=(rejected['0 Axiom trader']||0)+1;continue;}
-
-      // Seuil score final : 80+
-      if(rescored.score>=80){rescored.security=sec;finalScored.push(rescored);}
-      else{rejected[`score ${rescored.score}<80`]=(rejected[`score ${rescored.score}<80`]||0)+1;}
-    }catch(e){if(t.score>=80)finalScored.push(t);}
-  }
-  finalScored.sort((a,b)=>b.score-a.score);
-  const _now5 = Date.now();
-  for(const t of finalScored){
-    const existing=await getCallData(t.addr);
-    if(!existing){ await saveCall(t.addr,t.mcap,_now5,t.symbol,t.score||0,t.raw?.pairAddress||''); t._callTime=_now5; }
-    else{ if(t.mcap>(existing.athMcap||0))await updateAth(t.addr,t.mcap); t._callTime=existing.callTime||_now5; }
-  }
-  const newAddrs=new Set(finalScored.map(t=>t.addr));
-  for(const prev of lastScored){
-    if(!newAddrs.has(prev.addr)){
-      const age = _now5 - (prev._callTime||_now5);
-      // Garder en Live minimum 5 minutes après le premier call
-      if(age < 300000){
-        prev._sticky=true;
-        finalScored.push(prev);
-      }
-      // Après 5 min : passe en historique (déjà sauvegardé via saveCall)
     }
+    backendTokens.sort((a,b)=>b.score-a.score);
+    lastScored=backendTokens;
+    if(loadEl)loadEl.style.display='none';
+    document.getElementById('scanDot').style.background='var(--green)';
+    document.getElementById('lastUpdate').textContent='Updated '+new Date().toLocaleTimeString();
+    document.getElementById('debugToggleBtn').style.display=isAdminMode?'inline-block':'none';
+    if(backendTokens.length===0){
+      content.innerHTML=`<div class="empty-state"><div class="empty-icon">🔍</div><div class="empty-title">0 signal · ${data.pairs||0} paires analysées · ${data.candidates||0} candidats</div><div style="text-align:center;margin-top:1rem;font-size:.7rem;color:var(--muted)">Refresh auto 45s</div></div>`;
+    }else{await renderTokenTable(backendTokens);}
+    if(currentTab==='history')renderHistory();
+  }catch(e){
+    console.error('[fetchTokens] Backend error:',e.message);
+    if(loadEl)loadEl.style.display='none';
+    document.getElementById('scanDot').style.background='var(--red)';
+    content.innerHTML=`<div class="empty-state"><div class="empty-icon">⚠️</div><div class="empty-title">Backend indisponible</div><div class="empty-sub" style="font-size:.8rem;margin-top:.5rem">Vérifie que le serveur Railway est actif<br><small style="color:var(--muted)">${e.message}</small></div></div>`;
   }
-  finalScored.sort((a,b)=>b.score-a.score);
-  lastScored=finalScored;
-  if(loadEl)loadEl.style.display='none';
-  document.getElementById('scanDot').style.background='var(--green)';
-  document.getElementById('lastUpdate').textContent='Updated '+new Date().toLocaleTimeString();
-  document.getElementById('debugToggleBtn').style.display=isAdminMode?'inline-block':'none';
-  if(finalScored.length===0){const rejSorted=Object.entries(rejected).sort((a,b)=>b[1]-a[1]);const rejRows=rejSorted.slice(0,8).map(([r,n])=>`<tr><td style="color:var(--muted);padding:.2rem .5rem;font-size:.72rem">${r}</td><td style="color:var(--red);padding:.2rem .5rem;font-size:.72rem;text-align:right">×${n}</td></tr>`).join('');const allSc=candidates.map(p=>scoreTokenV2(p)).sort((a,b)=>b.score-a.score);const near=allSc.slice(0,5).map(t=>`<tr><td style="color:var(--text);font-size:.72rem;padding:.2rem .5rem">${t.symbol}</td><td style="color:#ffaa00;font-size:.72rem;padding:.2rem .5rem;text-align:right">${t.score}pts</td><td style="color:var(--muted);font-size:.72rem;padding:.2rem .5rem">$${fmtNum(t.mcap)}</td></tr>`).join('');content.innerHTML=`<div class="empty-state" style="text-align:left;max-width:600px;margin:0 auto"><div style="text-align:center;margin-bottom:1.2rem"><div class="empty-icon">🔍</div><div class="empty-title">0 signal · ${pairs.length} paires analysées · ${candidates.length} dans fenêtre 1h</div></div>${pairs.length===0?'<div style="color:var(--red);font-size:.85rem;text-align:center;padding:1rem;background:rgba(255,60,60,.08);border-radius:8px;margin-bottom:1rem">⚠️ FETCH ÉCHOUÉ — API indisponible</div>':''}<div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem"><div><div style="font-size:.72rem;color:var(--green);font-weight:700;margin-bottom:.4rem;text-transform:uppercase">Rejets (${pairs.length-candidates.length})</div><table style="width:100%;border-collapse:collapse">${rejRows||'<tr><td style="color:var(--muted);font-size:.72rem;padding:.3rem">—</td></tr>'}</table></div><div><div style="font-size:.72rem;color:#ffaa00;font-weight:700;margin-bottom:.4rem;text-transform:uppercase">Proches du seuil</div><table style="width:100%;border-collapse:collapse">${near||'<tr><td style="color:var(--muted);font-size:.72rem">—</td></tr>'}</table></div></div><div style="text-align:center;margin-top:1rem;font-size:.7rem;color:var(--muted)">Refresh auto 45s</div></div>`;}
-  else{await renderTokenTable(finalScored);}
-  if(currentTab==='history')renderHistory();
   if(refreshTimer)clearTimeout(refreshTimer);
   refreshTimer=setTimeout(fetchTokens,45000);
 }
