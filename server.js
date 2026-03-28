@@ -106,7 +106,7 @@ async function doScan() {
         }
 
         // checkAxiomWallets (Helius — caché 30min)
-        const wData = await scanner.checkAxiomWallets(t.addr, t.raw?.pairAddress || null);
+        const wData = await scanner.checkAxiomWallets(t.addr);
         const rescored = scanner.scoreTokenV2(t.raw, wData);
 
         // Hard filters
@@ -193,19 +193,6 @@ const server = http.createServer((req, res) => {
   if (url === '/api/scan') {
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify(scanCache));
-
-  } else if (url.startsWith('/api/wallets')) {
-    const qs = new URLSearchParams(req.url.split('?')[1] || '');
-    const addr = qs.get('addr');
-    const pair = qs.get('pair') || null;
-    if (!addr) { res.writeHead(400); res.end('missing addr'); return; }
-    scanner.checkAxiomWallets(addr, pair).then(result => {
-      res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify(result));
-    }).catch(() => {
-      res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ count: 0, wallets: [], clustered: false }));
-    });
 
   } else if (url === '/api/health') {
     const age = scanCache.lastUpdate ? Math.round((Date.now() - scanCache.lastUpdate) / 1000) : null;

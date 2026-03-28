@@ -1023,7 +1023,6 @@ let ADMIN_PW = 'admin1234';
 const BACKEND_URL = '';
 const HELIUS_KEY = '965faf69-c798-40c8-a81f-560579d05377'; // gardé pour debugCA uniquement
 const HELIUS_RPC = `https://mainnet.helius-rpc.com/?api-key=${HELIUS_KEY}`;
-const PUBLIC_RPC = 'https://api.mainnet-beta.solana.com';
 const FB_URL = 'https://memescanner-calls-default-rtdb.firebaseio.com';
 const STORAGE_KEY = 'ms_calls_v1';
 const CODE_KEY = 'ms_codes_v1';
@@ -2302,85 +2301,64 @@ const swCache = {};
 const scoreHistory = {}; // addr → {maxAxiom, maxSocial, maxHolder}
 
 // -- AXIOM wallet tracker -- verifie si des wallets AXIOM sont top holders --
-async function checkAxiomWallets(tokenAddr, pairAddr = null) {
+async function checkAxiomWallets(tokenAddr) {
   if (!tokenAddr) return { count: 0, wallets: [], clustered: false };
   const now = Date.now();
   const cached = swCache[tokenAddr];
+  // Cache 30min pour Axiom — évite les re-checks qui pourraient baisser le count
+  // Le MAX historique est aussi stocké dans maxEver pour double sécurité
   if (cached && now - cached.ts < 1800000) return cached.result;
 
   try {
-    // Interroger token mint ET pair address (bonding curve) pour maximiser la détection
-    const addrsToQuery = [tokenAddr, ...(pairAddr && pairAddr !== tokenAddr ? [pairAddr] : [])];
-    const fetchSigs = async (rpc, addr) => fetch(rpc, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ jsonrpc: '2.0', id: 'sigs', method: 'getSignaturesForAddress', params: [addr, { limit: 100 }] }),
-      signal: AbortSignal.timeout(8000)
-    }).then(r => r.json());
-    const sigResults = await Promise.allSettled(
-      addrsToQuery.map(async a => {
-        let res = await fetchSigs(HELIUS_RPC, a);
-        if (!res.result?.length) res = await fetchSigs(PUBLIC_RPC, a);
-        return res;
-      })
-    );
-    const sigRes = sigResults[0];
+    // DOUBLE STRATÉGIE — traders réels uniquement :
+    // A) Transactions récentes du token (feePayer = signataires humains)
+    // C) Top 20 holders → resolve owners (temps réel, sans lag indexation)
+
+    const [sigRes] = await Promise.allSettled([
+      // A) 100 dernières signatures sur le token mint → feePayer = traders réels
+      fetch(HELIUS_RPC, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ jsonrpc: '2.0', id: 'sigs',
+          method: 'getSignaturesForAddress',
+          params: [tokenAddr, { limit: 100 }] }),
+        signal: AbortSignal.timeout(8000)
+      }).then(r => r.json()),
+    ]);
 
     const allOwners = new Set();
-    let _diagHolderAccts = 0, _diagOwnersResolved = 0, _diagEnhancedTxs = 0, _diagRawSigsFound = 0;
-    const _diagSampleOwners = [];
 
-    // B) Real-time: getTokenLargestAccounts → getMultipleAccounts → owners (0 lag indexation)
-    try {
-      const rpcCall = async (rpc) => fetch(rpc, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ jsonrpc: '2.0', id: 'largest', method: 'getTokenLargestAccounts', params: [tokenAddr] }),
-        signal: AbortSignal.timeout(8000)
-      }).then(r => r.json());
-      let largestResp = await rpcCall(HELIUS_RPC);
-      if (!largestResp.result?.value?.length) largestResp = await rpcCall(PUBLIC_RPC);
-      const tokenAccts = (largestResp.result?.value || []).slice(0, 20).map(a => a.address).filter(Boolean);
-      _diagHolderAccts = tokenAccts.length;
-      console.log('[AXIOM] Token accounts (holders):', tokenAccts.length);
-      if (tokenAccts.length > 0) {
-        const multiCall = async (rpc) => fetch(rpc, {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ jsonrpc: '2.0', id: 'multi', method: 'getMultipleAccounts', params: [tokenAccts, { encoding: 'jsonParsed' }] }),
-          signal: AbortSignal.timeout(8000)
-        }).then(r => r.json());
-        let multiResp = await multiCall(HELIUS_RPC);
-        if (!multiResp.result?.value?.length) multiResp = await multiCall(PUBLIC_RPC);
-        (multiResp.result?.value || []).forEach(acc => {
-          const owner = acc?.data?.parsed?.info?.owner;
-          if (owner && owner.length >= 32) { allOwners.add(owner); if (_diagSampleOwners.length < 5) _diagSampleOwners.push(owner.slice(0,12)+'…'); }
-        });
-        _diagOwnersResolved = allOwners.size;
-        console.log('[AXIOM] Real-time owners resolved:', allOwners.size);
-      }
-    } catch(e) { console.warn('[AXIOM] getTokenLargestAccounts error:', e.message); }
-
-    // A) Enhanced API sur chaque adresse (token mint + pair) — feePayer = traders réels
-    for (const a of addrsToQuery) {
+    // A) Extraire les signers des transactions (= tous les traders récents)
+    if (sigRes.status === 'fulfilled') {
+      const sigs = sigRes.value?.result || [];
+      // Chaque signature a un champ "err" et pas directement le signer
+      // On doit fetch les transactions pour avoir les signers
+      // Mais getSignaturesForAddress ne donne pas les signers directement
+      // → On utilise getTransaction sur les 20 premières pour extraire les fee payers
+      // Helius Enhanced Transactions API → feePayer + accountData
       try {
         const enhancedResp = await fetch(
-          `https://api.helius.xyz/v0/addresses/${a}/transactions?api-key=${HELIUS_KEY}&limit=100`,
+          `https://api.helius.xyz/v0/addresses/${tokenAddr}/transactions?api-key=${HELIUS_KEY}&limit=100`,
           { signal: AbortSignal.timeout(10000) }
         );
         const enhancedTxs = await enhancedResp.json();
-        console.log(`[AXIOM] Enhanced ${a.slice(0,8)} status:`, enhancedResp.status, 'txs:', Array.isArray(enhancedTxs)?enhancedTxs.length:'ERROR');
+        console.log('[AXIOM] Enhanced API status:', enhancedResp.status, 'txs count:', Array.isArray(enhancedTxs)?enhancedTxs.length:'ERROR', typeof enhancedTxs==='object'&&!Array.isArray(enhancedTxs)?JSON.stringify(enhancedTxs).slice(0,200):'');
         if (Array.isArray(enhancedTxs)) {
-          _diagEnhancedTxs += enhancedTxs.length;
+          // FIX FAUX POSITIFS : ne garder QUE les feePayer (= signataires humains réels)
+          // accountData inclut tous les comptes touchés (AMM, pools, PDAs) → faux matches
           enhancedTxs.forEach(tx => {
+            // UNIQUEMENT feePayer = seul vrai humain signataire de la tx
+            // ix.accounts supprimé car inclut programs/PDAs → faux positifs
             if (tx?.feePayer && tx.feePayer.length >= 32) allOwners.add(tx.feePayer);
           });
+          console.log('[AXIOM] Total owners from Enhanced (feePayer only):', allOwners.size);
         }
       } catch(e) { console.warn('[AXIOM] Enhanced API error:', e.message); }
     }
-    console.log('[AXIOM] Total owners from Enhanced (feePayer only):', allOwners.size);
 
-    // A2) Raw getTransaction sur les signatures de toutes les adresses interrogées
-    const allRawSigs = sigResults.flatMap(r => r.status === 'fulfilled' ? (r.value?.result || []).map(s => s.signature).filter(Boolean) : []);
+    // A2) Raw getTransaction — toujours lancé pour compléter Enhanced API (qui a du lag)
+    // Résout les false negatives : token récent, Enhanced API n'a pas encore tout indexé
     if (sigRes.status === 'fulfilled') {
-      const rawSigs = allRawSigs.slice(0, 20);
+      const rawSigs = (sigRes.value?.result || []).slice(0, 8).map(s => s.signature).filter(Boolean);
       if (rawSigs.length > 0) {
         try {
           const rawTxs = await Promise.all(rawSigs.map(sig =>
@@ -2400,7 +2378,6 @@ async function checkAxiomWallets(tokenAddr, pairAddr = null) {
               if (isSigner && addr && addr.length >= 32) allOwners.add(addr);
             });
           });
-          _diagRawSigsFound = rawSigs.length;
           console.log('[AXIOM] Fallback raw tx:', allOwners.size, 'owners trouvés');
         } catch(e) { console.warn('[AXIOM] Raw tx fallback error:', e.message); }
       }
@@ -2436,7 +2413,8 @@ async function checkAxiomWallets(tokenAddr, pairAddr = null) {
     const wallets = count > newCount && prevResult?.wallets?.length
       ? prevResult.wallets  // conserver les wallets de la meilleure détection
       : newWallets;
-    const result = { count, wallets, clustered: count >= 2, _diag: { holderAccts: _diagHolderAccts, ownersResolved: _diagOwnersResolved, enhancedTxs: _diagEnhancedTxs, rawSigs: _diagRawSigsFound, totalOwners: allOwnersList.length, sampleOwners: _diagSampleOwners } };
+    const result = { count, wallets, clustered: count >= 2 };
+    // Garder le cache plus longtemps (30min) pour éviter les re-checks qui baissent
     swCache[tokenAddr] = { ts: now, result, maxEver: count };
     return result;
 
@@ -3157,13 +3135,8 @@ async function debugCA(){
     // 2. Helius security
     const sec = await checkTokenSecurity(addr, pairData?.pairAddress || null);
 
-    // 3. Axiom wallets — via serveur Railway (évite rate limit Helius depuis navigateur)
-    let wData = { count: 0, wallets: [], clustered: false, _diag: null };
-    try {
-      const pair = pairData?.pairAddress || '';
-      const wResp = await fetch(`${BACKEND_URL}/api/wallets?addr=${addr}${pair ? '&pair='+encodeURIComponent(pair) : ''}`, { signal: AbortSignal.timeout(15000) });
-      if (wResp.ok) wData = await wResp.json();
-    } catch(e) { console.warn('wallets endpoint error:', e.message); }
+    // 3. Axiom wallets
+    const wData = await checkAxiomWallets(addr);
 
     // 4. Score
     let score=0,traderScore=0,socialScore=0,holderScore=0,platformScore=0,mcapScore=0,ageScore=0,patternScore=0;
@@ -3237,8 +3210,6 @@ CA             : ${addr.slice(0,12)}...${addr.slice(-6)}
 MCAP           : $${fmtNum(mcap)} | LIQ : $${fmtNum(dbLiq||liq)}
 AGE            : ${ageH.toFixed(1)}h (${ageMin.toFixed(0)}min)
 AXIOM WALLETS  : ${wData.count} détectés${wData.wallets.length?' → '+wData.wallets.join(' '):''}
-DIAG holders   : ${wData._diag?.holderAccts??'?'} comptes token / ${wData._diag?.ownersResolved??'?'} owners résolus / ${wData._diag?.enhancedTxs??'?'} txs Enhanced / ${wData._diag?.rawSigs??'?'} raw sigs
-DIAG owners    : ${wData._diag?.totalOwners??'?'} uniques (hors programs) → sample: ${wData._diag?.sampleOwners?.join(' ')||'aucun'}
 HOLDERS HELIUS : ${dbHolderCount} comptes · top1=${dbTop1.toFixed(1)}% · top5=${dbTop5.toFixed(1)}% · top10=${dbTop10.toFixed(1)}%
 SOCIALS DEX    : ${dbHasX?'𝕏 ':''  }${dbHasTG?'TG ':''  }${dbHasWEB?'WEB ':''  }${!dbHasX&&!dbHasTG&&!dbHasWEB?'aucun':''}
 SOCIALS RAW    : ${dbRawSocials}
