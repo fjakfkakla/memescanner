@@ -1174,26 +1174,29 @@ async function checkTokenSecurity(mintAddr, pairAddress = null) {
   } catch(e) { return null; }
 }
 
-async function checkAxiomWallets(tokenAddr) {
+async function checkAxiomWallets(tokenAddr, pairAddr = null) {
   if (!tokenAddr) return { count: 0, wallets: [], clustered: false };
   const now = Date.now();
   const cached = swCache[tokenAddr];
   if (cached && now - cached.ts < 1800000) return cached.result;
   try {
-    const [sigRes] = await Promise.allSettled([
-      fetch(HELIUS_RPC, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ jsonrpc: '2.0', id: 'sigs', method: 'getSignaturesForAddress', params: [tokenAddr, { limit: 100 }] }), signal: AbortSignal.timeout(8000) }).then(r => r.json()),
-    ]);
+    const addrsToQuery = [tokenAddr, ...(pairAddr && pairAddr !== tokenAddr ? [pairAddr] : [])];
+    const sigResults = await Promise.allSettled(
+      addrsToQuery.map(a => fetch(HELIUS_RPC, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ jsonrpc: '2.0', id: 'sigs', method: 'getSignaturesForAddress', params: [a, { limit: 100 }] }), signal: AbortSignal.timeout(8000) }).then(r => r.json()))
+    );
+    const sigRes = sigResults[0];
     const allOwners = new Set();
-    // A) Enhanced API (feePayer = tous les traders y compris vendeurs)
-    if (sigRes.status === 'fulfilled') {
+    // A) Enhanced API sur token mint + pair address (feePayer = traders réels)
+    for (const a of addrsToQuery) {
       try {
-        const et = await fetch(`https://api.helius.xyz/v0/addresses/${tokenAddr}/transactions?api-key=${HELIUS_KEY}&limit=100`, { signal: AbortSignal.timeout(10000) }).then(r => r.json());
+        const et = await fetch(`https://api.helius.xyz/v0/addresses/${a}/transactions?api-key=${HELIUS_KEY}&limit=100`, { signal: AbortSignal.timeout(10000) }).then(r => r.json());
         if (Array.isArray(et)) et.forEach(tx => { if (tx?.feePayer && tx.feePayer.length >= 32) allOwners.add(tx.feePayer); });
       } catch(e) {}
     }
-    // A2) Fallback raw getTransaction si Enhanced API vide (lag pour tokens < 2-3 min)
+    // A2) Fallback raw getTransaction sur toutes les signatures collectées
+    const allRawSigs = sigResults.flatMap(r => r.status === 'fulfilled' ? (r.value?.result || []).map(s => s.signature).filter(Boolean) : []).slice(0, 30);
     if (sigRes.status === 'fulfilled') {
-      const rawSigs = (sigRes.value?.result || []).slice(0, 20).map(s => s.signature).filter(Boolean);
+      const rawSigs = allRawSigs.slice(0, 20);
       if (rawSigs.length > 0) {
         try {
           const rawTxs = await Promise.all(rawSigs.map(sig =>
@@ -1436,7 +1439,7 @@ async function runScan() {
         if (parseFloat(sec.top5Pct) > 55) { console.log(`[SKIP] ${t.symbol} top5=${sec.top5Pct}%`); continue; }
         t.raw.security = sec;
       }
-      const wData    = await checkAxiomWallets(t.addr);
+      const wData    = await checkAxiomWallets(t.addr, t.raw?.pairAddress || null);
       const rescored = scoreTokenV2(t.raw, wData);
       const rp    = rescored.raw;
       const rdex  = (rp?.dexId || '').toLowerCase();
