@@ -3,7 +3,7 @@
 // Node.js 18+  |  runs every 10 min via cron
 // ============================================================
 
-const HELIUS_KEY = '0f25b592-f8cd-449e-aac8-60812b2c4d50';
+const HELIUS_KEY = '965faf69-c798-40c8-a81f-560579d05377';
 const HELIUS_RPC = `https://mainnet.helius-rpc.com/?api-key=${HELIUS_KEY}`;
 const FB_URL     = 'https://memescanner-calls-default-rtdb.firebaseio.com';
 
@@ -1334,12 +1334,21 @@ function scoreTokenV2(p, walletData = { count: 0, wallets: [], clustered: false 
   return { score: finalScore, symbol: sym, addr, mcap, walletData, raw: p };
 }
 
+const DEX_HEADERS = {
+  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+  'Accept': 'application/json',
+  'Referer': 'https://dexscreener.com/',
+};
+
 async function fetchPairs(url) {
   try {
-    const data = await fetch(url, { signal: AbortSignal.timeout(9000) }).then(r => r.json());
+    const res = await fetch(url, { headers: DEX_HEADERS, signal: AbortSignal.timeout(9000) });
+    if (!res.ok) { console.warn(`[fetchPairs] HTTP ${res.status} — ${url}`); return []; }
+    const data = await res.json();
     if (data.pairs && Array.isArray(data.pairs)) return data.pairs;
     if (Array.isArray(data)) return data;
-  } catch(e) {}
+    console.warn(`[fetchPairs] Format inattendu — ${url}`, JSON.stringify(data).slice(0,200));
+  } catch(e) { console.warn(`[fetchPairs] Erreur — ${url}:`, e.message); }
   return [];
 }
 
@@ -1447,4 +1456,14 @@ async function runScan() {
   console.log(`[SCAN] Done - ${saved} nouveau(x) call(s)`);
 }
 
-runScan().catch(e => { console.error('[FATAL]', e); process.exit(1); });
+// Exporter pour server.js — runScan() ne s'exécute que si lancé directement
+if (require.main === module) {
+  runScan().catch(e => { console.error('[FATAL]', e); process.exit(1); });
+}
+
+module.exports = {
+  runScan, checkAxiomWallets, checkTokenSecurity, scoreTokenV2,
+  fetchPairs, fetchNewPumpTokens, saveCall,
+  heliusCache, swCache, AXIOM_WALLETS, KNOWN_PROGRAMS,
+  HELIUS_KEY, HELIUS_RPC, FB_URL,
+};
