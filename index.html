@@ -286,6 +286,9 @@ section{scroll-margin-top:70px;}
 .hist-count{font-size:.72rem;color:var(--muted);margin-left:.5rem;}
 .btn-reset{font-family:var(--font-mono);font-size:.68rem;padding:.28rem .7rem;border-radius:5px;cursor:pointer;border:1px solid rgba(255,68,102,.3);background:transparent;color:rgba(255,68,102,.7);transition:.2s;white-space:nowrap;}
 .btn-reset:hover{border-color:#ff4466;color:#ff4466;background:rgba(255,68,102,.08);}
+.wr-btn{font-family:var(--font-mono);font-size:.65rem;padding:.22rem .6rem;border-radius:5px;cursor:pointer;border:1px solid rgba(255,255,255,.1);background:transparent;color:var(--muted);transition:.2s;white-space:nowrap;}
+.wr-btn:hover{border-color:rgba(0,255,136,.3);color:var(--green);}
+.wr-btn.active{border-color:rgba(0,255,136,.4);background:rgba(0,255,136,.1);color:var(--green);}
 
 /* ══════════════════════════════════════════════════════════════
    RUG SNIP — Style Gaming / Rugs.fun
@@ -726,6 +729,31 @@ section{scroll-margin-top:70px;}
     </div>
   </div>
   <div id="panelHistory" style="display:none">
+    <!-- WINRATE BANNER -->
+    <div id="histWinrateBanner" style="background:rgba(0,255,136,.04);border:1px solid rgba(0,255,136,.12);border-radius:10px;padding:.65rem 1rem;margin-bottom:.75rem;display:flex;align-items:center;justify-content:space-between;gap:.8rem;flex-wrap:wrap;">
+      <div style="display:flex;gap:1.4rem;align-items:center;flex-wrap:wrap;">
+        <div style="text-align:center;">
+          <div id="wrWinrate" style="font-size:1.25rem;font-weight:700;color:var(--green);font-family:'Space Mono',monospace;line-height:1">—</div>
+          <div style="font-size:.6rem;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-top:.2rem">Winrate</div>
+        </div>
+        <div style="width:1px;height:26px;background:rgba(255,255,255,.08)"></div>
+        <div style="text-align:center;">
+          <div id="wrAvg" style="font-size:1.25rem;font-weight:700;color:#ffaa00;font-family:'Space Mono',monospace;line-height:1">—</div>
+          <div style="font-size:.6rem;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-top:.2rem">Moy. × ATH</div>
+        </div>
+        <div style="width:1px;height:26px;background:rgba(255,255,255,.08)"></div>
+        <div style="text-align:center;">
+          <div id="wrWins" style="font-size:1.25rem;font-weight:700;color:#3b82f6;font-family:'Space Mono',monospace;line-height:1">—</div>
+          <div style="font-size:.6rem;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-top:.2rem">Wins / Calls</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:.3rem;align-items:center;">
+        <button onclick="setWrPeriod('5m')"  id="wrBtn5m"  class="wr-btn">5m</button>
+        <button onclick="setWrPeriod('1h')"  id="wrBtn1h"  class="wr-btn">1h</button>
+        <button onclick="setWrPeriod('day')" id="wrBtnDay" class="wr-btn">Jour</button>
+        <button onclick="setWrPeriod('all')" id="wrBtnAll" class="wr-btn active">All</button>
+      </div>
+    </div>
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:.5rem;">
       <div style="font-size:.8rem;color:var(--muted)">Tous les tokens callés · ATH mis à jour en continu</div>
       <div style="display:flex;gap:.4rem;align-items:center;flex-wrap:wrap;">
@@ -1021,7 +1049,6 @@ window.addEventListener('unhandledrejection', function(e) { console.error('Promi
 let ADMIN_PW = 'admin1234';
 const HELIUS_KEY = '965faf69-c798-40c8-a81f-560579d05377';
 const HELIUS_RPC = `https://mainnet.helius-rpc.com/?api-key=${HELIUS_KEY}`;
-const PUBLIC_RPC = 'https://api.mainnet-beta.solana.com';
 const FB_URL = 'https://memescanner-calls-default-rtdb.firebaseio.com';
 const STORAGE_KEY = 'ms_calls_v1';
 const CODE_KEY = 'ms_codes_v1';
@@ -2265,7 +2292,7 @@ async function checkTokenSecurity(mintAddr, pairAddress = null) {
       // Fetch JSON URI (metadata on-chain Pump.fun/Bonk) — source la plus fiable
       // Le créateur y renseigne twitter/telegram directement au moment du mint
       const jsonUri = rd?.content?.json_uri;
-      if (jsonUri && jsonUri.startsWith('http') && (!twitter || !telegram || !website)) {
+      if (jsonUri && jsonUri.startsWith('http') && !twitter && !telegram) {
         try {
           const mj = await fetch(jsonUri, { signal: AbortSignal.timeout(5000) }).then(r => r.json());
           twitter  = twitter  || mj?.twitter  || mj?.extensions?.twitter  || mj?.properties?.twitter  || null;
@@ -2300,7 +2327,7 @@ const swCache = {};
 const scoreHistory = {}; // addr → {maxAxiom, maxSocial, maxHolder}
 
 // -- AXIOM wallet tracker -- verifie si des wallets AXIOM sont top holders --
-async function checkAxiomWallets(tokenAddr, pairAddr = null) {
+async function checkAxiomWallets(tokenAddr) {
   if (!tokenAddr) return { count: 0, wallets: [], clustered: false };
   const now = Date.now();
   const cached = swCache[tokenAddr];
@@ -2309,19 +2336,35 @@ async function checkAxiomWallets(tokenAddr, pairAddr = null) {
   if (cached && now - cached.ts < 1800000) return cached.result;
 
   try {
-    // DOUBLE STRATÉGIE — traders réels uniquement :
-    // A) Transactions récentes du token (feePayer = signataires humains)
-    // C) Top 20 holders → resolve owners (temps réel, sans lag indexation)
+    // TRIPLE STRATÉGIE — du plus complet au plus ciblé :
+    // A) Transactions récentes du token (signers = tous ceux qui ont tradé, même vendus)
+    // B) DAS getTokenAccounts (holders actuels avec balance > 0)
+    // C) Top 20 holders → resolve owners
 
-    const [sigRes] = await Promise.allSettled([
-      // A) 100 dernières signatures sur le token mint → feePayer = traders réels
-      fetch(PUBLIC_RPC, {
+    const [sigRes, dasRes, largestRes] = await Promise.allSettled([
+      // A) 100 dernières signatures sur le token mint → signers = traders récents
+      fetch(HELIUS_RPC, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ jsonrpc: '2.0', id: 'sigs',
           method: 'getSignaturesForAddress',
-          params: [pairAddr || tokenAddr, { limit: 100 }] }),
+          params: [tokenAddr, { limit: 100 }] }),
         signal: AbortSignal.timeout(8000)
       }).then(r => r.json()),
+      // B) DAS tous les holders actuels
+      fetch(`https://mainnet.helius-rpc.com/?api-key=${HELIUS_KEY}`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ jsonrpc: '2.0', id: 'das',
+          method: 'getTokenAccounts',
+          params: { mint: tokenAddr, limit: 1000, displayOptions: {} } }),
+        signal: AbortSignal.timeout(8000)
+      }).then(r => r.json()),
+      // C) Top 20 par balance
+      fetch(HELIUS_RPC, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ jsonrpc: '2.0', id: 'largest',
+          method: 'getTokenLargestAccounts', params: [tokenAddr] }),
+        signal: AbortSignal.timeout(8000)
+      }).then(r => r.json())
     ]);
 
     const allOwners = new Set();
@@ -2336,7 +2379,7 @@ async function checkAxiomWallets(tokenAddr, pairAddr = null) {
       // Helius Enhanced Transactions API → feePayer + accountData
       try {
         const enhancedResp = await fetch(
-          `https://api.helius.xyz/v0/addresses/${pairAddr || tokenAddr}/transactions?api-key=${HELIUS_KEY}&limit=100`,
+          `https://api.helius.xyz/v0/addresses/${tokenAddr}/transactions?api-key=${HELIUS_KEY}&limit=100`,
           { signal: AbortSignal.timeout(10000) }
         );
         const enhancedTxs = await enhancedResp.json();
@@ -2354,57 +2397,18 @@ async function checkAxiomWallets(tokenAddr, pairAddr = null) {
       } catch(e) { console.warn('[AXIOM] Enhanced API error:', e.message); }
     }
 
-    // A2) Raw getTransaction — toujours lancé pour compléter Enhanced API (qui a du lag)
-    // Résout les false negatives : token récent, Enhanced API n'a pas encore tout indexé
-    if (sigRes.status === 'fulfilled') {
-      const rawSigs = (sigRes.value?.result || []).slice(0, 3).map(s => s.signature).filter(Boolean);
-      if (rawSigs.length > 0) {
-        try {
-          const rawTxs = await Promise.all(rawSigs.map(sig =>
-            fetch(PUBLIC_RPC, {
-              method: 'POST', headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ jsonrpc: '2.0', id: sig, method: 'getTransaction',
-                params: [sig, { encoding: 'jsonParsed', commitment: 'confirmed', maxSupportedTransactionVersion: 0 }] }),
-              signal: AbortSignal.timeout(5000)
-            }).then(r => r.json()).catch(() => null)
-          ));
-          rawTxs.forEach(resp => {
-            if (!resp?.result) return;
-            const keys = resp.result.transaction?.message?.accountKeys || [];
-            keys.forEach((k, i) => {
-              const addr = typeof k === 'string' ? k : k?.pubkey;
-              const isSigner = typeof k !== 'string' ? k?.signer : i === 0;
-              if (isSigner && addr && addr.length >= 32) allOwners.add(addr);
-            });
-          });
-          console.log('[AXIOM] Fallback raw tx:', allOwners.size, 'owners trouvés');
-        } catch(e) { console.warn('[AXIOM] Raw tx fallback error:', e.message); }
-      }
+    // B) DAS holders actuels
+    if (dasRes.status === 'fulfilled') {
+      const dasAccounts = dasRes.value?.result?.token_accounts || [];
+      console.log('[AXIOM] DAS accounts:', dasAccounts.length, dasRes.value?.error||'');
+      dasAccounts.forEach(a => { if (a.owner) allOwners.add(a.owner); });
+    } else {
+      console.warn('[AXIOM] DAS failed:', dasRes.reason);
     }
 
-    // C) Top 20 holders → resolve token account owners (temps réel, sans lag indexation)
-    // getTokenLargestAccounts → ATAs → getMultipleAccounts → owner wallet
-    try {
-      const largestResp = await fetch(PUBLIC_RPC, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ jsonrpc: '2.0', id: 'holders', method: 'getTokenLargestAccounts', params: [tokenAddr] }),
-        signal: AbortSignal.timeout(8000)
-      }).then(r => r.json());
-      const atas = (largestResp?.result?.value || []).map(h => h.address).filter(Boolean);
-      console.log('[AXIOM] Top holders ATAs:', atas.length);
-      if (atas.length > 0) {
-        const ownersResp = await fetch(PUBLIC_RPC, {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ jsonrpc: '2.0', id: 'owners', method: 'getMultipleAccounts', params: [atas, { encoding: 'jsonParsed' }] }),
-          signal: AbortSignal.timeout(8000)
-        }).then(r => r.json());
-        (ownersResp?.result?.value || []).forEach(acc => {
-          const owner = acc?.data?.parsed?.info?.owner;
-          if (owner && owner.length >= 32) allOwners.add(owner);
-        });
-        console.log('[AXIOM] Holders owners resolved:', allOwners.size, 'total');
-      }
-    } catch(e) { console.warn('[AXIOM] Holders strategy error:', e.message); }
+    // Méthode C (getMultipleAccounts) supprimée — retournait des owners AMM/pools
+    // qui causaient des faux positifs Axiom
+    // On garde uniquement feePayer (signataires humains) + DAS owners (vrais holders)
 
     // Exclure les adresses système/programme connues avant le match
     // Ces adresses ne sont JAMAIS des vrais traders humains
@@ -2461,6 +2465,53 @@ function hardFilterV2(p){
 // ============================================================
 // SCORER v2
 // ============================================================
+// ── calculatePatternScore v3 ───────────────────────────────────────────────
+// Scoring Pattern strict : favorise vrais staircase (higher highs + higher lows,
+// consolidation, multi-pumps), pénalise fortement faux pumps/bundles/triangles.
+// Seuils resserrés : staircase c5m>5/c1h>30/c6h>48, pénalités plus lourdes.
+function calculatePatternScore(p) {
+  const c5m     = p.priceChange?.m5  || 0;
+  const c1h     = p.priceChange?.h1  || 0;
+  const c6h     = p.priceChange?.h6  || 0;
+  const m1      = p.priceChange?.m1  || 0;
+  const buysM5  = p.txns?.m5?.buys   || 0;
+  const sellsM5 = p.txns?.m5?.sells  || 0;
+
+  let score = 0;
+
+  // 1. Vrai Staircase (+15) : structure montante confirmée sur 3 timeframes
+  if (c5m > 5 && c1h > 30 && c6h > 48) score += 15;
+
+  // 2. Correction saine (+10) : recul entre -6% et -22% (ni trop ni trop peu)
+  if (c1h >= -22 && c1h <= -6) score += 10;
+
+  // 3. Multi-pumps confirmés (+10) : 2 vagues distinctes
+  if (c1h > 32 && c6h > 50) score += 10;
+
+  // 4. 3ème pump ou plus (+5)
+  if (c6h > 72) score += 5;
+
+  // 5. Consolidation propre (+8) : pause saine après pump
+  if (Math.abs(c5m) < 7.5 && c1h > 20) score += 8;
+
+  // 6. Pas de dump violent (+5)
+  if (c5m > -27 && m1 > -17) score += 5;
+
+  // 7. Volume organique anti-bundle (+7) : ratio buy/sell > 1.5 sur m5
+  if (buysM5 > sellsM5 * 1.5) score += 7;
+
+  // Pénalité forte : spike + dump immédiat (rug classique)
+  if (c1h > 85 && c5m < -26) score -= 15;
+
+  // Pénalité forte : pump sans structure (triangle / bundle)
+  if (c6h > 130 && c1h < 18) score -= 12;
+
+  // Pénalité : trop de sells pendant le pump
+  if (sellsM5 > buysM5 * 1.65 && c1h > 40) score -= 10;
+
+  return Math.max(0, Math.min(45, Math.round(score)));
+}
+
 function scoreTokenV2(p,walletData={count:0,wallets:[],clustered:false}){
   const ageMs  = Date.now()-(p.pairCreatedAt||0);
   const ageH   = ageMs/3600000;
@@ -2588,63 +2639,8 @@ function scoreTokenV2(p,walletData={count:0,wallets:[],clustered:false}){
   else if (ageMin >  5  && ageMin <= 15)  ageScore =  5;
   score += ageScore;
 
-  // ── 📈 PATTERN (ANTI-RUG / ANTI-BUNDLE) ──────────────────────────────────
-  let patternScore = 0;
-  const c24h    = p.priceChange?.h24 || 0;
-  const sellR1h = sells1 / total1;
-
-  // ── HARD FILTERS → 0 direct ────────────────────────────────────────────
-  const hardDump      = c1h < -50;
-  const pumpThenDump  = c1h > 60 && m5 < -20;
-  const returnToStart = (c6h > 50 && c1h < -40) || (c24h > 80 && c1h < -50);
-
-  if (!hardDump && !pumpThenDump && !returnToStart) {
-
-    // ── POSITIF (max 45) ─────────────────────────────────────────────────
-    // +10 Higher lows : progression positive sur plusieurs timeframes
-    if (c6h > 0 && c1h > 0 && m5 > -15)                   patternScore += 10;
-
-    // +10 Plusieurs legs (≥2 impulsions) : activité 24h + 6h + 1h
-    if (c24h > 10 && c6h > 8 && c1h > 3)                  patternScore += 10;
-
-    // +10 Accumulation propre : pas de dump récent + vendeurs raisonnables
-    if (c1h > -5 && m5 > -25 && sellR1h < 0.65)           patternScore += 10;
-
-    // +5 Pullback sain (-8% à -22% sur m5 OU sur c1h)
-    if ((m5 >= -22 && m5 <= -8 && c1h > 5)
-     || (c1h >= -22 && c1h <= -5 && c6h > 15))             patternScore +=  5;
-
-    // +5 Consolidation réelle (range serré après pump)
-    if (Math.abs(m5) < 5 && (c1h > 0 || c6h > 10))        patternScore +=  5;
-
-    // +5 Hold après pump (gains maintenus)
-    if (c1h > 0 && m5 > -10 && c6h > 0)                   patternScore +=  5;
-
-    // ── MALUS ────────────────────────────────────────────────────────────
-    // -30 Reset complet (prix revient au départ)
-    if (c1h < -35 || (c6h > 30 && c1h < -25))             patternScore -= 30;
-
-    // -20 Pression vendeuse forte (SS dominent + prix baisse)
-    if (sellR1h > 0.62 && m5 < -8)                         patternScore -= 20;
-
-    // -20 Pump unique isolé (aucune structure avant)
-    if (c1h > 30 && c24h < 20 && sellR1h > 0.55)          patternScore -= 20;
-
-    // -15 Pas de structure (tous les timeframes négatifs)
-    if (c6h <= 0 && c1h <= 0)                              patternScore -= 15;
-
-    // -15 Fake staircase (pompe 6h → distribution lente en 1h)
-    if (c6h > 25 && c1h < -8 && sellR1h > 0.52)           patternScore -= 15;
-
-    // -10 Volatilité incohérente (m5 erratique sans direction)
-    if ((Math.abs(m5) > 30 && Math.abs(c1h) < 5)
-     || (m5 > 15 && c1h < -10))                           patternScore -= 10;
-
-    // -10 Hold quality faible (1h pump mais redescend maintenant)
-    if (c1h > 15 && m5 < -20)                             patternScore -= 10;
-  }
-
-  patternScore = Math.max(0, Math.min(45, patternScore));
+  // ── 📈 PATTERN (via calculatePatternScore) ────────────────────────────────
+  const patternScore = calculatePatternScore(p);
   score += patternScore;
 
   // ── CALCUL FINAL ──────────────────────────────────────────────────────────
@@ -2766,6 +2762,30 @@ function checkPw(){
   }else{document.getElementById('pwErr').style.display='block';document.getElementById('adminPwInp').value='';}
 }
 function changePw(){const v=document.getElementById('newPwInp').value.trim();if(v.length<4)return;setAdminPw(v);ADMIN_PW=v;document.getElementById('newPwInp').value='';const m=document.getElementById('pwOkMsg');m.style.display='block';setTimeout(()=>m.style.display='none',2500);}
+
+async function adminEditAth(key,addr,sym){
+  const raw=prompt(`✏️ ATH manuel pour ${sym}\n\nNouvelle valeur en $ (ex: 258000) :`);
+  if(!raw)return;
+  const athMcap=Math.round(parseFloat(raw.replace(/[^0-9.]/g,'')));
+  if(isNaN(athMcap)||athMcap<=0){alert('Valeur invalide');return;}
+  // Mise à jour Firebase (visible par tous)
+  try{await fetch(`${FB_URL}/calls/${key}.json`,{method:'PATCH',body:JSON.stringify({athMcap})});}catch(e){}
+  // Mise à jour localStorage
+  try{
+    const local=JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}');
+    if(local[addr])local[addr].athMcap=athMcap;
+    localStorage.setItem(STORAGE_KEY,JSON.stringify(local));
+  }catch(e){}
+  // Mise à jour inline sans re-render complet
+  const athEl=document.getElementById('ath-val-'+key);
+  const xEl=document.getElementById('xath-val-'+key);
+  if(athEl)athEl.textContent='$'+fmtNum(athMcap);
+  // Recalcul xATH
+  const callMcapEl=athEl?.closest('.sc-stats')?.querySelector('.sc-stat-val');
+  const callMcapRaw=callMcapEl?parseFloat(callMcapEl.textContent.replace(/[^0-9.]/g,''))*1000:0;
+  // Re-render complet pour cohérence (winrate + xATH recalculé)
+  renderHistory();
+}
 function genCode(plan){const c='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';const s=(n)=>Array.from({length:n},()=>c[Math.floor(Math.random()*c.length)]).join('');return plan+'-'+s(4)+'-'+s(4);}
 async function genCodes(){
   const plan=document.getElementById('planSel').value;
@@ -2921,6 +2941,54 @@ async function fetchRealAth(pairAddress, tokenAddr) {
   }
 }
 
+// ── Winrate Banner ─────────────────────────────────────────
+let _wrPeriod='all';
+let _wrCalls=null; // cache des calls pour la bannière
+
+function setWrPeriod(p){
+  _wrPeriod=p;
+  ['5m','1h','day','all'].forEach(k=>{
+    const btn=document.getElementById('wrBtn'+k.charAt(0).toUpperCase()+k.slice(1));
+    if(btn)btn.classList.toggle('active',k===p);
+  });
+  if(_wrCalls)updateWrStats(_wrCalls);
+}
+
+function updateWrStats(calls){
+  _wrCalls=calls;
+  const now=Date.now();
+  const limits={'5m':5*60000,'1h':3600000,'day':86400000,'all':Infinity};
+  const limit=limits[_wrPeriod]||Infinity;
+  const filtered=Object.values(calls).filter(v=>{
+    if(!v.callTime)return false;
+    return (now-v.callTime)<=limit;
+  });
+  const total=filtered.length;
+  if(!total){
+    document.getElementById('wrWinrate').textContent='—';
+    document.getElementById('wrAvg').textContent='—';
+    document.getElementById('wrWins').textContent='0 / 0';
+    return;
+  }
+  let wins=0,sumX=0;
+  filtered.forEach(v=>{
+    const xAth=v.callMcap>0&&v.athMcap>0?v.athMcap/v.callMcap:1;
+    if(xAth>=1.2)wins++;
+    sumX+=xAth;
+  });
+  const wr=Math.round(wins/total*100);
+  const avg=(sumX/total).toFixed(2);
+  const wrEl=document.getElementById('wrWinrate');
+  const avgEl=document.getElementById('wrAvg');
+  if(wrEl){
+    wrEl.textContent=wr+'%';
+    wrEl.style.color=wr>=60?'var(--green)':wr>=40?'#ffaa00':'var(--red)';
+  }
+  if(avgEl){avgEl.textContent=avg+'x';}
+  const winsEl=document.getElementById('wrWins');
+  if(winsEl)winsEl.textContent=wins+' / '+total;
+}
+
 // ── Tri historique ─────────────────────────────────────────
 let currentHistSort='recent';
 function toggleHistSort(){
@@ -2947,7 +3015,7 @@ async function renderHistory(){
   container.innerHTML='<div class="hist-empty"><div class="hist-empty-icon">⏳</div><div style="color:var(--muted)">Chargement...</div></div>';
   // Charger depuis Firebase + localStorage, garder le meilleur ATH des 2
   let calls={};
-  try{const fb=await fetch(`${FB_URL}/calls.json`).then(r=>r.json());
+ try{const fb=await fetch(`${FB_URL}/calls.json`,{signal:AbortSignal.timeout(5000)}).then(r=>r.json());
     if(fb&&typeof fb==='object')Object.entries(fb).forEach(([k,v])=>{if(v&&v.callTime)calls[k]=v;});}catch(e){}
   try{const local=JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}');
     Object.entries(local).forEach(([addr,val])=>{
@@ -2960,6 +3028,9 @@ async function renderHistory(){
   if(!entries.length){
     const hc=document.getElementById('histCount');if(hc)hc.textContent='';
     container.innerHTML='<div class="hist-empty"><div class="hist-empty-icon">📭</div><div>Aucun call encore</div></div>';return;}
+
+  // Mettre à jour la bannière winrate dès le chargement initial
+  updateWrStats(calls);
 
   // Fetch prix live TOUS les tokens (par batch de 20 — DexScreener limite)
   const allAddrs=entries.map(([,v])=>v.addr||v.address||'').filter(Boolean);
@@ -2986,16 +3057,14 @@ async function renderHistory(){
         const c24=p.priceChange?.h24||0;
         const c6=p.priceChange?.h6||0;
         const c1=p.priceChange?.h1||0;
-        const MAX_MULT=50; // un token ne peut pas avoir fait 50x sans qu'on le sache
+        const MAX_MULT=50;
         let athEst=now;
-        // Formule inverse : si c=-90% → maintenant vaut 10% du max → max = now/0.10
-        // Plafond anti-MEV : ne jamais dépasser now * MAX_MULT
+        // Seuil abaissé à -3% : capture les dips récents même faibles
+        // Plafond anti-MEV : max now * MAX_MULT
         const cap=now*MAX_MULT;
-        if(c24<-10){const est=now/Math.max(0.001,1+c24/100);if(est<cap)athEst=Math.max(athEst,est);}
-        if(c6 <-10){const est=now/Math.max(0.001,1+c6/100); if(est<cap)athEst=Math.max(athEst,est);}
-        if(c1 <-10){const est=now/Math.max(0.001,1+c1/100); if(est<cap)athEst=Math.max(athEst,est);}
-        // Si positif : now est déjà un ATH potentiel
-        if(c24>0)athEst=Math.max(athEst,now);
+        if(c24<-3){const est=now/Math.max(0.001,1+c24/100);if(est<cap)athEst=Math.max(athEst,est);}
+        if(c6 <-3){const est=now/Math.max(0.001,1+c6/100); if(est<cap)athEst=Math.max(athEst,est);}
+        if(c1 <-3){const est=now/Math.max(0.001,1+c1/100); if(est<cap)athEst=Math.max(athEst,est);}
         liveMap[a]={now, athEst:Math.round(athEst), c24, c6, c1};
       });
     }catch(e){}
@@ -3016,10 +3085,7 @@ async function renderHistory(){
     // Appliquer fetchRealAth pour tous les tokens < 7 jours
     // La formule priceChange h24 est utile même pour tokens >24h
     // car elle donne le range du dernier jour (souvent contient l'ATH ou proche)
-    try{
-      const realAth=await fetchRealAth(v.pairAddress||'',addr);
-      if(realAth>0) bestKnown=Math.max(bestKnown,realAth);
-    }catch(e){}
+   // fetchRealAth skippé — ATH calculé depuis liveMap déjà fetchée en batch
 
     if(bestKnown>0&&bestKnown>(v.athMcap||0)){
       v.athMcap=bestKnown;
@@ -3038,6 +3104,9 @@ async function renderHistory(){
       localStorage.setItem(STORAGE_KEY,JSON.stringify(local));
     }catch(e){}
   }
+
+  // Refresh bannière winrate avec ATH mis à jour
+  updateWrStats(calls);
 
   // Trier selon le mode actuel
   let sorted=[...entries];
@@ -3091,15 +3160,15 @@ async function renderHistory(){
         </div>
         <div class="sc-stat">
           <div class="sc-stat-lbl">⏰ NOW</div>
-          <div class="sc-stat-val" style="color:${nowColor}">$${fmtNum(nowMcap||t.mcap)}</div>
+          <div class="sc-stat-val" style="color:${nowColor}">$${fmtNum(curMcap||0)}</div>
         </div>
         <div class="sc-stat">
-          <div class="sc-stat-lbl">🏆 ATH</div>
-          <div class="sc-stat-val" style="color:#ffaa44">$${fmtNum(athMcap)}</div>
+          <div class="sc-stat-lbl">🏆 ATH${isAdminMode?` <button onclick="adminEditAth('${key}','${addr}','${sym}')" style="background:rgba(255,170,0,.15);border:1px solid rgba(255,170,0,.3);color:#ffaa00;border-radius:3px;font-size:.55rem;padding:.08rem .28rem;cursor:pointer;vertical-align:middle">✏️</button>`:''}</div>
+          <div class="sc-stat-val" style="color:#ffaa44" id="ath-val-${key}">$${fmtNum(athMcap)}</div>
         </div>
         <div class="sc-stat gold">
           <div class="sc-stat-lbl">🎯 × ATH</div>
-          <div class="sc-stat-val" style="color:${xColor};font-size:.88rem">${xAth.toFixed(2)}x</div>
+          <div class="sc-stat-val" style="color:${xColor};font-size:.88rem" id="xath-val-${key}">${xAth.toFixed(2)}x</div>
         </div>
       </div>
       <div class="sc-footer">
@@ -3159,7 +3228,7 @@ async function debugCA(){
     const sec = await checkTokenSecurity(addr, pairData?.pairAddress || null);
 
     // 3. Axiom wallets
-    const wData = await checkAxiomWallets(addr, pairData?.pairAddress || null);
+    const wData = await checkAxiomWallets(addr);
 
     // 4. Score
     let score=0,traderScore=0,socialScore=0,holderScore=0,platformScore=0,mcapScore=0,ageScore=0,patternScore=0;
@@ -3410,10 +3479,29 @@ async function fetchTokens(){
   const candidates=pairs.filter(p=>{const ah=(Date.now()-(p.pairCreatedAt||0))/3600000;return ah>=0.02&&ah<=1;});
   let preScored=candidates.map(p=>scoreTokenV2(p)).filter(t=>t.score>=30);
   preScored.sort((a,b)=>b.score-a.score);preScored=preScored.slice(0,25);
+  // ── PARALLÉLISATION : security + axiom en même temps pour tous les tokens ──
+  // Au lieu de 25 tokens × (8s security + 8s axiom) en série = ~6min
+  // On lance tout en parallèle = ~10s max
+  const parallelResults = await Promise.allSettled(
+    preScored.map(async t => {
+      const [sec, wData] = await Promise.allSettled([
+        checkTokenSecurity(t.addr, t.raw?.pairAddress || null),
+        checkAxiomWallets(t.addr)
+      ]);
+      return {
+        t,
+        sec: sec.status==='fulfilled' ? sec.value : null,
+        wData: wData.status==='fulfilled' ? wData.value : {count:0,wallets:[],clustered:false}
+      };
+    })
+  );
+
   const finalScored=[];
-  for(const t of preScored){
+  for(const res of parallelResults){
+    if(res.status!=='fulfilled')continue;
+    const {t, sec, wData} = res.value;
     try{
-      const sec = await checkTokenSecurity(t.addr, t.pairAddress || null);
+      // Filtres sécurité
       if(sec){
         if(sec.mintAuthority!==null){rejected['mint authority active']=(rejected['mint authority active']||0)+1;continue;}
         if(sec.freezeAuthority!==null){rejected['freeze authority active']=(rejected['freeze authority active']||0)+1;continue;}
@@ -3422,8 +3510,8 @@ async function fetchTokens(){
         t.security=sec;
         if(t.raw)t.raw.security=sec;
       }
-      const wData=await checkAxiomWallets(t.addr, t.raw?.pairAddress || null);
-      const rescored=scoreTokenV2(t.raw,wData);
+
+      const rescored=scoreTokenV2(t.raw, wData);
       const hist=scoreHistory[rescored.addr]||{};
       const stickyAxiom=Math.max(rescored.debug.traderScore,hist.maxAxiom||0);
       const stickySocial=Math.max(rescored.debug.socialScore,hist.maxSocial||0);
@@ -3432,14 +3520,13 @@ async function fetchTokens(){
       if(axiomDiff>0||socialDiff>0){rescored.score=Math.min(150,rescored.score+axiomDiff+socialDiff);rescored.debug.traderScore=stickyAxiom;rescored.debug.socialScore=stickySocial;}
       scoreHistory[rescored.addr]={maxAxiom:stickyAxiom,maxSocial:stickySocial};
 
-      // ── ÉTAPE 2 : Hard filters POST-score ────────────────────────
-      // Appliqués APRÈS le score — ne bloquent plus les bons tokens en amont
+      // Hard filters POST-score
       const rp=rescored.raw;
       const rdex=(rp?.dexId||'').toLowerCase();
       const rurl=(rp?.url||'').toLowerCase();
       const raddr=(rp?.baseToken?.address||'');
 
-      // HARD FILTER 1 — Platform : pump.fun, bonk ou bags uniquement
+      // HARD FILTER 1 — Platform
       const isPump=rdex.includes('pump')||rurl.includes('pump')||raddr.endsWith('pump');
       const isBonk=rdex.includes('bonk')||rdex.includes('launchlab');
       const isBags=rdex.includes('bags')||rurl.includes('bags');
@@ -3447,19 +3534,16 @@ async function fetchTokens(){
 
       // HARD FILTER 2 — Mcap : 15K → 100K
       const rmc=rescored.mcap||0;
-      if(rmc<15000){rejected[`mcap $${fmtNum(rmc)}<15K`]=(rejected[`mcap $${fmtNum(rmc)}<15K`]||0)+1;continue;}
-      if(rmc>100000){rejected[`mcap $${fmtNum(rmc)}>100K`]=(rejected[`mcap $${fmtNum(rmc)}>100K`]||0)+1;continue;}
+      if(rmc<15000){rejected[`mcap<15K`]=(rejected['mcap<15K']||0)+1;continue;}
+      if(rmc>100000){rejected[`mcap>100K`]=(rejected['mcap>100K']||0)+1;continue;}
 
       // HARD FILTER 3 — Âge < 1h
       const rage=(Date.now()-(rp?.pairCreatedAt||0))/3600000;
-      if(rage>1){rejected[`age ${rage.toFixed(1)}h>1h`]=(rejected[`age ${rage.toFixed(1)}h>1h`]||0)+1;continue;}
+      if(rage>1){rejected[`age>1h`]=(rejected['age>1h']||0)+1;continue;}
 
-      // HARD FILTER 4 — Axiom : au moins 1 trader
-      if((rescored.walletData?.count||0)<1){rejected['0 Axiom trader']=(rejected['0 Axiom trader']||0)+1;continue;}
-
-      // Seuil score final : 80+
+      // Seuil score : 80+
       if(rescored.score>=80){rescored.security=sec;finalScored.push(rescored);}
-      else{rejected[`score ${rescored.score}<80`]=(rejected[`score ${rescored.score}<80`]||0)+1;}
+      else{rejected[`score<80`]=(rejected['score<80']||0)+1;}
     }catch(e){if(t.score>=80)finalScored.push(t);}
   }
   finalScored.sort((a,b)=>b.score-a.score);
@@ -4279,21 +4363,6 @@ function resetRugs(){if(!confirm('Supprimer toute la liste des rugs détectés ?
 function resetRuggers(){if(!confirm('Supprimer toute la liste des ruggeurs ?'))return;try{localStorage.removeItem(RUGGERS_KEY);}catch(e){}try{localStorage.removeItem(DEV_RUGS_KEY);}catch(e){}document.getElementById('rsStatRuggers').textContent='0';document.getElementById('rsAddrCount').textContent='';document.getElementById('rsAddrContent').innerHTML='<div class="rs-empty">🗑 Liste des ruggeurs supprimée</div>';}
 
 // ============================================================
-// EXPOSE GLOBAL FUNCTIONS (fix SES/Phantom wallet sandbox + CSP inline scope)
-// Wrapped in try-catch : une fonction manquante ne doit pas bloquer l'init
-// ============================================================
-(function exposeGlobals(){
-  var fns=['switchTab','openAdmin','closeAdmin','openCode','closeCode','formatCode',
-    'submitCode','checkPw','changePw','genCodes','clearUsed','delCode','cpCode',
-    'exportCodes','renderHistory','setStar','setHistSort','toggleHistSort',
-    'resetLive','resetHistory','resetRuggers','resetRugs','hideRug','setRugSort',
-    'toggleRugSort','switchRsTab','fetchRugs','fetchTokens','debugCA','showDebug',
-    'toggleDebugMode','toggleLang','closeDebug','closePnl','downloadPnl',
-    'openRugPnl','openScannerPnl','copyHistCA','submitReview'];
-  fns.forEach(function(n){try{if(typeof eval(n)==='function')window[n]=eval(n);}catch(e){}});
-})();
-
-// ============================================================
 // INIT
 // ============================================================
 // Relancer fetchTokens si on revient sur la page après une absence
@@ -4335,4 +4404,12 @@ window.addEventListener('DOMContentLoaded',()=>{
     document.getElementById('codeModal').addEventListener('click',e=>{if(e.target.id==='codeModal')closeCode();});
     document.getElementById('adminOverlay').addEventListener('click',e=>{if(e.target.id==='adminOverlay')closeAdmin();});
     document.getElementById('debugOverlay').addEventListener('click',e=>{if(e.target.id==='debugOverlay')closeDebug();});
-  }catch(err){console.error('Erreur init:',err);document.body.style.cssText='background:#050508;color:#ff4466;padding:2rem;font-family:monospace';document.body.innerHTML='<h2>⚠️ Erreur init</h
+  }catch(err){console.error('Erreur init:',err);document.body.style.cssText='background:#050508;color:#ff4466;padding:2rem;font-family:monospace';document.body.innerHTML='<h2>⚠️ Erreur init</h2><p>'+err.message+'</p>';}
+});
+</script>
+</body>
+</html>
+
+
+
+  
