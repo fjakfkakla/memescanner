@@ -2299,7 +2299,7 @@ const swCache = {};
 const scoreHistory = {}; // addr → {maxAxiom, maxSocial, maxHolder}
 
 // -- AXIOM wallet tracker -- verifie si des wallets AXIOM sont top holders --
-async function checkAxiomWallets(tokenAddr) {
+async function checkAxiomWallets(tokenAddr, pairAddr = null) {
   if (!tokenAddr) return { count: 0, wallets: [], clustered: false };
   const now = Date.now();
   const cached = swCache[tokenAddr];
@@ -2318,7 +2318,7 @@ async function checkAxiomWallets(tokenAddr) {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ jsonrpc: '2.0', id: 'sigs',
           method: 'getSignaturesForAddress',
-          params: [tokenAddr, { limit: 100 }] }),
+          params: [pairAddr || tokenAddr, { limit: 100 }] }),
         signal: AbortSignal.timeout(8000)
       }).then(r => r.json()),
     ]);
@@ -2335,7 +2335,7 @@ async function checkAxiomWallets(tokenAddr) {
       // Helius Enhanced Transactions API → feePayer + accountData
       try {
         const enhancedResp = await fetch(
-          `https://api.helius.xyz/v0/addresses/${tokenAddr}/transactions?api-key=${HELIUS_KEY}&limit=100`,
+          `https://api.helius.xyz/v0/addresses/${pairAddr || tokenAddr}/transactions?api-key=${HELIUS_KEY}&limit=100`,
           { signal: AbortSignal.timeout(10000) }
         );
         const enhancedTxs = await enhancedResp.json();
@@ -2380,6 +2380,30 @@ async function checkAxiomWallets(tokenAddr) {
         } catch(e) { console.warn('[AXIOM] Raw tx fallback error:', e.message); }
       }
     }
+
+    // C) Top 20 holders → resolve token account owners (temps réel, sans lag indexation)
+    // getTokenLargestAccounts → ATAs → getMultipleAccounts → owner wallet
+    try {
+      const largestResp = await fetch(HELIUS_RPC, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ jsonrpc: '2.0', id: 'holders', method: 'getTokenLargestAccounts', params: [tokenAddr] }),
+        signal: AbortSignal.timeout(8000)
+      }).then(r => r.json());
+      const atas = (largestResp?.result?.value || []).map(h => h.address).filter(Boolean);
+      console.log('[AXIOM] Top holders ATAs:', atas.length);
+      if (atas.length > 0) {
+        const ownersResp = await fetch(HELIUS_RPC, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ jsonrpc: '2.0', id: 'owners', method: 'getMultipleAccounts', params: [atas, { encoding: 'jsonParsed' }] }),
+          signal: AbortSignal.timeout(8000)
+        }).then(r => r.json());
+        (ownersResp?.result?.value || []).forEach(acc => {
+          const owner = acc?.data?.parsed?.info?.owner;
+          if (owner && owner.length >= 32) allOwners.add(owner);
+        });
+        console.log('[AXIOM] Holders owners resolved:', allOwners.size, 'total');
+      }
+    } catch(e) { console.warn('[AXIOM] Holders strategy error:', e.message); }
 
     // Exclure les adresses système/programme connues avant le match
     // Ces adresses ne sont JAMAIS des vrais traders humains
@@ -3134,7 +3158,7 @@ async function debugCA(){
     const sec = await checkTokenSecurity(addr, pairData?.pairAddress || null);
 
     // 3. Axiom wallets
-    const wData = await checkAxiomWallets(addr);
+    const wData = await checkAxiomWallets(addr, pairData?.pairAddress || null);
 
     // 4. Score
     let score=0,traderScore=0,socialScore=0,holderScore=0,platformScore=0,mcapScore=0,ageScore=0,patternScore=0;
@@ -3397,7 +3421,7 @@ async function fetchTokens(){
         t.security=sec;
         if(t.raw)t.raw.security=sec;
       }
-      const wData=await checkAxiomWallets(t.addr);
+      const wData=await checkAxiomWallets(t.addr, t.raw?.pairAddress || null);
       const rescored=scoreTokenV2(t.raw,wData);
       const hist=scoreHistory[rescored.addr]||{};
       const stickyAxiom=Math.max(rescored.debug.traderScore,hist.maxAxiom||0);
