@@ -3157,8 +3157,13 @@ async function debugCA(){
     // 2. Helius security
     const sec = await checkTokenSecurity(addr, pairData?.pairAddress || null);
 
-    // 3. Axiom wallets
-    const wData = await checkAxiomWallets(addr, pairData?.pairAddress || null);
+    // 3. Axiom wallets — via serveur Railway (évite rate limit Helius depuis navigateur)
+    let wData = { count: 0, wallets: [], clustered: false, _diag: null };
+    try {
+      const pair = pairData?.pairAddress || '';
+      const wResp = await fetch(`${BACKEND_URL}/api/wallets?addr=${addr}${pair ? '&pair='+encodeURIComponent(pair) : ''}`, { signal: AbortSignal.timeout(15000) });
+      if (wResp.ok) wData = await wResp.json();
+    } catch(e) { console.warn('wallets endpoint error:', e.message); }
 
     // 4. Score
     let score=0,traderScore=0,socialScore=0,holderScore=0,platformScore=0,mcapScore=0,ageScore=0,patternScore=0;
