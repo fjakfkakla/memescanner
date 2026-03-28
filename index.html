@@ -2320,6 +2320,8 @@ async function checkAxiomWallets(tokenAddr, pairAddr = null) {
     const sigRes = sigResults[0];
 
     const allOwners = new Set();
+    let _diagHolderAccts = 0, _diagOwnersResolved = 0, _diagEnhancedTxs = 0, _diagRawSigsFound = 0;
+    const _diagSampleOwners = [];
 
     // B) Real-time: getTokenLargestAccounts → getMultipleAccounts → owners (0 lag indexation)
     try {
@@ -2329,6 +2331,7 @@ async function checkAxiomWallets(tokenAddr, pairAddr = null) {
         signal: AbortSignal.timeout(8000)
       }).then(r => r.json());
       const tokenAccts = (largestResp.result?.value || []).slice(0, 20).map(a => a.address).filter(Boolean);
+      _diagHolderAccts = tokenAccts.length;
       console.log('[AXIOM] Token accounts (holders):', tokenAccts.length);
       if (tokenAccts.length > 0) {
         const multiResp = await fetch(HELIUS_RPC, {
@@ -2338,8 +2341,9 @@ async function checkAxiomWallets(tokenAddr, pairAddr = null) {
         }).then(r => r.json());
         (multiResp.result?.value || []).forEach(acc => {
           const owner = acc?.data?.parsed?.info?.owner;
-          if (owner && owner.length >= 32) allOwners.add(owner);
+          if (owner && owner.length >= 32) { allOwners.add(owner); if (_diagSampleOwners.length < 5) _diagSampleOwners.push(owner.slice(0,12)+'…'); }
         });
+        _diagOwnersResolved = allOwners.size;
         console.log('[AXIOM] Real-time owners resolved:', allOwners.size);
       }
     } catch(e) { console.warn('[AXIOM] getTokenLargestAccounts error:', e.message); }
@@ -2354,6 +2358,7 @@ async function checkAxiomWallets(tokenAddr, pairAddr = null) {
         const enhancedTxs = await enhancedResp.json();
         console.log(`[AXIOM] Enhanced ${a.slice(0,8)} status:`, enhancedResp.status, 'txs:', Array.isArray(enhancedTxs)?enhancedTxs.length:'ERROR');
         if (Array.isArray(enhancedTxs)) {
+          _diagEnhancedTxs += enhancedTxs.length;
           enhancedTxs.forEach(tx => {
             if (tx?.feePayer && tx.feePayer.length >= 32) allOwners.add(tx.feePayer);
           });
@@ -2385,6 +2390,7 @@ async function checkAxiomWallets(tokenAddr, pairAddr = null) {
               if (isSigner && addr && addr.length >= 32) allOwners.add(addr);
             });
           });
+          _diagRawSigsFound = rawSigs.length;
           console.log('[AXIOM] Fallback raw tx:', allOwners.size, 'owners trouvés');
         } catch(e) { console.warn('[AXIOM] Raw tx fallback error:', e.message); }
       }
@@ -2420,8 +2426,7 @@ async function checkAxiomWallets(tokenAddr, pairAddr = null) {
     const wallets = count > newCount && prevResult?.wallets?.length
       ? prevResult.wallets  // conserver les wallets de la meilleure détection
       : newWallets;
-    const result = { count, wallets, clustered: count >= 2 };
-    // Garder le cache plus longtemps (30min) pour éviter les re-checks qui baissent
+    const result = { count, wallets, clustered: count >= 2, _diag: { holderAccts: _diagHolderAccts, ownersResolved: _diagOwnersResolved, enhancedTxs: _diagEnhancedTxs, rawSigs: _diagRawSigsFound, totalOwners: allOwnersList.length, sampleOwners: _diagSampleOwners } };
     swCache[tokenAddr] = { ts: now, result, maxEver: count };
     return result;
 
@@ -3217,6 +3222,8 @@ CA             : ${addr.slice(0,12)}...${addr.slice(-6)}
 MCAP           : $${fmtNum(mcap)} | LIQ : $${fmtNum(dbLiq||liq)}
 AGE            : ${ageH.toFixed(1)}h (${ageMin.toFixed(0)}min)
 AXIOM WALLETS  : ${wData.count} détectés${wData.wallets.length?' → '+wData.wallets.join(' '):''}
+DIAG holders   : ${wData._diag?.holderAccts??'?'} comptes token / ${wData._diag?.ownersResolved??'?'} owners résolus / ${wData._diag?.enhancedTxs??'?'} txs Enhanced / ${wData._diag?.rawSigs??'?'} raw sigs
+DIAG owners    : ${wData._diag?.totalOwners??'?'} uniques (hors programs) → sample: ${wData._diag?.sampleOwners?.join(' ')||'aucun'}
 HOLDERS HELIUS : ${dbHolderCount} comptes · top1=${dbTop1.toFixed(1)}% · top5=${dbTop5.toFixed(1)}% · top10=${dbTop10.toFixed(1)}%
 SOCIALS DEX    : ${dbHasX?'𝕏 ':''  }${dbHasTG?'TG ':''  }${dbHasWEB?'WEB ':''  }${!dbHasX&&!dbHasTG&&!dbHasWEB?'aucun':''}
 SOCIALS RAW    : ${dbRawSocials}
