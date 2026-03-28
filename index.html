@@ -2356,7 +2356,7 @@ async function checkAxiomWallets(tokenAddr) {
     // A2) Raw getTransaction — toujours lancé pour compléter Enhanced API (qui a du lag)
     // Résout les false negatives : token récent, Enhanced API n'a pas encore tout indexé
     if (sigRes.status === 'fulfilled') {
-      const rawSigs = (sigRes.value?.result || []).slice(0, 25).map(s => s.signature).filter(Boolean);
+      const rawSigs = (sigRes.value?.result || []).slice(0, 8).map(s => s.signature).filter(Boolean);
       if (rawSigs.length > 0) {
         try {
           const rawTxs = await Promise.all(rawSigs.map(sig =>
@@ -4255,21 +4255,18 @@ function resetRuggers(){if(!confirm('Supprimer toute la liste des ruggeurs ?'))r
 
 // ============================================================
 // EXPOSE GLOBAL FUNCTIONS (fix SES/Phantom wallet sandbox + CSP inline scope)
+// Wrapped in try-catch : une fonction manquante ne doit pas bloquer l'init
 // ============================================================
-window.switchTab=switchTab;window.openAdmin=openAdmin;window.closeAdmin=closeAdmin;
-window.openCode=openCode;window.closeCode=closeCode;window.formatCode=formatCode;
-window.submitCode=submitCode;window.checkPw=checkPw;window.changePw=changePw;
-window.genCodes=genCodes;window.clearUsed=clearUsed;window.delCode=delCode;
-window.cpCode=cpCode;window.exportCodes=exportCodes;window.renderHistory=renderHistory;
-window.setStar=setStar;window.setHistSort=setHistSort;window.toggleHistSort=toggleHistSort;
-window.resetLive=resetLive;window.resetHistory=resetHistory;window.resetRuggers=resetRuggers;
-window.resetRugs=resetRugs;window.hideRug=hideRug;window.setRugSort=setRugSort;
-window.toggleRugSort=toggleRugSort;window.switchRsTab=switchRsTab;window.fetchRugs=fetchRugs;
-window.fetchTokens=fetchTokens;window.debugCA=debugCA;window.showDebug=showDebug;
-window.toggleDebugMode=toggleDebugMode;window.toggleLang=toggleLang;
-window.closeDebug=closeDebug;window.closePnl=closePnl;window.downloadPnl=downloadPnl;
-window.openRugPnl=openRugPnl;window.openScannerPnl=openScannerPnl;
-window.copyHistCA=copyHistCA;window.submitReview=submitReview;
+(function exposeGlobals(){
+  var fns=['switchTab','openAdmin','closeAdmin','openCode','closeCode','formatCode',
+    'submitCode','checkPw','changePw','genCodes','clearUsed','delCode','cpCode',
+    'exportCodes','renderHistory','setStar','setHistSort','toggleHistSort',
+    'resetLive','resetHistory','resetRuggers','resetRugs','hideRug','setRugSort',
+    'toggleRugSort','switchRsTab','fetchRugs','fetchTokens','debugCA','showDebug',
+    'toggleDebugMode','toggleLang','closeDebug','closePnl','downloadPnl',
+    'openRugPnl','openScannerPnl','copyHistCA','submitReview'];
+  fns.forEach(function(n){try{if(typeof eval(n)==='function')window[n]=eval(n);}catch(e){}});
+})();
 
 // ============================================================
 // INIT
