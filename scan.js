@@ -1072,7 +1072,7 @@ const AXIOM_WALLETS = new Set([
   "8M3ZArYWLNHbCTQpWwZzfZirmoCEj5uoggadfo5MG4f8",
   "DAzemUqtoh1qH7A23YoDPSJwhEmdzUByors5m7Q11t5f",
   "shottaxEfNihMUBWUHaQWjYc8n9XEMrUGTKwzY1tt1R"
-]);
+]);;
 
 const KNOWN_PROGRAMS = new Set([
   '11111111111111111111111111111111',
