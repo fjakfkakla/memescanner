@@ -90,8 +90,11 @@ async function doScan() {
 
     const finalTokens = [];
 
+    const sleep = ms => new Promise(r => setTimeout(r, ms));
+
     for (const t of preScored) {
       try {
+        await sleep(1500); // éviter flood Helius (429)
         // checkTokenSecurity (Helius — caché 10min)
         const sec = await scanner.checkTokenSecurity(t.addr, t.raw?.pairAddress || null);
         if (sec) {
