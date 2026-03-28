@@ -1193,7 +1193,7 @@ async function checkAxiomWallets(tokenAddr) {
     }
     // A2) Fallback raw getTransaction si Enhanced API vide (lag pour tokens < 2-3 min)
     if (sigRes.status === 'fulfilled') {
-      const rawSigs = (sigRes.value?.result || []).slice(0, 8).map(s => s.signature).filter(Boolean);
+      const rawSigs = (sigRes.value?.result || []).slice(0, 20).map(s => s.signature).filter(Boolean);
       if (rawSigs.length > 0) {
         try {
           const rawTxs = await Promise.all(rawSigs.map(sig =>
@@ -1210,6 +1210,7 @@ async function checkAxiomWallets(tokenAddr) {
       }
     }
     const ownersList = [...allOwners].filter(o => !KNOWN_PROGRAMS.has(o));
+    console.log(`[AXIOM] ${tokenAddr.slice(0,8)} — ${ownersList.length} traders uniques trouvés, ${ownersList.filter(o => AXIOM_WALLETS.has(o)).length} dans la liste`);
     const matching   = ownersList.filter(o => AXIOM_WALLETS.has(o));
     const newCount   = matching.length;
     const prevResult = swCache[tokenAddr]?.result;
