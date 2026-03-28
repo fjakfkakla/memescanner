@@ -1021,6 +1021,7 @@ window.addEventListener('unhandledrejection', function(e) { console.error('Promi
 let ADMIN_PW = 'admin1234';
 const HELIUS_KEY = '965faf69-c798-40c8-a81f-560579d05377';
 const HELIUS_RPC = `https://mainnet.helius-rpc.com/?api-key=${HELIUS_KEY}`;
+const PUBLIC_RPC = 'https://api.mainnet-beta.solana.com';
 const FB_URL = 'https://memescanner-calls-default-rtdb.firebaseio.com';
 const STORAGE_KEY = 'ms_calls_v1';
 const CODE_KEY = 'ms_codes_v1';
@@ -2314,7 +2315,7 @@ async function checkAxiomWallets(tokenAddr, pairAddr = null) {
 
     const [sigRes] = await Promise.allSettled([
       // A) 100 dernières signatures sur le token mint → feePayer = traders réels
-      fetch(HELIUS_RPC, {
+      fetch(PUBLIC_RPC, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ jsonrpc: '2.0', id: 'sigs',
           method: 'getSignaturesForAddress',
@@ -2356,11 +2357,11 @@ async function checkAxiomWallets(tokenAddr, pairAddr = null) {
     // A2) Raw getTransaction — toujours lancé pour compléter Enhanced API (qui a du lag)
     // Résout les false negatives : token récent, Enhanced API n'a pas encore tout indexé
     if (sigRes.status === 'fulfilled') {
-      const rawSigs = (sigRes.value?.result || []).slice(0, 8).map(s => s.signature).filter(Boolean);
+      const rawSigs = (sigRes.value?.result || []).slice(0, 3).map(s => s.signature).filter(Boolean);
       if (rawSigs.length > 0) {
         try {
           const rawTxs = await Promise.all(rawSigs.map(sig =>
-            fetch(HELIUS_RPC, {
+            fetch(PUBLIC_RPC, {
               method: 'POST', headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ jsonrpc: '2.0', id: sig, method: 'getTransaction',
                 params: [sig, { encoding: 'jsonParsed', commitment: 'confirmed', maxSupportedTransactionVersion: 0 }] }),
@@ -2384,7 +2385,7 @@ async function checkAxiomWallets(tokenAddr, pairAddr = null) {
     // C) Top 20 holders → resolve token account owners (temps réel, sans lag indexation)
     // getTokenLargestAccounts → ATAs → getMultipleAccounts → owner wallet
     try {
-      const largestResp = await fetch(HELIUS_RPC, {
+      const largestResp = await fetch(PUBLIC_RPC, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ jsonrpc: '2.0', id: 'holders', method: 'getTokenLargestAccounts', params: [tokenAddr] }),
         signal: AbortSignal.timeout(8000)
@@ -2392,7 +2393,7 @@ async function checkAxiomWallets(tokenAddr, pairAddr = null) {
       const atas = (largestResp?.result?.value || []).map(h => h.address).filter(Boolean);
       console.log('[AXIOM] Top holders ATAs:', atas.length);
       if (atas.length > 0) {
-        const ownersResp = await fetch(HELIUS_RPC, {
+        const ownersResp = await fetch(PUBLIC_RPC, {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ jsonrpc: '2.0', id: 'owners', method: 'getMultipleAccounts', params: [atas, { encoding: 'jsonParsed' }] }),
           signal: AbortSignal.timeout(8000)
@@ -4334,8 +4335,4 @@ window.addEventListener('DOMContentLoaded',()=>{
     document.getElementById('codeModal').addEventListener('click',e=>{if(e.target.id==='codeModal')closeCode();});
     document.getElementById('adminOverlay').addEventListener('click',e=>{if(e.target.id==='adminOverlay')closeAdmin();});
     document.getElementById('debugOverlay').addEventListener('click',e=>{if(e.target.id==='debugOverlay')closeDebug();});
-  }catch(err){console.error('Erreur init:',err);document.body.style.cssText='background:#050508;color:#ff4466;padding:2rem;font-family:monospace';document.body.innerHTML='<h2>⚠️ Erreur init</h2><p>'+err.message+'</p>';}
-});
-</script>
-</body>
-</html>
+  }catch(err){console.error('Erreur init:',err);document.body.style.cssText='background:#050508;color:#ff4466;padding:2rem;font-family:monospace';document.body.innerHTML='<h2>⚠️ Erreur init</h
