@@ -2353,10 +2353,10 @@ async function checkAxiomWallets(tokenAddr) {
       } catch(e) { console.warn('[AXIOM] Enhanced API error:', e.message); }
     }
 
-    // A2) Fallback raw getTransaction si Enhanced API vide (lag pour tokens < 2-3 min)
-    // Résout les false negatives : token très récent, lag indexation Enhanced API
-    if (allOwners.size === 0 && sigRes.status === 'fulfilled') {
-      const rawSigs = (sigRes.value?.result || []).slice(0, 15).map(s => s.signature).filter(Boolean);
+    // A2) Raw getTransaction — toujours lancé pour compléter Enhanced API (qui a du lag)
+    // Résout les false negatives : token récent, Enhanced API n'a pas encore tout indexé
+    if (sigRes.status === 'fulfilled') {
+      const rawSigs = (sigRes.value?.result || []).slice(0, 25).map(s => s.signature).filter(Boolean);
       if (rawSigs.length > 0) {
         try {
           const rawTxs = await Promise.all(rawSigs.map(sig =>
@@ -2563,40 +2563,61 @@ function scoreTokenV2(p,walletData={count:0,wallets:[],clustered:false}){
   else if (ageMin >  5  && ageMin <= 15)  ageScore =  5;
   score += ageScore;
 
-  // ── 📈 PATTERN ────────────────────────────────────────────────────────────
+  // ── 📈 PATTERN (ANTI-RUG / ANTI-BUNDLE) ──────────────────────────────────
   let patternScore = 0;
   const c24h    = p.priceChange?.h24 || 0;
-  const sellR1h = sells1 / total1; // ratio vendeurs 1h
+  const sellR1h = sells1 / total1;
 
-  // STRUCTURE
-  const higher_lows   = c6h > 0 && c1h > 0 && m5 > -20;          // progression multi-timeframes
-  const multiple_legs = c6h > 15 && c1h > 5;                      // au moins 2 phases positives
+  // ── HARD FILTERS → 0 direct ────────────────────────────────────────────
+  const hardDump      = c1h < -50;
+  const pumpThenDump  = c1h > 60 && m5 < -20;
+  const returnToStart = (c6h > 50 && c1h < -40) || (c24h > 80 && c1h < -50);
 
-  // ACCUMULATION
-  const no_early_dump = m5 > -20 && c1h > -10;                    // pas de dump violent précoce
+  if (!hardDump && !pumpThenDump && !returnToStart) {
 
-  // QUALITÉ
-  const clean_pullbacks = m5 > -20 && m5 < 0 && c1h > 5;         // correction saine post-pump
-  const consolidation   = Math.abs(m5) < 5 && c1h > 0;           // range serré après gains
-  const holds_gains     = c1h > 0 && m5 > -15;                   // gains 1h maintenus
+    // ── POSITIF (max 45) ─────────────────────────────────────────────────
+    // +10 Higher lows : progression positive sur plusieurs timeframes
+    if (c6h > 0 && c1h > 0 && m5 > -15)                   patternScore += 10;
 
-  // MALUS
-  const reset              = c1h < -40 || c6h < -30;              // reset total du prix
-  const aggressive_selling = sellR1h > 0.65 || m5 < -25;          // vendeurs dominants
-  const single_pump        = c6h < 10 && c24h < 20 && c1h > 20;  // 1 seul pump isolé sans history
-  const fake_staircase     = c6h > 30 && c1h < -5 && sellR1h > 0.5; // pump → staircase dump
+    // +10 Plusieurs legs (≥2 impulsions) : activité 24h + 6h + 1h
+    if (c24h > 10 && c6h > 8 && c1h > 3)                  patternScore += 10;
 
-  if (higher_lows)    patternScore += 10;
-  if (multiple_legs)  patternScore += 10;
-  if (no_early_dump)  patternScore += 10;
-  if (clean_pullbacks)  patternScore += 5;
-  if (consolidation)    patternScore += 5;
-  if (holds_gains)      patternScore += 5;
+    // +10 Accumulation propre : pas de dump récent + vendeurs raisonnables
+    if (c1h > -5 && m5 > -25 && sellR1h < 0.65)           patternScore += 10;
 
-  if (reset)              patternScore -= 30;
-  if (aggressive_selling) patternScore -= 20;
-  if (single_pump)        patternScore -= 20;
-  if (fake_staircase)     patternScore -= 15;
+    // +5 Pullback sain (-8% à -22% sur m5 OU sur c1h)
+    if ((m5 >= -22 && m5 <= -8 && c1h > 5)
+     || (c1h >= -22 && c1h <= -5 && c6h > 15))             patternScore +=  5;
+
+    // +5 Consolidation réelle (range serré après pump)
+    if (Math.abs(m5) < 5 && (c1h > 0 || c6h > 10))        patternScore +=  5;
+
+    // +5 Hold après pump (gains maintenus)
+    if (c1h > 0 && m5 > -10 && c6h > 0)                   patternScore +=  5;
+
+    // ── MALUS ────────────────────────────────────────────────────────────
+    // -30 Reset complet (prix revient au départ)
+    if (c1h < -35 || (c6h > 30 && c1h < -25))             patternScore -= 30;
+
+    // -20 Pression vendeuse forte (SS dominent + prix baisse)
+    if (sellR1h > 0.62 && m5 < -8)                         patternScore -= 20;
+
+    // -20 Pump unique isolé (aucune structure avant)
+    if (c1h > 30 && c24h < 20 && sellR1h > 0.55)          patternScore -= 20;
+
+    // -15 Pas de structure (tous les timeframes négatifs)
+    if (c6h <= 0 && c1h <= 0)                              patternScore -= 15;
+
+    // -15 Fake staircase (pompe 6h → distribution lente en 1h)
+    if (c6h > 25 && c1h < -8 && sellR1h > 0.52)           patternScore -= 15;
+
+    // -10 Volatilité incohérente (m5 erratique sans direction)
+    if ((Math.abs(m5) > 30 && Math.abs(c1h) < 5)
+     || (m5 > 15 && c1h < -10))                           patternScore -= 10;
+
+    // -10 Hold quality faible (1h pump mais redescend maintenant)
+    if (c1h > 15 && m5 < -20)                             patternScore -= 10;
+  }
 
   patternScore = Math.max(0, Math.min(45, patternScore));
   score += patternScore;
@@ -4269,13 +4290,4 @@ window.addEventListener('DOMContentLoaded',()=>{
     if(!isUnlocked){
       document.getElementById('loadingEl').style.display='none';
       document.getElementById('scannerContent').innerHTML=`<div class="empty-state"><div class="empty-icon">🔐</div><div class="empty-title">Accès réservé aux membres</div><div class="empty-sub" style="margin-top:1rem"><button onclick="openCode()" style="background:var(--green);color:#000;border:none;padding:.6rem 1.5rem;border-radius:8px;font-weight:700;cursor:pointer;font-family:var(--font);font-size:.88rem">Entrer mon code d'accès</button></div></div>`;
-      document.getElementById('rsTokenContent').innerHTML=`<div class="rs-empty" style="padding:3rem 1rem"><div style="font-size:2rem;margin-bottom:.8rem">🔐</div><div style="font-family:'Syne',sans-serif;font-size:1rem;font-weight:700;color:rgba(255,100,120,.8);margin-bottom:.5rem">Accès réservé aux membres</div><div style="font-size:.75rem;color:rgba(255,100,120,.4);margin-bottom:1.2rem">Entre ton code pour accéder au RUG SNIP</div><button onclick="openCode()" style="background:rgba(255,40,80,.15);border:1px solid rgba(255,40,80,.4);color:#ff4466;padding:.5rem 1.4rem;border-radius:6px;font-family:'Space Mono',monospace;font-size:.8rem;font-weight:700;cursor:pointer;">Entrer mon code →</button></div>`;
-    }
-    document.getElementById('codeModal').addEventListener('click',e=>{if(e.target.id==='codeModal')closeCode();});
-    document.getElementById('adminOverlay').addEventListener('click',e=>{if(e.target.id==='adminOverlay')closeAdmin();});
-    document.getElementById('debugOverlay').addEventListener('click',e=>{if(e.target.id==='debugOverlay')closeDebug();});
-  }catch(err){console.error('Erreur init:',err);document.body.style.cssText='background:#050508;color:#ff4466;padding:2rem;font-family:monospace';document.body.innerHTML='<h2>⚠️ Erreur init</h2><p>'+err.message+'</p>';}
-});
-</script>
-</body>
-</html>
+      document.getElementById('rsTokenContent').innerHTML=`<div class="rs-empty" style="padding:3rem 1rem"><div style="font-size:2rem;margin-bottom:.8rem">🔐</div><div style="font-family:'Syne',sans-serif;font-size:1rem;font-weight:700;color:rgba(255,100,120,.8);margin-bottom:.5rem">Accès réservé aux membres</div><div style="font-size:.75rem;color:rgba(255,100,120,.4);margin-bottom:1.2rem">Entre ton code pour accéder au RUG SNIP</div><b
