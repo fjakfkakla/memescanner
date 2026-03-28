@@ -2321,6 +2321,29 @@ async function checkAxiomWallets(tokenAddr, pairAddr = null) {
 
     const allOwners = new Set();
 
+    // B) Real-time: getTokenLargestAccounts → getMultipleAccounts → owners (0 lag indexation)
+    try {
+      const largestResp = await fetch(HELIUS_RPC, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ jsonrpc: '2.0', id: 'largest', method: 'getTokenLargestAccounts', params: [tokenAddr] }),
+        signal: AbortSignal.timeout(8000)
+      }).then(r => r.json());
+      const tokenAccts = (largestResp.result?.value || []).slice(0, 20).map(a => a.address).filter(Boolean);
+      console.log('[AXIOM] Token accounts (holders):', tokenAccts.length);
+      if (tokenAccts.length > 0) {
+        const multiResp = await fetch(HELIUS_RPC, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ jsonrpc: '2.0', id: 'multi', method: 'getMultipleAccounts', params: [tokenAccts, { encoding: 'jsonParsed' }] }),
+          signal: AbortSignal.timeout(8000)
+        }).then(r => r.json());
+        (multiResp.result?.value || []).forEach(acc => {
+          const owner = acc?.data?.parsed?.info?.owner;
+          if (owner && owner.length >= 32) allOwners.add(owner);
+        });
+        console.log('[AXIOM] Real-time owners resolved:', allOwners.size);
+      }
+    } catch(e) { console.warn('[AXIOM] getTokenLargestAccounts error:', e.message); }
+
     // A) Enhanced API sur chaque adresse (token mint + pair) — feePayer = traders réels
     for (const a of addrsToQuery) {
       try {
