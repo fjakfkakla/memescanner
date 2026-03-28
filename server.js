@@ -124,9 +124,8 @@ async function doScan() {
         const ageH = (_now - (rp?.pairCreatedAt || 0)) / 3600000;
         if (ageH > 1) { console.log(`[FILTER] ${rescored.symbol} éliminé: âge ${ageH.toFixed(2)}h`); continue; }
         const wCount = rescored.walletData?.count || 0;
-        // Axiom non bloquant (déjà dans le score) — juste loggé
-        if (wCount < 1) console.log(`[INFO] ${rescored.symbol} 0 wallets Axiom (score=${rescored.score})`);
-        if (rescored.score < 65) { console.log(`[FILTER] ${rescored.symbol} éliminé: score ${rescored.score} < 65`); continue; }
+        if (wCount < 1) { console.log(`[FILTER] ${rescored.symbol} éliminé: 0 wallets tracker (score=${rescored.score})`); continue; }
+        if (rescored.score < 80) { console.log(`[FILTER] ${rescored.symbol} éliminé: score ${rescored.score} < 80`); continue; }
 
         // Sauvegarder dans Firebase (même que scan.js)
         await scanner.saveCall(
