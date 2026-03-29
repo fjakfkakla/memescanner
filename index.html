@@ -2337,7 +2337,7 @@ async function fetchRetry(url, options, retries = 2, delayMs = 800) {
 }
 
 // -- AXIOM wallet tracker -- verifie si des wallets AXIOM sont top holders --
-async function checkAxiomWallets(tokenAddr, pairAddr = null) {
+async function checkAxiomWallets(tokenAddr, pairAddr = null, deep = false) {
   if (!tokenAddr) return { count: 0, wallets: [], clustered: false };
   const now = Date.now();
   const cached = swCache[tokenAddr];
@@ -2355,22 +2355,24 @@ async function checkAxiomWallets(tokenAddr, pairAddr = null) {
 
     // Requêtes parallèles : pairAddr (pool actuel) + mintAddr (all-time) + DAS holders
     // Double source sigs : couvre pré-migration (bonding curve) ET post-migration (PumpSwap)
+    // deep=true (Debug CA) : limite 500 pour couvrir tout l'historique même sur tokens gradués
+    const sigLimit = deep ? 500 : 100;
     const [sigPairRes, sigMintRes, dasRes] = await Promise.allSettled([
       // A1) Signatures via pairAddr (pool actuel — PumpSwap ou bonding curve)
       fetchRetry(HELIUS_RPC, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ jsonrpc: '2.0', id: 'sigs1',
           method: 'getSignaturesForAddress',
-          params: [sigAddr, { limit: 100 }] }),
-        signal: AbortSignal.timeout(12000)
+          params: [sigAddr, { limit: sigLimit }] }),
+        signal: AbortSignal.timeout(20000)
       }).then(r => r.json()),
       // A2) Signatures via mintAddr (couvre toutes les txs depuis le lancement)
       fetchRetry(HELIUS_RPC, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ jsonrpc: '2.0', id: 'sigs2',
           method: 'getSignaturesForAddress',
-          params: [tokenAddr, { limit: 100 }] }),
-        signal: AbortSignal.timeout(12000)
+          params: [tokenAddr, { limit: sigLimit }] }),
+        signal: AbortSignal.timeout(20000)
       }).then(r => r.json()),
       // B) DAS tous les holders actuels
       fetchRetry(`https://mainnet.helius-rpc.com/?api-key=${HELIUS_KEY}`, {
@@ -2390,35 +2392,37 @@ async function checkAxiomWallets(tokenAddr, pairAddr = null) {
         const sigs = r.value?.result || [];
         sigs.slice(0, 50).forEach(s => { if (s?.signature) sigSetNew.add(s.signature); });
         sigs.slice(-50).forEach(s => { if (s?.signature) sigSetOld.add(s.signature); });
+        // deep : aussi prendre le milieu pour couvrir l'intégralité
+        if (deep) sigs.forEach(s => { if (s?.signature) sigSetNew.add(s.signature); });
       }
     });
-    const sigList = [...new Set([...sigSetNew, ...sigSetOld])].slice(0, 100);
+    const sigList = deep
+      ? [...new Set([...sigSetNew, ...sigSetOld])]
+      : [...new Set([...sigSetNew, ...sigSetOld])].slice(0, 100);
     const allOwners = new Set();
 
-    // A) parseTransactions POST — couvre début ET fin d'historique (early buyers + traders récents)
+    // A) parseTransactions POST — en batches de 100 (limite API Helius)
     if (sigList.length > 0) {
-      console.log('[AXIOM] Signatures trouvées (newest+oldest):', sigList.length);
-      {
+      console.log('[AXIOM] Signatures trouvées:', sigList.length, deep ? '(deep mode)' : '');
+      const parseBatches = [];
+      for (let i = 0; i < sigList.length; i += 100) parseBatches.push(sigList.slice(i, i + 100));
+      for (const batch of parseBatches) {
         try {
           const parseResp = await fetchRetry(
             `https://api.helius.xyz/v0/transactions?api-key=${HELIUS_KEY}`,
             {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ transactions: sigList.slice(0, 100) }),
+              body: JSON.stringify({ transactions: batch }),
               signal: AbortSignal.timeout(20000)
             },
-            3, 1000  // 3 retries, 1s entre chaque
+            3, 1000
           );
           const parsedTxs = await parseResp.json();
-          console.log('[AXIOM] parseTransactions status:', parseResp.status, 'count:', Array.isArray(parsedTxs)?parsedTxs.length:'ERROR', typeof parsedTxs==='object'&&!Array.isArray(parsedTxs)?JSON.stringify(parsedTxs).slice(0,200):'');
+          console.log('[AXIOM] parseTransactions batch', parseBatches.indexOf(batch)+1, '/', parseBatches.length, '— status:', parseResp.status, 'count:', Array.isArray(parsedTxs)?parsedTxs.length:'ERROR');
           if (Array.isArray(parsedTxs)) {
             parsedTxs.forEach(tx => {
-              // feePayer (direct non-Jito trades)
               if (tx?.feePayer && tx.feePayer.length >= 32) allOwners.add(tx.feePayer);
-              // tokenTransfers → vrais acheteurs/vendeurs (Jito bundles inclus)
-              // BUY Pump.fun : bonding curve → user (toUserAccount = user)
-              // SELL Pump.fun : user → bonding curve (fromUserAccount = user)
               if (Array.isArray(tx?.tokenTransfers)) {
                 tx.tokenTransfers.forEach(tt => {
                   if (tt?.fromUserAccount && tt.fromUserAccount.length >= 32) allOwners.add(tt.fromUserAccount);
@@ -2426,10 +2430,10 @@ async function checkAxiomWallets(tokenAddr, pairAddr = null) {
                 });
               }
             });
-            console.log('[AXIOM] Total owners from parseTransactions (feePayer+tokenTransfers):', allOwners.size);
           }
-        } catch(e) { console.warn('[AXIOM] parseTransactions error:', e.message); }
+        } catch(e) { console.warn('[AXIOM] parseTransactions batch error:', e.message); }
       }
+      console.log('[AXIOM] Total owners from parseTransactions:', allOwners.size);
     }
 
     // B) DAS holders actuels
@@ -3244,14 +3248,11 @@ async function debugCA(){
   const addr = document.getElementById('dcaInput').value.trim();
   const result = document.getElementById('dcaResult');
   if(!addr || addr.length < 32){ result.innerHTML='<div class="dca-loading" style="color:var(--red)">⚠️ CA invalide</div>'; return; }
-  // Vider les caches pour forcer un fresh fetch
-  delete swCache[addr];
+  // Forcer re-fetch Axiom en expirant le timestamp (garde prevResult pour Math.max "jamais diminuer")
+  if (swCache[addr]) swCache[addr].ts = 0;
   delete heliusCache[addr];
   result.innerHTML='<div class="dca-loading"><div class="spinner"></div>Analyse en cours...<br><span style="font-size:.65rem;opacity:.6">Helius + DexScreener</span></div>';
   try{
-    // Vider le cache Helius (pour forcer refresh sécurité)
-    // NE PAS vider swCache (Axiom wallets) — garder le max historique
-    delete heliusCache[addr];
     // 1. Fetch pair data depuis DexScreener
     let pairData = null;
     try{
@@ -3262,8 +3263,8 @@ async function debugCA(){
     // 2. Helius security
     const sec = await checkTokenSecurity(addr, pairData?.pairAddress || null);
 
-    // 3. Axiom wallets (pairAddress = bonding curve = là où les swaps sont indexés)
-    const wData = await checkAxiomWallets(addr, pairData?.pairAddress || null);
+    // 3. Axiom wallets — deep=true : 500 sigs + batches de 100 pour couvrir tout l'historique
+    const wData = await checkAxiomWallets(addr, pairData?.pairAddress || null, true);
 
     // 4. Score
     let score=0,traderScore=0,socialScore=0,holderScore=0,platformScore=0,mcapScore=0,ageScore=0,patternScore=0;
