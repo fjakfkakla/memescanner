@@ -2353,13 +2353,23 @@ async function checkAxiomWallets(tokenAddr, pairAddr = null) {
     // A) getSignaturesForAddress → signatures → POST parseTransactions → feePayer (traders passés ET vendus)
     // B) DAS getTokenAccounts (holders actuels avec balance > 0)
 
-    const [sigRes, dasRes] = await Promise.allSettled([
-      // A) 100 dernières signatures sur la bonding curve (pairAddr) — c'est là que les swaps sont indexés
+    // Requêtes parallèles : pairAddr (pool actuel) + mintAddr (all-time) + DAS holders
+    // Double source sigs : couvre pré-migration (bonding curve) ET post-migration (PumpSwap)
+    const [sigPairRes, sigMintRes, dasRes] = await Promise.allSettled([
+      // A1) Signatures via pairAddr (pool actuel — PumpSwap ou bonding curve)
       fetchRetry(HELIUS_RPC, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ jsonrpc: '2.0', id: 'sigs',
+        body: JSON.stringify({ jsonrpc: '2.0', id: 'sigs1',
           method: 'getSignaturesForAddress',
           params: [sigAddr, { limit: 100 }] }),
+        signal: AbortSignal.timeout(12000)
+      }).then(r => r.json()),
+      // A2) Signatures via mintAddr (couvre toutes les txs depuis le lancement)
+      fetchRetry(HELIUS_RPC, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ jsonrpc: '2.0', id: 'sigs2',
+          method: 'getSignaturesForAddress',
+          params: [tokenAddr, { limit: 100 }] }),
         signal: AbortSignal.timeout(12000)
       }).then(r => r.json()),
       // B) DAS tous les holders actuels
@@ -2372,21 +2382,30 @@ async function checkAxiomWallets(tokenAddr, pairAddr = null) {
       }).then(r => r.json())
     ]);
 
+    // Fusionner : newest 50 + oldest 50 de chaque source → early buyers ET traders récents
+    const sigSetNew = new Set();
+    const sigSetOld = new Set();
+    [sigPairRes, sigMintRes].forEach(r => {
+      if (r.status === 'fulfilled') {
+        const sigs = r.value?.result || [];
+        sigs.slice(0, 50).forEach(s => { if (s?.signature) sigSetNew.add(s.signature); });
+        sigs.slice(-50).forEach(s => { if (s?.signature) sigSetOld.add(s.signature); });
+      }
+    });
+    const sigList = [...new Set([...sigSetNew, ...sigSetOld])].slice(0, 100);
     const allOwners = new Set();
 
-    // A) parseTransactions POST — fiable pour extraire les feePayer réels
-    // (l'ancien GET /v0/addresses/{mint}/transactions ne retourne plus les swaps Pump.fun)
-    if (sigRes.status === 'fulfilled') {
-      const sigList = (sigRes.value?.result || []).map(s => s.signature).filter(Boolean);
-      console.log('[AXIOM] Signatures trouvées:', sigList.length);
-      if (sigList.length > 0) {
+    // A) parseTransactions POST — couvre début ET fin d'historique (early buyers + traders récents)
+    if (sigList.length > 0) {
+      console.log('[AXIOM] Signatures trouvées (newest+oldest):', sigList.length);
+      {
         try {
           const parseResp = await fetchRetry(
             `https://api.helius.xyz/v0/transactions?api-key=${HELIUS_KEY}`,
             {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ transactions: sigList.slice(0, 50) }),
+              body: JSON.stringify({ transactions: sigList.slice(0, 100) }),
               signal: AbortSignal.timeout(20000)
             },
             3, 1000  // 3 retries, 1s entre chaque
@@ -2411,8 +2430,6 @@ async function checkAxiomWallets(tokenAddr, pairAddr = null) {
           }
         } catch(e) { console.warn('[AXIOM] parseTransactions error:', e.message); }
       }
-    } else {
-      console.warn('[AXIOM] getSignaturesForAddress failed:', sigRes.reason);
     }
 
     // B) DAS holders actuels
