@@ -2323,7 +2323,31 @@ async function checkTokenSecurity(mintAddr, pairAddress = null) {
   }
 }
 
-const swCache = {};
+// swCache persisté en localStorage — les counts Axiom survivent aux rechargements de page
+// Jamais diminuer : un trader qui a vendu reste compté définitivement
+function swCacheLoad() {
+  try {
+    const raw = localStorage.getItem('swCache_v1');
+    if (!raw) return {};
+    const parsed = JSON.parse(raw);
+    const now = Date.now();
+    const clean = {};
+    for (const [k, v] of Object.entries(parsed)) {
+      // Garder max 7 jours pour éviter que localStorage grossisse
+      if (now - (v.ts || 0) < 7 * 24 * 3600 * 1000) clean[k] = v;
+    }
+    return clean;
+  } catch(e) { return {}; }
+}
+function swCacheSave(addr, entry) {
+  try {
+    const raw = localStorage.getItem('swCache_v1');
+    const all = raw ? JSON.parse(raw) : {};
+    all[addr] = entry;
+    localStorage.setItem('swCache_v1', JSON.stringify(all));
+  } catch(e) {}
+}
+const swCache = swCacheLoad();
 const scoreHistory = {}; // addr → {maxAxiom, maxSocial, maxHolder}
 
 // Helper : fetch avec retry automatique sur 429
@@ -2422,13 +2446,19 @@ async function checkAxiomWallets(tokenAddr, pairAddr = null, deep = false) {
           console.log('[AXIOM] parseTransactions batch', parseBatches.indexOf(batch)+1, '/', parseBatches.length, '— status:', parseResp.status, 'count:', Array.isArray(parsedTxs)?parsedTxs.length:'ERROR');
           if (Array.isArray(parsedTxs)) {
             parsedTxs.forEach(tx => {
-              if (tx?.feePayer && tx.feePayer.length >= 32) allOwners.add(tx.feePayer);
-              if (Array.isArray(tx?.tokenTransfers)) {
-                tx.tokenTransfers.forEach(tt => {
-                  if (tt?.fromUserAccount && tt.fromUserAccount.length >= 32) allOwners.add(tt.fromUserAccount);
-                  if (tt?.toUserAccount && tt.toUserAccount.length >= 32) allOwners.add(tt.toUserAccount);
-                });
+              // Filtrer uniquement les tokenTransfers du token analysé (évite faux positifs bundles Jito)
+              const relevantTTs = Array.isArray(tx?.tokenTransfers)
+                ? tx.tokenTransfers.filter(tt => tt?.mint === tokenAddr)
+                : [];
+              // feePayer compté UNIQUEMENT si la tx contient un vrai transfer du token
+              // (évite le cas Jito où un wallet Axiom paie les fees d'une tx qui n'est pas la sienne)
+              if (relevantTTs.length > 0 && tx?.feePayer && tx.feePayer.length >= 32) {
+                allOwners.add(tx.feePayer);
               }
+              relevantTTs.forEach(tt => {
+                if (tt?.fromUserAccount && tt.fromUserAccount.length >= 32) allOwners.add(tt.fromUserAccount);
+                if (tt?.toUserAccount && tt.toUserAccount.length >= 32) allOwners.add(tt.toUserAccount);
+              });
             });
           }
         } catch(e) { console.warn('[AXIOM] parseTransactions batch error:', e.message); }
@@ -2480,8 +2510,10 @@ async function checkAxiomWallets(tokenAddr, pairAddr = null, deep = false) {
       ? prevResult.wallets  // conserver les wallets de la meilleure détection
       : newWallets;
     const result = { count, wallets, clustered: count >= 2 };
-    // Garder le cache plus longtemps (30min) pour éviter les re-checks qui baissent
-    swCache[tokenAddr] = { ts: now, result, maxEver: count };
+    const cacheEntry = { ts: now, result, maxEver: count };
+    swCache[tokenAddr] = cacheEntry;
+    // Persister en localStorage → survit aux rechargements de page (jamais diminuer)
+    swCacheSave(tokenAddr, cacheEntry);
     return result;
 
   } catch(e) {
