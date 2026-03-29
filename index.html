@@ -1047,7 +1047,7 @@ window.addEventListener('unhandledrejection', function(e) { console.error('Promi
 // CONFIG
 // ============================================================
 let ADMIN_PW = 'admin1234';
-const HELIUS_KEY = '965faf69-c798-40c8-a81f-560579d05377';
+const HELIUS_KEY = '0f25b592-f8cd-449e-aac8-60812b2c4d50';
 const HELIUS_RPC = `https://mainnet.helius-rpc.com/?api-key=${HELIUS_KEY}`;
 const FB_URL = 'https://memescanner-calls-default-rtdb.firebaseio.com';
 const STORAGE_KEY = 'ms_calls_v1';
@@ -2326,14 +2326,27 @@ async function checkTokenSecurity(mintAddr, pairAddress = null) {
 const swCache = {};
 const scoreHistory = {}; // addr → {maxAxiom, maxSocial, maxHolder}
 
+// Helper : fetch avec retry automatique sur 429
+async function fetchRetry(url, options, retries = 2, delayMs = 800) {
+  for (let i = 0; i <= retries; i++) {
+    const resp = await fetch(url, options);
+    if (resp.status !== 429) return resp;
+    if (i < retries) await new Promise(r => setTimeout(r, delayMs * (i + 1)));
+  }
+  return fetch(url, options); // dernière tentative sans catch
+}
+
 // -- AXIOM wallet tracker -- verifie si des wallets AXIOM sont top holders --
-async function checkAxiomWallets(tokenAddr) {
+async function checkAxiomWallets(tokenAddr, pairAddr = null) {
   if (!tokenAddr) return { count: 0, wallets: [], clustered: false };
   const now = Date.now();
   const cached = swCache[tokenAddr];
   // Cache 30min pour Axiom — évite les re-checks qui pourraient baisser le count
   // Le MAX historique est aussi stocké dans maxEver pour double sécurité
   if (cached && now - cached.ts < 1800000) return cached.result;
+  // Pour getSignaturesForAddress : utiliser pairAddress (bonding curve) si dispo
+  // Les swaps Pump.fun sont indexés sous la bonding curve, PAS sous le mint
+  const sigAddr = pairAddr || tokenAddr;
 
   try {
     // DOUBLE STRATÉGIE :
@@ -2341,21 +2354,21 @@ async function checkAxiomWallets(tokenAddr) {
     // B) DAS getTokenAccounts (holders actuels avec balance > 0)
 
     const [sigRes, dasRes] = await Promise.allSettled([
-      // A) 100 dernières signatures sur le token mint → on va parser les feePayers
-      fetch(HELIUS_RPC, {
+      // A) 100 dernières signatures sur la bonding curve (pairAddr) — c'est là que les swaps sont indexés
+      fetchRetry(HELIUS_RPC, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ jsonrpc: '2.0', id: 'sigs',
           method: 'getSignaturesForAddress',
-          params: [tokenAddr, { limit: 100 }] }),
-        signal: AbortSignal.timeout(8000)
+          params: [sigAddr, { limit: 100 }] }),
+        signal: AbortSignal.timeout(12000)
       }).then(r => r.json()),
       // B) DAS tous les holders actuels
-      fetch(`https://mainnet.helius-rpc.com/?api-key=${HELIUS_KEY}`, {
+      fetchRetry(`https://mainnet.helius-rpc.com/?api-key=${HELIUS_KEY}`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ jsonrpc: '2.0', id: 'das',
           method: 'getTokenAccounts',
           params: { mint: tokenAddr, limit: 1000, displayOptions: {} } }),
-        signal: AbortSignal.timeout(8000)
+        signal: AbortSignal.timeout(12000)
       }).then(r => r.json())
     ]);
 
@@ -2368,23 +2381,33 @@ async function checkAxiomWallets(tokenAddr) {
       console.log('[AXIOM] Signatures trouvées:', sigList.length);
       if (sigList.length > 0) {
         try {
-          const parseResp = await fetch(
+          const parseResp = await fetchRetry(
             `https://api.helius.xyz/v0/transactions?api-key=${HELIUS_KEY}`,
             {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ transactions: sigList.slice(0, 100) }),
-              signal: AbortSignal.timeout(15000)
-            }
+              body: JSON.stringify({ transactions: sigList.slice(0, 50) }),
+              signal: AbortSignal.timeout(20000)
+            },
+            3, 1000  // 3 retries, 1s entre chaque
           );
           const parsedTxs = await parseResp.json();
           console.log('[AXIOM] parseTransactions status:', parseResp.status, 'count:', Array.isArray(parsedTxs)?parsedTxs.length:'ERROR', typeof parsedTxs==='object'&&!Array.isArray(parsedTxs)?JSON.stringify(parsedTxs).slice(0,200):'');
           if (Array.isArray(parsedTxs)) {
-            // UNIQUEMENT feePayer = seul vrai humain signataire de la tx
             parsedTxs.forEach(tx => {
+              // feePayer (direct non-Jito trades)
               if (tx?.feePayer && tx.feePayer.length >= 32) allOwners.add(tx.feePayer);
+              // tokenTransfers → vrais acheteurs/vendeurs (Jito bundles inclus)
+              // BUY Pump.fun : bonding curve → user (toUserAccount = user)
+              // SELL Pump.fun : user → bonding curve (fromUserAccount = user)
+              if (Array.isArray(tx?.tokenTransfers)) {
+                tx.tokenTransfers.forEach(tt => {
+                  if (tt?.fromUserAccount && tt.fromUserAccount.length >= 32) allOwners.add(tt.fromUserAccount);
+                  if (tt?.toUserAccount && tt.toUserAccount.length >= 32) allOwners.add(tt.toUserAccount);
+                });
+              }
             });
-            console.log('[AXIOM] Total feePayers from parseTransactions:', allOwners.size);
+            console.log('[AXIOM] Total owners from parseTransactions (feePayer+tokenTransfers):', allOwners.size);
           }
         } catch(e) { console.warn('[AXIOM] parseTransactions error:', e.message); }
       }
@@ -2419,6 +2442,8 @@ async function checkAxiomWallets(tokenAddr) {
       'SysvarC1ock11111111111111111111111111111111',
       'BQ72nSv9f3PRyRKCBnHLVrerrv37CYTHm5h3s9VSGQDV',
     ]);
+    // Exclure aussi la bonding curve du token (pairAddr) — elle apparaît dans tous les tokenTransfers
+    if (pairAddr) KNOWN_PROGRAMS.add(pairAddr);
     const allOwnersList = [...allOwners].filter(o => !KNOWN_PROGRAMS.has(o));
     console.log('[AXIOM] Total unique owners (excl. programs):', allOwnersList.length);
     const matchingOwners = allOwnersList.filter(o => AXIOM_WALLETS.has(o));
@@ -3220,8 +3245,8 @@ async function debugCA(){
     // 2. Helius security
     const sec = await checkTokenSecurity(addr, pairData?.pairAddress || null);
 
-    // 3. Axiom wallets
-    const wData = await checkAxiomWallets(addr);
+    // 3. Axiom wallets (pairAddress = bonding curve = là où les swaps sont indexés)
+    const wData = await checkAxiomWallets(addr, pairData?.pairAddress || null);
 
     // 4. Score
     let score=0,traderScore=0,socialScore=0,holderScore=0,platformScore=0,mcapScore=0,ageScore=0,patternScore=0;
@@ -3472,22 +3497,27 @@ async function fetchTokens(){
   const candidates=pairs.filter(p=>{const ah=(Date.now()-(p.pairCreatedAt||0))/3600000;return ah>=0.02&&ah<=1;});
   let preScored=candidates.map(p=>scoreTokenV2(p)).filter(t=>t.score>=30);
   preScored.sort((a,b)=>b.score-a.score);preScored=preScored.slice(0,25);
-  // ── PARALLÉLISATION : security + axiom en même temps pour tous les tokens ──
-  // Au lieu de 25 tokens × (8s security + 8s axiom) en série = ~6min
-  // On lance tout en parallèle = ~10s max
-  const parallelResults = await Promise.allSettled(
-    preScored.map(async t => {
-      const [sec, wData] = await Promise.allSettled([
-        checkTokenSecurity(t.addr, t.raw?.pairAddress || null),
-        checkAxiomWallets(t.addr)
-      ]);
-      return {
-        t,
-        sec: sec.status==='fulfilled' ? sec.value : null,
-        wData: wData.status==='fulfilled' ? wData.value : {count:0,wallets:[],clustered:false}
-      };
-    })
-  );
+  // ── PARALLÉLISATION PAR BATCH : évite les 429 Helius (rate limit) ──
+  // Batch de 3 tokens + 600ms entre batches → ~15 req simultanées max
+  const parallelResults = [];
+  for (let i = 0; i < preScored.length; i += 3) {
+    const batch = preScored.slice(i, i + 3);
+    const batchRes = await Promise.allSettled(
+      batch.map(async t => {
+        const [sec, wData] = await Promise.allSettled([
+          checkTokenSecurity(t.addr, t.raw?.pairAddress || null),
+          checkAxiomWallets(t.addr, t.raw?.pairAddress || null)
+        ]);
+        return {
+          t,
+          sec: sec.status==='fulfilled' ? sec.value : null,
+          wData: wData.status==='fulfilled' ? wData.value : {count:0,wallets:[],clustered:false}
+        };
+      })
+    );
+    parallelResults.push(...batchRes);
+    if (i + 3 < preScored.length) await new Promise(r => setTimeout(r, 600));
+  }
 
   const finalScored=[];
   for(const res of parallelResults){
@@ -3543,6 +3573,7 @@ async function fetchTokens(){
     }catch(e){if(t.score>=80)finalScored.push(t);}
   }
   finalScored.sort((a,b)=>b.score-a.score);
+  console.log(`[Scanner] ${finalScored.length} calls | rejected:`, JSON.stringify(rejected));
   const _now5 = Date.now();
   for(const t of finalScored){
     const existing=await getCallData(t.addr);
