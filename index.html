@@ -1010,7 +1010,7 @@ section{scroll-margin-top:70px;}
           <div class="pnl-mcap-lbl">ATH</div>
         </div>
       </div>
-      <div class="pnl-footer-txt">memecoinpump.vercel.app · DYOR · NFA 🐸</div>
+      <div class="pnl-footer-txt">DYOR · NFA 🐸</div>
     </div>
     <div class="pnl-actions">
       <button class="pnl-btn-dl" onclick="downloadPnl()">⬇ Télécharger</button>
@@ -4426,7 +4426,7 @@ async function downloadPnl(){
   ctx.strokeStyle='rgba(0,255,136,.18)';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(W*0.18,392);ctx.lineTo(W*0.82,392);ctx.stroke();
   ctx.font='bold 26px monospace';ctx.textAlign='left';ctx.fillStyle='#ffaa44';ctx.fillText(call,W*0.22,438);ctx.textAlign='center';ctx.fillStyle='rgba(255,255,255,.3)';ctx.fillText('→',W/2,438);ctx.textAlign='right';ctx.fillStyle='#00ff88';ctx.fillText(ath,W*0.78,438);
   ctx.font='12px monospace';ctx.fillStyle='rgba(255,255,255,.25)';ctx.textAlign='left';ctx.fillText('CALL',W*0.22,458);ctx.textAlign='right';ctx.fillText('ATH',W*0.78,458);
-  ctx.font='13px monospace';ctx.fillStyle='rgba(255,255,255,.18)';ctx.textAlign='center';ctx.fillText('memecoinpump.vercel.app  ·  DYOR  ·  NFA  🐸',W/2,518);
+  ctx.font='13px monospace';ctx.fillStyle='rgba(255,255,255,.18)';ctx.textAlign='center';ctx.fillText('DYOR  ·  NFA  🐸',W/2,518);
   try{const dataUrl=canvas.toDataURL('image/png');const a=document.createElement('a');a.href=dataUrl;a.download='pnl_'+sym.replace('$','')+'_'+mult+'.png';document.body.appendChild(a);a.click();document.body.removeChild(a);btn.textContent='✅ Téléchargé !';setTimeout(()=>btn.textContent='⬇ Télécharger',2000);}
   catch(e){btn.textContent='⚠️ Erreur';setTimeout(()=>btn.textContent='⬇ Télécharger',2000);}
 }
