@@ -1,7 +1,7 @@
 import express from 'express';
 import cors    from 'cors';
 import { getCalls, getHistory } from './firebase.js';
-import { runScanCycle } from './worker.js';
+import { runScanCycle, checkTokenSecurityExport, checkAxiomWalletsExport } from './worker.js';
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
@@ -55,6 +55,22 @@ app.post('/verify-code', (req, res) => {
   if (!code) return res.status(400).json({ ok: false, error: 'code manquant' });
   const valid = ACCESS_CODES.has(code.trim().toUpperCase());
   res.json({ ok: valid, valid });
+});
+
+// Debug CA — analyse complète d'un token à la demande (deep mode)
+app.get('/debug/:addr', async (req, res) => {
+  const { addr } = req.params;
+  const pairAddr = req.query.pair || null;
+  if (!addr || addr.length < 32) return res.status(400).json({ ok: false, error: 'adresse invalide' });
+  try {
+    const [sec, wData] = await Promise.all([
+      checkTokenSecurityExport(addr, pairAddr),
+      checkAxiomWalletsExport(addr, pairAddr, true), // deep=true : 500 sigs
+    ]);
+    res.json({ ok: true, addr, sec, wData });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
 });
 
 // ── DÉMARRAGE ────────────────────────────────────────────────────
