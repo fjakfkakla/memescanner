@@ -118,23 +118,24 @@ async function checkTokenSecurity(tokenAddr, pairAddr = null) {
   }
 }
 
-async function checkAxiomWallets(tokenAddr, pairAddr = null) {
+async function checkAxiomWallets(tokenAddr, pairAddr = null, deep = false) {
   const cached = swCache.get(tokenAddr);
   if (cached && Date.now() - cached.ts < 1800000) return cached.result;
 
-  const sigAddr = pairAddr || tokenAddr;
+  const sigAddr  = pairAddr || tokenAddr;
+  const sigLimit = deep ? 500 : 100;
 
   try {
     const [sigPairRes, sigMintRes, dasRes] = await Promise.allSettled([
       fetchRetry(HELIUS_RPC, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ jsonrpc: '2.0', id: 'sigs1', method: 'getSignaturesForAddress', params: [sigAddr, { limit: 100 }] }),
-        signal: AbortSignal.timeout(12000)
+        body: JSON.stringify({ jsonrpc: '2.0', id: 'sigs1', method: 'getSignaturesForAddress', params: [sigAddr, { limit: sigLimit }] }),
+        signal: AbortSignal.timeout(20000)
       }).then(r => r.json()),
       fetchRetry(HELIUS_RPC, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ jsonrpc: '2.0', id: 'sigs2', method: 'getSignaturesForAddress', params: [tokenAddr, { limit: 100 }] }),
-        signal: AbortSignal.timeout(12000)
+        body: JSON.stringify({ jsonrpc: '2.0', id: 'sigs2', method: 'getSignaturesForAddress', params: [tokenAddr, { limit: sigLimit }] }),
+        signal: AbortSignal.timeout(20000)
       }).then(r => r.json()),
       fetchRetry(HELIUS_RPC, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -150,16 +151,22 @@ async function checkAxiomWallets(tokenAddr, pairAddr = null) {
         const sigs = r.value?.result || [];
         sigs.slice(0, 50).forEach(s => { if (s?.signature) sigSetNew.add(s.signature); });
         sigs.slice(-50).forEach(s => { if (s?.signature) sigSetOld.add(s.signature); });
+        if (deep) sigs.forEach(s => { if (s?.signature) sigSetNew.add(s.signature); });
       }
     });
-    const sigList = [...new Set([...sigSetNew, ...sigSetOld])].slice(0, 100);
+    const sigList = deep
+      ? [...new Set([...sigSetNew, ...sigSetOld])]
+      : [...new Set([...sigSetNew, ...sigSetOld])].slice(0, 100);
     const allOwners = new Set();
 
     if (sigList.length > 0) {
+      const parseBatches = [];
+      for (let i = 0; i < sigList.length; i += 100) parseBatches.push(sigList.slice(i, i + 100));
+      for (const batch of parseBatches) {
       try {
         const parseResp = await fetchRetry(
           `${HELIUS_API}/v0/transactions?api-key=${HELIUS_KEY}`,
-          { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ transactions: sigList }), signal: AbortSignal.timeout(20000) },
+          { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ transactions: batch }), signal: AbortSignal.timeout(20000) },
           3, 1000
         );
         const parsedTxs = await parseResp.json();
@@ -176,6 +183,7 @@ async function checkAxiomWallets(tokenAddr, pairAddr = null) {
           });
         }
       } catch (e) {}
+      } // fin parseBatches loop
     }
 
     if (dasRes.status === 'fulfilled') {
@@ -337,3 +345,6 @@ export async function runScanCycle() {
     console.error('[Worker] Cycle error:', e.message);
   }
 }
+
+// Exports pour server.js (Debug CA endpoint)
+export { checkTokenSecurity as checkTokenSecurityExport, checkAxiomWallets as checkAxiomWalletsExport };
