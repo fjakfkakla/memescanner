@@ -2539,46 +2539,71 @@ function hardFilterV2(p){
 // ── calculatePatternScore v3 ───────────────────────────────────────────────
 // Scoring Pattern strict : favorise vrais staircase (higher highs + higher lows,
 // consolidation, multi-pumps), pénalise fortement faux pumps/bundles/triangles.
-// Seuils resserrés : staircase c5m>5/c1h>30/c6h>48, pénalités plus lourdes.
 function calculatePatternScore(p) {
   const c5m     = p.priceChange?.m5  || 0;
   const c1h     = p.priceChange?.h1  || 0;
   const c6h     = p.priceChange?.h6  || 0;
-  const m1      = p.priceChange?.m1  || 0;
   const buysM5  = p.txns?.m5?.buys   || 0;
   const sellsM5 = p.txns?.m5?.sells  || 0;
+  const buysH1  = p.txns?.h1?.buys   || 0;
+  const sellsH1 = p.txns?.h1?.sells  || 0;
+  const volH1   = p.volume?.h1       || 0;
+  const mcap    = p.marketCap || p.fdv || 0;
+
+  const totalM5 = buysM5 + sellsM5 || 1;
+  const totalH1 = buysH1 + sellsH1 || 1;
+  const sellRatioM5 = sellsM5 / totalM5;
+  const sellRatioH1 = sellsH1 / totalH1;
+  const volPerBuyH1 = volH1 / Math.max(buysH1, 1);
 
   let score = 0;
 
-  // 1. Vrai Staircase (+15) : structure montante confirmée sur 3 timeframes
-  if (c5m > 5 && c1h > 30 && c6h > 48) score += 15;
+  // ── POINTS POSITIFS — runner organique ──────────────────────
+  // Staircase organique : montée modérée + majorité achats + plusieurs txns
+  if (c5m >= 3 && c5m <= 25 && sellRatioM5 < 0.42 && buysM5 >= 8) score += 20;
 
-  // 2. Correction saine (+10) : recul entre -6% et -22% (ni trop ni trop peu)
-  if (c1h >= -22 && c1h <= -6) score += 10;
+  // Vraie distribution : beaucoup d'acheteurs différents sur 1h
+  if (buysH1 >= 25 && sellRatioH1 < 0.50) score += 15;
 
-  // 3. Multi-pumps confirmés (+10) : 2 vagues distinctes
-  if (c1h > 32 && c6h > 50) score += 10;
+  // Zone idéale runner : déjà pumpé mais encore en montée
+  if (c1h >= 25 && c1h <= 120 && c5m > 0) score += 12;
 
-  // 4. 3ème pump ou plus (+5)
-  if (c6h > 72) score += 5;
+  // Petits acheteurs organiques : volume/txn faible = pas un seul gros wallet
+  if (volPerBuyH1 < 2000 && buysH1 >= 10) score += 10;
 
-  // 5. Consolidation propre (+8) : pause saine après pump
-  if (Math.abs(c5m) < 7.5 && c1h > 20) score += 8;
+  // Momentum fort et propre : 2x plus d'achats que de ventes sur m5
+  if (buysM5 >= 2 && buysM5 / Math.max(sellsM5, 1) >= 2.0) score += 8;
 
-  // 6. Pas de dump violent (+5)
-  if (c5m > -27 && m1 > -17) score += 5;
+  // Token qui monte depuis le début et pas surpumpé
+  if (c1h > 0 && c5m > 0 && c6h > c1h) score += 5;
 
-  // 7. Volume organique anti-bundle (+7) : ratio buy/sell > 1.5 sur m5
-  if (buysM5 > sellsM5 * 1.5) score += 7;
+  // ── POINTS NÉGATIFS — bundle/rug détecté ────────────────────
+  // Bundle spike : aucun runner ne fait +60% en 5min
+  if (c5m > 60) score -= 25;
 
-  // Pénalité forte : spike + dump immédiat (rug classique)
-  if (c1h > 85 && c5m < -26) score -= 15;
+  // Distribution massive sur m5
+  if (sellRatioM5 > 0.65) score -= 20;
 
-  // Pénalité forte : pump sans structure (triangle / bundle)
-  if (c6h > 130 && c1h < 18) score -= 12;
+  // Arrivé trop tard — rug lent déjà surpumpé (c6h >> c1h)
+  if (c6h > c1h * 4 && c1h < 30) score -= 20;
 
-  // Pénalité : trop de sells pendant le pump
-  if (sellsM5 > buysM5 * 1.65 && c1h > 40) score -= 10;
+  // Bundle pur : prix monte fort + quasi aucune txn
+  if (buysM5 < 4 && c5m > 15) score -= 18;
+
+  // Distribution en cours : ventes dominent sur m5 pendant montée
+  if (sellRatioM5 > 0.55 && c5m > 10) score -= 15;
+
+  // Bundle déguisé : gros montants par achat + peu de monde
+  if (volPerBuyH1 > 5000 && buysH1 < 20) score -= 15;
+
+  // Ventes dominent sur 1h = token en distribution
+  if (sellRatioH1 > 0.58) score -= 12;
+
+  // Dernier spike avant dump : nouveau spike sur token déjà surpumpé
+  if (c5m > 30 && c1h > 200) score -= 10;
+
+  // Pas de retail : moins de 10 achats sur 1h pour un mcap > 15K
+  if (buysH1 < 10 && mcap > 15000) score -= 10;
 
   return Math.max(0, Math.min(45, Math.round(score)));
 }
