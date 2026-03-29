@@ -2336,13 +2336,12 @@ async function checkAxiomWallets(tokenAddr) {
   if (cached && now - cached.ts < 1800000) return cached.result;
 
   try {
-    // TRIPLE STRATÉGIE — du plus complet au plus ciblé :
-    // A) Transactions récentes du token (signers = tous ceux qui ont tradé, même vendus)
+    // DOUBLE STRATÉGIE :
+    // A) getSignaturesForAddress → signatures → POST parseTransactions → feePayer (traders passés ET vendus)
     // B) DAS getTokenAccounts (holders actuels avec balance > 0)
-    // C) Top 20 holders → resolve owners
 
-    const [sigRes, dasRes, largestRes] = await Promise.allSettled([
-      // A) 100 dernières signatures sur le token mint → signers = traders récents
+    const [sigRes, dasRes] = await Promise.allSettled([
+      // A) 100 dernières signatures sur le token mint → on va parser les feePayers
       fetch(HELIUS_RPC, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ jsonrpc: '2.0', id: 'sigs',
@@ -2357,44 +2356,40 @@ async function checkAxiomWallets(tokenAddr) {
           method: 'getTokenAccounts',
           params: { mint: tokenAddr, limit: 1000, displayOptions: {} } }),
         signal: AbortSignal.timeout(8000)
-      }).then(r => r.json()),
-      // C) Top 20 par balance
-      fetch(HELIUS_RPC, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ jsonrpc: '2.0', id: 'largest',
-          method: 'getTokenLargestAccounts', params: [tokenAddr] }),
-        signal: AbortSignal.timeout(8000)
       }).then(r => r.json())
     ]);
 
     const allOwners = new Set();
 
-    // A) Extraire les signers des transactions (= tous les traders récents)
+    // A) parseTransactions POST — fiable pour extraire les feePayer réels
+    // (l'ancien GET /v0/addresses/{mint}/transactions ne retourne plus les swaps Pump.fun)
     if (sigRes.status === 'fulfilled') {
-      const sigs = sigRes.value?.result || [];
-      // Chaque signature a un champ "err" et pas directement le signer
-      // On doit fetch les transactions pour avoir les signers
-      // Mais getSignaturesForAddress ne donne pas les signers directement
-      // → On utilise getTransaction sur les 20 premières pour extraire les fee payers
-      // Helius Enhanced Transactions API → feePayer + accountData
-      try {
-        const enhancedResp = await fetch(
-          `https://api.helius.xyz/v0/addresses/${tokenAddr}/transactions?api-key=${HELIUS_KEY}&limit=100`,
-          { signal: AbortSignal.timeout(10000) }
-        );
-        const enhancedTxs = await enhancedResp.json();
-        console.log('[AXIOM] Enhanced API status:', enhancedResp.status, 'txs count:', Array.isArray(enhancedTxs)?enhancedTxs.length:'ERROR', typeof enhancedTxs==='object'&&!Array.isArray(enhancedTxs)?JSON.stringify(enhancedTxs).slice(0,200):'');
-        if (Array.isArray(enhancedTxs)) {
-          // FIX FAUX POSITIFS : ne garder QUE les feePayer (= signataires humains réels)
-          // accountData inclut tous les comptes touchés (AMM, pools, PDAs) → faux matches
-          enhancedTxs.forEach(tx => {
+      const sigList = (sigRes.value?.result || []).map(s => s.signature).filter(Boolean);
+      console.log('[AXIOM] Signatures trouvées:', sigList.length);
+      if (sigList.length > 0) {
+        try {
+          const parseResp = await fetch(
+            `https://api.helius.xyz/v0/transactions?api-key=${HELIUS_KEY}`,
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ transactions: sigList.slice(0, 100) }),
+              signal: AbortSignal.timeout(15000)
+            }
+          );
+          const parsedTxs = await parseResp.json();
+          console.log('[AXIOM] parseTransactions status:', parseResp.status, 'count:', Array.isArray(parsedTxs)?parsedTxs.length:'ERROR', typeof parsedTxs==='object'&&!Array.isArray(parsedTxs)?JSON.stringify(parsedTxs).slice(0,200):'');
+          if (Array.isArray(parsedTxs)) {
             // UNIQUEMENT feePayer = seul vrai humain signataire de la tx
-            // ix.accounts supprimé car inclut programs/PDAs → faux positifs
-            if (tx?.feePayer && tx.feePayer.length >= 32) allOwners.add(tx.feePayer);
-          });
-          console.log('[AXIOM] Total owners from Enhanced (feePayer only):', allOwners.size);
-        }
-      } catch(e) { console.warn('[AXIOM] Enhanced API error:', e.message); }
+            parsedTxs.forEach(tx => {
+              if (tx?.feePayer && tx.feePayer.length >= 32) allOwners.add(tx.feePayer);
+            });
+            console.log('[AXIOM] Total feePayers from parseTransactions:', allOwners.size);
+          }
+        } catch(e) { console.warn('[AXIOM] parseTransactions error:', e.message); }
+      }
+    } else {
+      console.warn('[AXIOM] getSignaturesForAddress failed:', sigRes.reason);
     }
 
     // B) DAS holders actuels
@@ -2406,9 +2401,7 @@ async function checkAxiomWallets(tokenAddr) {
       console.warn('[AXIOM] DAS failed:', dasRes.reason);
     }
 
-    // Méthode C (getMultipleAccounts) supprimée — retournait des owners AMM/pools
-    // qui causaient des faux positifs Axiom
-    // On garde uniquement feePayer (signataires humains) + DAS owners (vrais holders)
+    // On garde uniquement feePayer (signataires humains) + DAS owners (vrais holders actuels)
 
     // Exclure les adresses système/programme connues avant le match
     // Ces adresses ne sont JAMAIS des vrais traders humains
@@ -3525,6 +3518,9 @@ async function fetchTokens(){
       const rdex=(rp?.dexId||'').toLowerCase();
       const rurl=(rp?.url||'').toLowerCase();
       const raddr=(rp?.baseToken?.address||'');
+
+      // HARD FILTER 0 — Axiom wallet obligatoire
+      if((rescored.debug?.axiomCount||0)<1){rejected['no_axiom']=(rejected['no_axiom']||0)+1;continue;}
 
       // HARD FILTER 1 — Platform
       const isPump=rdex.includes('pump')||rurl.includes('pump')||raddr.endsWith('pump');
