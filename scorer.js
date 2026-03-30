@@ -152,7 +152,7 @@ export function scoreTokenV2(p, walletData = { count: 0, wallets: [], clustered:
 
   // AGE
   let ageScore = 0;
-  if      (ageMin >= 1  && ageMin <= 5)  ageScore = 10;
+  if      (ageMin >= 0.5  && ageMin <= 5)  ageScore = 10;
   else if (ageMin >  5  && ageMin <= 15) ageScore =  5;
   score += ageScore;
 
