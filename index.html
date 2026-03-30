@@ -1047,7 +1047,7 @@ window.addEventListener('unhandledrejection', function(e) { console.error('Promi
 // CONFIG
 // ============================================================
 let ADMIN_PW = 'admin1234';
-const HELIUS_KEY = ''; // conservé pour debug CA local uniquement
+const HELIUS_KEY = '0f25b592-f8cd-449e-aac8-60812b2c4d50'; // conservé pour debug CA local uniquement
 const HELIUS_RPC = `https://mainnet.helius-rpc.com/?api-key=${HELIUS_KEY}`;
 const FB_URL = 'https://memescanner-calls-default-rtdb.firebaseio.com';
 const BACKEND_URL = 'https://memescanner-production-342a.up.railway.app';
@@ -3300,23 +3300,21 @@ async function debugCA(){
   const addr = document.getElementById('dcaInput').value.trim();
   const result = document.getElementById('dcaResult');
   if(!addr || addr.length < 32){ result.innerHTML='<div class="dca-loading" style="color:var(--red)">⚠️ CA invalide</div>'; return; }
-  // Forcer re-fetch Axiom en expirant le timestamp (garde prevResult pour Math.max "jamais diminuer")
-  if (swCache[addr]) swCache[addr].ts = 0;
-  delete heliusCache[addr];
-  result.innerHTML='<div class="dca-loading"><div class="spinner"></div>Analyse en cours...<br><span style="font-size:.65rem;opacity:.6">Helius + DexScreener</span></div>';
+  result.innerHTML='<div class="dca-loading"><div class="spinner"></div>Analyse en cours...<br><span style="font-size:.65rem;opacity:.6">Backend Railway + DexScreener</span></div>';
   try{
-    // 1. Fetch pair data depuis DexScreener
+    // 1. Fetch pair data depuis DexScreener (gratuit, pas de clé)
     let pairData = null;
     try{
       const dex = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${addr}`,{signal:AbortSignal.timeout(8000)}).then(r=>r.json());
       pairData = (dex.pairs||[]).sort((a,b)=>(b.volume?.h1||0)-(a.volume?.h1||0))[0] || null;
     }catch(e){}
 
-    // 2. Helius security
-    const sec = await checkTokenSecurity(addr, pairData?.pairAddress || null);
-
-    // 3. Axiom wallets — deep=true : 500 sigs + batches de 100 pour couvrir tout l'historique
-    const wData = await checkAxiomWallets(addr, pairData?.pairAddress || null, true);
+    // 2+3. Security + Axiom wallets via backend Railway (clé Helius côté serveur)
+    const pairAddr = pairData?.pairAddress || null;
+    const backendUrl = `${BACKEND_URL}/debug/${addr}${pairAddr?'?pair='+pairAddr:''}`;
+    const backendResp = await fetch(backendUrl, {signal:AbortSignal.timeout(30000)}).then(r=>r.json());
+    const sec   = backendResp.sec   || null;
+    const wData = backendResp.wData || {count:0,wallets:[],clustered:false};
 
     // 4. Score
     let score=0,traderScore=0,socialScore=0,holderScore=0,platformScore=0,mcapScore=0,ageScore=0,patternScore=0;
@@ -3421,7 +3419,52 @@ async function fetchTokens(){
   const content=document.getElementById('scannerContent');
   if(loadEl)loadEl.style.display='block';
   document.getElementById('scanDot').style.background='var(--gold)';
-  // Invalider le cache Axiom des tokens qui ne sont PLUS dans lastScored
+  try{
+    // ── BACKEND MODE : le scan tourne sur Railway, on poll juste /live ──
+    const resp = await fetch(`${BACKEND_URL}/live`, {signal:AbortSignal.timeout(10000)});
+    const json = await resp.json();
+    const calls = json.data || [];
+    // Convertir le format backend → format lastScored attendu par renderTokenTable
+    const finalScored = calls.map(c => ({
+      addr: c.addr,
+      symbol: c.symbol || '?',
+      score: c.score || 80,
+      mcap: c.mcap || 0,
+      liq: c.liq || 0,
+      rugRisk: c.rugRisk || 'LOW',
+      socials: c.socials || false,
+      pairUrl: c.pairUrl || `https://dexscreener.com/solana/${c.addr}`,
+      emoji: c.emoji || '📡',
+      walletData: c.walletData || {count:0,wallets:[],clustered:false},
+      _callTime: c.calledAt || c.savedAt || Date.now(),
+      debug: c.debug || {traderScore:0,socialScore:0,holderScore:0,platformScore:0,mcapScore:0,ageScore:0,patternScore:0,axiomCount:0},
+      raw: c.raw || {},
+      security: c.raw?.security || null,
+    }));
+    finalScored.sort((a,b)=>b.score-a.score);
+    lastScored = finalScored;
+    if(loadEl)loadEl.style.display='none';
+    document.getElementById('scanDot').style.background='var(--green)';
+    document.getElementById('lastUpdate').textContent='Updated '+new Date().toLocaleTimeString();
+    document.getElementById('debugToggleBtn').style.display=isAdminMode?'inline-block':'none';
+    if(finalScored.length===0){
+      content.innerHTML=`<div class="empty-state"><div class="empty-icon">🔍</div><div class="empty-title">0 signal pour l'instant</div><div class="empty-sub">Le backend scan toutes les 45s — refresh auto</div></div>`;
+    } else {
+      await renderTokenTable(finalScored);
+    }
+    if(currentTab==='history')renderHistory();
+    if(refreshTimer)clearTimeout(refreshTimer);
+    refreshTimer=setTimeout(fetchTokens,45000);
+    return;
+  }catch(eBackend){
+    console.warn('[fetchTokens] Backend injoignable, fallback local:', eBackend.message);
+    document.getElementById('scanDot').style.background='var(--red)';
+    content.innerHTML=`<div class="empty-state"><div class="empty-icon">⚠️</div><div class="empty-title">Backend hors ligne</div><div class="empty-sub">${BACKEND_URL}</div></div>`;
+    if(refreshTimer)clearTimeout(refreshTimer);
+    refreshTimer=setTimeout(fetchTokens,30000);
+    return;
+  }
+  // ── CODE MORT ci-dessous (conservé pour référence) ──
   const activeAddrs=new Set(lastScored.map(t=>t.addr));
   Object.keys(swCache).forEach(addr=>{
     if(!activeAddrs.has(addr))delete swCache[addr];
