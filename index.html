@@ -2293,8 +2293,8 @@ async function checkTokenSecurity(mintAddr, pairAddress = null) {
     ]);
     if (pairAddress) KNOWN_PROGRAMS.add(pairAddress);
     const holdersFiltered = holdersRaw.filter(h => !KNOWN_PROGRAMS.has(h.address));
-    // Exclure le #1 holder (toujours le LP/bonding curve) → scorer [2..11]
-    const holders = holdersFiltered.length > 1 ? holdersFiltered.slice(1) : holdersFiltered;
+    // Exclure le #1 holder (toujours le LP pool / bonding curve) → scorer les vrais wallets [2..11]
+    const holders = holdersFiltered.slice(1, 11);
     const holderCount = holders.length;
     const top1Pct  = supplyNum > 0 && holders[0] ? (parseFloat(holders[0].uiAmount)/supplyNum)*100 : 0;
     const top5Pct  = supplyNum > 0 ? holders.slice(0,5).reduce((s,h)=>s+parseFloat(h.uiAmount||0),0)/supplyNum*100 : 0;
