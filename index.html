@@ -2566,67 +2566,54 @@ function hardFilterV2(p){
 // ── calculatePatternScore v3 ───────────────────────────────────────────────
 // Scoring Pattern strict : favorise vrais staircase (higher highs + higher lows,
 function calculatePatternScore(p) {
-  const c5m        = p.priceChange?.m5  || 0;
-  const c1h        = p.priceChange?.h1  || 0;
-  const c6h        = p.priceChange?.h6  || 0;
-  const buysM5     = p.txns?.m5?.buys   || 0;
-  const sellsM5    = p.txns?.m5?.sells  || 0;
-  const buysH1     = p.txns?.h1?.buys   || 0;
-  const sellsH1    = p.txns?.h1?.sells  || 0;
-  const volH1      = p.volume?.h1       || 0;
-  const mcap       = p.marketCap || p.fdv || 0;
+  const c5m         = p.priceChange?.m5 || 0;
+  const c1h         = p.priceChange?.h1 || 0;
+  const buysH1      = p.txns?.h1?.buys  || 0;
+  const sellsH1     = p.txns?.h1?.sells || 0;
+  const buysM5      = p.txns?.m5?.buys  || 0;
+  const sellsM5     = p.txns?.m5?.sells || 0;
+  const volH1       = p.volume?.h1      || 0;
 
-  const totalM5       = buysM5 + sellsM5 || 1;
   const totalH1       = buysH1 + sellsH1 || 1;
-  const sellRatioM5   = sellsM5 / totalM5;
   const sellRatioH1   = sellsH1 / totalH1;
   const volPerBuyH1   = volH1 / Math.max(buysH1, 1);
-  const c1hC5mRatio   = c1h / Math.max(Math.abs(c5m), 0.5);
 
-  let score = 0;
+  // ── STAIRCASE — vrai runner organique ──────────────────────────
+  // c1h jusqu'à 250% car token de 15-20min peut légitimement avoir +200%
+  if (
+    c5m >= 2 && c5m <= 18 &&
+    c1h >= 20 && c1h <= 250 &&
+    buysH1 >= 25 &&
+    sellRatioH1 < 0.40 &&
+    volPerBuyH1 < 1200
+  ) return 40;
 
-  // ── POSITIFS — runner organique (conditions STRICTES) ──────────
+  // ── MOMENTUM — bonne dynamique, pas parfaitement structuré ─────
+  if (
+    c5m >= 2 && c5m <= 20 &&
+    buysH1 >= 15 &&
+    sellRatioH1 < 0.50
+  ) return 28;
 
-  // Staircase organique : montée modérée + achats largement dominants + plusieurs txns
-  if (c5m >= 3 && c5m <= 20 && sellRatioM5 < 0.35 && buysM5 >= 10) score += 20;
+  // ── MAUVAIS PATTERNS ───────────────────────────────────────────
 
-  // Vraie distribution retail : beaucoup d'acheteurs, ventes nettement minoritaires
-  if (buysH1 >= 20 && sellRatioH1 < 0.45) score += 15;
+  // BUNDLE : gros pump total mais presque personne n'a acheté
+  if (c1h > 150 && buysH1 < 12) return 2;
 
-  // Zone runner idéale : h1 entre 20-100%, encore de la place, m5 toujours positif
-  if (c1h >= 20 && c1h <= 100 && c5m > 0 && c5m <= 25) score += 12;
+  // SPIKE : encore en train de monter trop vite (trop tard / trop chaud)
+  if (c5m > 35) return 3;
 
-  // Petits acheteurs organiques : vol/txn très faible = vraie distribution
-  if (volPerBuyH1 < 1500 && buysH1 >= 12) score += 10;
+  // DUMP : déjà en train de redescendre depuis son ATH
+  if (c5m < -10 && c1h > 30) return 3;
 
-  // Momentum net : 3x plus d'achats que ventes sur m5
-  if (buysM5 >= 2 && buysM5 / Math.max(sellsM5, 1) >= 3.0) score += 8;
+  // RUG_LENT : escalier artificiel, 1-2 wallets font tout le boulot
+  if (buysH1 < 15 && volPerBuyH1 > 1500 && c1h > 30) return 5;
 
-  // ── NÉGATIFS — ÉLIMINATOIRES ───────────────────────────────────
+  // FAIBLE : quasi pas d'activité
+  if (buysH1 < 10) return 8;
 
-  // CLEF 1 : spike passé — c1h énorme mais c5m faible = on arrive après le pump
-  // Runner ratio ~5x / Bundle ratio ~35-44x → seuil 12x
-  if (c1hC5mRatio > 12 && c1h > 80) score -= 30;
-
-  // CLEF 2 : trop peu d'acheteurs = bundle (Runner: 35 buysH1 / Bundle: 5-8)
-  if (buysH1 < 15) score -= 25;
-
-  // CLEF 3 : gros volume par achat = 1-2 wallets (Runner: $514 / Bundle: $5000+)
-  if (volPerBuyH1 > 3000) score -= 20;
-
-  // CLEF 4 : ventes dominent sur m5 (Runner: 0.26 / Bundle: 0.65-0.80)
-  if (sellRatioM5 > 0.50) score -= 20;
-
-  // CLEF 5 : ventes dominent sur h1 = distribution en cours
-  if (sellRatioH1 > 0.55) score -= 15;
-
-  // CLEF 6 : spike violent sur m5 = bundle encore frais
-  if (c5m > 50) score -= 20;
-
-  // CLEF 7 : dump en cours pendant h1 positif = fin du pump
-  if (c5m < -5 && c1h > 50) score -= 15;
-
-  return Math.max(0, Math.min(45, Math.round(score)));
+  // NEUTRE : rien de clair
+  return 15;
 }
 
 function scoreTokenV2(p,walletData={count:0,wallets:[],clustered:false}){
