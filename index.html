@@ -173,47 +173,54 @@ nav{position:sticky;top:0;z-index:100;background:rgba(5,5,8,.92);backdrop-filter
 .code-err{color:var(--red);font-size:.78rem;margin:.6rem 0;text-align:center;}
 .code-submit{width:100%;padding:.8rem;background:var(--green);color:#000;border:none;border-radius:8px;font-weight:700;font-size:.95rem;cursor:pointer;font-family:var(--font);transition:.2s;margin-top:.6rem;}
 .code-submit:hover{background:var(--green2);}
-.admin-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:2000;align-items:center;justify-content:center;backdrop-filter:blur(10px);}
+.admin-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:2000;align-items:center;justify-content:center;backdrop-filter:blur(16px);}
 .admin-overlay.open{display:flex;}
-.admin-panel{background:#080810;border:1px solid rgba(0,255,136,.15);border-radius:16px;padding:36px;max-width:580px;width:92%;max-height:88vh;overflow-y:auto;position:relative;}
-.admin-panel::-webkit-scrollbar{width:3px;}
-.admin-panel::-webkit-scrollbar-thumb{background:var(--green);border-radius:2px;}
-.admin-title{font-family:'Syne',sans-serif;font-size:26px;font-weight:800;color:var(--green);letter-spacing:-1px;margin-bottom:3px;}
-.admin-sub{font-family:'Space Mono',monospace;font-size:10px;color:var(--muted);margin-bottom:24px;}
-.admin-section{margin-bottom:24px;}
-.admin-section-title{font-family:'Space Mono',monospace;font-size:9px;color:var(--green);text-transform:uppercase;letter-spacing:2px;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--border);}
-.admin-row{display:flex;gap:8px;align-items:center;}
-.admin-inp{flex:1;background:rgba(0,0,0,.4);border:1px solid var(--border);border-radius:6px;padding:9px 12px;font-family:'Space Mono',monospace;font-size:11px;color:var(--green);outline:none;transition:border .2s;}
-.admin-inp:focus{border-color:var(--green);}
-.btn-admin{background:var(--green);color:#000;border:none;padding:9px 16px;font-family:'Space Mono',monospace;font-size:10px;font-weight:700;border-radius:6px;cursor:pointer;transition:all .2s;white-space:nowrap;}
-.btn-admin:hover{background:#fff;}
-.btn-admin.red{background:var(--red);color:#fff;}
-.btn-admin.red:hover{background:#ff6b78;}
-.btn-admin.ghost{background:transparent;border:1px solid var(--border);color:var(--muted);}
-.btn-admin.ghost:hover{border-color:var(--green);color:var(--green);background:transparent;}
-.admin-msg{font-family:'Space Mono',monospace;font-size:9px;margin-top:8px;display:none;}
+.admin-panel{background:linear-gradient(150deg,#0c0c1e 0%,#080812 60%,#050510 100%);border:1px solid rgba(0,255,136,.2);border-radius:22px;padding:48px;max-width:720px;width:96%;max-height:92vh;overflow-y:auto;position:relative;box-shadow:0 0 80px rgba(0,255,136,.05),0 24px 100px rgba(0,0,0,.7);}
+.admin-panel::-webkit-scrollbar{width:4px;}
+.admin-panel::-webkit-scrollbar-thumb{background:linear-gradient(var(--green),#00aa55);border-radius:2px;}
+.admin-title{font-family:'Syne',sans-serif;font-size:34px;font-weight:800;background:linear-gradient(135deg,#00ff88 0%,#00cc66 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:-2px;margin-bottom:4px;}
+.admin-sub{font-family:'Space Mono',monospace;font-size:10px;color:var(--muted);margin-bottom:36px;letter-spacing:.5px;}
+.admin-section{margin-bottom:20px;background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:22px 24px;}
+.admin-section-title{font-family:'Space Mono',monospace;font-size:9px;color:rgba(0,255,136,.75);text-transform:uppercase;letter-spacing:3px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;}
+.admin-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+.admin-inp{flex:1;background:rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.1);border-radius:9px;padding:11px 14px;font-family:'Space Mono',monospace;font-size:11px;color:#d8ffe8;outline:none;transition:border .2s,box-shadow .2s;min-width:80px;}
+.admin-inp:focus{border-color:var(--green);box-shadow:0 0 0 3px rgba(0,255,136,.08);}
+.btn-admin{background:linear-gradient(135deg,#00ff88,#00cc55);color:#000;border:none;padding:11px 20px;font-family:'Space Mono',monospace;font-size:10px;font-weight:700;border-radius:9px;cursor:pointer;transition:all .2s;white-space:nowrap;letter-spacing:.5px;}
+.btn-admin:hover{transform:translateY(-1px);box-shadow:0 6px 24px rgba(0,255,136,.25);}
+.btn-admin:active{transform:translateY(0);}
+.btn-admin.red{background:linear-gradient(135deg,#ff2d55,#cc2244);color:#fff;}
+.btn-admin.red:hover{box-shadow:0 6px 24px rgba(255,45,85,.25);}
+.btn-admin.ghost{background:transparent;border:1px solid rgba(255,255,255,.12);color:rgba(255,255,255,.45);}
+.btn-admin.ghost:hover{border-color:var(--green);color:var(--green);background:rgba(0,255,136,.06);}
+.admin-msg{font-family:'Space Mono',monospace;font-size:9px;margin-top:10px;display:none;}
 .admin-msg.ok{color:var(--green);}
 .admin-msg.err{color:var(--red);}
-.codes-list{display:flex;flex-direction:column;gap:5px;max-height:220px;overflow-y:auto;}
-.codes-list::-webkit-scrollbar{width:2px;}
-.codes-list::-webkit-scrollbar-thumb{background:var(--green);}
-.code-item{display:flex;align-items:center;justify-content:space-between;background:rgba(0,255,136,.04);border:1px solid rgba(0,255,136,.1);border-radius:6px;padding:8px 12px;}
-.code-item.used{background:rgba(255,45,85,.04);border-color:rgba(255,45,85,.15);}
-.code-val{font-family:'Space Mono',monospace;font-size:11px;color:var(--green);letter-spacing:1px;}
+.codes-list{display:flex;flex-direction:column;gap:6px;max-height:280px;overflow-y:auto;padding-right:2px;}
+.codes-list::-webkit-scrollbar{width:3px;}
+.codes-list::-webkit-scrollbar-thumb{background:rgba(0,255,136,.35);border-radius:2px;}
+.code-item{display:flex;align-items:center;justify-content:space-between;background:rgba(0,255,136,.03);border:1px solid rgba(0,255,136,.1);border-radius:9px;padding:11px 16px;transition:border .2s,background .2s;}
+.code-item:hover{border-color:rgba(0,255,136,.28);background:rgba(0,255,136,.05);}
+.code-item.used{background:rgba(255,45,85,.03);border-color:rgba(255,45,85,.12);}
+.code-val{font-family:'Space Mono',monospace;font-size:12px;color:#d8ffe8;letter-spacing:2px;font-weight:700;}
 .code-item.used .code-val{color:var(--muted);}
-.code-meta{font-family:'Space Mono',monospace;font-size:8px;color:var(--muted);margin-top:2px;}
+.code-meta{font-family:'Space Mono',monospace;font-size:8px;color:var(--muted);margin-top:3px;line-height:1.6;}
 .code-meta.u{color:var(--red);}
-.code-actions{display:flex;gap:5px;}
-.btn-cc,.btn-del{background:transparent;border:1px solid var(--border);color:var(--muted);font-family:'Space Mono',monospace;font-size:8px;padding:3px 7px;border-radius:3px;cursor:pointer;transition:all .15s;}
-.btn-cc:hover{border-color:var(--green);color:var(--green);}
-.btn-del:hover{border-color:var(--red);color:var(--red);}
-.admin-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
-.admin-stat{background:rgba(0,255,136,.04);border:1px solid rgba(0,255,136,.15);border-radius:6px;padding:12px;text-align:center;}
-.admin-stat-val{font-family:'Syne',sans-serif;font-size:26px;font-weight:800;color:var(--green);}
-.admin-stat-lbl{font-family:'Space Mono',monospace;font-size:8px;color:var(--muted);margin-top:2px;}
-.pw-input{width:100%;background:rgba(0,0,0,.4);border:1px solid var(--border);border-radius:6px;padding:.6rem .9rem;color:var(--text);font-family:var(--font-mono);font-size:.9rem;margin-bottom:.8rem;}
-.pw-input:focus{outline:none;border-color:var(--green);}
+.code-actions{display:flex;gap:5px;flex-shrink:0;}
+.btn-cc,.btn-del{background:transparent;border:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.35);font-family:'Space Mono',monospace;font-size:8px;padding:4px 9px;border-radius:5px;cursor:pointer;transition:all .15s;}
+.btn-cc:hover{border-color:var(--green);color:var(--green);background:rgba(0,255,136,.07);}
+.btn-del:hover{border-color:var(--red);color:var(--red);background:rgba(255,45,85,.07);}
+.admin-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
+.admin-stat{background:rgba(0,0,0,.35);border:1px solid rgba(0,255,136,.13);border-radius:11px;padding:16px;text-align:center;}
+.admin-stat-val{font-family:'Syne',sans-serif;font-size:30px;font-weight:800;color:var(--green);}
+.admin-stat-lbl{font-family:'Space Mono',monospace;font-size:8px;color:var(--muted);margin-top:3px;letter-spacing:1px;}
+.pw-input{width:100%;background:rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.1);border-radius:9px;padding:.75rem 1rem;color:var(--text);font-family:var(--font-mono);font-size:.9rem;margin-bottom:.9rem;outline:none;transition:border .2s;}
+.pw-input:focus{border-color:var(--green);box-shadow:0 0 0 3px rgba(0,255,136,.08);}
 .admin-pw-err{color:var(--red);font-size:.78rem;margin-bottom:.6rem;}
+.dur-row{display:flex;gap:6px;align-items:center;}
+.dur-inp{width:68px;background:rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.1);border-radius:9px;padding:11px 10px;font-family:'Space Mono',monospace;font-size:11px;color:#d8ffe8;outline:none;text-align:center;transition:border .2s;}
+.dur-inp:focus{border-color:var(--green);}
+.dur-sel{background:rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.1);border-radius:9px;padding:11px 10px;font-family:'Space Mono',monospace;font-size:11px;color:#d8ffe8;outline:none;cursor:pointer;transition:border .2s;}
+.dur-sel:focus{border-color:var(--green);}
 .debug-overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);backdrop-filter:blur(6px);z-index:300;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:.3s;}
 .debug-overlay.open{opacity:1;pointer-events:all;}
 .debug-box{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:2rem;width:90%;max-width:620px;max-height:85vh;overflow-y:auto;position:relative;}
@@ -926,57 +933,76 @@ section{scroll-margin-top:70px;}
 <!-- ADMIN OVERLAY -->
 <div class="admin-overlay" id="adminOverlay">
   <div class="admin-panel">
-    <button class="modal-close" onclick="closeAdmin()" style="position:absolute;top:14px;right:14px;background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer;">✕</button>
+    <button class="modal-close" onclick="closeAdmin()" style="position:absolute;top:18px;right:20px;background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;line-height:1;opacity:.6;transition:opacity .2s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=.6">✕</button>
     <div id="adminPwScreen">
       <div class="admin-title">ADMIN</div>
-      <p class="admin-sub">Accès réservé — entre le mot de passe admin</p>
-      <div class="admin-row" style="max-width:320px;">
-        <input class="admin-inp" type="password" id="adminPwInp" placeholder="Mot de passe..." onkeydown="if(event.key==='Enter')checkPw()">
-        <button class="btn-admin" onclick="checkPw()">ENTRER</button>
+      <p class="admin-sub">Accès réservé — entrer le mot de passe administrateur</p>
+      <div class="admin-section" style="max-width:420px;">
+        <div class="admin-section-title">Authentification</div>
+        <div class="admin-row">
+          <input class="admin-inp" type="password" id="adminPwInp" placeholder="Mot de passe..." onkeydown="if(event.key==='Enter')checkPw()" style="font-size:14px;padding:13px 16px;">
+          <button class="btn-admin" onclick="checkPw()" style="padding:13px 22px;font-size:11px;">ENTRER</button>
+        </div>
+        <div class="admin-msg err" id="pwErr" style="display:none;margin-top:10px;">Mot de passe incorrect.</div>
       </div>
-      <div class="admin-msg err" id="pwErr">Mot de passe incorrect.</div>
     </div>
     <div id="adminContent" style="display:none;">
       <div class="admin-title">ADMIN PANEL</div>
-      <p class="admin-sub">Gérer les codes d'accès MemeScanner</p>
+      <p class="admin-sub">Gestion des accès — MemeScanner</p>
+
+      <!-- STATS -->
       <div class="admin-section">
-        <div class="admin-section-title">⚙ Changer mot de passe admin</div>
-        <div class="admin-row">
-          <input class="admin-inp" type="password" id="newPwInp" placeholder="Nouveau mot de passe (min 4 car.)...">
-          <button class="btn-admin" onclick="changePw()">CHANGER</button>
+        <div class="admin-section-title">Statistiques</div>
+        <div class="admin-stats">
+          <div class="admin-stat"><div class="admin-stat-val" id="stTotal">0</div><div class="admin-stat-lbl">TOTAL</div></div>
+          <div class="admin-stat" style="background:rgba(255,71,87,.05);border-color:rgba(255,71,87,.18);"><div class="admin-stat-val" id="stUsed" style="color:var(--red);">0</div><div class="admin-stat-lbl">EXPIRÉS</div></div>
+          <div class="admin-stat" style="background:rgba(0,255,136,.04);border-color:rgba(0,255,136,.18);"><div class="admin-stat-val" id="stFree">0</div><div class="admin-stat-lbl">DISPONIBLES</div></div>
         </div>
-        <div class="admin-msg ok" id="pwOkMsg">✓ Mot de passe modifié</div>
       </div>
+
+      <!-- GENERATE CODES -->
       <div class="admin-section">
-        <div class="admin-section-title">🔑 Générer des codes</div>
-        <div class="admin-row">
-          <select class="admin-inp" id="planSel" style="flex:.8;">
-            <option value="BASE">BASE ($19)</option>
-            <option value="ALPH">ALPHA ($49)</option>
-            <option value="DGNP">DUBAI MODE ($99)</option>
+        <div class="admin-section-title">Générer des codes d'accès</div>
+        <div class="admin-row" style="gap:10px;flex-wrap:wrap;">
+          <select class="admin-inp" id="planSel" style="flex:1.2;min-width:140px;">
+            <option value="BASE">BASE</option>
+            <option value="ALPH">ALPHA</option>
+            <option value="DGNP">DUBAI MODE</option>
           </select>
-          <input class="admin-inp" type="number" id="genCount" value="1" min="1" max="50" style="flex:.35;text-align:center;">
-          <button class="btn-admin" onclick="genCodes()">GÉNÉRER</button>
+          <input class="admin-inp" type="number" id="genCount" value="1" min="1" max="50" style="width:64px;flex:none;text-align:center;" placeholder="Qté">
+          <div class="dur-row">
+            <input class="dur-inp" type="number" id="durVal" value="30" min="1" max="9999" placeholder="30">
+            <select class="dur-sel" id="durUnit">
+              <option value="min">min</option>
+              <option value="h">heures</option>
+              <option value="j" selected>jours</option>
+            </select>
+          </div>
+          <button class="btn-admin" onclick="genCodes()" style="flex:none;">GÉNÉRER</button>
         </div>
         <div class="admin-msg ok" id="genOkMsg"></div>
       </div>
+
+      <!-- CODES LIST -->
       <div class="admin-section">
-        <div class="admin-section-title" style="display:flex;justify-content:space-between;align-items:center;">
-          <span>📋 Codes (<span id="codeCount">0</span>)</span>
+        <div class="admin-section-title">
+          <span>Codes actifs <span id="codeCount" style="color:var(--green);font-size:10px;"></span></span>
           <div style="display:flex;gap:6px;">
-            <button class="btn-admin ghost" onclick="exportCodes()" style="font-size:8px;padding:4px 10px;">EXPORT CSV</button>
-            <button class="btn-admin red" onclick="clearUsed()" style="font-size:8px;padding:4px 10px;">SUPPR. UTILISÉS</button>
+            <button class="btn-admin ghost" onclick="exportCodes()" style="font-size:8px;padding:5px 11px;">EXPORT CSV</button>
+            <button class="btn-admin red" onclick="clearUsed()" style="font-size:8px;padding:5px 11px;">SUPPR. EXPIRÉS</button>
           </div>
         </div>
         <div class="codes-list" id="codesList"></div>
       </div>
+
+      <!-- CHANGE PASSWORD -->
       <div class="admin-section">
-        <div class="admin-section-title">📊 Stats</div>
-        <div class="admin-stats">
-          <div class="admin-stat"><div class="admin-stat-val" id="stTotal">0</div><div class="admin-stat-lbl">TOTAL</div></div>
-          <div class="admin-stat" style="background:rgba(255,71,87,.06);border-color:rgba(255,71,87,.2);"><div class="admin-stat-val" id="stUsed" style="color:var(--red);">0</div><div class="admin-stat-lbl">UTILISÉS</div></div>
-          <div class="admin-stat"><div class="admin-stat-val" id="stFree">0</div><div class="admin-stat-lbl">DISPO</div></div>
+        <div class="admin-section-title">Mot de passe admin</div>
+        <div class="admin-row">
+          <input class="admin-inp" type="password" id="newPwInp" placeholder="Nouveau mot de passe...">
+          <button class="btn-admin ghost" onclick="changePw()">CHANGER</button>
         </div>
+        <div class="admin-msg ok" id="pwOkMsg"></div>
       </div>
     </div>
   </div>
@@ -2814,6 +2840,8 @@ function loadCodes(){try{const c=JSON.parse(localStorage.getItem(CODE_KEY));if(c
 function saveCodes(c){localStorage.setItem(CODE_KEY,JSON.stringify(c));fetch(`${FB_URL}/codes.json`,{method:'PUT',body:JSON.stringify(c)}).catch(()=>{});}
 function getDefaultCodes(){return[{code:'CODE-DEMO-1234',plan:'alpha',used:false},{code:'BASE-TEST-0001',plan:'base',used:false},{code:'DUBA-MODE-9999',plan:'dubai',used:false}];}
 function checkSession(){try{const s=JSON.parse(localStorage.getItem(SESSION_KEY));if(s&&s.expires>Date.now()){isUnlocked=true;onUnlock(s.plan);}}catch(e){}}
+// Auto-déconnexion à expiration de session
+setInterval(()=>{if(!isUnlocked)return;try{const s=JSON.parse(localStorage.getItem(SESSION_KEY));if(!s||s.expires<=Date.now()){isUnlocked=false;localStorage.removeItem(SESSION_KEY);location.reload();}}catch(e){}},30000);
 async function submitCode(){
   const val=document.getElementById('codeInput').value.trim().toUpperCase();
   const err=document.getElementById('codeErr');
@@ -2823,9 +2851,12 @@ async function submitCode(){
   const found=codes.find(c=>c.code===val&&!c.used);
   if(btn){btn.textContent='Accéder →';btn.disabled=false;}
   if(!found){err.textContent='Code invalide ou déjà utilisé.';err.style.display='block';document.getElementById('codeInput').classList.add('err');return;}
-  found.used=true;
-  await saveCodesFB(codes);
-  localStorage.setItem(SESSION_KEY,JSON.stringify({plan:found.plan,expires:Date.now()+30*24*60*60*1000}));
+  const duration=found.duration||30*24*60*60*1000;
+  const expires=Date.now()+duration;
+  // Suppression du code (usage unique)
+  const remaining=codes.filter(c=>c.code!==val);
+  await saveCodesFB(remaining);
+  localStorage.setItem(SESSION_KEY,JSON.stringify({plan:found.plan,expires}));
   isUnlocked=true;closeCode();onUnlock(found.plan);
 }
 function onUnlock(plan){loadReviews();fetchTokens();fetchRugs().then(()=>{if(rugPriceTimer)clearTimeout(rugPriceTimer);rugPriceTimer=setTimeout(refreshRugPrices,3000);});}
@@ -2884,27 +2915,37 @@ async function adminEditAth(key,addr,sym){
   renderHistory();
 }
 function genCode(plan){const c='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';const s=(n)=>Array.from({length:n},()=>c[Math.floor(Math.random()*c.length)]).join('');return plan+'-'+s(4)+'-'+s(4);}
+function parseDurationMs(){const v=parseInt(document.getElementById('durVal').value)||30;const u=document.getElementById('durUnit').value;if(u==='min')return v*60*1000;if(u==='h')return v*3600*1000;return v*24*3600*1000;}
+function fmtDuration(ms){if(!ms)return'∞';const d=Math.floor(ms/86400000);const h=Math.floor((ms%86400000)/3600000);const m=Math.floor((ms%3600000)/60000);if(d>0)return d+'j'+(h>0?' '+h+'h':'');if(h>0)return h+'h'+(m>0?' '+m+'min':'');return m+'min';}
 async function genCodes(){
   const plan=document.getElementById('planSel').value;
   const n=Math.min(parseInt(document.getElementById('genCount').value)||1,50);
+  const duration=parseDurationMs();
   const created=[];
   const codes=await loadCodesFromFB();
-  for(let i=0;i<n;i++){const code=genCode(plan);codes.push({code,plan,used:false,ts:Date.now()});created.push(code);}
+  for(let i=0;i<n;i++){const code=genCode(plan);codes.push({code,plan,used:false,duration,ts:Date.now()});created.push(code);}
   await saveCodesFB(codes);renderCodes();
   const m=document.getElementById('genOkMsg');
-  m.textContent='✓ '+n+' code(s) généré(s)'+(n===1?' : '+created[0]:'');
-  m.style.display='block';setTimeout(()=>m.style.display='none',5000);
+  m.textContent='✓ '+n+' code(s) généré(s) — validité '+fmtDuration(duration)+(n===1?' : '+created[0]:'');
+  m.style.display='block';setTimeout(()=>m.style.display='none',6000);
 }
 async function renderCodes(){
   const codes=await loadCodesFromFB();
   const used=codes.filter(c=>c.used).length;
-  document.getElementById('codeCount').textContent=codes.length;
+  const free=codes.filter(c=>!c.used).length;
+  document.getElementById('codeCount').textContent=codes.length?'('+codes.length+')':'';
   document.getElementById('stTotal').textContent=codes.length;
   document.getElementById('stUsed').textContent=used;
-  document.getElementById('stFree').textContent=codes.length-used;
+  document.getElementById('stFree').textContent=free;
   const el=document.getElementById('codesList');
-  if(!codes.length){el.innerHTML='<div style="font-family:Space Mono,monospace;font-size:10px;color:var(--muted);padding:14px;text-align:center;">Aucun code</div>';return;}
-  el.innerHTML=[...codes].reverse().map((c,i)=>{const ri=codes.length-1-i;return`<div class="code-item${c.used?' used':''}"><div><div class="code-val">${c.code}</div><div class="code-meta${c.used?' u':''}">${c.plan} — ${c.used?'🔴 UTILISÉ':'🟢 DISPONIBLE'}</div></div><div class="code-actions"><button class="btn-cc" onclick="cpCode('${c.code}',this)">COPY</button><button class="btn-del" onclick="delCode(${ri})">✕</button></div></div>`;}).join('');
+  if(!codes.length){el.innerHTML='<div style="font-family:Space Mono,monospace;font-size:10px;color:var(--muted);padding:18px;text-align:center;opacity:.5;">Aucun code généré</div>';return;}
+  el.innerHTML=[...codes].reverse().map((c,i)=>{
+    const ri=codes.length-1-i;
+    const durLabel=c.duration?fmtDuration(c.duration):'∞';
+    const statusLabel=c.used?'🔴 UTILISÉ (ancien)':'🟢 DISPONIBLE';
+    const statusClass=c.used?' used':'';
+    return`<div class="code-item${statusClass}"><div style="min-width:0;flex:1;"><div class="code-val">${c.code}</div><div class="code-meta${c.used?' u':''}">${c.plan} — ${statusLabel} — durée : ${durLabel}</div></div><div class="code-actions"><button class="btn-cc" onclick="cpCode('${c.code}',this)">COPY</button><button class="btn-del" onclick="delCode(${ri})">✕</button></div></div>`;
+  }).join('');
 }
 
 // ============================================================
@@ -2915,7 +2956,7 @@ function copyHistCA(el){const addr=el.dataset.addr||el.closest('[data-addr]')?.d
 function cpCode(code,btn){navigator.clipboard.writeText(code).then(()=>{const o=btn.textContent;btn.textContent='✓';btn.style.borderColor='var(--green)';btn.style.color='var(--green)';setTimeout(()=>{btn.textContent=o;btn.style.borderColor='';btn.style.color='';},1200);}).catch(()=>{});}
 function delCode(idx){const codes=loadCodes();codes.splice(idx,1);saveCodes(codes);renderCodes();saveCodesFB(codes);}
 function clearUsed(){if(!confirm('Supprimer tous les codes utilisés ?'))return;const filtered=loadCodes().filter(c=>!c.used);saveCodes(filtered);saveCodesFB(filtered);renderCodes();}
-function exportCodes(){const codes=loadCodes();const rows=['Code,Plan,Statut,Date'];codes.forEach(c=>rows.push([c.code,c.plan,c.used?'UTILISÉ':'DISPO',new Date(c.ts||Date.now()).toLocaleDateString('fr-FR')].join(',')));const url=URL.createObjectURL(new Blob([rows.join('\n')],{type:'text/csv'}));const a=document.createElement('a');a.href=url;a.download='memescanner_codes.csv';a.click();URL.revokeObjectURL(url);}
+function exportCodes(){const codes=loadCodes();const rows=['Code,Plan,Statut,Durée,Date'];codes.forEach(c=>rows.push([c.code,c.plan,c.used?'UTILISÉ':'DISPO',c.duration?fmtDuration(c.duration):'∞',new Date(c.ts||Date.now()).toLocaleDateString('fr-FR')].join(',')));const url=URL.createObjectURL(new Blob([rows.join('\n')],{type:'text/csv'}));const a=document.createElement('a');a.href=url;a.download='memescanner_codes.csv';a.click();URL.revokeObjectURL(url);}
 function toggleDebugMode(){debugModeOn=!debugModeOn;const btn=document.getElementById('debugToggleBtn');if(btn)btn.textContent=debugModeOn?'🟠 Debug ON':'🟠 Debug OFF';if(lastScored.length)renderTokenTable(lastScored);}
 
 // ============================================================
