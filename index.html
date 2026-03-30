@@ -1046,7 +1046,7 @@ window.addEventListener('unhandledrejection', function(e) { console.error('Promi
 // ============================================================
 // CONFIG
 // ============================================================
-let ADMIN_PW = 'admin1234';
+// ADMIN_PW supprimé du frontend — vérification via backend Railway uniquement
 const HELIUS_KEY = '0f25b592-f8cd-449e-aac8-60812b2c4d50'; // conservé pour debug CA local uniquement
 const HELIUS_RPC = `https://mainnet.helius-rpc.com/?api-key=${HELIUS_KEY}`;
 const FB_URL = 'https://memescanner-calls-default-rtdb.firebaseio.com';
@@ -2839,20 +2839,26 @@ function closeCode(){document.getElementById('codeModal').classList.remove('open
 function openAdmin(){document.getElementById('adminOverlay').classList.add('open');document.getElementById('adminPwScreen').style.display='block';document.getElementById('adminContent').style.display='none';document.getElementById('pwErr').style.display='none';setTimeout(()=>document.getElementById('adminPwInp').focus(),80);}
 function closeAdmin(){document.getElementById('adminOverlay').classList.remove('open');document.getElementById('adminPwInp').value='';}
 function closeDebug(){document.getElementById('debugOverlay').classList.remove('open');}
-function getAdminPw(){try{return localStorage.getItem('ms_admin_pw')||ADMIN_PW;}catch(e){return ADMIN_PW;}}
-function setAdminPw(p){try{localStorage.setItem('ms_admin_pw',p);}catch(e){}}
 function checkPw(){
   const v=document.getElementById('adminPwInp').value;
-  if(v===getAdminPw()){
-    document.getElementById('adminPwScreen').style.display='none';
-    document.getElementById('adminContent').style.display='block';
-    isAdminMode=true;
-    loadCodesFromFB().then(fbCodes=>{if(!fbCodes||fbCodes.length===0){const local=loadCodes();if(local.length>0){saveCodesFB(local);}}});
-    renderCodes();document.getElementById('debugToggleBtn').style.display='inline-block';
-    document.getElementById('tabDebugCA').style.display='inline-block';
-  }else{document.getElementById('pwErr').style.display='block';document.getElementById('adminPwInp').value='';}
+  if(!v)return;
+  document.getElementById('pwErr').style.display='none';
+  // Vérification via backend Railway — mot de passe jamais dans le code frontend
+  fetch(`${BACKEND_URL}/admin/verify`,{
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({pw:v}),signal:AbortSignal.timeout(5000)
+  }).then(r=>r.json()).then(res=>{
+    if(res.ok){
+      document.getElementById('adminPwScreen').style.display='none';
+      document.getElementById('adminContent').style.display='block';
+      isAdminMode=true;
+      loadCodesFromFB().then(fbCodes=>{if(!fbCodes||fbCodes.length===0){const local=loadCodes();if(local.length>0){saveCodesFB(local);}}});
+      renderCodes();document.getElementById('debugToggleBtn').style.display='inline-block';
+      document.getElementById('tabDebugCA').style.display='inline-block';
+    }else{document.getElementById('pwErr').style.display='block';document.getElementById('adminPwInp').value='';}
+  }).catch(()=>{document.getElementById('pwErr').style.display='block';document.getElementById('adminPwInp').value='';});
 }
-function changePw(){const v=document.getElementById('newPwInp').value.trim();if(v.length<4)return;setAdminPw(v);ADMIN_PW=v;document.getElementById('newPwInp').value='';const m=document.getElementById('pwOkMsg');m.style.display='block';setTimeout(()=>m.style.display='none',2500);}
+function changePw(){const m=document.getElementById('pwOkMsg');m.textContent='Changez ADMIN_PW dans Railway Variables';m.style.display='block';setTimeout(()=>m.style.display='none',4000);}
 
 async function adminEditAth(key,addr,sym){
   const raw=prompt(`✏️ ATH manuel pour ${sym}\n\nNouvelle valeur en $ (ex: 258000) :`);
