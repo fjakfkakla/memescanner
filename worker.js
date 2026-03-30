@@ -99,12 +99,15 @@ async function checkTokenSecurity(tokenAddr, pairAddr = null) {
     let top1Pct = 0, top5Pct = 0, top10Pct = 0, holderCount = 0;
     if (holdersRes.status === 'fulfilled') {
       const accounts = holdersRes.value?.result?.value || [];
-      holderCount = accounts.length;
       const supply = accounts.reduce((s, a) => s + (a.uiAmount || 0), 0) || 1;
       const exclude = new Set([pairAddr].filter(Boolean));
       const filtered = accounts.filter(a => !exclude.has(a.address));
       const sorted   = [...filtered].sort((a, b) => (b.uiAmount || 0) - (a.uiAmount || 0));
-      const pct = (n) => sorted.slice(0, n).reduce((s, a) => s + (a.uiAmount || 0), 0) / supply * 100;
+      // Exclure le #1 holder (LP pool / bonding curve) — toujours le plus gros
+      // Scorer uniquement les vrais wallets [2..11]
+      const real   = sorted.slice(1, 11);
+      holderCount  = real.length;
+      const pct = (n) => real.slice(0, n).reduce((s, a) => s + (a.uiAmount || 0), 0) / supply * 100;
       top1Pct  = pct(1);
       top5Pct  = pct(5);
       top10Pct = pct(10);
