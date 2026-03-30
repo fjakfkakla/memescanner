@@ -57,6 +57,21 @@ app.post('/verify-code', (req, res) => {
   res.json({ ok: valid, valid });
 });
 
+// Vérification mot de passe admin — stocké dans ADMIN_PW Railway, jamais dans le frontend
+app.post('/admin/verify', (req, res) => {
+  const { pw } = req.body || {};
+  if (!pw) return res.status(400).json({ ok: false });
+  const ADMIN_PW = process.env.ADMIN_PW || '';
+  if (!ADMIN_PW) return res.status(500).json({ ok: false, error: 'ADMIN_PW non configuré' });
+  res.json({ ok: pw === ADMIN_PW });
+});
+
+// Changement mot de passe admin — nécessite l'ancien mot de passe pour valider
+app.post('/admin/change-pw', (req, res) => {
+  // Le vrai changement se fait dans Railway Variables — cet endpoint indique juste la procédure
+  res.json({ ok: false, error: 'Changez ADMIN_PW directement dans Railway Variables' });
+});
+
 // Debug CA — analyse complète d'un token à la demande (deep mode)
 app.get('/debug/:addr', async (req, res) => {
   const { addr } = req.params;
