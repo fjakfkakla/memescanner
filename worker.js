@@ -296,7 +296,7 @@ export async function runScanCycle() {
         scoreHistory.set(scored.addr, { maxAxiom: Math.max(hist.maxAxiom || 0, scored.debug.axiomCount) });
 
         // HARD FILTER 0 — Axiom obligatoire
-        if ((wData.count || 0) < 1) { rejected['no_axiom'] = (rejected['no_axiom'] || 0) + 1; continue; }
+        if ((wData.count || 0) < 2) { rejected['no_axiom'] = (rejected['no_axiom'] || 0) + 2; continue; }
 
         // HARD FILTER 1 — Platform Pump/Bonk/Raydium
         const dexId  = (p.dexId || '').toLowerCase();
@@ -308,10 +308,13 @@ export async function runScanCycle() {
 
         // HARD FILTER 2 — Mcap min
         if (scored.mcap < 15000) { rejected['mcap<15K'] = (rejected['mcap<15K'] || 0) + 1; continue; }
+          
+const callThreshold = (wData.count || 0) >= 5 ? 65 : 80;
 
-        if (scored.score >= 80) {
-          finalScored.push(scored);
-        } else {
+if (scored.score >= callThreshold) {
+  finalScored.push(scored);
+}
+         else {
           rejected[`score<80 (${scored.score})`] = (rejected[`score<80 (${scored.score})`] || 0) + 1;
         }
       } catch (e) {
