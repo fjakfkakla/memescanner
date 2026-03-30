@@ -9,40 +9,54 @@ function hardFilterV2(p) {
 }
 
 function calculatePatternScore(p) {
-  const c5m        = p.priceChange?.m5  || 0;
-  const c1h        = p.priceChange?.h1  || 0;
-  const c6h        = p.priceChange?.h6  || 0;
-  const buysM5     = p.txns?.m5?.buys   || 0;
-  const sellsM5    = p.txns?.m5?.sells  || 0;
-  const buysH1     = p.txns?.h1?.buys   || 0;
-  const sellsH1    = p.txns?.h1?.sells  || 0;
-  const volH1      = p.volume?.h1       || 0;
-  const mcap       = p.marketCap || p.fdv || 0;
+  const c5m         = p.priceChange?.m5 || 0;
+  const c1h         = p.priceChange?.h1 || 0;
+  const buysH1      = p.txns?.h1?.buys  || 0;
+  const sellsH1     = p.txns?.h1?.sells || 0;
+  const buysM5      = p.txns?.m5?.buys  || 0;
+  const sellsM5     = p.txns?.m5?.sells || 0;
+  const volH1       = p.volume?.h1      || 0;
 
-  const totalM5       = buysM5 + sellsM5 || 1;
   const totalH1       = buysH1 + sellsH1 || 1;
-  const sellRatioM5   = sellsM5 / totalM5;
   const sellRatioH1   = sellsH1 / totalH1;
   const volPerBuyH1   = volH1 / Math.max(buysH1, 1);
-  const c1hC5mRatio   = c1h / Math.max(Math.abs(c5m), 0.5);
 
-  let score = 0;
+  // ── STAIRCASE — vrai runner organique ──────────────────────────
+  // c1h jusqu'à 250% car token de 15-20min peut légitimement avoir +200%
+  if (
+    c5m >= 2 && c5m <= 18 &&
+    c1h >= 20 && c1h <= 250 &&
+    buysH1 >= 25 &&
+    sellRatioH1 < 0.40 &&
+    volPerBuyH1 < 1200
+  ) return 40;
 
-  if (c5m >= 3 && c5m <= 20 && sellRatioM5 < 0.35 && buysM5 >= 10) score += 20;
-  if (buysH1 >= 20 && sellRatioH1 < 0.45) score += 15;
-  if (c1h >= 20 && c1h <= 100 && c5m > 0 && c5m <= 25) score += 12;
-  if (volPerBuyH1 < 1500 && buysH1 >= 12) score += 10;
-  if (buysM5 >= 2 && buysM5 / Math.max(sellsM5, 1) >= 3.0) score += 8;
+  // ── MOMENTUM — bonne dynamique, pas parfaitement structuré ─────
+  if (
+    c5m >= 2 && c5m <= 20 &&
+    buysH1 >= 15 &&
+    sellRatioH1 < 0.50
+  ) return 28;
 
-  if (c1hC5mRatio > 12 && c1h > 80) score -= 30;
-  if (buysH1 < 15) score -= 25;
-  if (volPerBuyH1 > 3000) score -= 20;
-  if (sellRatioM5 > 0.50) score -= 20;
-  if (sellRatioH1 > 0.55) score -= 15;
-  if (c5m > 50) score -= 20;
-  if (c5m < -5 && c1h > 50) score -= 15;
+  // ── MAUVAIS PATTERNS ───────────────────────────────────────────
 
-  return Math.max(0, Math.min(45, Math.round(score)));
+  // BUNDLE : gros pump total mais presque personne n'a acheté
+  if (c1h > 150 && buysH1 < 12) return 2;
+
+  // SPIKE : encore en train de monter trop vite (trop tard / trop chaud)
+  if (c5m > 35) return 3;
+
+  // DUMP : déjà en train de redescendre depuis son ATH
+  if (c5m < -10 && c1h > 30) return 3;
+
+  // RUG_LENT : escalier artificiel, 1-2 wallets font tout le boulot
+  if (buysH1 < 15 && volPerBuyH1 > 1500 && c1h > 30) return 5;
+
+  // FAIBLE : quasi pas d'activité
+  if (buysH1 < 10) return 8;
+
+  // NEUTRE : rien de clair
+  return 15;
 }
 
 export function scoreTokenV2(p, walletData = { count: 0, wallets: [], clustered: false }) {
