@@ -5,12 +5,31 @@ const FB_URL = process.env.FB_URL;
 // Sur Railway : FIREBASE_CREDENTIALS_JSON = contenu du JSON de service account (pas un chemin)
 if (!admin.apps.length) {
   const raw = process.env.FIREBASE_CREDENTIALS_JSON;
-  if (!raw) throw new Error('Variable FIREBASE_CREDENTIALS_JSON manquante');
-  const serviceAccount = JSON.parse(raw);
-  admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount),
-    databaseURL: FB_URL,
-  });
+  if (!raw) {
+    console.error('[Firebase] ERREUR FATALE: variable FIREBASE_CREDENTIALS_JSON manquante dans Railway Variables');
+    process.exit(1);
+  }
+  if (!FB_URL) {
+    console.error('[Firebase] ERREUR FATALE: variable FB_URL manquante dans Railway Variables');
+    process.exit(1);
+  }
+  let serviceAccount;
+  try {
+    serviceAccount = JSON.parse(raw);
+  } catch (e) {
+    console.error('[Firebase] ERREUR FATALE: FIREBASE_CREDENTIALS_JSON n\'est pas un JSON valide:', e.message);
+    process.exit(1);
+  }
+  try {
+    admin.initializeApp({
+      credential: admin.credential.cert(serviceAccount),
+      databaseURL: FB_URL,
+    });
+    console.log('[Firebase] Initialisé avec succès');
+  } catch (e) {
+    console.error('[Firebase] ERREUR FATALE initialisation:', e.message);
+    process.exit(1);
+  }
 }
 
 export const db = admin.database();

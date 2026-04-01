@@ -111,10 +111,34 @@ async function checkTokenSecurity(tokenAddr, pairAddr = null) {
     if (assetRes.status === 'fulfilled') {
       const asset = assetRes.value?.result;
       const links = asset?.content?.links || {};
-      const socials = asset?.content?.metadata?.socials || [];
-      hasTwitter  = !!(links.twitter  || links.x || socials.find(s => s.type === 'twitter'));
-      hasTelegram = !!(links.telegram || socials.find(s => s.type === 'telegram'));
-      hasWebsite  = !!(links.website  || asset?.content?.links?.website);
+      const meta  = asset?.content?.metadata || {};
+      const ext   = meta.extensions || {};
+      const socials = meta.socials || [];
+      // pump.fun stocke twitter/telegram/website directement dans metadata ou extensions
+      let twitter  = links.twitter || links.x || meta.twitter || meta.x || ext.twitter || socials.find(s => s.type === 'twitter')?.url || '';
+      let telegram = links.telegram || meta.telegram || ext.telegram || socials.find(s => s.type === 'telegram')?.url || '';
+      let website  = links.website || links.external_url || meta.website || meta.external_url || ext.website || '';
+      // Vérifier aussi les attributes (certains tokens les utilisent)
+      for (const attr of (meta.attributes || [])) {
+        if (!twitter  && (attr.trait_type === 'twitter' || attr.trait_type === 'Twitter'))   twitter  = attr.value;
+        if (!telegram && (attr.trait_type === 'telegram' || attr.trait_type === 'Telegram')) telegram = attr.value;
+        if (!website  && (attr.trait_type === 'website' || attr.trait_type === 'Website'))   website  = attr.value;
+      }
+      // Fallback: fetch JSON URI (pump.fun metadata on-chain)
+      if (!twitter && !telegram) {
+        const jsonUri = asset?.content?.json_uri;
+        if (jsonUri && jsonUri.startsWith('http')) {
+          try {
+            const mj = await fetch(jsonUri, { signal: AbortSignal.timeout(5000) }).then(r => r.json());
+            twitter  = twitter  || mj?.twitter  || mj?.extensions?.twitter  || '';
+            telegram = telegram || mj?.telegram || mj?.extensions?.telegram || '';
+            website  = website  || mj?.website  || mj?.extensions?.website  || mj?.external_url || '';
+          } catch(e) { /* optionnel */ }
+        }
+      }
+      hasTwitter  = !!twitter;
+      hasTelegram = !!telegram;
+      hasWebsite  = !!website;
       mintAuthority   = asset?.mint_extensions?.mint_close_authority || null;
       freezeAuthority = asset?.mint_extensions?.permanent_delegate   || null;
     }
@@ -326,8 +350,9 @@ export async function runScanCycle() {
         const pairUrl = (p.url  || '').toLowerCase();
         const isPump  = dexId.includes('pump') || pairUrl.includes('pump');
         const isBonk  = dexId.includes('bonk') || dexId.includes('launchlab');
-        const isRay   = dexId.includes('raydium') || dexId.includes('cpmm');
-        if (!isPump && !isBonk && !isRay) { rejected['platform'] = (rejected['platform'] || 0) + 1; continue; }
+        const isRay   = dexId.includes('raydium') || dexId.includes('cpmm') || dexId.includes('clmm');
+        const isPumpSwap = dexId.includes('pumpswap') || pairUrl.includes('pumpswap');
+        if (!isPump && !isBonk && !isRay && !isPumpSwap) { rejected['platform'] = (rejected['platform'] || 0) + 1; continue; }
 
         // HARD FILTER 2 — Mcap min
         if (scored.mcap < 15000) { rejected['mcap<15K'] = (rejected['mcap<15K'] || 0) + 1; continue; }

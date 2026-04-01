@@ -17,25 +17,26 @@ function calculatePatternScore(p) {
   const buysM5  = p.txns?.m5?.buys  || 0;
   const sellsM5 = p.txns?.m5?.sells || 0;
 
-  // 1. Vrai Staircase (très strict - doit avoir de la structure)
-  if (c5m > 6 && c1h > 35 && c6h > 55 && c1h < 80) score += 15;
+  // 1. Montée douce / Staircase : c1h fort mais c5m modéré = croissance régulière pas spike
+  //    c5m positif mais petit par rapport à c1h → montée en escalier
+  if (c1h > 35 && c5m > 0 && c5m < 20 && c1h > c5m * 3) score += 15;
   // 2. Correction saine (pas trop violente)
   if (c1h >= -20 && c1h <= -5) score += 10;
-  // 3. Multi-pumps avec structure
+  // 3. Gros pump avec structure (multi-pumps)
   if (c1h > 35 && c6h > 55) score += 10;
   if (c6h > 75) score += 5;
-  // 4. Consolidation propre
+  // 4. Consolidation propre (stabilisation après pump = très bon signe)
   if (Math.abs(c5m) < 7 && c1h > 22) score += 8;
   // 5. Pas de dump violent
   if (c5m > -25 && m1 > -16) score += 5;
-  // 6. Volume organique (anti-bundle)
+  // 6. Volume organique (anti-bundle) — buys dominent les sells
   if (buysM5 > sellsM5 * 1.55) score += 7;
 
   // === PÉNALITÉS ANTI-RUG / FAUX PUMP ===
-  if (c1h > 90 && c5m < -28) score -= 18;
-  if (c6h > 140 && c1h < 20) score -= 15;
-  if (sellsM5 > buysM5 * 1.7 && c1h > 30) score -= 12;
-  if (c1h > 60 && Math.abs(c5m) > 25) score -= 10;
+  if (c1h > 90 && c5m < -28) score -= 18;          // pump puis dump violent
+  if (c6h > 140 && c1h < 20) score -= 15;           // retombé après gros pump
+  if (sellsM5 > buysM5 * 1.7 && c1h > 30) score -= 12; // sells dominent malgré pump
+  if (c1h > 60 && c5m < -20) score -= 10;           // dump en cours après pump (avant: |c5m|>25 pénalisait les pumps organiques)
 
   return Math.max(0, Math.min(45, Math.round(score)));
 }
@@ -117,9 +118,10 @@ export function scoreTokenV2(p, walletData = { count: 0, wallets: [], clustered:
   let platformScore = 0;
   const pairUrl    = (p.url || '').toLowerCase();
   const isPumpFun  = dexId.includes('pump') || pairUrl.includes('pump');
+  const isPumpSwap = dexId.includes('pumpswap') || pairUrl.includes('pumpswap');
   const isBonk     = dexId.includes('bonk') || dexId.includes('launchlab') || pairUrl.includes('bonk');
   const isRaydium  = dexId.includes('raydium') || dexId.includes('cpmm') || dexId.includes('clmm');
-  if (isPumpFun || isBonk || isRaydium) platformScore += 5;
+  if (isPumpFun || isPumpSwap || isBonk || isRaydium) platformScore += 5;
   if ((p.labels || []).some(l => (l.label || l || '').toLowerCase().includes('paid'))) platformScore += 10;
   score += platformScore;
 
