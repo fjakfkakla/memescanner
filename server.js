@@ -1,7 +1,7 @@
 import express from 'express';
 import cors    from 'cors';
 import { getCalls, getHistory } from './firebase.js';
-import { runScanCycle, checkTokenSecurityExport, checkAxiomWalletsExport } from './worker.js';
+import { runScanCycle, getLiveTokens, checkTokenSecurityExport, checkAxiomWalletsExport } from './worker.js';
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
@@ -16,11 +16,11 @@ app.get('/health', (_req, res) => {
   res.json({ status: 'ok', ts: Date.now(), uptime: process.uptime() });
 });
 
-// Tokens callés dans les 2 dernières heures
-app.get('/live', async (_req, res) => {
+// Tokens live : qualifiés actuellement + 5min après drop
+app.get('/live', (_req, res) => {
   try {
-    const calls = await getCalls(2);
-    res.json({ ok: true, count: calls.length, data: calls });
+    const data = getLiveTokens();
+    res.json({ ok: true, count: data.length, data });
   } catch (e) {
     res.status(500).json({ ok: false, error: e.message });
   }

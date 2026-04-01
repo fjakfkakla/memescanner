@@ -14,6 +14,7 @@ const calledTokens  = new Map(); // addr → timestamp
 const swCache       = new Map(); // addr → { ts, result }
 const heliusCache   = new Map(); // addr → { ts, data }
 const scoreHistory  = new Map(); // addr → { maxAxiom }
+const liveTokens    = new Map(); // addr → { token data, calledAt, lastSeenAt, droppedAt }
 
 // Appels DexScreener en parallèle (12 endpoints)
 async function fetchRetry(url, options = {}, retries = 2, delayMs = 800) {
@@ -370,32 +371,74 @@ export async function runScanCycle() {
     finalScored.sort((a, b) => b.score - a.score);
     console.log(`[Worker] ${finalScored.length} calls | rejected:`, JSON.stringify(rejected));
 
-    // 5. Save calls
+    // 5. Save calls + update liveTokens
+    const now = Date.now();
+    const qualifyingAddrs = new Set(finalScored.map(t => t.addr));
+
     for (const token of finalScored) {
-      if (calledTokens.has(token.addr)) continue;
-      calledTokens.set(token.addr, Date.now());
-      try {
-        await saveCall({
-          addr:     token.addr,
-          symbol:   token.symbol,
-          score:    token.score,
-          mcap:     token.mcap,
-          liq:      token.liq,
-          rugRisk:  token.rugRisk,
-          socials:  token.socials,
-          pairUrl:  token.pairUrl,
-          debug:    token.debug,
-          calledAt: Date.now(),
-        });
-        console.log(`[Worker] CALL: ${token.symbol} score=${token.score} mcap=$${token.mcap}`);
-      } catch (e) {
-        console.warn('[Worker] saveCall error:', e.message);
+      const existing = liveTokens.get(token.addr);
+      // Mettre à jour liveTokens (toujours, même si déjà callé)
+      liveTokens.set(token.addr, {
+        addr:      token.addr,
+        symbol:    token.symbol,
+        score:     token.score,
+        mcap:      token.mcap,
+        liq:       token.liq,
+        rugRisk:   token.rugRisk,
+        socials:   token.socials,
+        pairUrl:   token.pairUrl,
+        debug:     token.debug,
+        walletData: token.walletData,
+        emoji:     token.emoji,
+        raw:       token.raw,
+        calledAt:  existing?.calledAt || now,
+        lastSeenAt: now,
+        droppedAt: null,
+      });
+
+      // Sauvegarder dans Firebase une seule fois
+      if (!calledTokens.has(token.addr)) {
+        calledTokens.set(token.addr, now);
+        try {
+          await saveCall({
+            addr:     token.addr,
+            symbol:   token.symbol,
+            score:    token.score,
+            mcap:     token.mcap,
+            liq:      token.liq,
+            rugRisk:  token.rugRisk,
+            socials:  token.socials,
+            pairUrl:  token.pairUrl,
+            debug:    token.debug,
+            calledAt: now,
+          });
+          console.log(`[Worker] CALL: ${token.symbol} score=${token.score} mcap=$${token.mcap}`);
+        } catch (e) {
+          console.warn('[Worker] saveCall error:', e.message);
+        }
       }
     }
+
+    // Marquer les tokens qui ne qualifient plus + purger après 5 min
+    for (const [addr, data] of liveTokens) {
+      if (!qualifyingAddrs.has(addr)) {
+        if (!data.droppedAt) {
+          data.droppedAt = now;
+          console.log(`[Worker] ${data.symbol} dropped (score was ${data.score}), 5min countdown`);
+        }
+        if (now - data.droppedAt > 300000) {
+          liveTokens.delete(addr);
+          console.log(`[Worker] ${data.symbol} removed from live (5min expired)`);
+        }
+      }
+    }
+
+    console.log(`[Worker] Live tokens: ${liveTokens.size}`);
   } catch (e) {
     console.error('[Worker] Cycle error:', e.message);
   }
 }
 
-// Exports pour server.js (Debug CA endpoint)
+// Exports pour server.js
+export function getLiveTokens() { return [...liveTokens.values()]; }
 export { checkTokenSecurity as checkTokenSecurityExport, checkAxiomWallets as checkAxiomWalletsExport };
