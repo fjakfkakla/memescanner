@@ -332,12 +332,10 @@ export async function runScanCycle() {
         // HARD FILTER 2 — Mcap min
         if (scored.mcap < 15000) { rejected['mcap<15K'] = (rejected['mcap<15K'] || 0) + 1; continue; }
 
-        // Seuil dynamique : 65 pts si ≥5 Axiom wallets, 80 sinon
-        const callThreshold = (wData.count || 0) >= 5 ? 65 : 80;
-        if (scored.score >= callThreshold) {
+        if (scored.score >= 80) {
           finalScored.push(scored);
         } else {
-          rejected[`score<${callThreshold} (${scored.score})`] = (rejected[`score<${callThreshold} (${scored.score})`] || 0) + 1;
+          rejected[`score<80 (${scored.score})`] = (rejected[`score<80 (${scored.score})`] || 0) + 1;
         }
       } catch (e) {
         console.warn('[Worker] Scoring error:', e.message);
