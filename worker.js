@@ -286,9 +286,6 @@ export async function runScanCycle() {
       const addr = p.baseToken?.address || '';
       if (mcap < 5000 || mcap > 200000) { rejected['mcap hors range'] = (rejected['mcap hors range'] || 0) + 1; return false; }
       if (!addr || addr.length < 32) return false;
-      if (calledTokens.has(addr) && Date.now() - calledTokens.get(addr) < 7200000) {
-        rejected['déjà callé'] = (rejected['déjà callé'] || 0) + 1; return false;
-      }
       return true;
     });
 
@@ -391,6 +388,7 @@ export async function runScanCycle() {
         walletData: token.walletData,
         emoji:     token.emoji,
         raw:       token.raw,
+        callMcap:  existing?.callMcap || token.mcap,  // mcap au moment du PREMIER call
         calledAt:  existing?.calledAt || now,
         lastSeenAt: now,
         droppedAt: null,
