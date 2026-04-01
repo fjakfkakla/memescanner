@@ -2566,54 +2566,35 @@ function hardFilterV2(p){
 // ── calculatePatternScore v3 ───────────────────────────────────────────────
 // Scoring Pattern strict : favorise vrais staircase (higher highs + higher lows,
 function calculatePatternScore(p) {
-  const c5m         = p.priceChange?.m5 || 0;
-  const c1h         = p.priceChange?.h1 || 0;
-  const buysH1      = p.txns?.h1?.buys  || 0;
-  const sellsH1     = p.txns?.h1?.sells || 0;
-  const buysM5      = p.txns?.m5?.buys  || 0;
-  const sellsM5     = p.txns?.m5?.sells || 0;
-  const volH1       = p.volume?.h1      || 0;
+  let score = 0;
+  const c5m = p.priceChange?.m5 || 0;
+  const c1h = p.priceChange?.h1 || 0;
+  const c6h = p.priceChange?.h6 || 0;
+  const m1  = p.priceChange?.m1 || 0;
+  const buysM5  = p.txns?.m5?.buys  || 0;
+  const sellsM5 = p.txns?.m5?.sells || 0;
 
-  const totalH1       = buysH1 + sellsH1 || 1;
-  const sellRatioH1   = sellsH1 / totalH1;
-  const volPerBuyH1   = volH1 / Math.max(buysH1, 1);
+  // 1. Vrai Staircase (très strict - doit avoir de la structure)
+  if (c5m > 6 && c1h > 35 && c6h > 55 && c1h < 80) score += 15;
+  // 2. Correction saine (pas trop violente)
+  if (c1h >= -20 && c1h <= -5) score += 10;
+  // 3. Multi-pumps avec structure
+  if (c1h > 35 && c6h > 55) score += 10;
+  if (c6h > 75) score += 5;
+  // 4. Consolidation propre
+  if (Math.abs(c5m) < 7 && c1h > 22) score += 8;
+  // 5. Pas de dump violent
+  if (c5m > -25 && m1 > -16) score += 5;
+  // 6. Volume organique (anti-bundle)
+  if (buysM5 > sellsM5 * 1.55) score += 7;
 
-  // ── STAIRCASE — vrai runner organique ──────────────────────────
-  // c1h jusqu'à 250% car token de 15-20min peut légitimement avoir +200%
-  if (
-    c5m >= 2 && c5m <= 18 &&
-    c1h >= 20 && c1h <= 250 &&
-    buysH1 >= 25 &&
-    sellRatioH1 < 0.40 &&
-    volPerBuyH1 < 1200
-  ) return 40;
+  // === PÉNALITÉS ANTI-RUG / FAUX PUMP ===
+  if (c1h > 90 && c5m < -28) score -= 18;
+  if (c6h > 140 && c1h < 20) score -= 15;
+  if (sellsM5 > buysM5 * 1.7 && c1h > 30) score -= 12;
+  if (c1h > 60 && Math.abs(c5m) > 25) score -= 10;
 
-  // ── MOMENTUM — bonne dynamique, pas parfaitement structuré ─────
-  if (
-    c5m >= 2 && c5m <= 20 &&
-    buysH1 >= 15 &&
-    sellRatioH1 < 0.50
-  ) return 28;
-
-  // ── MAUVAIS PATTERNS ───────────────────────────────────────────
-
-  // BUNDLE : gros pump total mais presque personne n'a acheté
-  if (c1h > 150 && buysH1 < 12) return 2;
-
-  // SPIKE : encore en train de monter trop vite (trop tard / trop chaud)
-  if (c5m > 35) return 3;
-
-  // DUMP : déjà en train de redescendre depuis son ATH
-  if (c5m < -10 && c1h > 30) return 3;
-
-  // RUG_LENT : escalier artificiel, 1-2 wallets font tout le boulot
-  if (buysH1 < 15 && volPerBuyH1 > 1500 && c1h > 30) return 5;
-
-  // FAIBLE : quasi pas d'activité
-  if (buysH1 < 10) return 8;
-
-  // NEUTRE : rien de clair
-  return 15;
+  return Math.max(0, Math.min(45, Math.round(score)));
 }
 
 function scoreTokenV2(p,walletData={count:0,wallets:[],clustered:false}){
@@ -2739,7 +2720,7 @@ function scoreTokenV2(p,walletData={count:0,wallets:[],clustered:false}){
 
   // ── ⏱ AGE ─────────────────────────────────────────────────────────────────
   let ageScore = 0;
-  if      (ageMin >= 1  && ageMin <= 5)   ageScore = 10;
+  if      (ageMin >= 0.5 && ageMin <= 5)   ageScore = 10;
   else if (ageMin >  5  && ageMin <= 15)  ageScore =  5;
   score += ageScore;
 
