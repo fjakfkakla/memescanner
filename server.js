@@ -1,7 +1,7 @@
 import express from 'express';
 import cors    from 'cors';
 import { getCalls, getHistory } from './firebase.js';
-import { runScanCycle, getLiveTokens, checkTokenSecurityExport, checkAxiomWalletsExport } from './worker.js';
+import { runScanCycle, getLiveTokens, checkTokenSecurityExport, checkAxiomWalletsExport, checkDeployerExport, detectBundleExport } from './worker.js';
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
@@ -78,11 +78,13 @@ app.get('/debug/:addr', async (req, res) => {
   const pairAddr = req.query.pair || null;
   if (!addr || addr.length < 32) return res.status(400).json({ ok: false, error: 'adresse invalide' });
   try {
-    const [sec, wData] = await Promise.all([
+    const [sec, wData, depData, bundleData] = await Promise.all([
       checkTokenSecurityExport(addr, pairAddr),
-      checkAxiomWalletsExport(addr, pairAddr, true), // deep=true : 500 sigs
+      checkAxiomWalletsExport(addr, pairAddr, true),
+      checkDeployerExport(addr),
+      detectBundleExport(addr),
     ]);
-    res.json({ ok: true, addr, sec, wData });
+    res.json({ ok: true, addr, sec, wData, depData, bundleData });
   } catch (e) {
     res.status(500).json({ ok: false, error: e.message });
   }

@@ -677,4 +677,4 @@ export async function runScanCycle() {
 
 // Exports pour server.js
 export function getLiveTokens() { return [...liveTokens.values()]; }
-export { checkTokenSecurity as checkTokenSecurityExport, checkAxiomWallets as checkAxiomWalletsExport };
+export { checkTokenSecurity as checkTokenSecurityExport, checkAxiomWallets as checkAxiomWalletsExport, checkDeployer as checkDeployerExport, detectBundle as detectBundleExport };
