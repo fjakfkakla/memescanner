@@ -16,27 +16,53 @@ function calculatePatternScore(p) {
   const m1  = p.priceChange?.m1 || 0;
   const buysM5  = p.txns?.m5?.buys  || 0;
   const sellsM5 = p.txns?.m5?.sells || 0;
+  const buysH1  = p.txns?.h1?.buys  || 0;
+  const sellsH1 = p.txns?.h1?.sells || 0;
+  const mcap    = p.marketCap || p.fdv || 1;
+  const volH1   = p.volume?.h1 || 0;
+  const volM5   = p.volume?.m5 || 0;
+  const liq     = p.liquidity?.usd || 0;
+  const totalTxH1 = buysH1 + sellsH1 || 1;
+  const buyRatioM5 = buysM5 / ((buysM5 + sellsM5) || 1);
+  const volMcapH1  = volH1 / mcap;
+  const avgTxSize  = volH1 / totalTxH1;
 
-  // 1. Montée douce / Staircase : c1h fort mais c5m modéré = croissance régulière pas spike
-  //    c5m positif mais petit par rapport à c1h → montée en escalier
+  // 1. Montée douce / Staircase : c1h fort mais c5m modéré = croissance régulière
   if (c1h > 35 && c5m > 0 && c5m < 20 && c1h > c5m * 3) score += 15;
   // 2. Correction saine (pas trop violente)
   if (c1h >= -20 && c1h <= -5) score += 10;
   // 3. Gros pump avec structure (multi-pumps)
   if (c1h > 35 && c6h > 55) score += 10;
   if (c6h > 75) score += 5;
-  // 4. Consolidation propre (stabilisation après pump = très bon signe)
+  // 4. Consolidation propre (stabilisation après pump)
   if (Math.abs(c5m) < 7 && c1h > 22) score += 8;
   // 5. Pas de dump violent
   if (c5m > -25 && m1 > -16) score += 5;
-  // 6. Volume organique (anti-bundle) — buys dominent les sells
+  // 6. Volume organique — buys dominent les sells
   if (buysM5 > sellsM5 * 1.55) score += 7;
 
+  // 7. NEW — Buy ratio m5 élevé (bon: >0.55, mauvais: <0.50)
+  if (buyRatioM5 >= 0.58) score += 5;
+  else if (buyRatioM5 < 0.45) score -= 5;
+
+  // 8. NEW — Vol/Mcap ratio (bon: 1-6, mauvais: >10 = manipulation)
+  if (volMcapH1 >= 1 && volMcapH1 <= 7) score += 5;
+  else if (volMcapH1 > 12) score -= 8;
+
+  // 9. NEW — Taille moyenne des tx (bon: >$60 = smart money, mauvais: <$50 = bots)
+  if (avgTxSize >= 80) score += 5;
+  else if (avgTxSize < 40 && totalTxH1 > 100) score -= 5;
+
+  // 10. NEW — Liquidité > 0 = migré de bonding curve (signal fort)
+  if (liq > 5000) score += 5;
+
   // === PÉNALITÉS ANTI-RUG / FAUX PUMP ===
-  if (c1h > 90 && c5m < -28) score -= 18;          // pump puis dump violent
-  if (c6h > 140 && c1h < 20) score -= 15;           // retombé après gros pump
-  if (sellsM5 > buysM5 * 1.7 && c1h > 30) score -= 12; // sells dominent malgré pump
-  if (c1h > 60 && c5m < -20) score -= 10;           // dump en cours après pump (avant: |c5m|>25 pénalisait les pumps organiques)
+  if (c1h > 90 && c5m < -28) score -= 18;
+  if (c6h > 140 && c1h < 20) score -= 15;
+  if (sellsM5 > buysM5 * 1.7 && c1h > 30) score -= 12;
+  if (c1h > 60 && c5m < -20) score -= 10;
+  // NEW — m5 dump violent (< -35%)
+  if (c5m < -35) score -= 8;
 
   return Math.max(0, Math.min(45, Math.round(score)));
 }

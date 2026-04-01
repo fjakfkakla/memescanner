@@ -26,6 +26,71 @@ async function fetchRetry(url, options = {}, retries = 2, delayMs = 800) {
   return fetch(url, options);
 }
 
+// ── Découverte de tokens via Helius : surveiller les achats récents des top Axiom wallets ──
+const DISCOVERY_WALLETS = AXIOM_WALLETS.slice(0, 25); // Top 25 wallets
+const discoveryCache = new Map(); // wallet → { ts, tokens }
+
+async function discoverTokensFromAxiom() {
+  const discovered = new Set();
+  const now = Date.now();
+
+  // Batch de 5 wallets en parallèle
+  for (let i = 0; i < DISCOVERY_WALLETS.length; i += 5) {
+    const batch = DISCOVERY_WALLETS.slice(i, i + 5);
+    const results = await Promise.allSettled(
+      batch.map(async wallet => {
+        // Cache 2 min par wallet
+        const cached = discoveryCache.get(wallet);
+        if (cached && now - cached.ts < 120000) {
+          cached.tokens.forEach(t => discovered.add(t));
+          return;
+        }
+        try {
+          // Récupérer les dernières signatures du wallet
+          const sigResp = await fetchRetry(HELIUS_RPC, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ jsonrpc: '2.0', id: 'disc', method: 'getSignaturesForAddress', params: [wallet, { limit: 10 }] }),
+            signal: AbortSignal.timeout(8000)
+          });
+          const sigData = await sigResp.json();
+          const sigs = (sigData?.result || [])
+            .filter(s => s?.signature && (!s.blockTime || (now/1000 - s.blockTime) < 600)) // dernières 10 min
+            .map(s => s.signature);
+
+          if (sigs.length === 0) { discoveryCache.set(wallet, { ts: now, tokens: [] }); return; }
+
+          // Parser les transactions pour extraire les token mints
+          const parseResp = await fetchRetry(
+            `${HELIUS_API}/v0/transactions?api-key=${HELIUS_KEY}`,
+            { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ transactions: sigs }), signal: AbortSignal.timeout(10000) }
+          );
+          const parsed = await parseResp.json();
+          const tokens = new Set();
+          if (Array.isArray(parsed)) {
+            for (const tx of parsed) {
+              // Chercher les token transfers (achats = le wallet reçoit des tokens)
+              if (!Array.isArray(tx?.tokenTransfers)) continue;
+              for (const tt of tx.tokenTransfers) {
+                if (tt?.toUserAccount === wallet && tt?.mint && tt.mint.length >= 32) {
+                  // Exclure SOL et tokens connus
+                  if (tt.mint === 'So11111111111111111111111111111111111111112') continue;
+                  tokens.add(tt.mint);
+                }
+              }
+            }
+          }
+          discoveryCache.set(wallet, { ts: now, tokens: [...tokens] });
+          tokens.forEach(t => discovered.add(t));
+        } catch (e) { /* skip wallet */ }
+      })
+    );
+    if (i + 5 < DISCOVERY_WALLETS.length) await new Promise(r => setTimeout(r, 300));
+  }
+
+  console.log(`[Discovery] ${discovered.size} tokens trouvés via ${DISCOVERY_WALLETS.length} Axiom wallets`);
+  return [...discovered];
+}
+
 async function fetchDexScreener() {
   const pairMap = new Map();
 
@@ -283,8 +348,35 @@ export async function runScanCycle() {
   const rejected = {};
 
   try {
-    // 1. Collecte DexScreener
+    // 1a. Collecte DexScreener
     const allPairs = await fetchDexScreener();
+
+    // 1b. Découverte Helius : tokens achetés par les top Axiom wallets
+    try {
+      const axiomTokens = await discoverTokensFromAxiom();
+      // Filtrer les tokens déjà dans allPairs
+      const existingAddrs = new Set(allPairs.map(p => p.baseToken?.address).filter(Boolean));
+      const newTokens = axiomTokens.filter(t => !existingAddrs.has(t));
+      if (newTokens.length > 0) {
+        // Fetch pair data depuis DexScreener pour ces tokens
+        for (let i = 0; i < newTokens.length; i += 30) {
+          const batch = newTokens.slice(i, i + 30).join(',');
+          try {
+            const resp = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${batch}`,
+              { signal: AbortSignal.timeout(10000) });
+            const data = await resp.json();
+            const newPairs = (data.pairs || []).filter(p => p.chainId === 'solana' && p.baseToken?.address);
+            for (const p of newPairs) {
+              if (!existingAddrs.has(p.baseToken.address)) {
+                allPairs.push(p);
+                existingAddrs.add(p.baseToken.address);
+              }
+            }
+            if (newPairs.length > 0) console.log(`[Discovery] +${newPairs.length} paires Axiom ajoutées`);
+          } catch (e) {}
+        }
+      }
+    } catch (e) { console.warn('[Discovery] Error:', e.message); }
     console.log(`[Worker] ${allPairs.length} paires collectées`);
 
     // 2. Pré-filtre rapide
