@@ -73,8 +73,17 @@ async function fetchDexScreener() {
     if (i + 30 < addrList.length) await new Promise(r => setTimeout(r, 300));
   }
 
-  // ── ÉTAPE 3 : Search trending (requêtes variées) ──
-  const searchQueries = ['pump.fun solana', 'pumpswap', 'bonk solana new', 'solana memecoin'];
+  // ── ÉTAPE 3 : Search trending (requêtes variées — max de tokens frais) ──
+  const searchQueries = [
+    'pumpfun',              // 24 fresh tokens — meilleure source
+    'SOL pump',             // 7 fresh
+    'pump.fun',             // 2 fresh + différents de pumpfun
+    'pump.fun solana',      // variantes
+    'pumpswap',             // tokens migrés
+    'bonk solana new',      // launchlab
+    'solana memecoin',      // memecoins généraux
+    'solana new token',     // nouveaux tokens
+  ];
   for (const q of searchQueries) {
     try {
       const resp = await fetch(`https://api.dexscreener.com/latest/dex/search?q=${encodeURIComponent(q)}`,
