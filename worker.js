@@ -1,7 +1,7 @@
 import fetch from 'node-fetch';
 import { AXIOM_WALLETS } from './axiomWallets.js';
 import { scoreTokenV2, hardFilterV2 } from './scorer.js';
-import { saveCall } from './firebase.js';
+import { saveCall, getCallByAddr } from './firebase.js';
 
 const HELIUS_KEY  = process.env.HELIUS_KEY;
 const HELIUS_RPC  = `https://mainnet.helius-rpc.com/?api-key=${HELIUS_KEY}`;
@@ -373,8 +373,19 @@ export async function runScanCycle() {
     const qualifyingAddrs = new Set(finalScored.map(t => t.addr));
 
     for (const token of finalScored) {
-      const existing = liveTokens.get(token.addr);
-      // Mettre à jour liveTokens (toujours, même si déjà callé)
+      let existing = liveTokens.get(token.addr);
+
+      // Si pas en mémoire, vérifier Firebase (survit aux redémarrages)
+      if (!existing) {
+        try {
+          const fbCall = await getCallByAddr(token.addr);
+          if (fbCall) {
+            existing = { calledAt: fbCall.calledAt || fbCall.callTime || fbCall.savedAt, callMcap: fbCall.callMcap || fbCall.mcap };
+          }
+        } catch (e) { /* pas grave */ }
+      }
+
+      // Mettre à jour liveTokens
       liveTokens.set(token.addr, {
         addr:      token.addr,
         symbol:    token.symbol,
@@ -388,13 +399,13 @@ export async function runScanCycle() {
         walletData: token.walletData,
         emoji:     token.emoji,
         raw:       token.raw,
-        callMcap:  existing?.callMcap || token.mcap,  // mcap au moment du PREMIER call
+        callMcap:  existing?.callMcap || token.mcap,
         calledAt:  existing?.calledAt || now,
         lastSeenAt: now,
         droppedAt: null,
       });
 
-      // Sauvegarder dans Firebase une seule fois
+      // Sauvegarder dans Firebase (saveCall gère le dedup)
       if (!calledTokens.has(token.addr)) {
         calledTokens.set(token.addr, now);
         try {
@@ -414,6 +425,9 @@ export async function runScanCycle() {
         } catch (e) {
           console.warn('[Worker] saveCall error:', e.message);
         }
+      } else {
+        // Mettre à jour le score/mcap dans Firebase sans toucher calledAt
+        try { await saveCall({ addr: token.addr, score: token.score, mcap: token.mcap, liq: token.liq, debug: token.debug }); } catch(e) {}
       }
     }
 

@@ -34,14 +34,38 @@ if (!admin.apps.length) {
 
 export const db = admin.database();
 
-// Sauvegarde un call dans Firebase
+// Sauvegarde un call dans Firebase — clé = adresse du token (pas push key)
+// Permet de retrouver le call par adresse et de ne jamais écraser calledAt/callMcap
 export async function saveCall(token) {
-  const ref = db.ref('calls').push();
+  const key = token.addr.replace(/[.#$\/\[\]]/g, '_');
+  const ref = db.ref(`calls/${key}`);
+  const existing = (await ref.once('value')).val();
+  if (existing) {
+    // Mise à jour : garder calledAt et callMcap d'origine, update le reste
+    await ref.update({
+      score:    token.score,
+      mcap:     token.mcap,
+      liq:      token.liq,
+      debug:    token.debug,
+      lastSeenAt: Date.now(),
+    });
+    return key;
+  }
+  // Nouveau call
   await ref.set({
     ...token,
-    savedAt: Date.now(),
+    callMcap: token.mcap,
+    savedAt:  Date.now(),
+    callTime: Date.now(),
   });
-  return ref.key;
+  return key;
+}
+
+// Récupère un call existant par adresse
+export async function getCallByAddr(addr) {
+  const key = addr.replace(/[.#$\/\[\]]/g, '_');
+  const snap = await db.ref(`calls/${key}`).once('value');
+  return snap.val();
 }
 
 // Récupère les calls récents (dernières N heures)
