@@ -16,21 +16,6 @@ const heliusCache   = new Map(); // addr → { ts, data }
 const scoreHistory  = new Map(); // addr → { maxAxiom }
 
 // Appels DexScreener en parallèle (12 endpoints)
-const DEX_ENDPOINTS = [
-  'https://api.dexscreener.com/token-profiles/latest/v1',
-  'https://api.dexscreener.com/latest/dex/tokens/solana?sort=trendingScoreH1&order=desc',
-  'https://api.dexscreener.com/latest/dex/tokens/solana?sort=trendingScoreM5&order=desc',
-  'https://api.dexscreener.com/latest/dex/pairs/solana?sort=trendingScoreH1&order=desc',
-  'https://api.dexscreener.com/latest/dex/pairs/solana?sort=trendingScoreM5&order=desc',
-  'https://api.dexscreener.com/latest/dex/tokens/solana?sort=volume&order=desc&minLiq=3000&maxAge=3600',
-  'https://api.dexscreener.com/latest/dex/tokens/solana?sort=priceChangeH1&order=desc&minLiq=3000',
-  'https://api.dexscreener.com/latest/dex/tokens/solana?sort=priceChangeM5&order=desc&minLiq=2000',
-  'https://api.dexscreener.com/token-boosts/latest/v1',
-  'https://api.dexscreener.com/token-boosts/top/v1',
-  'https://api.dexscreener.com/latest/dex/tokens/solana?sort=txns&order=desc&minLiq=2000',
-  'https://api.dexscreener.com/latest/dex/tokens/solana?sort=liquidity&order=desc&minAge=60&maxAge=3600',
-];
-
 async function fetchRetry(url, options = {}, retries = 2, delayMs = 800) {
   for (let i = 0; i <= retries; i++) {
     const resp = await fetch(url, options);
@@ -41,26 +26,64 @@ async function fetchRetry(url, options = {}, retries = 2, delayMs = 800) {
 }
 
 async function fetchDexScreener() {
-  const results = await Promise.allSettled(
-    DEX_ENDPOINTS.map(url =>
-      fetch(url, { signal: AbortSignal.timeout(8000) })
-        .then(r => r.json())
-        .catch(() => null)
-    )
-  );
-
   const pairMap = new Map();
-  for (const res of results) {
-    if (res.status !== 'fulfilled' || !res.value) continue;
-    const data = res.value;
-    const pairs = data.pairs || data.data || [];
+
+  function addPairs(pairs, source) {
+    let count = 0;
     for (const p of (Array.isArray(pairs) ? pairs : [])) {
       if (!p?.baseToken?.address) continue;
       if ((p.chainId || p.chain || '') !== 'solana') continue;
       const addr = p.baseToken.address;
-      if (!pairMap.has(addr)) pairMap.set(addr, p);
+      if (!pairMap.has(addr)) { pairMap.set(addr, p); count++; }
+    }
+    if (count > 0) console.log(`[DexScreener] ${source}: +${count} paires`);
+  }
+
+  // ── ÉTAPE 1 : Token profiles & boosts → récolter les adresses Solana ──
+  const profileUrls = [
+    'https://api.dexscreener.com/token-profiles/latest/v1',
+    'https://api.dexscreener.com/token-boosts/latest/v1',
+    'https://api.dexscreener.com/token-boosts/top/v1',
+  ];
+  const profileResults = await Promise.allSettled(
+    profileUrls.map(url =>
+      fetch(url, { signal: AbortSignal.timeout(8000) }).then(r => r.json()).catch(() => null)
+    )
+  );
+  const tokenAddrs = new Set();
+  for (const res of profileResults) {
+    if (res.status !== 'fulfilled' || !Array.isArray(res.value)) continue;
+    for (const item of res.value) {
+      if (item.chainId === 'solana' && item.tokenAddress) tokenAddrs.add(item.tokenAddress);
     }
   }
+  console.log(`[DexScreener] Profiles/boosts: ${tokenAddrs.size} adresses Solana`);
+
+  // ── ÉTAPE 2 : Fetch pair data pour ces tokens (batch de 30 max) ──
+  const addrList = [...tokenAddrs];
+  for (let i = 0; i < addrList.length; i += 30) {
+    const batch = addrList.slice(i, i + 30).join(',');
+    try {
+      const resp = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${batch}`,
+        { signal: AbortSignal.timeout(10000) });
+      const data = await resp.json();
+      addPairs(data.pairs, `tokens-batch-${Math.floor(i/30)}`);
+    } catch (e) { console.warn(`[DexScreener] tokens-batch error: ${e.message}`); }
+    if (i + 30 < addrList.length) await new Promise(r => setTimeout(r, 300));
+  }
+
+  // ── ÉTAPE 3 : Search trending (requêtes variées) ──
+  const searchQueries = ['pump.fun solana', 'pumpswap', 'bonk solana new', 'solana memecoin'];
+  for (const q of searchQueries) {
+    try {
+      const resp = await fetch(`https://api.dexscreener.com/latest/dex/search?q=${encodeURIComponent(q)}`,
+        { signal: AbortSignal.timeout(8000) });
+      const data = await resp.json();
+      addPairs(data.pairs, `search "${q}"`);
+    } catch (e) { console.warn(`[DexScreener] search error: ${e.message}`); }
+  }
+
+  console.log(`[DexScreener] Total unique: ${pairMap.size}`);
   return [...pairMap.values()];
 }
 
