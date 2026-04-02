@@ -570,7 +570,7 @@ section{scroll-margin-top:70px;}
   border:1px solid rgba(255,170,0,.4);color:#ffcc44;border-radius:5px;font-size:.62rem;
   font-family:'Space Mono',monospace;cursor:pointer;transition:.2s;font-weight:700;}
 .sc-btn-pnl:hover{background:linear-gradient(135deg,rgba(255,170,0,.28),rgba(255,120,0,.2));}
-/* Axiom wallets tag */
+/* Tracker wallets tag */
 .sc-axiom{font-family:'Space Mono',monospace;font-size:.6rem;background:rgba(255,215,0,.12);
   border:1px solid rgba(255,215,0,.25);color:var(--gold);padding:.18rem .45rem;border-radius:4px;}
 
@@ -2574,25 +2574,47 @@ function calculatePatternScore(p) {
   const buysM5  = p.txns?.m5?.buys  || 0;
   const sellsM5 = p.txns?.m5?.sells || 0;
 
-  // 1. Vrai Staircase (très strict - doit avoir de la structure)
-  if (c5m > 6 && c1h > 35 && c6h > 55 && c1h < 80) score += 15;
+  const buysH1  = p.txns?.h1?.buys  || 0;
+  const sellsH1 = p.txns?.h1?.sells || 0;
+  const mcap    = p.marketCap || p.fdv || 1;
+  const volH1   = p.volume?.h1 || 0;
+  const liq     = p.liquidity?.usd || 0;
+  const totalTxH1 = buysH1 + sellsH1 || 1;
+  const buyRatioM5 = buysM5 / ((buysM5 + sellsM5) || 1);
+  const volMcapH1  = volH1 / mcap;
+  const avgTxSize  = volH1 / totalTxH1;
+
+  // 1. Montée douce / Staircase : c1h fort mais c5m modéré = croissance régulière
+  if (c1h > 35 && c5m > 0 && c5m < 20 && c1h > c5m * 3) score += 15;
   // 2. Correction saine (pas trop violente)
   if (c1h >= -20 && c1h <= -5) score += 10;
-  // 3. Multi-pumps avec structure
+  // 3. Gros pump avec structure (multi-pumps)
   if (c1h > 35 && c6h > 55) score += 10;
   if (c6h > 75) score += 5;
-  // 4. Consolidation propre
+  // 4. Consolidation propre (stabilisation après pump)
   if (Math.abs(c5m) < 7 && c1h > 22) score += 8;
   // 5. Pas de dump violent
   if (c5m > -25 && m1 > -16) score += 5;
   // 6. Volume organique (anti-bundle)
   if (buysM5 > sellsM5 * 1.55) score += 7;
+  // 7. Buy ratio m5 élevé (bon: >0.55, mauvais: <0.50)
+  if (buyRatioM5 >= 0.58) score += 5;
+  else if (buyRatioM5 < 0.45) score -= 5;
+  // 8. Vol/Mcap ratio (bon: 1-6, mauvais: >10 = manipulation)
+  if (volMcapH1 >= 1 && volMcapH1 <= 7) score += 5;
+  else if (volMcapH1 > 12) score -= 8;
+  // 9. Taille moyenne des tx (bon: >$60 smart money, mauvais: <$50 bots)
+  if (avgTxSize >= 80) score += 5;
+  else if (avgTxSize < 40 && totalTxH1 > 100) score -= 5;
+  // 10. Liquidité > 0 = migré (signal fort)
+  if (liq > 5000) score += 5;
 
   // === PÉNALITÉS ANTI-RUG / FAUX PUMP ===
   if (c1h > 90 && c5m < -28) score -= 18;
   if (c6h > 140 && c1h < 20) score -= 15;
   if (sellsM5 > buysM5 * 1.7 && c1h > 30) score -= 12;
-  if (c1h > 60 && Math.abs(c5m) > 25) score -= 10;
+  if (c1h > 60 && c5m < -20) score -= 10;
+  if (c5m < -35) score -= 8;
 
   return Math.max(0, Math.min(45, Math.round(score)));
 }
@@ -2937,7 +2959,7 @@ function showDebug(idx){
   const bars=cats.map(c=>{const pct=Math.max(0,Math.min(100,(Math.max(0,c.val)/c.max)*100));const color=c.val<0?'var(--red)':c.val>c.max*.7?'var(--green)':'#ffaa00';return`<div class="debug-bar-row"><div class="debug-bar-label">${c.label}</div><div class="debug-bar-track"><div class="debug-bar-fill" style="width:${pct}%;background:${color}"></div></div><div class="debug-bar-val">${c.val>0?'+':''}${c.val}</div></div>`;}).join('');
   const scoreColor=t.score>=80?'var(--gold)':t.score>=65?'var(--green)':'var(--blue)';
   const d=t.debug;
-  const details=`AXIOM WALLETS  : ${d.walletCount||0} détectés\nBUY RATIO h1   : ${((d.buyRatio||0)*100).toFixed(1)}%\nVOL ACCEL      : ${(d.volAccel||0).toFixed(2)}x\nPRICE h1       : ${(d.c1h||0).toFixed(1)}%\nPRICE m5       : ${(d.m5||0).toFixed(1)}%\nAGE            : ${(d.ageH||0).toFixed(1)}h\nMCAP           : $${fmtNum(t.mcap)}\nSOCIALS        : ${t.socials?'✓':'✗'}\nRUG RISK       : ${t.rugRisk}`;
+  const details=`TRACKER WALLETS : ${d.walletCount||0} détectés\nBUY RATIO h1   : ${((d.buyRatio||0)*100).toFixed(1)}%\nVOL ACCEL      : ${(d.volAccel||0).toFixed(2)}x\nPRICE h1       : ${(d.c1h||0).toFixed(1)}%\nPRICE m5       : ${(d.m5||0).toFixed(1)}%\nAGE            : ${(d.ageH||0).toFixed(1)}h\nMCAP           : $${fmtNum(t.mcap)}\nSOCIALS        : ${t.socials?'✓':'✗'}\nRUG RISK       : ${t.rugRisk}`;
   document.getElementById('debugContent').innerHTML=`<div class="debug-title">🔬 DEBUG — ${t.symbol}</div><div class="debug-score-big" style="color:${scoreColor}">${t.score}<span style="font-size:1rem;color:var(--muted)"> /100</span></div><div class="debug-bars">${bars}</div><div class="debug-details">${details}</div><details class="debug-raw"><summary>▶ Données brutes</summary><pre>${JSON.stringify(t.raw||{},null,2)}</pre></details>`;
 }
 
@@ -2954,7 +2976,16 @@ async function updateAth(addr,currentMcap){
   try{const key=addr.replace(/[.#$\/\[\]]/g,'_');const ex=await fetch(`${FB_URL}/calls/${key}.json`).then(r=>r.json()).catch(()=>null);if(ex&&currentMcap>(ex.athMcap||0))await fetch(`${FB_URL}/calls/${key}.json`,{method:'PATCH',body:JSON.stringify({athMcap:currentMcap})});}catch(e){}
 }
 async function getCallData(addr){
-  try{const key=addr.replace(/[.#$\/\[\]]/g,'_');const data=await fetch(`${FB_URL}/calls/${key}.json`).then(r=>r.json());if(data&&data.callTime)return data;}catch(e){}
+  try{
+    const key=addr.replace(/[.#$\/\[\]]/g,'_');
+    const data=await fetch(`${FB_URL}/calls/${key}.json`).then(r=>r.json());
+    if(data && (data.callTime || data.calledAt || data.savedAt)) {
+      // Normaliser les champs
+      data.callTime = data.callTime || data.calledAt || data.savedAt;
+      data.callMcap = data.callMcap || data.mcap || 0;
+      return data;
+    }
+  }catch(e){}
   try{const all=JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}');if(all[addr])return all[addr];}catch(e){}
   return null;
 }
@@ -3351,7 +3382,7 @@ async function debugCA(){
     const labelText=label?label.text:'❌ SOUS SEUIL (< 55)';
 
     const cats=[
-      {name:'🎯 Axiom',    val:traderScore,  max:20},
+      {name:'🎯 Tracker',   val:traderScore,  max:20},
       {name:'🌐 Social',   val:socialScore,  max:26},
       {name:'👥 Holders',  val:holderScore,  max:20},
       {name:'🪙 Platform', val:platformScore,max:5},
@@ -3402,7 +3433,7 @@ async function debugCA(){
 CA             : ${addr.slice(0,12)}...${addr.slice(-6)}
 MCAP           : $${fmtNum(mcap)} | LIQ : $${fmtNum(dbLiq||liq)}
 AGE            : ${ageH.toFixed(1)}h (${ageMin.toFixed(0)}min)
-AXIOM WALLETS  : ${wData.count} détectés${wData.wallets.length?' → '+wData.wallets.join(' '):''}
+TRACKER WALLETS : ${wData.count} détectés${wData.wallets.length?' → '+wData.wallets.join(' '):''}
 HOLDERS HELIUS : ${dbHolderCount} comptes · top1=${dbTop1.toFixed(1)}% · top5=${dbTop5.toFixed(1)}% · top10=${dbTop10.toFixed(1)}%
 SOCIALS DEX    : ${dbHasX?'𝕏 ':''  }${dbHasTG?'TG ':''  }${dbHasWEB?'WEB ':''  }${!dbHasX&&!dbHasTG&&!dbHasWEB?'aucun':''}
 SOCIALS RAW    : ${dbRawSocials}
@@ -3452,6 +3483,7 @@ async function fetchTokens(){
       emoji: c.emoji || '📡',
       walletData: c.walletData || {count:0,wallets:[],clustered:false},
       _callTime: c.calledAt || c.savedAt || Date.now(),
+      _callMcap: c.callMcap || c.mcap || 0,
       debug: c.debug || {traderScore:0,socialScore:0,holderScore:0,platformScore:0,mcapScore:0,ageScore:0,patternScore:0,axiomCount:0},
       raw: c.raw || {},
       security: c.raw?.security || null,
@@ -3772,8 +3804,8 @@ async function renderTokenTable(tokens){
     const label=getLabel(t.score);
     if(!label)continue;
     const callData=await getCallData(t.addr);
-    const callMcap=callData?.callMcap||t.mcap;
-    const callTime=callData?.callTime||Date.now();
+    const callMcap=t._callMcap||callData?.callMcap||t.mcap;
+    const callTime=t._callTime||callData?.callTime||Date.now();
     // nowMcap = prix live (DexScreener) ou fallback sur mcap du scan
     const nowMcap=livePriceMap[t.addr]||t.mcap||0;
     // ATH Live : prendre le max entre ATH stocké ET estimation via priceChange
@@ -3805,7 +3837,7 @@ async function renderTokenTable(tokens){
     const xAth=callMcap>0&&athMcap>callMcap?(athMcap/callMcap):1;
     const xColor=xAth>=3?'#00ff88':xAth>=2?'#88ff44':xAth>=1.5?'#ffcc44':'#ff8866';
     // Axiom wallets badge
-    const axiomBadge=t.walletData?.count>0?`<span class="sc-axiom">🎯 ${t.walletData.count} Axiom</span>`:'';
+    const axiomBadge=t.walletData?.count>0?`<span class="sc-axiom">🎯 ${t.walletData.count} Tracker</span>`:'';
     // Debug btn
     const debugBtn=debugModeOn?`<button onclick="showDebug(${i})" style="padding:.15rem .4rem;background:rgba(255,170,0,.15);border:1px solid rgba(255,170,0,.3);color:#ffaa00;border-radius:4px;font-size:.6rem;cursor:pointer;font-family:var(--font-mono)">DBG</button>`:'';
     // Security chips

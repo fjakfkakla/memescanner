@@ -162,105 +162,6 @@ async function fetchDexScreener() {
   return [...pairMap.values()];
 }
 
-// ── Deployer History : détecter les serial ruggers ──
-const deployerCache = new Map(); // deployer → { ts, data }
-
-async function checkDeployer(tokenAddr) {
-  try {
-    // 1. Trouver le deployer via les premières signatures du token
-    const sigResp = await fetchRetry(HELIUS_RPC, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ jsonrpc: '2.0', id: 'dep', method: 'getSignaturesForAddress',
-        params: [tokenAddr, { limit: 1 }] }), // la dernière = la plus ancienne si peu de tx
-      signal: AbortSignal.timeout(6000)
-    }).then(r => r.json());
-
-    const sigs = sigResp?.result || [];
-    if (sigs.length === 0) return { deployer: null, rugCount: 0, tokenCount: 0, isSerial: false };
-
-    // Parser la première tx pour trouver le feePayer (= deployer)
-    const parseResp = await fetchRetry(
-      `${HELIUS_API}/v0/transactions?api-key=${HELIUS_KEY}`,
-      { method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ transactions: [sigs[sigs.length - 1].signature] }),
-        signal: AbortSignal.timeout(8000) }
-    );
-    const parsed = await parseResp.json();
-    const deployer = parsed?.[0]?.feePayer;
-    if (!deployer || deployer.length < 32) return { deployer: null, rugCount: 0, tokenCount: 0, isSerial: false };
-
-    // Cache par deployer (5 min)
-    const cached = deployerCache.get(deployer);
-    if (cached && Date.now() - cached.ts < 300000) return cached.data;
-
-    // 2. Compter les transactions récentes du deployer
-    const depSigResp = await fetchRetry(HELIUS_RPC, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ jsonrpc: '2.0', id: 'depsigs', method: 'getSignaturesForAddress',
-        params: [deployer, { limit: 50 }] }),
-      signal: AbortSignal.timeout(8000)
-    }).then(r => r.json());
-
-    const depSigs = depSigResp?.result || [];
-    // Compter les tx récentes (24h)
-    const now = Date.now() / 1000;
-    const recent = depSigs.filter(s => s.blockTime && (now - s.blockTime) < 86400);
-    // Un deployer avec 30+ tx en 24h = probablement serial launcher
-    const isSerial = recent.length >= 30;
-    const data = { deployer, txCount24h: recent.length, isSerial };
-    deployerCache.set(deployer, { ts: Date.now(), data });
-    return data;
-  } catch (e) {
-    return { deployer: null, rugCount: 0, tokenCount: 0, isSerial: false };
-  }
-}
-
-// ── Bundle Detection : détecter les snipes coordonnés au launch ──
-async function detectBundle(tokenAddr) {
-  try {
-    // Récupérer les 15 premières signatures du token
-    const sigResp = await fetchRetry(HELIUS_RPC, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ jsonrpc: '2.0', id: 'bundle', method: 'getSignaturesForAddress',
-        params: [tokenAddr, { limit: 15 }] }),
-      signal: AbortSignal.timeout(8000)
-    }).then(r => r.json());
-
-    const sigs = (sigResp?.result || []).map(s => s.signature).filter(Boolean);
-    if (sigs.length < 3) return { bundled: false, bundlePct: 0 };
-
-    // Parser les transactions
-    const parseResp = await fetchRetry(
-      `${HELIUS_API}/v0/transactions?api-key=${HELIUS_KEY}`,
-      { method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ transactions: sigs }),
-        signal: AbortSignal.timeout(10000) }
-    );
-    const parsed = await parseResp.json();
-    if (!Array.isArray(parsed)) return { bundled: false, bundlePct: 0 };
-
-    // Compter combien de fois le même wallet apparaît comme buyer
-    const buyerCounts = {};
-    for (const tx of parsed) {
-      const feePayer = tx?.feePayer;
-      if (!feePayer) continue;
-      const transfers = (tx?.tokenTransfers || []).filter(t => t?.mint === tokenAddr);
-      if (transfers.some(t => t.toUserAccount === feePayer)) {
-        buyerCounts[feePayer] = (buyerCounts[feePayer] || 0) + 1;
-      }
-    }
-
-    // Si un wallet achète dans 3+ des 15 premières tx → bundle
-    const maxBuys = Math.max(0, ...Object.values(buyerCounts));
-    const bundled = maxBuys >= 3;
-    const bundlePct = maxBuys / Math.max(1, sigs.length);
-
-    return { bundled, bundlePct, maxBuys, uniqueBuyers: Object.keys(buyerCounts).length };
-  } catch (e) {
-    return { bundled: false, bundlePct: 0 };
-  }
-}
-
 async function checkTokenSecurity(tokenAddr, pairAddr = null) {
   const cached = heliusCache.get(tokenAddr);
   if (cached && Date.now() - cached.ts < 120000) return cached.data;
@@ -499,18 +400,14 @@ export async function runScanCycle() {
         batch.map(async p => {
           const addr     = p.baseToken.address;
           const pairAddr = p.pairAddress || null;
-          const [sec, wData, depData, bundleData] = await Promise.allSettled([
+          const [sec, wData] = await Promise.allSettled([
             checkTokenSecurity(addr, pairAddr),
             checkAxiomWallets(addr, pairAddr),
-            checkDeployer(addr),
-            detectBundle(addr),
           ]);
           return {
             p,
-            sec:    sec.status    === 'fulfilled' ? sec.value    : null,
-            wData:  wData.status  === 'fulfilled' ? wData.value  : { count: 0, wallets: [], clustered: false },
-            depData: depData.status === 'fulfilled' ? depData.value : { isSerial: false },
-            bundleData: bundleData.status === 'fulfilled' ? bundleData.value : { bundled: false },
+            sec:   sec.status   === 'fulfilled' ? sec.value   : null,
+            wData: wData.status === 'fulfilled' ? wData.value : { count: 0, wallets: [], clustered: false },
           };
         })
       );
@@ -522,14 +419,8 @@ export async function runScanCycle() {
     const finalScored = [];
     for (const res of parallelResults) {
       if (res.status !== 'fulfilled') continue;
-      const { p, sec, wData, depData, bundleData } = res.value;
+      const { p, sec, wData } = res.value;
       try {
-        // HARD FILTER — Serial deployer (30+ tx en 24h = bot/rugger)
-        if (depData?.isSerial) { rejected['serial deployer'] = (rejected['serial deployer'] || 0) + 1; continue; }
-
-        // HARD FILTER — Bundle détecté (même wallet achète 3+ fois dans les 15 premières tx)
-        if (bundleData?.bundled) { rejected['bundled'] = (rejected['bundled'] || 0) + 1; continue; }
-
         // Filtres sécurité
         if (sec) {
           if (sec.mintAuthority   !== null) { rejected['mint authority']   = (rejected['mint authority']   || 0) + 1; continue; }
@@ -549,20 +440,7 @@ export async function runScanCycle() {
           scored.debug.traderScore = stickyAxiom;
         }
 
-        // Score Trend (Multi-Timeframe Confirmation)
-        const prevScore = hist.lastScore || 0;
-        let trendBonus = 0;
-        if (prevScore > 0) {
-          if (scored.score > prevScore) trendBonus = 5;       // score monte = confirmation
-          else if (scored.score < prevScore - 10) trendBonus = -5; // score chute = signal faible
-        }
-        scored.score += trendBonus;
-        scored.debug.trendBonus = trendBonus;
-
-        scoreHistory.set(scored.addr, {
-          maxAxiom: Math.max(hist.maxAxiom || 0, scored.debug.axiomCount),
-          lastScore: scored.score,
-        });
+        scoreHistory.set(scored.addr, { maxAxiom: Math.max(hist.maxAxiom || 0, scored.debug.axiomCount) });
 
         // HARD FILTER 0 — Axiom obligatoire
         if ((wData.count || 0) < 1) { rejected['no_axiom'] = (rejected['no_axiom'] || 0) + 1; continue; }
@@ -677,4 +555,4 @@ export async function runScanCycle() {
 
 // Exports pour server.js
 export function getLiveTokens() { return [...liveTokens.values()]; }
-export { checkTokenSecurity as checkTokenSecurityExport, checkAxiomWallets as checkAxiomWalletsExport, checkDeployer as checkDeployerExport, detectBundle as detectBundleExport };
+export { checkTokenSecurity as checkTokenSecurityExport, checkAxiomWallets as checkAxiomWalletsExport };
