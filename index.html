@@ -221,6 +221,37 @@ nav{position:sticky;top:0;z-index:100;background:rgba(5,5,8,.92);backdrop-filter
 .dur-inp:focus{border-color:var(--green);}
 .dur-sel{background:rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.1);border-radius:9px;padding:11px 10px;font-family:'Space Mono',monospace;font-size:11px;color:#d8ffe8;outline:none;cursor:pointer;transition:border .2s;}
 .dur-sel:focus{border-color:var(--green);}
+/* AI Panel */
+.ai-section{margin-bottom:20px;background:rgba(0,0,0,.3);border:1px solid rgba(138,43,226,.2);border-radius:14px;padding:22px 24px;}
+.ai-section-title{font-family:'Space Mono',monospace;font-size:9px;color:rgba(138,43,226,.9);text-transform:uppercase;letter-spacing:3px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;}
+.ai-title{font-family:'Syne',sans-serif;font-size:28px;font-weight:800;background:linear-gradient(135deg,#8a2be2 0%,#da70d6 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:-1.5px;margin-bottom:4px;}
+.ai-sub{font-family:'Space Mono',monospace;font-size:10px;color:var(--muted);margin-bottom:24px;letter-spacing:.5px;}
+.ai-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px;}
+.ai-stat{background:rgba(138,43,226,.06);border:1px solid rgba(138,43,226,.18);border-radius:11px;padding:14px;text-align:center;}
+.ai-stat-val{font-family:'Syne',sans-serif;font-size:26px;font-weight:800;color:#da70d6;}
+.ai-stat-lbl{font-family:'Space Mono',monospace;font-size:7px;color:var(--muted);margin-top:3px;letter-spacing:1px;text-transform:uppercase;}
+.ai-stat.green .ai-stat-val{color:var(--green);}
+.ai-stat.red .ai-stat-val{color:var(--red);}
+.ai-stat.gold .ai-stat-val{color:#ffaa44;}
+.ai-log{max-height:400px;overflow-y:auto;display:flex;flex-direction:column;gap:10px;}
+.ai-log::-webkit-scrollbar{width:3px;}
+.ai-log::-webkit-scrollbar-thumb{background:rgba(138,43,226,.4);border-radius:2px;}
+.ai-log-entry{background:rgba(0,0,0,.4);border:1px solid rgba(138,43,226,.12);border-radius:10px;padding:14px 16px;}
+.ai-log-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+.ai-log-date{font-family:'Space Mono',monospace;font-size:9px;color:rgba(138,43,226,.7);}
+.ai-log-winrate{font-family:'Space Mono',monospace;font-size:9px;padding:3px 8px;border-radius:6px;background:rgba(0,255,136,.1);color:var(--green);}
+.ai-log-changes{display:flex;flex-direction:column;gap:6px;}
+.ai-log-change{font-family:'Space Mono',monospace;font-size:10px;color:var(--text);line-height:1.5;}
+.ai-log-param{color:#da70d6;font-weight:700;}
+.ai-log-old{color:var(--red);text-decoration:line-through;}
+.ai-log-new{color:var(--green);font-weight:700;}
+.ai-log-reason{font-family:'Space Mono',monospace;font-size:9px;color:var(--muted);margin-top:4px;padding-left:10px;border-left:2px solid rgba(138,43,226,.25);line-height:1.5;}
+.ai-weights{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;}
+.ai-weight-item{display:flex;justify-content:space-between;align-items:center;padding:6px 10px;background:rgba(0,0,0,.3);border-radius:7px;font-family:'Space Mono',monospace;font-size:9px;}
+.ai-weight-name{color:var(--muted);}
+.ai-weight-val{color:#da70d6;font-weight:700;}
+.ai-empty{text-align:center;padding:30px;color:var(--muted);font-family:'Space Mono',monospace;font-size:11px;}
+.ai-divider{height:1px;background:linear-gradient(90deg,transparent,rgba(138,43,226,.3),transparent);margin:28px 0;}
 .debug-overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);backdrop-filter:blur(6px);z-index:300;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:.3s;}
 .debug-overlay.open{opacity:1;pointer-events:all;}
 .debug-box{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:2rem;width:90%;max-width:620px;max-height:85vh;overflow-y:auto;position:relative;}
@@ -994,6 +1025,55 @@ section{scroll-margin-top:70px;}
         </div>
         <div class="codes-list" id="codesList"></div>
       </div>
+
+      <!-- AI ENGINE PANEL -->
+      <div class="ai-divider"></div>
+      <div class="ai-title">AI ENGINE</div>
+      <p class="ai-sub">Apprentissage automatique — analyse des calls passés et ajustement du scoring</p>
+
+      <!-- AI WINRATE STATS -->
+      <div class="ai-section">
+        <div class="ai-section-title">
+          <span>Performance globale</span>
+          <button class="btn-admin ghost" onclick="refreshAI()" style="font-size:8px;padding:5px 11px;">REFRESH</button>
+        </div>
+        <div class="ai-stats" id="aiStats">
+          <div class="ai-stat green"><div class="ai-stat-val" id="aiWinrate">—</div><div class="ai-stat-lbl">Winrate</div></div>
+          <div class="ai-stat gold"><div class="ai-stat-val" id="aiTotal">—</div><div class="ai-stat-lbl">Calls traqués</div></div>
+          <div class="ai-stat"><div class="ai-stat-val" id="aiAvgRoi1h">—</div><div class="ai-stat-lbl">ROI moyen 1h</div></div>
+          <div class="ai-stat"><div class="ai-stat-val" id="aiAvgRoi6h">—</div><div class="ai-stat-lbl">ROI moyen 6h</div></div>
+        </div>
+        <div class="ai-stats" style="grid-template-columns:repeat(5,1fr);margin-top:8px;">
+          <div class="ai-stat green"><div class="ai-stat-val" id="aiMoons">0</div><div class="ai-stat-lbl">Moons (x2+)</div></div>
+          <div class="ai-stat green"><div class="ai-stat-val" id="aiWins">0</div><div class="ai-stat-lbl">Wins (+20%)</div></div>
+          <div class="ai-stat gold"><div class="ai-stat-val" id="aiFlats">0</div><div class="ai-stat-lbl">Flats</div></div>
+          <div class="ai-stat red"><div class="ai-stat-val" id="aiLosses">0</div><div class="ai-stat-lbl">Losses</div></div>
+          <div class="ai-stat"><div class="ai-stat-val" id="aiPending">0</div><div class="ai-stat-lbl">En attente</div></div>
+        </div>
+      </div>
+
+      <!-- AI LAST ANALYSIS -->
+      <div class="ai-section">
+        <div class="ai-section-title">
+          <span>Dernière analyse (winners vs losers)</span>
+          <button class="btn-admin" onclick="forceAnalyze()" style="font-size:8px;padding:5px 11px;background:linear-gradient(135deg,#8a2be2,#da70d6);">FORCER ANALYSE</button>
+        </div>
+        <div id="aiAnalysis"><div class="ai-empty">Aucune analyse disponible — l'IA s'exécute toutes les 6h</div></div>
+      </div>
+
+      <!-- AI ADJUSTMENT LOG -->
+      <div class="ai-section">
+        <div class="ai-section-title"><span>Historique des ajustements</span></div>
+        <div class="ai-log" id="aiLog"><div class="ai-empty">Aucun ajustement enregistré — l'IA n'a pas encore assez de données</div></div>
+      </div>
+
+      <!-- AI CURRENT WEIGHTS -->
+      <div class="ai-section">
+        <div class="ai-section-title"><span>Poids actuels du scoring</span></div>
+        <div class="ai-weights" id="aiWeights"><div class="ai-empty">Chargement...</div></div>
+      </div>
+
+      <div class="ai-divider"></div>
 
       <!-- CHANGE PASSWORD -->
       <div class="admin-section">
@@ -2876,10 +2956,120 @@ function checkPw(){
       loadCodesFromFB().then(fbCodes=>{if(!fbCodes||fbCodes.length===0){const local=loadCodes();if(local.length>0){saveCodesFB(local);}}});
       renderCodes();document.getElementById('debugToggleBtn').style.display='inline-block';
       document.getElementById('tabDebugCA').style.display='inline-block';
+      refreshAI();
     }else{document.getElementById('pwErr').style.display='block';document.getElementById('adminPwInp').value='';}
   }).catch(()=>{document.getElementById('pwErr').style.display='block';document.getElementById('adminPwInp').value='';});
 }
 function changePw(){const m=document.getElementById('pwOkMsg');m.textContent='Changez ADMIN_PW dans Railway Variables';m.style.display='block';setTimeout(()=>m.style.display='none',4000);}
+
+// ── AI ENGINE PANEL ──
+async function refreshAI(){
+  try{
+    const resp=await fetch(`${BACKEND_URL}/admin/ai`,{signal:AbortSignal.timeout(10000)});
+    const data=await resp.json();
+    if(!data.ok)return;
+    // Stats
+    const s=data.stats||{};
+    document.getElementById('aiWinrate').textContent=s.winrate!=null?s.winrate+'%':'—';
+    document.getElementById('aiTotal').textContent=s.total||'0';
+    document.getElementById('aiAvgRoi1h').textContent=s.avgRoi1h!=null?(s.avgRoi1h>0?'+':'')+s.avgRoi1h+'%':'—';
+    document.getElementById('aiAvgRoi6h').textContent=s.avgRoi6h!=null?(s.avgRoi6h>0?'+':'')+s.avgRoi6h+'%':'—';
+    document.getElementById('aiMoons').textContent=s.moons||0;
+    document.getElementById('aiWins').textContent=s.wins||0;
+    document.getElementById('aiFlats').textContent=s.flats||0;
+    document.getElementById('aiLosses').textContent=s.losses||0;
+    document.getElementById('aiPending').textContent=s.pending||0;
+    // Winrate color
+    const wr=document.getElementById('aiWinrate');
+    if(s.winrate>=60)wr.style.color='var(--green)';
+    else if(s.winrate>=40)wr.style.color='#ffaa44';
+    else wr.style.color='var(--red)';
+    // Analysis
+    renderAIAnalysis(data.lastAnalysis);
+    // Adjustments log
+    renderAILog(data.adjustments||[]);
+    // Weights
+    renderAIWeights(data.currentWeights);
+  }catch(e){console.warn('[AI Panel] error:',e.message);}
+}
+
+function renderAIAnalysis(analysis){
+  const el=document.getElementById('aiAnalysis');
+  if(!analysis){el.innerHTML='<div class="ai-empty">Aucune analyse disponible — l\'IA s\'exécute toutes les 6h</div>';return;}
+  const d=new Date(analysis.ts);
+  const features=analysis.analysis||{};
+  const featureNames={traderScore:'Axiom Traders',socialScore:'Social',holderScore:'Holders',patternScore:'Pattern',buyRatio:'Buy Ratio',volAccel:'Vol Accél.',c1h:'Change 1h',m5:'Change 5m',top10pct:'Top10 Holders %',axiomCount:'Nb Axiom',mcap:'Mcap',liq:'Liquidité'};
+  let rows='';
+  for(const[k,v]of Object.entries(features)){
+    const name=featureNames[k]||k;
+    const diffColor=v.diff>0?'var(--green)':v.diff<0?'var(--red)':'var(--muted)';
+    const diffSign=v.diff>0?'+':'';
+    rows+=`<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.04);font-family:'Space Mono',monospace;font-size:10px;">
+      <span style="color:var(--muted);width:110px;">${name}</span>
+      <span style="color:var(--green);width:70px;text-align:center;">W: ${v.winAvg}</span>
+      <span style="color:var(--red);width:70px;text-align:center;">L: ${v.loseAvg}</span>
+      <span style="color:${diffColor};width:60px;text-align:right;font-weight:700;">${diffSign}${v.diff}</span>
+    </div>`;
+  }
+  el.innerHTML=`
+    <div style="font-family:'Space Mono',monospace;font-size:9px;color:var(--muted);margin-bottom:12px;">
+      Dernière analyse : ${d.toLocaleDateString('fr-FR')} ${d.toLocaleTimeString('fr-FR')} · ${analysis.totalCalls} calls · Winrate: <span style="color:${analysis.winrate>=50?'var(--green)':'var(--red)'};font-weight:700;">${analysis.winrate}%</span>
+    </div>
+    <div style="display:flex;justify-content:space-between;padding:5px 0;font-family:'Space Mono',monospace;font-size:8px;color:rgba(138,43,226,.6);text-transform:uppercase;letter-spacing:1px;border-bottom:1px solid rgba(138,43,226,.15);">
+      <span style="width:110px;">Feature</span><span style="width:70px;text-align:center;">Winners</span><span style="width:70px;text-align:center;">Losers</span><span style="width:60px;text-align:right;">Diff</span>
+    </div>
+    ${rows}
+  `;
+}
+
+function renderAILog(adjustments){
+  const el=document.getElementById('aiLog');
+  if(!adjustments||adjustments.length===0){el.innerHTML='<div class="ai-empty">Aucun ajustement enregistré — l\'IA n\'a pas encore assez de données</div>';return;}
+  el.innerHTML=adjustments.map(adj=>{
+    const d=new Date(adj.ts);
+    const changes=(adj.changes||[]).map(c=>`
+      <div class="ai-log-change">
+        <span class="ai-log-param">${c.param}</span> : <span class="ai-log-old">${c.old}</span> → <span class="ai-log-new">${c.new}</span>
+      </div>
+      <div class="ai-log-reason">${c.reason}</div>
+    `).join('');
+    return`<div class="ai-log-entry">
+      <div class="ai-log-header">
+        <span class="ai-log-date">${d.toLocaleDateString('fr-FR')} ${d.toLocaleTimeString('fr-FR')}</span>
+        <span class="ai-log-winrate">Winrate: ${adj.winrateBefore||'?'}% · ${adj.sampleSize||'?'} calls</span>
+      </div>
+      <div class="ai-log-changes">${changes}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderAIWeights(weights){
+  const el=document.getElementById('aiWeights');
+  if(!weights){el.innerHTML='<div class="ai-empty">Poids par défaut</div>';return;}
+  const importantKeys=['buyRatioBad','buyRatioGood','rugPumpC1h','rugPumpC5m','staircaseMinC1h','staircaseBonus','organicVolumeMultiplier','volMcapGoodMax','volMcapBadMin','traderMax','socialMax','patternMax','holderMax','avgTxGood','liqMinBonus','violentDumpC5m','sellWallMultiplier','lateDumpC1h'];
+  const displayNames={buyRatioBad:'Buy Ratio seuil bas',buyRatioGood:'Buy Ratio seuil haut',rugPumpC1h:'Rug Pump c1h seuil',rugPumpC5m:'Rug Pump c5m seuil',staircaseMinC1h:'Staircase min c1h',staircaseBonus:'Staircase bonus',organicVolumeMultiplier:'Vol organique multi',volMcapGoodMax:'Vol/Mcap max bon',volMcapBadMin:'Vol/Mcap min bad',traderMax:'Poids max Traders',socialMax:'Poids max Social',patternMax:'Poids max Pattern',holderMax:'Poids max Holders',avgTxGood:'Avg Tx seuil bon',liqMinBonus:'Liquidité min bonus',violentDumpC5m:'Dump violent c5m',sellWallMultiplier:'Sell wall multi',lateDumpC1h:'Late dump c1h'};
+  el.innerHTML=importantKeys.filter(k=>weights[k]!=null).map(k=>`
+    <div class="ai-weight-item">
+      <span class="ai-weight-name">${displayNames[k]||k}</span>
+      <span class="ai-weight-val">${weights[k]}</span>
+    </div>
+  `).join('');
+}
+
+async function forceAnalyze(){
+  const btn=event.target;btn.textContent='ANALYSE...';btn.disabled=true;
+  try{
+    const resp=await fetch(`${BACKEND_URL}/admin/ai/analyze`,{method:'POST',signal:AbortSignal.timeout(30000)});
+    const data=await resp.json();
+    if(data.ok&&data.changes&&data.changes.length>0){
+      btn.textContent=data.changes.length+' AJUSTEMENTS';btn.style.background='linear-gradient(135deg,var(--green),#00aa55)';
+    }else{
+      btn.textContent='AUCUN CHANGEMENT';
+    }
+    setTimeout(()=>refreshAI(),500);
+  }catch(e){btn.textContent='ERREUR';}
+  setTimeout(()=>{btn.textContent='FORCER ANALYSE';btn.disabled=false;btn.style.background='';},3000);
+}
 
 async function adminEditAth(key,addr,sym){
   const raw=prompt(`✏️ ATH manuel pour ${sym}\n\nNouvelle valeur en $ (ex: 258000) :`);

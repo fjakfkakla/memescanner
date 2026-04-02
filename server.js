@@ -2,6 +2,7 @@ import express from 'express';
 import cors    from 'cors';
 import { getCalls, getHistory } from './firebase.js';
 import { runScanCycle, getLiveTokens, checkTokenSecurityExport, checkAxiomWalletsExport, getHeliusStats } from './worker.js';
+import { trackOutcomes, autoAdjust, loadWeights, getAIPanel, getWinrateStats } from './aiEngine.js';
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
@@ -72,6 +73,35 @@ app.post('/admin/change-pw', (req, res) => {
   res.json({ ok: false, error: 'Changez ADMIN_PW directement dans Railway Variables' });
 });
 
+// ── AI PANEL (admin only) ──
+app.get('/admin/ai', async (_req, res) => {
+  try {
+    const [panel, stats] = await Promise.all([getAIPanel(), getWinrateStats()]);
+    res.json({ ok: true, ...panel, stats });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+app.get('/admin/ai/winrate', async (_req, res) => {
+  try {
+    const stats = await getWinrateStats();
+    res.json({ ok: true, ...stats });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+// Force une analyse + ajustement immédiat (admin)
+app.post('/admin/ai/analyze', async (_req, res) => {
+  try {
+    const changes = await autoAdjust();
+    res.json({ ok: true, changes: changes || [] });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
 // Debug CA — analyse complète d'un token à la demande (deep mode)
 app.get('/debug/:addr', async (req, res) => {
   const { addr } = req.params;
@@ -92,8 +122,18 @@ app.get('/debug/:addr', async (req, res) => {
 app.listen(PORT, () => {
   console.log(`[Server] Écoute sur port ${PORT}`);
 
+  // Charger les poids IA depuis Firebase
+  loadWeights();
+
   // Premier cycle immédiat
   runScanCycle();
   // Cycle toutes les 45s
   setInterval(runScanCycle, 45000);
+
+  // AI: track outcomes toutes les 5 min (check prix des calls passés)
+  setInterval(trackOutcomes, 5 * 60 * 1000);
+  // AI: analyse + auto-ajustement toutes les 6h
+  setInterval(autoAdjust, 6 * 3600 * 1000);
+  // Premier track après 2 min (laisser le temps au premier cycle)
+  setTimeout(trackOutcomes, 120000);
 });
