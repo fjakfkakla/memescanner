@@ -16,6 +16,13 @@ const heliusCache   = new Map(); // addr → { ts, data }
 const scoreHistory  = new Map(); // addr → { maxAxiom }
 const liveTokens    = new Map(); // addr → { token data, calledAt, lastSeenAt, droppedAt }
 
+// Compteur d'appels Helius pour monitoring
+let heliusCalls = { total: 0, today: 0, dayStart: Date.now() };
+function trackHelius(n = 1) {
+  if (Date.now() - heliusCalls.dayStart > 86400000) { heliusCalls.today = 0; heliusCalls.dayStart = Date.now(); }
+  heliusCalls.total += n; heliusCalls.today += n;
+}
+
 // Appels DexScreener en parallèle (12 endpoints)
 async function fetchRetry(url, options = {}, retries = 2, delayMs = 800) {
   for (let i = 0; i <= retries; i++) {
@@ -27,7 +34,7 @@ async function fetchRetry(url, options = {}, retries = 2, delayMs = 800) {
 }
 
 // ── Découverte de tokens via Helius : surveiller les achats récents des top Axiom wallets ──
-const DISCOVERY_WALLETS = AXIOM_WALLETS.slice(0, 25); // Top 25 wallets
+const DISCOVERY_WALLETS = AXIOM_WALLETS.slice(0, 10); // Top 10 wallets (réduit conso Helius)
 const discoveryCache = new Map(); // wallet → { ts, tokens }
 
 async function discoverTokensFromAxiom() {
@@ -39,9 +46,9 @@ async function discoverTokensFromAxiom() {
     const batch = DISCOVERY_WALLETS.slice(i, i + 5);
     const results = await Promise.allSettled(
       batch.map(async wallet => {
-        // Cache 2 min par wallet
+        // Cache 5 min par wallet (réduit conso Helius)
         const cached = discoveryCache.get(wallet);
-        if (cached && now - cached.ts < 120000) {
+        if (cached && now - cached.ts < 300000) {
           cached.tokens.forEach(t => discovered.add(t));
           return;
         }
@@ -52,6 +59,7 @@ async function discoverTokensFromAxiom() {
             body: JSON.stringify({ jsonrpc: '2.0', id: 'disc', method: 'getSignaturesForAddress', params: [wallet, { limit: 10 }] }),
             signal: AbortSignal.timeout(8000)
           });
+          trackHelius();
           const sigData = await sigResp.json();
           const sigs = (sigData?.result || [])
             .filter(s => s?.signature && (!s.blockTime || (now/1000 - s.blockTime) < 600)) // dernières 10 min
@@ -64,6 +72,7 @@ async function discoverTokensFromAxiom() {
             `${HELIUS_API}/v0/transactions?api-key=${HELIUS_KEY}`,
             { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ transactions: sigs }), signal: AbortSignal.timeout(10000) }
           );
+          trackHelius();
           const parsed = await parseResp.json();
           const tokens = new Set();
           if (Array.isArray(parsed)) {
@@ -164,9 +173,10 @@ async function fetchDexScreener() {
 
 async function checkTokenSecurity(tokenAddr, pairAddr = null) {
   const cached = heliusCache.get(tokenAddr);
-  if (cached && Date.now() - cached.ts < 120000) return cached.data;
+  if (cached && Date.now() - cached.ts < 300000) return cached.data; // Cache 5 min (was 2 min)
 
   try {
+    trackHelius(2); // getAsset + getTokenLargestAccounts
     const [assetRes, holdersRes] = await Promise.allSettled([
       fetchRetry(HELIUS_RPC, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -248,9 +258,10 @@ async function checkAxiomWallets(tokenAddr, pairAddr = null, deep = false) {
   if (cached && Date.now() - cached.ts < 1800000) return cached.result;
 
   const sigAddr  = pairAddr || tokenAddr;
-  const sigLimit = deep ? 500 : 100;
+  const sigLimit = deep ? 100 : 30; // Réduit: was 500/100, économise ~70% crédits Enhanced API
 
   try {
+    trackHelius(3); // 2x getSignaturesForAddress + getTokenAccounts
     const [sigPairRes, sigMintRes, dasRes] = await Promise.allSettled([
       fetchRetry(HELIUS_RPC, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -264,24 +275,20 @@ async function checkAxiomWallets(tokenAddr, pairAddr = null, deep = false) {
       }).then(r => r.json()),
       fetchRetry(HELIUS_RPC, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ jsonrpc: '2.0', id: 'das', method: 'getTokenAccounts', params: { mint: tokenAddr, limit: 1000, displayOptions: {} } }),
+        body: JSON.stringify({ jsonrpc: '2.0', id: 'das', method: 'getTokenAccounts', params: { mint: tokenAddr, limit: 200, displayOptions: {} } }),
         signal: AbortSignal.timeout(12000)
       }).then(r => r.json()),
     ]);
 
-    const sigSetNew = new Set();
-    const sigSetOld = new Set();
+    const sigSet = new Set();
     [sigPairRes, sigMintRes].forEach(r => {
       if (r.status === 'fulfilled') {
         const sigs = r.value?.result || [];
-        sigs.slice(0, 50).forEach(s => { if (s?.signature) sigSetNew.add(s.signature); });
-        sigs.slice(-50).forEach(s => { if (s?.signature) sigSetOld.add(s.signature); });
-        if (deep) sigs.forEach(s => { if (s?.signature) sigSetNew.add(s.signature); });
+        // Prendre les plus récentes uniquement (suffisant pour détecter Axiom wallets)
+        sigs.slice(0, deep ? 50 : 20).forEach(s => { if (s?.signature) sigSet.add(s.signature); });
       }
     });
-    const sigList = deep
-      ? [...new Set([...sigSetNew, ...sigSetOld])]
-      : [...new Set([...sigSetNew, ...sigSetOld])].slice(0, 100);
+    const sigList = [...sigSet].slice(0, deep ? 80 : 30); // Max 30 sigs en normal, 80 en deep
     const allOwners = new Set();
 
     if (sigList.length > 0) {
@@ -289,6 +296,7 @@ async function checkAxiomWallets(tokenAddr, pairAddr = null, deep = false) {
       for (let i = 0; i < sigList.length; i += 100) parseBatches.push(sigList.slice(i, i + 100));
       for (const batch of parseBatches) {
       try {
+        trackHelius();
         const parseResp = await fetchRetry(
           `${HELIUS_API}/v0/transactions?api-key=${HELIUS_KEY}`,
           { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ transactions: batch }), signal: AbortSignal.timeout(20000) },
@@ -468,7 +476,7 @@ export async function runScanCycle() {
     }
 
     finalScored.sort((a, b) => b.score - a.score);
-    console.log(`[Worker] ${finalScored.length} calls | rejected:`, JSON.stringify(rejected));
+    console.log(`[Worker] ${finalScored.length} calls | helius today: ${heliusCalls.today} | rejected:`, JSON.stringify(rejected));
 
     // 5. Save calls + update liveTokens
     const now = Date.now();
@@ -555,4 +563,5 @@ export async function runScanCycle() {
 
 // Exports pour server.js
 export function getLiveTokens() { return [...liveTokens.values()]; }
+export function getHeliusStats() { return { ...heliusCalls }; }
 export { checkTokenSecurity as checkTokenSecurityExport, checkAxiomWallets as checkAxiomWalletsExport };

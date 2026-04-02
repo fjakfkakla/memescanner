@@ -1,7 +1,7 @@
 import express from 'express';
 import cors    from 'cors';
 import { getCalls, getHistory } from './firebase.js';
-import { runScanCycle, getLiveTokens, checkTokenSecurityExport, checkAxiomWalletsExport } from './worker.js';
+import { runScanCycle, getLiveTokens, checkTokenSecurityExport, checkAxiomWalletsExport, getHeliusStats } from './worker.js';
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
@@ -11,9 +11,9 @@ app.use(express.json());
 
 // ── ENDPOINTS ────────────────────────────────────────────────────
 
-// Ping
+// Ping + Helius usage
 app.get('/health', (_req, res) => {
-  res.json({ status: 'ok', ts: Date.now(), uptime: process.uptime() });
+  res.json({ status: 'ok', ts: Date.now(), uptime: process.uptime(), helius: getHeliusStats() });
 });
 
 // Tokens live : qualifiés actuellement + 5min après drop
