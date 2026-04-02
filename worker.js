@@ -16,11 +16,26 @@ const heliusCache   = new Map(); // addr → { ts, data }
 const scoreHistory  = new Map(); // addr → { maxAxiom }
 const liveTokens    = new Map(); // addr → { token data, calledAt, lastSeenAt, droppedAt }
 
-// Compteur d'appels Helius pour monitoring
-let heliusCalls = { total: 0, today: 0, dayStart: Date.now() };
+// Compteur d'appels Helius + hard limit journalier
+const HELIUS_DAILY_LIMIT = parseInt(process.env.HELIUS_DAILY_LIMIT || '200000'); // 200k crédits/jour par défaut
+let heliusCalls = { total: 0, today: 0, dayStart: Date.now(), blocked: 0 };
 function trackHelius(n = 1) {
-  if (Date.now() - heliusCalls.dayStart > 86400000) { heliusCalls.today = 0; heliusCalls.dayStart = Date.now(); }
+  if (Date.now() - heliusCalls.dayStart > 86400000) {
+    console.log(`[Helius] Daily reset. Yesterday: ${heliusCalls.today} calls, ${heliusCalls.blocked} blocked`);
+    heliusCalls.today = 0; heliusCalls.blocked = 0; heliusCalls.dayStart = Date.now();
+  }
   heliusCalls.total += n; heliusCalls.today += n;
+}
+function canCallHelius() {
+  if (Date.now() - heliusCalls.dayStart > 86400000) {
+    heliusCalls.today = 0; heliusCalls.blocked = 0; heliusCalls.dayStart = Date.now();
+  }
+  if (heliusCalls.today >= HELIUS_DAILY_LIMIT) {
+    heliusCalls.blocked++;
+    if (heliusCalls.blocked % 100 === 1) console.warn(`[Helius] ⛔ DAILY LIMIT HIT (${HELIUS_DAILY_LIMIT}). ${heliusCalls.blocked} calls blocked.`);
+    return false;
+  }
+  return true;
 }
 
 // Appels DexScreener en parallèle (12 endpoints)
@@ -38,6 +53,7 @@ const DISCOVERY_WALLETS = AXIOM_WALLETS.slice(0, 10); // Top 10 wallets (réduit
 const discoveryCache = new Map(); // wallet → { ts, tokens }
 
 async function discoverTokensFromAxiom() {
+  if (!canCallHelius()) return [];
   const discovered = new Set();
   const now = Date.now();
 
@@ -173,7 +189,8 @@ async function fetchDexScreener() {
 
 async function checkTokenSecurity(tokenAddr, pairAddr = null) {
   const cached = heliusCache.get(tokenAddr);
-  if (cached && Date.now() - cached.ts < 300000) return cached.data; // Cache 5 min (was 2 min)
+  if (cached && Date.now() - cached.ts < 300000) return cached.data;
+  if (!canCallHelius()) return null;
 
   try {
     trackHelius(2); // getAsset + getTokenLargestAccounts
@@ -256,6 +273,7 @@ async function checkTokenSecurity(tokenAddr, pairAddr = null) {
 async function checkAxiomWallets(tokenAddr, pairAddr = null, deep = false) {
   const cached = swCache.get(tokenAddr);
   if (cached && Date.now() - cached.ts < 1800000) return cached.result;
+  if (!canCallHelius()) return { count: 0, wallets: [], clustered: false };
 
   const sigAddr  = pairAddr || tokenAddr;
   const sigLimit = deep ? 100 : 30; // Réduit: was 500/100, économise ~70% crédits Enhanced API
@@ -563,5 +581,7 @@ export async function runScanCycle() {
 
 // Exports pour server.js
 export function getLiveTokens() { return [...liveTokens.values()]; }
-export function getHeliusStats() { return { ...heliusCalls }; }
+export function getHeliusStats() {
+  return { ...heliusCalls, limit: HELIUS_DAILY_LIMIT, remaining: Math.max(0, HELIUS_DAILY_LIMIT - heliusCalls.today), limitReached: heliusCalls.today >= HELIUS_DAILY_LIMIT };
+}
 export { checkTokenSecurity as checkTokenSecurityExport, checkAxiomWallets as checkAxiomWalletsExport };
