@@ -72,7 +72,8 @@ let dynamicWeights = {
 const adjustmentLog = []; // { ts, changes: [{param, old, new, reason}], winrateBefore, winrateAfter, sampleSize }
 
 // ── OUTCOME TRACKING ──
-// Check le prix des calls passés après 1h et 6h
+// Check le prix toutes les 5 min pendant 6h, track le ATH (mcap max atteint)
+// Le résultat final est basé sur le ATH, pas le prix à un instant T
 async function trackOutcomes() {
   try {
     const snap = await db.ref('calls').orderByChild('savedAt').limitToLast(100).once('value');
@@ -83,64 +84,85 @@ async function trackOutcomes() {
     for (const [key, call] of Object.entries(calls)) {
       if (!call.addr || !call.callMcap) continue;
 
-      const age = now - (call.calledAt || call.callTime || call.savedAt || 0);
-      const has1h = call.outcome?.mcap1h != null;
-      const has6h = call.outcome?.mcap6h != null;
+      const callTime = call.calledAt || call.callTime || call.savedAt || 0;
+      const age = now - callTime;
 
-      // Check 1h (entre 55min et 75min après le call)
-      if (!has1h && age > 55 * 60000 && age < 75 * 60000) {
-        const currentMcap = await fetchCurrentMcap(call.addr);
-        if (currentMcap > 0) {
-          const roi1h = ((currentMcap - call.callMcap) / call.callMcap * 100).toFixed(1);
-          await db.ref(`calls/${key}/outcome`).update({
-            mcap1h: currentMcap,
-            roi1h: parseFloat(roi1h),
-            check1hAt: now,
-          });
-          checked++;
-        }
+      // Skip si trop vieux (> 8h) et déjà finalisé
+      if (age > 8 * 3600000 && call.outcome?.finalized) continue;
+      // Skip si trop récent (< 5 min)
+      if (age < 5 * 60000) continue;
+
+      const currentMcap = await fetchCurrentMcap(call.addr);
+      if (currentMcap <= 0) continue;
+      checked++;
+
+      const athMcap = Math.max(currentMcap, call.outcome?.athMcap || 0, call.athMcap || 0);
+      const athX = parseFloat((athMcap / call.callMcap).toFixed(2));
+      const currentX = parseFloat((currentMcap / call.callMcap).toFixed(2));
+      const roi = parseFloat(((currentMcap - call.callMcap) / call.callMcap * 100).toFixed(1));
+
+      // Résultat basé sur le ATH (pas le prix actuel)
+      const result = athX >= 2 ? 'moon'
+        : athX >= 1.3 ? 'win'
+        : athX >= 0.8 ? 'flat'
+        : 'loss';
+
+      const update = {
+        athMcap,
+        athX,
+        currentMcap,
+        currentX,
+        roi,
+        result,
+        lastCheckAt: now,
+        checkCount: (call.outcome?.checkCount || 0) + 1,
+      };
+
+      // Marquer les checks 1h et 6h quand on passe ces seuils
+      if (!call.outcome?.mcap1h && age >= 55 * 60000) {
+        update.mcap1h = currentMcap;
+        update.roi1h = roi;
+      }
+      if (!call.outcome?.mcap6h && age >= 350 * 60000) {
+        update.mcap6h = currentMcap;
+        update.roi6h = roi;
       }
 
-      // Check 6h (entre 5h50 et 6h20 après le call)
-      if (!has6h && age > 350 * 60000 && age < 380 * 60000) {
-        const currentMcap = await fetchCurrentMcap(call.addr);
-        if (currentMcap > 0) {
-          const roi6h = ((currentMcap - call.callMcap) / call.callMcap * 100).toFixed(1);
-          const result = currentMcap >= call.callMcap * 2 ? 'moon'
-            : currentMcap >= call.callMcap * 1.2 ? 'win'
-            : currentMcap >= call.callMcap * 0.7 ? 'flat'
-            : 'loss';
-          await db.ref(`calls/${key}/outcome`).update({
-            mcap6h: currentMcap,
-            roi6h: parseFloat(roi6h),
-            check6hAt: now,
-            result,
-          });
-          // Sauvegarder le snapshot features pour l'analyse
-          await db.ref(`calls/${key}/outcome/features`).set({
-            score: call.score,
-            mcap: call.callMcap,
-            liq: call.liq,
-            traderScore: call.debug?.traderScore || 0,
-            socialScore: call.debug?.socialScore || 0,
-            holderScore: call.debug?.holderScore || 0,
-            patternScore: call.debug?.patternScore || 0,
-            platformScore: call.debug?.platformScore || 0,
-            mcapScore: call.debug?.mcapScore || 0,
-            ageScore: call.debug?.ageScore || 0,
-            buyRatio: call.debug?.buyRatio || 0,
-            volAccel: call.debug?.volAccel || 0,
-            c1h: call.debug?.c1h || 0,
-            m5: call.debug?.m5 || 0,
-            top10pct: call.debug?.top10pct || 0,
-            axiomCount: call.debug?.axiomCount || 0,
-          });
-          checked++;
-        }
+      // Finaliser après 6h
+      if (age >= 6 * 3600000 && !call.outcome?.finalized) {
+        update.finalized = true;
+        // Sauvegarder le snapshot features pour l'analyse
+        update.features = {
+          score: call.score,
+          mcap: call.callMcap,
+          liq: call.liq,
+          traderScore: call.debug?.traderScore || 0,
+          socialScore: call.debug?.socialScore || 0,
+          holderScore: call.debug?.holderScore || 0,
+          patternScore: call.debug?.patternScore || 0,
+          platformScore: call.debug?.platformScore || 0,
+          mcapScore: call.debug?.mcapScore || 0,
+          ageScore: call.debug?.ageScore || 0,
+          buyRatio: call.debug?.buyRatio || 0,
+          volAccel: call.debug?.volAccel || 0,
+          c1h: call.debug?.c1h || 0,
+          m5: call.debug?.m5 || 0,
+          top10pct: call.debug?.top10pct || 0,
+          axiomCount: call.debug?.axiomCount || 0,
+        };
       }
+
+      await db.ref(`calls/${key}/outcome`).update(update);
+      // Aussi mettre à jour athMcap au niveau du call (pour le frontend)
+      if (athMcap > (call.athMcap || 0)) {
+        await db.ref(`calls/${key}/athMcap`).set(athMcap);
+      }
+
+      // Rate limit DexScreener : pas trop de calls d'un coup
+      if (checked % 5 === 0) await new Promise(r => setTimeout(r, 1000));
     }
 
-    if (checked > 0) console.log(`[AI] Tracked ${checked} outcomes`);
+    if (checked > 0) console.log(`[AI] Tracked ${checked} outcomes (ATH-based)`);
   } catch (e) {
     console.warn('[AI] trackOutcomes error:', e.message);
   }
@@ -394,6 +416,10 @@ async function getWinrateStats() {
     const flats = withOutcome.filter(c => c.outcome.result === 'flat').length;
     const moons = withOutcome.filter(c => c.outcome.result === 'moon').length;
 
+    // Calcul ATH moyen (xATH) — la vraie métrique
+    const withAth = withOutcome.filter(c => c.outcome.athX != null);
+    const avgAthX = withAth.length > 0 ? parseFloat((withAth.reduce((s, c) => s + c.outcome.athX, 0) / withAth.length).toFixed(2)) : 0;
+
     return {
       winrate: parseFloat((wins / withOutcome.length * 100).toFixed(1)),
       total: withOutcome.length,
@@ -402,6 +428,7 @@ async function getWinrateStats() {
       flats,
       moons,
       pending: calls.filter(c => !c.outcome?.result).length,
+      avgAthX,
       avgRoi1h: parseFloat((withOutcome.filter(c => c.outcome.roi1h != null).reduce((s, c) => s + c.outcome.roi1h, 0) / (withOutcome.filter(c => c.outcome.roi1h != null).length || 1)).toFixed(1)),
       avgRoi6h: parseFloat((withOutcome.filter(c => c.outcome.roi6h != null).reduce((s, c) => s + c.outcome.roi6h, 0) / (withOutcome.filter(c => c.outcome.roi6h != null).length || 1)).toFixed(1)),
     };

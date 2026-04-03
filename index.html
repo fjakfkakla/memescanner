@@ -1038,9 +1038,9 @@ section{scroll-margin-top:70px;}
           <button class="btn-admin ghost" onclick="refreshAI()" style="font-size:8px;padding:5px 11px;">REFRESH</button>
         </div>
         <div class="ai-stats" id="aiStats">
-          <div class="ai-stat green"><div class="ai-stat-val" id="aiWinrate">—</div><div class="ai-stat-lbl">Winrate</div></div>
+          <div class="ai-stat green"><div class="ai-stat-val" id="aiWinrate">—</div><div class="ai-stat-lbl">Winrate (x1.3+)</div></div>
           <div class="ai-stat gold"><div class="ai-stat-val" id="aiTotal">—</div><div class="ai-stat-lbl">Calls traqués</div></div>
-          <div class="ai-stat"><div class="ai-stat-val" id="aiAvgRoi1h">—</div><div class="ai-stat-lbl">ROI moyen 1h</div></div>
+          <div class="ai-stat"><div class="ai-stat-val" id="aiAvgAthX">—</div><div class="ai-stat-lbl">ATH moyen (xATH)</div></div>
           <div class="ai-stat"><div class="ai-stat-val" id="aiAvgRoi6h">—</div><div class="ai-stat-lbl">ROI moyen 6h</div></div>
         </div>
         <div class="ai-stats" style="grid-template-columns:repeat(5,1fr);margin-top:8px;">
@@ -2972,7 +2972,7 @@ async function refreshAI(){
     const s=data.stats||{};
     document.getElementById('aiWinrate').textContent=s.winrate!=null?s.winrate+'%':'—';
     document.getElementById('aiTotal').textContent=s.total||'0';
-    document.getElementById('aiAvgRoi1h').textContent=s.avgRoi1h!=null?(s.avgRoi1h>0?'+':'')+s.avgRoi1h+'%':'—';
+    document.getElementById('aiAvgAthX').textContent=s.avgAthX!=null?s.avgAthX+'x':'—';
     document.getElementById('aiAvgRoi6h').textContent=s.avgRoi6h!=null?(s.avgRoi6h>0?'+':'')+s.avgRoi6h+'%':'—';
     document.getElementById('aiMoons').textContent=s.moons||0;
     document.getElementById('aiWins').textContent=s.wins||0;
