@@ -437,6 +437,112 @@ async function getWinrateStats() {
   }
 }
 
+// ── DEEP ANALYZE — Résultats détaillés pour le panel admin ──
+// Retourne les tableaux de calls bons/mauvais, les patterns trouvés, et les changements
+async function deepAnalyze() {
+  try {
+    const snap = await db.ref('calls').orderByChild('savedAt').limitToLast(200).once('value');
+    const allCalls = snap.val() || {};
+    const calls = Object.entries(allCalls)
+      .map(([key, c]) => ({ key, ...c }))
+      .filter(c => c.outcome?.result && c.outcome?.features);
+
+    if (calls.length < 5) {
+      return { ok: false, reason: `Pas assez de calls avec outcome (${calls.length}/5 min)` };
+    }
+
+    // Séparer bons (x1.2+) et mauvais (< x1.2)
+    const threshold = 1.2;
+    const badCalls = calls.filter(c => (c.outcome.athX || 0) < threshold);
+    const goodCalls = calls.filter(c => (c.outcome.athX || 0) >= threshold);
+
+    // Formatter les calls pour le frontend
+    const formatCall = (c) => ({
+      sym: c.sym || c.name || '???',
+      addr: c.addr,
+      score: c.score || 0,
+      callMcap: c.callMcap || 0,
+      athMcap: c.outcome.athMcap || c.athMcap || 0,
+      athX: c.outcome.athX || 0,
+      currentX: c.outcome.currentX || 0,
+      result: c.outcome.result,
+      calledAt: c.calledAt || c.callTime || c.savedAt || 0,
+      features: c.outcome.features || {},
+      axiomCount: c.outcome.features?.axiomCount || c.debug?.axiomCount || 0,
+      buyRatio: c.outcome.features?.buyRatio || c.debug?.buyRatio || 0,
+      top10pct: c.outcome.features?.top10pct || c.debug?.top10pct || 0,
+      traderScore: c.outcome.features?.traderScore || c.debug?.traderScore || 0,
+      socialScore: c.outcome.features?.socialScore || c.debug?.socialScore || 0,
+      holderScore: c.outcome.features?.holderScore || c.debug?.holderScore || 0,
+      patternScore: c.outcome.features?.patternScore || c.debug?.patternScore || 0,
+      liq: c.outcome.features?.liq || c.liq || 0,
+      c1h: c.outcome.features?.c1h || c.debug?.c1h || 0,
+      m5: c.outcome.features?.m5 || c.debug?.m5 || 0,
+    });
+
+    const badFormatted = badCalls.map(formatCall).sort((a, b) => a.athX - b.athX);
+    const goodFormatted = goodCalls.map(formatCall).sort((a, b) => b.athX - a.athX);
+
+    // ── PATTERNS : ce que l'IA trouve comme différences ──
+    const features = ['traderScore', 'socialScore', 'holderScore', 'patternScore', 'buyRatio', 'c1h', 'm5', 'top10pct', 'axiomCount', 'mcap', 'liq'];
+    const insights = [];
+
+    for (const feat of features) {
+      const goodVals = goodCalls.map(c => c.outcome?.features?.[feat] || c.debug?.[feat] || 0).filter(v => v !== 0);
+      const badVals = badCalls.map(c => c.outcome?.features?.[feat] || c.debug?.[feat] || 0).filter(v => v !== 0);
+      if (goodVals.length < 3 || badVals.length < 3) continue;
+
+      const goodAvg = goodVals.reduce((a, b) => a + b, 0) / goodVals.length;
+      const badAvg = badVals.reduce((a, b) => a + b, 0) / badVals.length;
+      const diff = goodAvg - badAvg;
+      const pctDiff = badAvg !== 0 ? Math.abs(diff / badAvg * 100) : 0;
+
+      if (pctDiff > 15 || Math.abs(diff) > 3) {
+        const featureNames = {
+          traderScore: 'Score Traders Axiom', socialScore: 'Score Social', holderScore: 'Score Holders',
+          patternScore: 'Score Pattern', buyRatio: 'Buy Ratio', c1h: 'Variation 1h (%)',
+          m5: 'Variation 5m (%)', top10pct: 'Top 10 holders (%)', axiomCount: 'Nb wallets Axiom',
+          mcap: 'Market Cap au call', liq: 'Liquidité'
+        };
+        insights.push({
+          feature: featureNames[feat] || feat,
+          featureKey: feat,
+          goodAvg: parseFloat(goodAvg.toFixed(2)),
+          badAvg: parseFloat(badAvg.toFixed(2)),
+          diff: parseFloat(diff.toFixed(2)),
+          direction: diff > 0 ? 'up' : 'down',
+          explanation: diff > 0
+            ? `Les bons calls ont en moyenne ${featureNames[feat] || feat} plus élevé (${goodAvg.toFixed(1)} vs ${badAvg.toFixed(1)})`
+            : `Les mauvais calls ont en moyenne ${featureNames[feat] || feat} plus élevé (${badAvg.toFixed(1)} vs ${goodAvg.toFixed(1)})`
+        });
+      }
+    }
+
+    // Trier insights par importance (plus gros écart d'abord)
+    insights.sort((a, b) => Math.abs(b.diff) - Math.abs(a.diff));
+
+    // ── CHANGEMENTS proposés par l'IA ──
+    const changes = await autoAdjust();
+
+    return {
+      ok: true,
+      ts: Date.now(),
+      totalCalls: calls.length,
+      goodCalls: goodFormatted,
+      badCalls: badFormatted,
+      goodCount: goodCalls.length,
+      badCount: badCalls.length,
+      winrate: parseFloat((goodCalls.length / calls.length * 100).toFixed(1)),
+      insights,
+      changes: changes || [],
+      currentWeights: { ...dynamicWeights },
+    };
+  } catch (e) {
+    console.warn('[AI] deepAnalyze error:', e.message);
+    return { ok: false, reason: e.message };
+  }
+}
+
 // ── EXPORT ──
 export {
   dynamicWeights,
@@ -446,4 +552,5 @@ export {
   loadWeights,
   getAIPanel,
   getWinrateStats,
+  deepAnalyze,
 };
