@@ -2,7 +2,7 @@ import express from 'express';
 import cors    from 'cors';
 import { getCalls, getHistory } from './firebase.js';
 import { runScanCycle, getLiveTokens, checkTokenSecurityExport, checkAxiomWalletsExport, getHeliusStats } from './worker.js';
-import { trackOutcomes, autoAdjust, loadWeights, getAIPanel, getWinrateStats } from './aiEngine.js';
+import { trackOutcomes, autoAdjust, loadWeights, getAIPanel, getWinrateStats, deepAnalyze } from './aiEngine.js';
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
@@ -97,6 +97,16 @@ app.post('/admin/ai/analyze', async (_req, res) => {
   try {
     const changes = await autoAdjust();
     res.json({ ok: true, changes: changes || [] });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+// Deep analyze — analyse détaillée avec tableaux bons/mauvais calls + patterns
+app.post('/admin/ai/deep-analyze', async (_req, res) => {
+  try {
+    const result = await deepAnalyze();
+    res.json(result);
   } catch (e) {
     res.status(500).json({ ok: false, error: e.message });
   }
