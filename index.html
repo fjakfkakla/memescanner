@@ -1069,45 +1069,77 @@ section{scroll-margin-top:70px;}
       <!-- AI ENGINE PANEL -->
       <div class="ai-divider"></div>
       <div class="ai-title">AI ENGINE</div>
-      <p class="ai-sub">Apprentissage automatique — analyse des calls passés et ajustement du scoring</p>
+      <p class="ai-sub">Analyse tes calls — compare les winners vs losers — ajuste le scoring automatiquement</p>
 
       <!-- AI WINRATE STATS -->
       <div class="ai-section">
         <div class="ai-section-title">
           <span>Performance globale</span>
-          <button class="btn-admin ghost" onclick="refreshAI()" style="font-size:8px;padding:5px 11px;">REFRESH</button>
+          <button class="btn-admin ghost" onclick="refreshAI()" style="font-size:12px;padding:6px 14px;">REFRESH</button>
         </div>
         <div class="ai-stats" id="aiStats">
-          <div class="ai-stat green"><div class="ai-stat-val" id="aiWinrate">—</div><div class="ai-stat-lbl">Winrate (x1.3+)</div></div>
+          <div class="ai-stat green"><div class="ai-stat-val" id="aiWinrate">—</div><div class="ai-stat-lbl">Winrate (x1.2+)</div></div>
           <div class="ai-stat gold"><div class="ai-stat-val" id="aiTotal">—</div><div class="ai-stat-lbl">Calls traqués</div></div>
-          <div class="ai-stat"><div class="ai-stat-val" id="aiAvgAthX">—</div><div class="ai-stat-lbl">ATH moyen (xATH)</div></div>
+          <div class="ai-stat"><div class="ai-stat-val" id="aiAvgAthX">—</div><div class="ai-stat-lbl">ATH moyen</div></div>
           <div class="ai-stat"><div class="ai-stat-val" id="aiAvgRoi6h">—</div><div class="ai-stat-lbl">ROI moyen 6h</div></div>
         </div>
         <div class="ai-stats" style="grid-template-columns:repeat(5,1fr);margin-top:8px;">
           <div class="ai-stat green"><div class="ai-stat-val" id="aiMoons">0</div><div class="ai-stat-lbl">Moons (x2+)</div></div>
-          <div class="ai-stat green"><div class="ai-stat-val" id="aiWins">0</div><div class="ai-stat-lbl">Wins (+20%)</div></div>
+          <div class="ai-stat green"><div class="ai-stat-val" id="aiWins">0</div><div class="ai-stat-lbl">Wins (x1.2+)</div></div>
           <div class="ai-stat gold"><div class="ai-stat-val" id="aiFlats">0</div><div class="ai-stat-lbl">Flats</div></div>
           <div class="ai-stat red"><div class="ai-stat-val" id="aiLosses">0</div><div class="ai-stat-lbl">Losses</div></div>
           <div class="ai-stat"><div class="ai-stat-val" id="aiPending">0</div><div class="ai-stat-lbl">En attente</div></div>
         </div>
       </div>
 
-      <!-- AI LAST ANALYSIS -->
-      <div class="ai-section">
-        <div class="ai-section-title">
-          <span>Dernière analyse (winners vs losers)</span>
-          <button class="btn-admin" onclick="forceAnalyze()" style="font-size:8px;padding:5px 11px;background:linear-gradient(135deg,#8a2be2,#da70d6);">FORCER ANALYSE</button>
+      <!-- BOUTON LANCER ANALYSE -->
+      <div style="text-align:center;margin:16px 0;">
+        <button class="btn-admin" onclick="runDeepAnalyze()" id="btnDeepAnalyze" style="font-size:15px;padding:12px 32px;background:linear-gradient(135deg,var(--purple),var(--purple2));border-radius:12px;">
+          🧠 LANCER L'ANALYSE COMPLÈTE
+        </button>
+        <div style="font-size:13px;color:var(--muted);margin-top:8px;">Analyse tous les calls et compare winners vs losers en détail</div>
+      </div>
+
+      <!-- RÉSULTATS DEEP ANALYZE -->
+      <div id="deepAnalyzeResults" style="display:none;">
+
+        <!-- TABLEAU 1 : MAUVAIS CALLS -->
+        <div class="ai-section">
+          <div class="ai-section-title">
+            <span>❌ Mauvais calls (en dessous de x1.2)</span>
+            <span id="badCallsCount" style="font-size:13px;color:var(--red);font-weight:700;"></span>
+          </div>
+          <div style="font-size:13px;color:var(--muted);margin-bottom:12px;">Tokens qui n'ont pas performé — ATH en dessous de x1.2 depuis le call</div>
+          <div id="badCallsTable" style="max-height:400px;overflow-y:auto;"></div>
         </div>
-        <div id="aiAnalysis"><div class="ai-empty">Aucune analyse disponible — l'IA s'exécute toutes les 6h</div></div>
+
+        <!-- TABLEAU 2 : BONS CALLS -->
+        <div class="ai-section">
+          <div class="ai-section-title">
+            <span>✅ Bons calls (x1.2 et plus)</span>
+            <span id="goodCallsCount" style="font-size:13px;color:var(--green);font-weight:700;"></span>
+          </div>
+          <div style="font-size:13px;color:var(--muted);margin-bottom:12px;">Tokens qui ont performé — ATH au dessus de x1.2 depuis le call</div>
+          <div id="goodCallsTable" style="max-height:400px;overflow-y:auto;"></div>
+        </div>
+
+        <!-- SECTION 2 : PATTERNS TROUVÉS PAR L'IA -->
+        <div class="ai-section">
+          <div class="ai-section-title"><span>🔍 Ce que l'IA a trouvé</span></div>
+          <div style="font-size:13px;color:var(--muted);margin-bottom:12px;">Points communs et différences entre les bons et mauvais calls</div>
+          <div id="aiInsights"></div>
+        </div>
+
+        <!-- SECTION 3 : CHANGEMENTS APPLIQUÉS -->
+        <div class="ai-section">
+          <div class="ai-section-title"><span>⚙️ Changements appliqués par l'IA</span></div>
+          <div style="font-size:13px;color:var(--muted);margin-bottom:12px;">Ajustements automatiques du scoring basés sur l'analyse</div>
+          <div id="aiChanges"></div>
+        </div>
+
       </div>
 
-      <!-- AI ADJUSTMENT LOG -->
-      <div class="ai-section">
-        <div class="ai-section-title"><span>Historique des ajustements</span></div>
-        <div class="ai-log" id="aiLog"><div class="ai-empty">Aucun ajustement enregistré — l'IA n'a pas encore assez de données</div></div>
-      </div>
-
-      <!-- AI CURRENT WEIGHTS -->
+      <!-- AI CURRENT WEIGHTS (toujours visible) -->
       <div class="ai-section">
         <div class="ai-section-title"><span>Poids actuels du scoring</span></div>
         <div class="ai-weights" id="aiWeights"><div class="ai-empty">Chargement...</div></div>
@@ -3045,56 +3077,6 @@ async function refreshAI(){
   }catch(e){console.warn('[AI Panel] error:',e.message);}
 }
 
-function renderAIAnalysis(analysis){
-  const el=document.getElementById('aiAnalysis');
-  if(!analysis){el.innerHTML='<div class="ai-empty">Aucune analyse disponible — l\'IA s\'exécute toutes les 6h</div>';return;}
-  const d=new Date(analysis.ts);
-  const features=analysis.analysis||{};
-  const featureNames={traderScore:'Axiom Traders',socialScore:'Social',holderScore:'Holders',patternScore:'Pattern',buyRatio:'Buy Ratio',volAccel:'Vol Accél.',c1h:'Change 1h',m5:'Change 5m',top10pct:'Top10 Holders %',axiomCount:'Nb Axiom',mcap:'Mcap',liq:'Liquidité'};
-  let rows='';
-  for(const[k,v]of Object.entries(features)){
-    const name=featureNames[k]||k;
-    const diffColor=v.diff>0?'var(--green)':v.diff<0?'var(--red)':'var(--muted)';
-    const diffSign=v.diff>0?'+':'';
-    rows+=`<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:13px;">
-      <span style="color:var(--muted);width:110px;">${name}</span>
-      <span style="color:var(--green);width:70px;text-align:center;">W: ${v.winAvg}</span>
-      <span style="color:var(--red);width:70px;text-align:center;">L: ${v.loseAvg}</span>
-      <span style="color:${diffColor};width:60px;text-align:right;font-weight:700;">${diffSign}${v.diff}</span>
-    </div>`;
-  }
-  el.innerHTML=`
-    <div style="font-size:12px;color:var(--muted);margin-bottom:12px;">
-      Dernière analyse : ${d.toLocaleDateString('fr-FR')} ${d.toLocaleTimeString('fr-FR')} · ${analysis.totalCalls} calls · Winrate: <span style="color:${analysis.winrate>=50?'var(--green)':'var(--red)'};font-weight:700;">${analysis.winrate}%</span>
-    </div>
-    <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:11px;color:var(--purple2);text-transform:uppercase;letter-spacing:1px;border-bottom:1px solid rgba(97,86,217,.15);">
-      <span style="width:110px;">Feature</span><span style="width:70px;text-align:center;">Winners</span><span style="width:70px;text-align:center;">Losers</span><span style="width:60px;text-align:right;">Diff</span>
-    </div>
-    ${rows}
-  `;
-}
-
-function renderAILog(adjustments){
-  const el=document.getElementById('aiLog');
-  if(!adjustments||adjustments.length===0){el.innerHTML='<div class="ai-empty">Aucun ajustement enregistré — l\'IA n\'a pas encore assez de données</div>';return;}
-  el.innerHTML=adjustments.map(adj=>{
-    const d=new Date(adj.ts);
-    const changes=(adj.changes||[]).map(c=>`
-      <div class="ai-log-change">
-        <span class="ai-log-param">${c.param}</span> : <span class="ai-log-old">${c.old}</span> → <span class="ai-log-new">${c.new}</span>
-      </div>
-      <div class="ai-log-reason">${c.reason}</div>
-    `).join('');
-    return`<div class="ai-log-entry">
-      <div class="ai-log-header">
-        <span class="ai-log-date">${d.toLocaleDateString('fr-FR')} ${d.toLocaleTimeString('fr-FR')}</span>
-        <span class="ai-log-winrate">Winrate: ${adj.winrateBefore||'?'}% · ${adj.sampleSize||'?'} calls</span>
-      </div>
-      <div class="ai-log-changes">${changes}</div>
-    </div>`;
-  }).join('');
-}
-
 function renderAIWeights(weights){
   const el=document.getElementById('aiWeights');
   if(!weights){el.innerHTML='<div class="ai-empty">Poids par défaut</div>';return;}
@@ -3108,19 +3090,137 @@ function renderAIWeights(weights){
   `).join('');
 }
 
-async function forceAnalyze(){
-  const btn=event.target;btn.textContent='ANALYSE...';btn.disabled=true;
+// ── DEEP ANALYZE — Analyse complète avec tableaux détaillés ──
+function fmtMcap(v){if(!v)return'—';if(v>=1e6)return'$'+( v/1e6).toFixed(1)+'M';if(v>=1e3)return'$'+(v/1e3).toFixed(0)+'K';return'$'+v;}
+function fmtTime(ts){if(!ts)return'—';const d=new Date(ts);return d.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'})+' '+d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});}
+
+async function runDeepAnalyze(){
+  const btn=document.getElementById('btnDeepAnalyze');
+  btn.textContent='🔄 Analyse en cours...';btn.disabled=true;
   try{
-    const resp=await fetch(`${BACKEND_URL}/admin/ai/analyze`,{method:'POST',signal:AbortSignal.timeout(30000)});
+    const resp=await fetch(`${BACKEND_URL}/admin/ai/deep-analyze`,{method:'POST',signal:AbortSignal.timeout(45000)});
     const data=await resp.json();
-    if(data.ok&&data.changes&&data.changes.length>0){
-      btn.textContent=data.changes.length+' AJUSTEMENTS';btn.style.background='linear-gradient(135deg,var(--green),#00aa55)';
-    }else{
-      btn.textContent='AUCUN CHANGEMENT';
-    }
-    setTimeout(()=>refreshAI(),500);
-  }catch(e){btn.textContent='ERREUR';}
-  setTimeout(()=>{btn.textContent='FORCER ANALYSE';btn.disabled=false;btn.style.background='';},3000);
+    if(!data.ok){btn.textContent='❌ '+( data.reason||'Erreur');setTimeout(()=>{btn.textContent='🧠 LANCER L\'ANALYSE COMPLÈTE';btn.disabled=false;},3000);return;}
+
+    document.getElementById('deepAnalyzeResults').style.display='block';
+
+    // TABLEAU 1 : Mauvais calls
+    document.getElementById('badCallsCount').textContent=data.badCount+' tokens';
+    renderCallsTable('badCallsTable',data.badCalls,'bad');
+
+    // TABLEAU 2 : Bons calls
+    document.getElementById('goodCallsCount').textContent=data.goodCount+' tokens';
+    renderCallsTable('goodCallsTable',data.goodCalls,'good');
+
+    // SECTION 2 : Insights / Patterns
+    renderInsights(data.insights);
+
+    // SECTION 3 : Changements
+    renderChanges(data.changes, data.currentWeights);
+
+    btn.textContent='✅ Analyse terminée !';btn.style.background='linear-gradient(135deg,var(--green),#00aa55)';
+    setTimeout(()=>{btn.textContent='🧠 RELANCER L\'ANALYSE';btn.disabled=false;btn.style.background='';},4000);
+    // Refresh les stats aussi
+    refreshAI();
+  }catch(e){
+    btn.textContent='❌ Erreur réseau';
+    setTimeout(()=>{btn.textContent='🧠 LANCER L\'ANALYSE COMPLÈTE';btn.disabled=false;},3000);
+  }
+}
+
+function renderCallsTable(containerId, calls, type){
+  const el=document.getElementById(containerId);
+  if(!calls||calls.length===0){el.innerHTML='<div class="ai-empty">Aucun call dans cette catégorie</div>';return;}
+
+  const color=type==='bad'?'var(--red)':'var(--green)';
+  const rows=calls.map(c=>{
+    const xColor=c.athX>=2?'var(--gold)':c.athX>=1.2?'var(--green)':c.athX>=0.8?'var(--muted)':'var(--red)';
+    return`<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.04);font-size:14px;">
+      <div style="width:90px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${c.sym}">${c.sym}</div>
+      <div style="width:55px;text-align:center;font-weight:700;color:${xColor};">x${c.athX}</div>
+      <div style="width:70px;text-align:center;color:var(--muted);font-size:13px;">${fmtMcap(c.callMcap)}</div>
+      <div style="width:70px;text-align:center;color:var(--muted);font-size:13px;">→ ${fmtMcap(c.athMcap)}</div>
+      <div style="width:40px;text-align:center;font-size:13px;color:var(--purple2);" title="Score">${c.score}</div>
+      <div style="width:30px;text-align:center;font-size:12px;" title="Axiom wallets">${c.axiomCount||0}🎯</div>
+      <div style="width:45px;text-align:center;font-size:12px;color:var(--muted);" title="Buy Ratio">${c.buyRatio?c.buyRatio.toFixed(2):'—'}</div>
+      <div style="width:45px;text-align:center;font-size:12px;color:var(--muted);" title="Pattern Score">P:${c.patternScore||0}</div>
+      <div style="flex:1;text-align:right;font-size:12px;color:var(--muted);">${fmtTime(c.calledAt)}</div>
+    </div>`;
+  }).join('');
+
+  el.innerHTML=`
+    <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;font-size:12px;color:var(--purple2);text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid rgba(97,86,217,.15);">
+      <div style="width:90px;">Token</div>
+      <div style="width:55px;text-align:center;">xATH</div>
+      <div style="width:70px;text-align:center;">Mcap Call</div>
+      <div style="width:70px;text-align:center;">Mcap ATH</div>
+      <div style="width:40px;text-align:center;">Score</div>
+      <div style="width:30px;text-align:center;">Ax</div>
+      <div style="width:45px;text-align:center;">BuyR</div>
+      <div style="width:45px;text-align:center;">Pattern</div>
+      <div style="flex:1;text-align:right;">Date</div>
+    </div>
+    ${rows}
+  `;
+}
+
+function renderInsights(insights){
+  const el=document.getElementById('aiInsights');
+  if(!insights||insights.length===0){el.innerHTML='<div class="ai-empty">Pas assez de données pour trouver des patterns</div>';return;}
+
+  el.innerHTML=insights.map(ins=>{
+    const icon=ins.direction==='up'?'📈':'📉';
+    const barWidth=Math.min(100,Math.abs(ins.diff)*3);
+    const barColor=ins.direction==='up'?'var(--green)':'var(--red)';
+    return`<div style="background:rgba(0,0,0,.2);border:1px solid rgba(97,86,217,.1);border-radius:10px;padding:14px 16px;margin-bottom:10px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+        <span style="font-size:18px;">${icon}</span>
+        <span style="font-weight:700;font-size:15px;color:#fff;">${ins.feature}</span>
+      </div>
+      <div style="font-size:14px;color:var(--muted);margin-bottom:10px;line-height:1.5;">${ins.explanation}</div>
+      <div style="display:flex;gap:20px;align-items:center;">
+        <div style="text-align:center;">
+          <div style="font-size:18px;font-weight:700;color:var(--green);">${ins.goodAvg}</div>
+          <div style="font-size:12px;color:var(--muted);">Moy. Bons calls</div>
+        </div>
+        <div style="flex:1;height:6px;background:rgba(255,255,255,.06);border-radius:3px;overflow:hidden;">
+          <div style="height:100%;width:${barWidth}%;background:${barColor};border-radius:3px;"></div>
+        </div>
+        <div style="text-align:center;">
+          <div style="font-size:18px;font-weight:700;color:var(--red);">${ins.badAvg}</div>
+          <div style="font-size:12px;color:var(--muted);">Moy. Mauvais calls</div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderChanges(changes, weights){
+  const el=document.getElementById('aiChanges');
+  if(!changes||changes.length===0){
+    el.innerHTML='<div class="ai-empty" style="padding:20px;">Aucun changement nécessaire — le scoring est déjà optimisé pour les données actuelles</div>';
+    return;
+  }
+
+  el.innerHTML=changes.map(c=>{
+    const isUp=parseFloat(c.new)>parseFloat(c.old);
+    const arrow=isUp?'⬆️':'⬇️';
+    const color=isUp?'var(--green)':'var(--red)';
+    return`<div style="background:rgba(0,0,0,.2);border:1px solid rgba(97,86,217,.1);border-radius:10px;padding:14px 16px;margin-bottom:10px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="font-size:16px;">${arrow}</span>
+          <span style="font-weight:700;font-size:15px;color:var(--purple2);">${c.param}</span>
+        </div>
+        <div style="font-size:15px;">
+          <span style="color:var(--red);text-decoration:line-through;">${c.old}</span>
+          <span style="color:var(--muted);margin:0 4px;">→</span>
+          <span style="color:var(--green);font-weight:700;">${c.new}</span>
+        </div>
+      </div>
+      <div style="font-size:13px;color:var(--muted);line-height:1.5;padding-left:28px;border-left:2px solid rgba(97,86,217,.2);">${c.reason}</div>
+    </div>`;
+  }).join('');
 }
 
 async function adminEditAth(key,addr,sym){
