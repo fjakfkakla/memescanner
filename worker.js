@@ -471,9 +471,15 @@ export async function runScanCycle() {
         // HARD FILTER 0 — Axiom obligatoire
         if ((wData.count || 0) < 1) { rejected['no_axiom'] = (rejected['no_axiom'] || 0) + 1; continue; }
 
-        // HARD FILTER 1 — Platform Solana (accepte tout sauf les DEX non-Solana)
-        // On ne filtre plus par dexId car il y a trop de DEX valides (pump, pumpswap, raydium, meteora, orca, bags, etc.)
-        // Le filtre chainId === 'solana' est déjà fait dans fetchDexScreener
+        // HARD FILTER 1 — Platform Pump/Bonk/Raydium/Bags
+        const dexId  = (p.dexId || '').toLowerCase();
+        const pairUrl = (p.url  || '').toLowerCase();
+        const isPump  = dexId.includes('pump') || pairUrl.includes('pump');
+        const isBonk  = dexId.includes('bonk') || dexId.includes('launchlab');
+        const isRay   = dexId.includes('raydium') || dexId.includes('cpmm') || dexId.includes('clmm');
+        const isPumpSwap = dexId.includes('pumpswap') || pairUrl.includes('pumpswap');
+        const isBags  = dexId.includes('bags');
+        if (!isPump && !isBonk && !isRay && !isPumpSwap && !isBags) { rejected['platform'] = (rejected['platform'] || 0) + 1; continue; }
 
         // HARD FILTER 2 — Mcap min
         if (scored.mcap < 15000) { rejected['mcap<15K'] = (rejected['mcap<15K'] || 0) + 1; continue; }
