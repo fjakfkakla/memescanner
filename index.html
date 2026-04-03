@@ -36,7 +36,7 @@ body::before{content:'';position:fixed;top:0;left:0;right:0;bottom:0;background:
   pointer-events:none;z-index:0;}
 nav{position:sticky;top:0;z-index:100;background:rgba(10,6,18,.92);backdrop-filter:blur(20px) saturate(1.4);border-bottom:1px solid rgba(97,86,217,.15);padding:0 2rem;display:flex;align-items:center;gap:1rem;height:68px;box-shadow:0 4px 30px rgba(0,0,0,.5);}
 .nav-logo{display:flex;align-items:center;gap:.6rem;cursor:pointer;text-decoration:none;flex-shrink:0;}
-.nav-logo svg{width:38px;height:38px;flex-shrink:0;filter:drop-shadow(0 0 8px rgba(97,86,217,.5));}
+.nav-logo svg{width:38px;height:38px;flex-shrink:0;filter:drop-shadow(0 0 10px rgba(97,86,217,.4));}
 .logo-text{font-family:var(--font-head);font-size:1.15rem;font-weight:700;color:var(--text);line-height:1.1;}
 .logo-text span{color:var(--green);}
 .logo-tagline{font-size:.7rem;color:var(--muted);letter-spacing:.04em;margin-top:2px;}
@@ -534,31 +534,31 @@ section{scroll-margin-top:70px;}
   border:1.5px solid rgba(0,255,136,.2);
   box-shadow:0 0 80px rgba(0,255,136,.1),0 24px 60px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.04);}
 .pnl-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;
-  background:linear-gradient(90deg,transparent,var(--green),var(--cyan),var(--green),transparent);
+  background:linear-gradient(90deg,transparent,var(--purple),var(--green),var(--purple),transparent);
   background-size:300%;animation:shimmer-green 3s linear infinite;}
 .pnl-card-inner{padding:2rem 1.8rem 1.6rem;text-align:center;position:relative;z-index:1;}
-.pnl-logo{font-family:'Syne',sans-serif;font-size:.9rem;font-weight:800;
-  background:linear-gradient(135deg,var(--green),var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent;
-  letter-spacing:1px;margin-bottom:.8rem;}
-.pnl-sym{font-family:'Syne',sans-serif;font-size:2rem;font-weight:800;color:#fff;letter-spacing:-1px;margin-bottom:.3rem;
-  text-shadow:0 0 20px rgba(0,229,255,.2);}
-.pnl-called{font-family:'Space Mono',monospace;font-size:.72rem;color:rgba(255,255,255,.4);margin-bottom:1rem;}
-.pnl-mult{font-family:'Syne',sans-serif;font-size:4.5rem;font-weight:800;line-height:1;
-  background:linear-gradient(135deg,#00ff88,#00e5ff,#88ff44);background-size:200% 200%;animation:gradient-shift 3s ease infinite;
+.pnl-logo{font-family:var(--font-head);font-size:1rem;font-weight:700;
+  background:linear-gradient(135deg,var(--purple),var(--purple2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  letter-spacing:.5px;margin-bottom:.8rem;}
+.pnl-sym{font-family:var(--font-head);font-size:2rem;font-weight:700;color:#fff;letter-spacing:-1px;margin-bottom:.3rem;
+  text-shadow:0 0 20px rgba(97,86,217,.2);}
+.pnl-called{font-size:.82rem;color:rgba(255,255,255,.4);margin-bottom:1rem;}
+.pnl-mult{font-family:var(--font-head);font-size:4.5rem;font-weight:700;line-height:1;
+  background:linear-gradient(135deg,#00ff88,var(--purple2),#88ff44);background-size:200% 200%;animation:gradient-shift 3s ease infinite;
   -webkit-background-clip:text;-webkit-text-fill-color:transparent;
-  filter:drop-shadow(0 0 25px rgba(0,255,136,.5));margin-bottom:.4rem;}
+  filter:drop-shadow(0 0 25px rgba(0,255,136,.4));margin-bottom:.4rem;}
 .pnl-mult.big-mult{font-size:5.5rem;}
-.pnl-sub{font-family:'Space Mono',monospace;font-size:.68rem;color:rgba(255,255,255,.35);margin-bottom:1.2rem;}
+.pnl-sub{font-size:.78rem;color:rgba(255,255,255,.3);margin-bottom:1.2rem;}
 .pnl-mcap-row{display:flex;justify-content:center;gap:1.5rem;margin-bottom:1.2rem;}
-.pnl-mcap-cell{text-align:center;padding:.5rem .8rem;background:rgba(0,229,255,.04);border:1px solid rgba(0,229,255,.08);border-radius:10px;}
-.pnl-mcap-val{font-family:'Space Mono',monospace;font-size:.85rem;font-weight:700;}
-.pnl-mcap-lbl{font-size:.55rem;color:rgba(255,255,255,.3);text-transform:uppercase;letter-spacing:.06em;}
-.pnl-footer-txt{font-family:'Space Mono',monospace;font-size:.6rem;color:rgba(255,255,255,.2);letter-spacing:.06em;}
+.pnl-mcap-cell{text-align:center;padding:.5rem .8rem;background:rgba(97,86,217,.05);border:1px solid rgba(97,86,217,.1);border-radius:10px;}
+.pnl-mcap-val{font-size:.92rem;font-weight:700;}
+.pnl-mcap-lbl{font-size:.68rem;color:rgba(255,255,255,.3);text-transform:uppercase;letter-spacing:.04em;}
+.pnl-footer-txt{font-size:.72rem;color:rgba(255,255,255,.2);letter-spacing:.04em;}
 .pnl-actions{display:flex;gap:.6rem;justify-content:center;padding:.8rem 1.8rem 1.4rem;}
-.pnl-btn-dl{flex:1;padding:.7rem;background:linear-gradient(135deg,var(--green),#00cc6a);color:#000;border:none;border-radius:10px;font-family:'Syne',sans-serif;font-weight:700;font-size:.85rem;cursor:pointer;transition:.25s;box-shadow:0 2px 14px rgba(0,255,136,.2);}
-.pnl-btn-dl:hover{transform:translateY(-2px);box-shadow:0 6px 24px rgba(0,255,136,.3);}
-.pnl-btn-close{padding:.7rem 1.2rem;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.45);border-radius:10px;font-family:var(--font);font-size:.82rem;cursor:pointer;transition:.25s;}
-.pnl-btn-close:hover{border-color:rgba(0,229,255,.3);color:rgba(0,229,255,.7);background:rgba(0,229,255,.05);}
+.pnl-btn-dl{flex:1;padding:.75rem;background:linear-gradient(135deg,var(--purple),var(--purple2));color:#fff;border:none;border-radius:10px;font-family:var(--font-head);font-weight:700;font-size:.92rem;cursor:pointer;transition:.25s;box-shadow:0 2px 16px rgba(97,86,217,.25);}
+.pnl-btn-dl:hover{transform:translateY(-2px);box-shadow:0 6px 24px rgba(97,86,217,.35);}
+.pnl-btn-close{padding:.75rem 1.2rem;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.45);border-radius:10px;font-family:var(--font);font-size:.88rem;cursor:pointer;transition:.25s;}
+.pnl-btn-close:hover{border-color:rgba(97,86,217,.3);color:var(--purple2);background:rgba(97,86,217,.06);}
 
 /* ── SCANNER CARDS — Cyberpunk Degen Style ─────────────────────── */
 .scanner-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:1.2rem;padding:.5rem 0;}
@@ -678,22 +678,22 @@ section{scroll-margin-top:70px;}
 <nav>
   <a class="nav-logo" href="#hero">
     <svg viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="30" cy="30" r="29" fill="#050508" stroke="#00ff88" stroke-width="1.5"/>
-      <circle cx="30" cy="30" r="24" fill="#0a0a14"/>
-      <ellipse cx="30" cy="34" rx="13" ry="11" fill="#00cc66"/>
-      <ellipse cx="30" cy="33" rx="11" ry="9" fill="#00e87a"/>
-      <circle cx="23" cy="24" r="4" fill="#00ff88"/>
-      <circle cx="37" cy="24" r="4" fill="#00ff88"/>
-      <circle cx="23" cy="24" r="2" fill="#050508"/>
-      <circle cx="37" cy="24" r="2" fill="#050508"/>
+      <circle cx="30" cy="30" r="29" fill="#0a0612" stroke="#6156d9" stroke-width="1.5"/>
+      <circle cx="30" cy="30" r="24" fill="#150f22"/>
+      <ellipse cx="30" cy="34" rx="13" ry="11" fill="#5a4fc7"/>
+      <ellipse cx="30" cy="33" rx="11" ry="9" fill="#6156d9"/>
+      <circle cx="23" cy="24" r="4" fill="#7c6aff"/>
+      <circle cx="37" cy="24" r="4" fill="#7c6aff"/>
+      <circle cx="23" cy="24" r="2" fill="#0a0612"/>
+      <circle cx="37" cy="24" r="2" fill="#0a0612"/>
       <circle cx="24" cy="23" r=".8" fill="white"/>
       <circle cx="38" cy="23" r=".8" fill="white"/>
-      <path d="M 24 38 Q 30 43 36 38" stroke="#00a352" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-      <path d="M 18 32 Q 13 28 15 22" stroke="#00cc66" stroke-width="3" stroke-linecap="round" fill="none"/>
+      <path d="M 24 38 Q 30 43 36 38" stroke="#4a3fb0" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+      <path d="M 18 32 Q 13 28 15 22" stroke="#5a4fc7" stroke-width="3" stroke-linecap="round" fill="none"/>
       <circle cx="15" cy="20" r="3" fill="#ffd700"/>
-      <path d="M 42 32 Q 47 28 45 22" stroke="#00cc66" stroke-width="3" stroke-linecap="round" fill="none"/>
+      <path d="M 42 32 Q 47 28 45 22" stroke="#5a4fc7" stroke-width="3" stroke-linecap="round" fill="none"/>
       <circle cx="45" cy="20" r="3" fill="#ffd700"/>
-      <circle cx="30" cy="30" r="28" stroke="#00ff88" stroke-width=".5" opacity=".3"/>
+      <circle cx="30" cy="30" r="28" stroke="#7c6aff" stroke-width=".5" opacity=".3"/>
     </svg>
     <div>
       <div class="logo-text">Memecoin<span>Pump</span></div>
@@ -808,20 +808,20 @@ section{scroll-margin-top:70px;}
   </div>
   <div id="panelHistory" style="display:none">
     <!-- WINRATE BANNER -->
-    <div id="histWinrateBanner" style="background:rgba(0,255,136,.04);border:1px solid rgba(0,255,136,.12);border-radius:10px;padding:.65rem 1rem;margin-bottom:.75rem;display:flex;align-items:center;justify-content:space-between;gap:.8rem;flex-wrap:wrap;">
+    <div id="histWinrateBanner" style="background:rgba(97,86,217,.05);border:1px solid rgba(97,86,217,.15);border-radius:12px;padding:.7rem 1.1rem;margin-bottom:.75rem;display:flex;align-items:center;justify-content:space-between;gap:.8rem;flex-wrap:wrap;">
       <div style="display:flex;gap:1.4rem;align-items:center;flex-wrap:wrap;">
         <div style="text-align:center;">
-          <div id="wrWinrate" style="font-size:1.25rem;font-weight:700;color:var(--green);font-family:'Space Mono',monospace;line-height:1">—</div>
+          <div id="wrWinrate" style="font-size:1.3rem;font-weight:700;color:var(--green);line-height:1">—</div>
           <div style="font-size:.6rem;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-top:.2rem">Winrate</div>
         </div>
         <div style="width:1px;height:26px;background:rgba(255,255,255,.08)"></div>
         <div style="text-align:center;">
-          <div id="wrAvg" style="font-size:1.25rem;font-weight:700;color:#ffaa00;font-family:'Space Mono',monospace;line-height:1">—</div>
+          <div id="wrAvg" style="font-size:1.3rem;font-weight:700;color:#ffaa00;line-height:1">—</div>
           <div style="font-size:.6rem;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-top:.2rem">Moy. × ATH</div>
         </div>
         <div style="width:1px;height:26px;background:rgba(255,255,255,.08)"></div>
         <div style="text-align:center;">
-          <div id="wrWins" style="font-size:1.25rem;font-weight:700;color:#3b82f6;font-family:'Space Mono',monospace;line-height:1">—</div>
+          <div id="wrWins" style="font-size:1.3rem;font-weight:700;color:var(--purple2);line-height:1">—</div>
           <div style="font-size:.6rem;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-top:.2rem">Wins / Calls</div>
         </div>
       </div>
@@ -837,7 +837,7 @@ section{scroll-margin-top:70px;}
       <div style="display:flex;gap:.4rem;align-items:center;flex-wrap:wrap;">
         <!-- Tri historique -->
         <div style="position:relative;">
-          <button id="histSortBtn" onclick="toggleHistSort()" style="background:rgba(0,255,136,.08);border:1px solid rgba(0,255,136,.2);color:var(--green);padding:.32rem .8rem;border-radius:6px;font-family:'Space Mono',monospace;font-size:.68rem;cursor:pointer;display:flex;align-items:center;gap:.4rem;">
+          <button id="histSortBtn" onclick="toggleHistSort()" style="background:rgba(97,86,217,.08);border:1px solid rgba(97,86,217,.2);color:var(--purple2);padding:.35rem .85rem;border-radius:8px;font-size:.82rem;cursor:pointer;display:flex;align-items:center;gap:.4rem;">
             <span id="histSortIcon">↕</span> <span id="histSortLabel">Trier</span>
           </button>
           <div id="histSortMenu" style="display:none;position:absolute;right:0;top:calc(100% + 4px);background:var(--card);border:1px solid var(--border);border-radius:8px;min-width:200px;z-index:100;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.5);">
@@ -887,7 +887,7 @@ section{scroll-margin-top:70px;}
       <div class="rs-stat-item"><div class="rs-stat-val" id="rsStatAvgAge">—</div><div class="rs-stat-lbl">Âge moyen au rug</div></div>
     </div>
     <div style="position:relative;">
-      <button id="rugSortBtn" onclick="toggleRugSort()" style="background:rgba(255,40,80,.1);border:1px solid rgba(255,40,80,.3);color:#ff6680;padding:.35rem .8rem;border-radius:6px;font-family:'Space Mono',monospace;font-size:.68rem;cursor:pointer;display:flex;align-items:center;gap:.4rem;white-space:nowrap;">
+      <button id="rugSortBtn" onclick="toggleRugSort()" style="background:rgba(255,40,80,.08);border:1px solid rgba(255,40,80,.2);color:#ff6680;padding:.38rem .85rem;border-radius:8px;font-size:.82rem;cursor:pointer;display:flex;align-items:center;gap:.4rem;white-space:nowrap;">
         <span id="rugSortIcon">↕</span> <span id="rugSortLabel">Trier</span>
       </button>
       <div id="rugSortMenu" style="display:none;position:absolute;right:0;top:calc(100% + 4px);background:#0d0406;border:1px solid rgba(255,40,80,.3);border-radius:8px;min-width:200px;z-index:100;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.5);">
@@ -3056,7 +3056,7 @@ function renderAIAnalysis(analysis){
     const name=featureNames[k]||k;
     const diffColor=v.diff>0?'var(--green)':v.diff<0?'var(--red)':'var(--muted)';
     const diffSign=v.diff>0?'+':'';
-    rows+=`<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.04);font-family:'Space Mono',monospace;font-size:10px;">
+    rows+=`<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:13px;">
       <span style="color:var(--muted);width:110px;">${name}</span>
       <span style="color:var(--green);width:70px;text-align:center;">W: ${v.winAvg}</span>
       <span style="color:var(--red);width:70px;text-align:center;">L: ${v.loseAvg}</span>
@@ -3064,10 +3064,10 @@ function renderAIAnalysis(analysis){
     </div>`;
   }
   el.innerHTML=`
-    <div style="font-family:'Space Mono',monospace;font-size:9px;color:var(--muted);margin-bottom:12px;">
+    <div style="font-size:12px;color:var(--muted);margin-bottom:12px;">
       Dernière analyse : ${d.toLocaleDateString('fr-FR')} ${d.toLocaleTimeString('fr-FR')} · ${analysis.totalCalls} calls · Winrate: <span style="color:${analysis.winrate>=50?'var(--green)':'var(--red)'};font-weight:700;">${analysis.winrate}%</span>
     </div>
-    <div style="display:flex;justify-content:space-between;padding:5px 0;font-family:'Space Mono',monospace;font-size:8px;color:rgba(138,43,226,.6);text-transform:uppercase;letter-spacing:1px;border-bottom:1px solid rgba(138,43,226,.15);">
+    <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:11px;color:var(--purple2);text-transform:uppercase;letter-spacing:1px;border-bottom:1px solid rgba(97,86,217,.15);">
       <span style="width:110px;">Feature</span><span style="width:70px;text-align:center;">Winners</span><span style="width:70px;text-align:center;">Losers</span><span style="width:60px;text-align:right;">Diff</span>
     </div>
     ${rows}
@@ -4353,7 +4353,7 @@ function detectRug(p){
 async function fetchRugs(){
   const content=document.getElementById('rsTokenContent');
   if(!isUnlocked){
-    content.innerHTML=`<div class="rs-empty" style="padding:3rem 1rem"><div style="font-size:2rem;margin-bottom:.8rem">🔐</div><div style="font-family:'Syne',sans-serif;font-size:1rem;font-weight:700;color:rgba(255,100,120,.8);margin-bottom:.5rem">Accès réservé aux membres</div><div style="font-size:.75rem;color:rgba(255,100,120,.4);margin-bottom:1.2rem">Entre ton code pour accéder au RUG SNIP</div><button onclick="openCode()" style="background:rgba(255,40,80,.15);border:1px solid rgba(255,40,80,.4);color:#ff4466;padding:.5rem 1.4rem;border-radius:6px;font-family:'Space Mono',monospace;font-size:.8rem;font-weight:700;cursor:pointer;">Entrer mon code →</button></div>`;
+    content.innerHTML=`<div class="rs-empty" style="padding:3rem 1rem"><div style="font-size:2rem;margin-bottom:.8rem">🔐</div><div style="font-family:var(--font-head);font-size:1rem;font-weight:700;color:rgba(255,100,120,.8);margin-bottom:.5rem">Accès réservé aux membres</div><div style="font-size:.75rem;color:rgba(255,100,120,.4);margin-bottom:1.2rem">Entre ton code pour accéder au RUG SNIP</div><button onclick="openCode()" style="background:rgba(255,40,80,.15);border:1px solid rgba(255,40,80,.4);color:#ff4466;padding:.5rem 1.4rem;border-radius:6px;font-family:var(--font);font-size:.8rem;font-weight:700;cursor:pointer;">Entrer mon code →</button></div>`;
     return;
   }
 
@@ -4704,7 +4704,7 @@ async function renderRuggers(){
   for(const r of allRuggers){if(r.isToken)continue;if(!r.addr||r.addr.length<32)continue;const activity=await checkRuggerActivity(r.addr);if(!activity.active)continue;checkedRuggers.push({...r,activityStatus:`✅ ${activity.reason}`,active:true,solBalance:activity.solBalance});}
   document.getElementById('rsAddrCount').textContent=`(${checkedRuggers.length})`;
   if(!checkedRuggers.length){content.innerHTML='<div class="rs-empty">🕵️ Aucun ruggeur actif détecté actuellement<br><span style="font-size:.7rem;opacity:.6">Les ruggeurs inactifs (balance vide ou tx > 24h) sont filtrés</span></div>';return;}
-  const cards=checkedRuggers.map(r=>{const addrShort=r.addr.slice(0,10)+'...'+r.addr.slice(-4);return`<div class="rugger-card"><div class="rugger-header"><div class="rugger-icon">☠️</div><div style="flex:1;min-width:0"><div style="font-weight:700;font-size:.85rem;color:#ff8888">${r.label}</div><div class="rugger-addr" data-addr="${r.addr}" onclick="copyHistCA(this)" title="Copier l'adresse">${addrShort} 📋</div></div></div><div class="rugger-stats"><div class="rugger-stat"><div class="rugger-stat-val">${r.rugs}</div><div class="rugger-stat-lbl">Rugs</div></div><div class="rugger-stat"><div class="rugger-stat-val">+${r.maxPump}%</div><div class="rugger-stat-lbl">Pump max</div></div><div class="rugger-stat"><div class="rugger-stat-val">${r.avgDump}%</div><div class="rugger-stat-lbl">Dump moy.</div></div></div><div class="rugger-history">${r.isToken?`Token rug détecté · dump ${r.avgDump?.toFixed(0)||'?'}% · pump max +${r.maxPump?.toFixed(0)||'?'}%`:`Pattern : pump +${r.maxPump}% puis dump ${r.avgDump}% · ${r.rugs} tokens`}${r.activityStatus?`<br><span style="color:rgba(0,255,136,.6);font-size:.6rem">${r.activityStatus}</span>`:''}</div><div class="rugger-footer"><span style="font-size:.6rem;color:var(--muted);font-family:var(--font-mono)">${addrShort}</span><div style="display:flex;gap:.4rem"><button class="rug-copy-ca" data-addr="${r.addr}" onclick="copyHistCA(this)" style="padding:.22rem .55rem;background:transparent;border:1px solid rgba(255,40,80,.18);color:rgba(255,100,120,.6);border-radius:4px;font-size:.6rem;font-family:'Space Mono',monospace;cursor:pointer;">COPY</button><a href="https://solscan.io/account/${r.addr}" target="_blank" class="btn-solscan">Solscan →</a></div></div></div>`;}).join('');
+  const cards=checkedRuggers.map(r=>{const addrShort=r.addr.slice(0,10)+'...'+r.addr.slice(-4);return`<div class="rugger-card"><div class="rugger-header"><div class="rugger-icon">☠️</div><div style="flex:1;min-width:0"><div style="font-weight:700;font-size:.85rem;color:#ff8888">${r.label}</div><div class="rugger-addr" data-addr="${r.addr}" onclick="copyHistCA(this)" title="Copier l'adresse">${addrShort} 📋</div></div></div><div class="rugger-stats"><div class="rugger-stat"><div class="rugger-stat-val">${r.rugs}</div><div class="rugger-stat-lbl">Rugs</div></div><div class="rugger-stat"><div class="rugger-stat-val">+${r.maxPump}%</div><div class="rugger-stat-lbl">Pump max</div></div><div class="rugger-stat"><div class="rugger-stat-val">${r.avgDump}%</div><div class="rugger-stat-lbl">Dump moy.</div></div></div><div class="rugger-history">${r.isToken?`Token rug détecté · dump ${r.avgDump?.toFixed(0)||'?'}% · pump max +${r.maxPump?.toFixed(0)||'?'}%`:`Pattern : pump +${r.maxPump}% puis dump ${r.avgDump}% · ${r.rugs} tokens`}${r.activityStatus?`<br><span style="color:rgba(0,255,136,.6);font-size:.6rem">${r.activityStatus}</span>`:''}</div><div class="rugger-footer"><span style="font-size:.6rem;color:var(--muted);font-family:var(--font-mono)">${addrShort}</span><div style="display:flex;gap:.4rem"><button class="rug-copy-ca" data-addr="${r.addr}" onclick="copyHistCA(this)" style="padding:.22rem .55rem;background:transparent;border:1px solid rgba(255,40,80,.18);color:rgba(255,100,120,.6);border-radius:4px;font-size:.6rem;font-family:var(--font);cursor:pointer;">COPY</button><a href="https://solscan.io/account/${r.addr}" target="_blank" class="btn-solscan">Solscan →</a></div></div></div>`;}).join('');
   content.innerHTML=`<div class="rugger-grid">${cards}</div>`;
 }
 
@@ -4828,7 +4828,7 @@ window.addEventListener('DOMContentLoaded',()=>{
     if(!isUnlocked){
       document.getElementById('loadingEl').style.display='none';
       document.getElementById('scannerContent').innerHTML=`<div class="empty-state"><div class="empty-icon">🔐</div><div class="empty-title">Accès réservé aux membres</div><div class="empty-sub" style="margin-top:1rem"><button onclick="openCode()" style="background:var(--green);color:#000;border:none;padding:.6rem 1.5rem;border-radius:8px;font-weight:700;cursor:pointer;font-family:var(--font);font-size:.88rem">Entrer mon code d'accès</button></div></div>`;
-      document.getElementById('rsTokenContent').innerHTML=`<div class="rs-empty" style="padding:3rem 1rem"><div style="font-size:2rem;margin-bottom:.8rem">🔐</div><div style="font-family:'Syne',sans-serif;font-size:1rem;font-weight:700;color:rgba(255,100,120,.8);margin-bottom:.5rem">Accès réservé aux membres</div><div style="font-size:.75rem;color:rgba(255,100,120,.4);margin-bottom:1.2rem">Entre ton code pour accéder au RUG SNIP</div><button onclick="openCode()" style="background:rgba(255,40,80,.15);border:1px solid rgba(255,40,80,.4);color:#ff4466;padding:.5rem 1.4rem;border-radius:6px;font-family:'Space Mono',monospace;font-size:.8rem;font-weight:700;cursor:pointer;">Entrer mon code →</button></div>`;
+      document.getElementById('rsTokenContent').innerHTML=`<div class="rs-empty" style="padding:3rem 1rem"><div style="font-size:2rem;margin-bottom:.8rem">🔐</div><div style="font-family:var(--font-head);font-size:1rem;font-weight:700;color:rgba(255,100,120,.8);margin-bottom:.5rem">Accès réservé aux membres</div><div style="font-size:.75rem;color:rgba(255,100,120,.4);margin-bottom:1.2rem">Entre ton code pour accéder au RUG SNIP</div><button onclick="openCode()" style="background:rgba(255,40,80,.15);border:1px solid rgba(255,40,80,.4);color:#ff4466;padding:.5rem 1.4rem;border-radius:6px;font-family:var(--font);font-size:.8rem;font-weight:700;cursor:pointer;">Entrer mon code →</button></div>`;
     }
     document.getElementById('codeModal').addEventListener('click',e=>{if(e.target.id==='codeModal')closeCode();});
     document.getElementById('adminOverlay').addEventListener('click',e=>{if(e.target.id==='adminOverlay')closeAdmin();});
