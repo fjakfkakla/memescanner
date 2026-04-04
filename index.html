@@ -2780,6 +2780,22 @@ function calculatePatternScore(p) {
   if (c1h > 60 && c5m < -20) score -= 10;
   if (c5m < -35) score -= 8;
 
+  // === PATTERN 1 : GROSSE BOUGIE INITIALE (bundle launch spike) ===
+  // Token jeune avec spike massif = achat bundle au launch, chart bizarre après
+  const ageMinP = (Date.now() - (p.pairCreatedAt || 0)) / 60000;
+  if (ageMinP < 10 && c5m > 80) score -= 20;          // spike >80% en 5min sur token <10min
+  if (ageMinP < 10 && c1h > 150) score -= 18;          // pump >150% sur token très jeune
+  if (c1h > 120 && c5m < -15) score -= 15;              // pump massif puis dump = bougie initiale retombée
+  if (ageMinP < 5 && m1 > 25) score -= 12;              // m1 >25% sur token <5min = spike artificiel
+
+  // === PATTERN 2 : PUMP-DUMP CYCLES (manipulation) ===
+  // Grosse montée grosse descente répétée = vol/mcap élevé, sells~buys, c6h haut mais c1h bas
+  const sellBuyRatio = sellsH1 / (buysH1 || 1);
+  if (volMcapH1 > 8 && sellBuyRatio > 0.8 && sellBuyRatio < 1.3) score -= 18;  // volume énorme, sells≈buys = pump-dump en boucle
+  if (c6h > 80 && c1h < 15 && volMcapH1 > 5) score -= 15;   // monté haut sur 6h mais retombé = cycles
+  if (c6h > 60 && c1h < 0) score -= 12;                       // c6h positif mais c1h négatif = pattern dump
+  if (sellsH1 > buysH1 * 1.3 && c1h > 40) score -= 10;       // beaucoup de sells malgré pump = distribution
+
   return Math.max(0, Math.min(45, Math.round(score)));
 }
 
@@ -2945,8 +2961,10 @@ function scoreTokenV2(p,walletData={count:0,wallets:[],clustered:false}){
       momentumScore: patternScore,
       buyScore: 0, volScore: 0, // non utilisés dans ce scoring
       walletCount: axiomCount, clustered: walletData.clustered,
-      buyRatio: buyR, volAccel, c1h, m5, ageH,
-      top10pct, axiomCount
+      buyRatio: buyR, volAccel, c1h, m5, ageH, c6h, m1,
+      top10pct, axiomCount,
+      volMcapH1: vol1/mcap,
+      sellBuyRatio: sells1/(buys1||1)
     }
   };
 }

@@ -147,8 +147,12 @@ async function trackOutcomes() {
           volAccel: call.debug?.volAccel || 0,
           c1h: call.debug?.c1h || 0,
           m5: call.debug?.m5 || 0,
+          c6h: call.debug?.c6h || 0,
+          m1: call.debug?.m1 || 0,
           top10pct: call.debug?.top10pct || 0,
           axiomCount: call.debug?.axiomCount || 0,
+          volMcapH1: call.debug?.volMcapH1 || 0,
+          sellBuyRatio: call.debug?.sellBuyRatio || 0,
         };
       }
 
@@ -205,7 +209,7 @@ async function analyzePatterns() {
     console.log(`[AI] Analyse: ${total} calls, ${winners.length} wins, ${losers.length} losses, winrate=${winrate}%`);
 
     // Calculer les moyennes par feature pour winners vs losers
-    const features = ['traderScore', 'socialScore', 'holderScore', 'patternScore', 'buyRatio', 'volAccel', 'c1h', 'm5', 'top10pct', 'axiomCount', 'mcap', 'liq'];
+    const features = ['traderScore', 'socialScore', 'holderScore', 'patternScore', 'buyRatio', 'volAccel', 'c1h', 'm5', 'c6h', 'top10pct', 'axiomCount', 'mcap', 'liq', 'volMcapH1', 'sellBuyRatio'];
     const analysis = {};
 
     for (const feat of features) {
@@ -340,6 +344,30 @@ async function autoAdjust() {
       });
       dynamicWeights.socialMax -= 2;
     }
+  }
+
+  // Règle 8: Volume/Mcap ratio — losers ont souvent vol/mcap élevé (pump-dump cycles)
+  if (a.volMcapH1 && a.volMcapH1.loseAvg > a.volMcapH1.winAvg * 1.4 && a.volMcapH1.loseSamples >= 5) {
+    const newThreshold = Math.round(a.volMcapH1.loseAvg * 0.7);
+    if (newThreshold > 3 && newThreshold < 20) {
+      changes.push({
+        param: 'volMcapDangerThreshold',
+        old: dynamicWeights.volMcapDangerThreshold || 12,
+        new: newThreshold,
+        reason: `PATTERN PUMP-DUMP : losers vol/mcap=${a.volMcapH1.loseAvg.toFixed(1)} vs winners=${a.volMcapH1.winAvg.toFixed(1)}. Volume excessif = manipulation en boucle.`,
+      });
+      dynamicWeights.volMcapDangerThreshold = newThreshold;
+    }
+  }
+
+  // Règle 9: Sell/Buy ratio — losers ont plus de sells relatifs (distribution/dump)
+  if (a.sellBuyRatio && a.sellBuyRatio.loseAvg > a.sellBuyRatio.winAvg * 1.2 && a.sellBuyRatio.loseSamples >= 5) {
+    changes.push({
+      param: 'sellBuyDangerNote',
+      old: dynamicWeights.sellBuyDangerNote || 'N/A',
+      new: `losers=${a.sellBuyRatio.loseAvg.toFixed(2)} vs winners=${a.sellBuyRatio.winAvg.toFixed(2)}`,
+      reason: `PATTERN GROSSE BOUGIE + DUMP : losers ont ratio sells/buys=${a.sellBuyRatio.loseAvg.toFixed(2)} vs winners=${a.sellBuyRatio.winAvg.toFixed(2)}. Trop de ventes = distribution.`,
+    });
   }
 
   if (changes.length > 0) {
@@ -478,13 +506,16 @@ async function deepAnalyze() {
       liq: c.outcome.features?.liq || c.liq || 0,
       c1h: c.outcome.features?.c1h || c.debug?.c1h || 0,
       m5: c.outcome.features?.m5 || c.debug?.m5 || 0,
+      c6h: c.outcome.features?.c6h || c.debug?.c6h || 0,
+      volMcapH1: c.outcome.features?.volMcapH1 || c.debug?.volMcapH1 || 0,
+      sellBuyRatio: c.outcome.features?.sellBuyRatio || c.debug?.sellBuyRatio || 0,
     });
 
     const badFormatted = badCalls.map(formatCall).sort((a, b) => a.athX - b.athX);
     const goodFormatted = goodCalls.map(formatCall).sort((a, b) => b.athX - a.athX);
 
     // ── PATTERNS : ce que l'IA trouve comme différences ──
-    const features = ['traderScore', 'socialScore', 'holderScore', 'patternScore', 'buyRatio', 'c1h', 'm5', 'top10pct', 'axiomCount', 'mcap', 'liq'];
+    const features = ['traderScore', 'socialScore', 'holderScore', 'patternScore', 'buyRatio', 'c1h', 'm5', 'c6h', 'top10pct', 'axiomCount', 'mcap', 'liq', 'volMcapH1', 'sellBuyRatio'];
     const insights = [];
 
     for (const feat of features) {
@@ -501,8 +532,9 @@ async function deepAnalyze() {
         const featureNames = {
           traderScore: 'Score Traders Axiom', socialScore: 'Score Social', holderScore: 'Score Holders',
           patternScore: 'Score Pattern', buyRatio: 'Buy Ratio', c1h: 'Variation 1h (%)',
-          m5: 'Variation 5m (%)', top10pct: 'Top 10 holders (%)', axiomCount: 'Nb wallets Axiom',
-          mcap: 'Market Cap au call', liq: 'Liquidité'
+          m5: 'Variation 5m (%)', c6h: 'Variation 6h (%)', top10pct: 'Top 10 holders (%)', axiomCount: 'Nb wallets Axiom',
+          mcap: 'Market Cap au call', liq: 'Liquidité',
+          volMcapH1: 'Volume/Mcap ratio (manipulation)', sellBuyRatio: 'Ratio Sells/Buys (dump)'
         };
         insights.push({
           feature: featureNames[feat] || feat,
