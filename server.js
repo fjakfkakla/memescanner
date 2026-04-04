@@ -167,6 +167,10 @@ app.listen(PORT, () => {
   setInterval(trackOutcomes, 5 * 60 * 1000);
   // AI: analyse + auto-ajustement toutes les 6h
   setInterval(autoAdjust, 6 * 3600 * 1000);
+  // AI: auto-rebuild smart filters toutes les 12h
+  setInterval(buildSmartFilters, 12 * 3600 * 1000);
   // Premier track après 2 min (laisser le temps au premier cycle)
   setTimeout(trackOutcomes, 120000);
+  // Premier rebuild smart filters après 3 min
+  setTimeout(buildSmartFilters, 180000);
 });
