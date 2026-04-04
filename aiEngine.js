@@ -632,7 +632,7 @@ function findOptimalThreshold(goodCalls, badCalls, featureKey, direction) {
       if (aboveTotal < 3) continue;
       const lossRate = aboveLose / aboveTotal;
       const score = lossRate * Math.sqrt(aboveTotal); // pondéré par sample size
-      if (lossRate >= 0.70 && score > bestScore) {
+      if (lossRate >= 0.60 && score > bestScore) {
         bestScore = score;
         bestThreshold = { threshold, lossRate: Math.round(lossRate * 100), samples: aboveTotal, direction };
       }
@@ -641,7 +641,7 @@ function findOptimalThreshold(goodCalls, badCalls, featureKey, direction) {
       if (belowTotal < 3) continue;
       const lossRate = belowLose / belowTotal;
       const score = lossRate * Math.sqrt(belowTotal);
-      if (lossRate >= 0.70 && score > bestScore) {
+      if (lossRate >= 0.60 && score > bestScore) {
         bestScore = score;
         bestThreshold = { threshold, lossRate: Math.round(lossRate * 100), samples: belowTotal, direction };
       }
@@ -663,6 +663,13 @@ function findToxicCombos(goodCalls, badCalls) {
     ['top10pct', 'sellBuyRatio'], ['buyRatio', 'volMcapH1'],
     // Momentum patterns
     ['c5m', 'sellBuyRatio'], ['c1h', 'volMcapH1'],
+    // Score-based patterns (work with old calls too)
+    ['patternScore', 'buyRatio'], ['patternScore', 'c1h'],
+    ['score', 'c1h'], ['score', 'buyRatio'],
+    ['traderScore', 'patternScore'], ['socialScore', 'patternScore'],
+    ['top10pct', 'buyRatio'], ['top10pct', 'c1h'],
+    ['holderScore', 'c1h'], ['c1h', 'buyRatio'],
+    ['callMcap', 'c1h'], ['callMcap', 'patternScore'],
   ];
 
   for (const [f1, f2] of featurePairs) {
@@ -681,7 +688,7 @@ function findToxicCombos(goodCalls, badCalls) {
     if (total < 4) continue;
     const lossRate = matchBad / total;
 
-    if (lossRate >= 0.75) {
+    if (lossRate >= 0.65) {
       combos.push({
         features: [f1, f2],
         thresholds: [parseFloat(medF1.toFixed(2)), parseFloat(medF2.toFixed(2))],
@@ -699,7 +706,7 @@ function findToxicCombos(goodCalls, badCalls) {
     if (total2 < 4) continue;
     const lossRate2 = matchBad2 / total2;
 
-    if (lossRate2 >= 0.75) {
+    if (lossRate2 >= 0.65) {
       combos.push({
         features: [f1, f2],
         thresholds: [parseFloat(medF1.toFixed(2)), parseFloat(medF2.toFixed(2))],
@@ -778,8 +785,8 @@ async function buildSmartFilters() {
           feature: fc.key,
           name: fc.name,
           ...result,
-          action: result.lossRate >= 85 ? 'HARD_REJECT' : 'PENALTY',
-          penalty: result.lossRate >= 85 ? -999 : -Math.round(result.lossRate / 4),
+          action: result.lossRate >= 80 ? 'HARD_REJECT' : 'PENALTY',
+          penalty: result.lossRate >= 80 ? -999 : -Math.round(result.lossRate / 3),
         });
       }
     }
@@ -852,13 +859,13 @@ function checkSmartFilters(tokenDebug) {
     if (combo.operator === 'ABOVE_BELOW' && v1 >= t1 && v2 < t2) triggered = true;
 
     if (triggered) {
-      if (combo.lossRate >= 85) {
+      if (combo.lossRate >= 80) {
         return {
           pass: false,
           reasons: [`🚫 COMBO TOXIQUE: ${combo.description}`],
         };
       }
-      totalPenalty -= Math.round(combo.lossRate / 5);
+      totalPenalty -= Math.round(combo.lossRate / 4);
       reasons.push(`⚠️ COMBO: ${combo.description}`);
     }
   }

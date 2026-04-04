@@ -3348,7 +3348,7 @@ function renderSmartFilters(data){
   if(data.comboRules?.length){
     html+=`<div style="font-weight:700;font-size:15px;color:#fff;margin:16px 0 8px;">💀 Combinaisons toxiques</div>`;
     html+=data.comboRules.map(c=>{
-      const isReject=c.lossRate>=85;
+      const isReject=c.lossRate>=80;
       const bg=isReject?'rgba(255,50,50,.08)':'rgba(255,107,53,.06)';
       const border=isReject?'rgba(255,50,50,.2)':'rgba(255,107,53,.15)';
       return`<div style="background:${bg};border:1px solid ${border};border-radius:10px;padding:12px 16px;margin-bottom:8px;">
