@@ -109,7 +109,8 @@ export function scoreTokenV2(p, walletData = { count: 0, wallets: [], clustered:
   // TRADERS AXIOM
   let traderScore = 0;
   const axiomCount = walletData.count || 0;
-  if      (axiomCount >= 5) traderScore = 20;
+  if      (axiomCount >= 6) traderScore = 30;
+  else if (axiomCount >= 5) traderScore = 20;
   else if (axiomCount === 4) traderScore = 15;
   else if (axiomCount === 3) traderScore = 10;
   else if (axiomCount === 2) traderScore =  8;
@@ -127,10 +128,18 @@ export function scoreTokenV2(p, walletData = { count: 0, wallets: [], clustered:
   const gotX   = hasX || dexX;
   const gotTG  = hasTG || dexTG;
   const gotWEB = hasWEB || dexWEB;
+  const gotGH  = dexSocials.some(s => (s.type || '').toLowerCase().includes('github') || (s.url || '').includes('github.com'));
+  const hasCashback = !!(p.profile?.icon || p.profile?.banner || p.info?.imageUrl);
   let socialScore = 0;
-  if (gotX)  socialScore += ageH < 1 ? 10 : 5;
+  // Twitter: dans la minute +10, dans l'heure +5, sinon +2
+  if (gotX) {
+    if (ageMin <= 1) socialScore += 10;
+    else if (ageH < 1) socialScore += 5;
+    else socialScore += 2;
+  }
   if (gotTG || gotWEB) socialScore += 8;
   if (gotX && (gotTG || gotWEB)) socialScore += 8;
+  if (gotGH || hasCashback) socialScore += 5;
   if (socialScore === 0) {
     if      (ageMin < 5 && buys1 >= 5)  socialScore += 8;
     else if (holderCount >= 300)         socialScore += 10;
@@ -142,39 +151,32 @@ export function scoreTokenV2(p, walletData = { count: 0, wallets: [], clustered:
   const top5pct = sec ? parseFloat(sec.top5Pct || 0) : 0;
   let holderScore = 0;
   if (top10pct > 0) {
-    if      (top10pct <= 20) holderScore += 10;
-    else if (top10pct <= 35) holderScore +=  8;
-    else if (top10pct <= 50) holderScore +=  5;
-    else if (top10pct <= 65) holderScore +=  0;
-    else                     holderScore -=  5;
+    if      (top10pct <= 20) holderScore += 15;
+    else if (top10pct <= 35) holderScore += 10;
+    else if (top10pct <= 50) holderScore +=  2;
   }
   const totalTxns = (p.txns?.h1?.buys || 0) + (p.txns?.h1?.sells || 0) + (p.txns?.h6?.buys || 0) + (p.txns?.h6?.sells || 0);
   const hasProTraders = axiomCount >= 3 || (totalTxns >= 100 && top10pct <= 60) || (totalTxns >= 50 && top10pct <= 30);
   if (hasProTraders) holderScore += 10;
   score += holderScore;
 
-  // PLATFORM
+  // TOKEN (dex paid)
   let platformScore = 0;
-  const pairUrl    = (p.url || '').toLowerCase();
-  const isPumpFun  = dexId.includes('pump') || pairUrl.includes('pump');
-  const isPumpSwap = dexId.includes('pumpswap') || pairUrl.includes('pumpswap');
-  const isBonk     = dexId.includes('bonk') || dexId.includes('launchlab') || pairUrl.includes('bonk');
-  const isRaydium  = dexId.includes('raydium') || dexId.includes('cpmm') || dexId.includes('clmm');
-  if (isPumpFun || isPumpSwap || isBonk || isRaydium) platformScore += 5;
-  if ((p.labels || []).some(l => (l.label || l || '').toLowerCase().includes('paid'))) platformScore += 10;
+  if ((p.labels || []).some(l => (l.label || l || '').toLowerCase().includes('paid'))) platformScore += 15;
   score += platformScore;
 
   // MCAP
   let mcapScore = 0;
-  if      (mcap >= 15000 && mcap <= 30000)  mcapScore = 15;
-  else if (mcap >  30000 && mcap <= 60000)  mcapScore = 10;
-  else if (mcap >  60000 && mcap <= 120000) mcapScore =  5;
+  if      (mcap >= 15000 && mcap <= 20000)  mcapScore = 20;
+  else if (mcap >  20000 && mcap <= 60000)  mcapScore = 15;
+  else if (mcap >  60000 && mcap <= 120000) mcapScore = 10;
   else if (mcap > 150000)                   mcapScore = -5;
   score += mcapScore;
 
   // AGE
   let ageScore = 0;
-  if      (ageMin >= 0.5 && ageMin <= 5)  ageScore = 10;
+  if      (ageMin >= 0.5 && ageMin <= 2)  ageScore = 20;
+  else if (ageMin >  2  && ageMin <= 5)  ageScore = 10;
   else if (ageMin >  5  && ageMin <= 15) ageScore =  5;
   score += ageScore;
 
@@ -182,7 +184,7 @@ export function scoreTokenV2(p, walletData = { count: 0, wallets: [], clustered:
   const patternScore = calculatePatternScore(p);
   score += patternScore;
 
-  const finalScore = Math.min(150, Math.max(0, Math.round(score)));
+  const finalScore = Math.min(170, Math.max(0, Math.round(score)));
 
   // RUG RISK
   let rugPts = 0;

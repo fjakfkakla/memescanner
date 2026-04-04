@@ -3032,7 +3032,8 @@ function scoreTokenV2(p,walletData={count:0,wallets:[],clustered:false}){
   // Basé sur axiomData.count (wallets de ta liste Axiom détectés en top holders)
   let traderScore = 0;
   const axiomCount = walletData.count || 0;
-  if      (axiomCount >= 5) traderScore = 20;
+  if      (axiomCount >= 6) traderScore = 30;
+  else if (axiomCount >= 5) traderScore = 20;
   else if (axiomCount === 4) traderScore = 15;
   else if (axiomCount === 3) traderScore = 10;
   else if (axiomCount === 2) traderScore =  8;
@@ -3066,10 +3067,20 @@ function scoreTokenV2(p,walletData={count:0,wallets:[],clustered:false}){
   const gotX   = hasX   || dexX;
   const gotTG  = hasTG  || dexTG;
   const gotWEB = hasWEB || dexWEB;
+  // Detect GitHub
+  const gotGH  = dexSocials.some(s=>(s.type||'').toLowerCase().includes('github')||(s.url||'').includes('github.com'));
+  // Detect PumpFun cashback (profile/banner)
+  const hasCashback = !!(p.profile?.icon || p.profile?.banner || p.info?.imageUrl);
 
-  if (gotX)  socialScore += ageH < 1 ? 10 : 5;  // tweet récent ou du jour
-  if (gotTG || gotWEB) socialScore += 8;           // site OU telegram OU github
-  if (gotX && (gotTG || gotWEB)) socialScore += 8; // communauté X active
+  // Twitter scoring: dans la minute du launch +10, dans l'heure +5, sinon +2
+  if (gotX) {
+    if (ageMin <= 1) socialScore += 10;
+    else if (ageH < 1) socialScore += 5;
+    else socialScore += 2;
+  }
+  if (gotTG || gotWEB) socialScore += 8;
+  if (gotX && (gotTG || gotWEB)) socialScore += 8; // combo
+  if (gotGH || hasCashback) socialScore += 5;
 
   // Proxy : token < 5min avec achats actifs = lancé avec tweet (pas encore indexé)
   if (socialScore === 0) {
@@ -3085,12 +3096,10 @@ function scoreTokenV2(p,walletData={count:0,wallets:[],clustered:false}){
   const top5pct = sec ? parseFloat(sec.top5Pct||0) : 0;
   let holderScore = 0;
   if (top10pct > 0) {
-    // top10 après exclusion LP = vraie distribution retail
-    if      (top10pct <= 20)  holderScore += 10; // excellent
-    else if (top10pct <= 35)  holderScore +=  8; // très bien
-    else if (top10pct <= 50)  holderScore +=  5; // bien
-    else if (top10pct <= 65)  holderScore +=  0; // neutre
-    else                      holderScore -=  5; // trop concentré
+    if      (top10pct <= 20)  holderScore += 15;
+    else if (top10pct <= 35)  holderScore += 10;
+    else if (top10pct <= 50)  holderScore +=  2;
+    // > 50% = 0 (neutre, pas de penalite)
   }
   // Bonus pro traders
   // holderCount Helius = max 19 (20 comptes - 1 LP skippé) → pas fiable pour seuil 100
@@ -3103,30 +3112,24 @@ function scoreTokenV2(p,walletData={count:0,wallets:[],clustered:false}){
   if (hasProTraders) holderScore += 10;
   score += holderScore;
 
-  // ── 🪙 TOKEN PLATFORM ─────────────────────────────────────────────────────
+  // ── 🪙 TOKEN (dex paid) ─────────────────────────────────────────────────────
   let platformScore = 0;
-  const pairUrl = (p.url || '').toLowerCase();
-  const isPumpFun  = dexId.includes('pump') || pairUrl.includes('pump');
-  const isBonk     = dexId.includes('bonk') || dexId.includes('launchlab') || pairUrl.includes('bonk') || (p.labels||[]).some(l=>(l.label||l||'').toLowerCase().includes('bonk'));
-  const isRaydium  = dexId.includes('raydium') || dexId.includes('cpmm') || dexId.includes('clmm');
-  if (isPumpFun || isBonk || isRaydium) {
-    platformScore += 5;
-  }
-  // +10 si Dex Paid (bannière ou profil payé sur DexScreener)
-  if ((p.labels||[]).some(l=>(l.label||l||'').toLowerCase().includes('paid'))) platformScore += 10;
+  // +15 si Dex Paid (bannière ou profil payé sur DexScreener)
+  if ((p.labels||[]).some(l=>(l.label||l||'').toLowerCase().includes('paid'))) platformScore += 15;
   score += platformScore;
 
   // ── ⭐ MCAP ───────────────────────────────────────────────────────────────
   let mcapScore = 0;
-  if      (mcap >= 15000 && mcap <= 30000)  mcapScore = 15;
-  else if (mcap >  30000 && mcap <= 60000)  mcapScore = 10;
-  else if (mcap >  60000 && mcap <= 120000) mcapScore =  5; // plus large, encore intéressant
-  else if (mcap > 150000)                   mcapScore = -5; // trop gros
+  if      (mcap >= 15000 && mcap <= 20000)  mcapScore = 20;
+  else if (mcap >  20000 && mcap <= 60000)  mcapScore = 15;
+  else if (mcap >  60000 && mcap <= 120000) mcapScore = 10;
+  else if (mcap > 150000)                   mcapScore = -5;
   score += mcapScore;
 
   // ── ⏱ AGE ─────────────────────────────────────────────────────────────────
   let ageScore = 0;
-  if      (ageMin >= 0.5 && ageMin <= 5)   ageScore = 10;
+  if      (ageMin >= 0.5 && ageMin <= 2)   ageScore = 20;
+  else if (ageMin >  2  && ageMin <= 5)   ageScore = 10;
   else if (ageMin >  5  && ageMin <= 15)  ageScore =  5;
   score += ageScore;
 
@@ -3135,7 +3138,7 @@ function scoreTokenV2(p,walletData={count:0,wallets:[],clustered:false}){
   score += patternScore;
 
   // ── CALCUL FINAL ──────────────────────────────────────────────────────────
-  const finalScore = Math.min(150, Math.max(0, Math.round(score)));
+  const finalScore = Math.min(170, Math.max(0, Math.round(score)));
 
   // Rug risk inchangé (basé sur données disponibles)
   let rugPts = 0;
