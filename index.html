@@ -904,7 +904,7 @@ section{scroll-margin-top:70px;}
       <div class="tool-badge">LIVE</div>
       <div class="tool-icon">🧠</div>
       <div class="tool-name">AI Scanner</div>
-      <div class="tool-desc">IA auto-learning + 15 hard filters + scoring 150pts. Track les Axiom wallets. L'algo apprend de chaque call et ajuste le scoring en continu.</div>
+      <div class="tool-desc">IA auto-learning + 15 hard filters + scoring 170pts. Track les Axiom wallets. L'algo apprend de chaque call et ajuste le scoring en continu.</div>
     </div>
     <div class="tool-card">
       <div class="tool-badge" style="background:rgba(136,85,255,.12);color:var(--purple)">ALPHA</div>
@@ -4277,12 +4277,12 @@ async function debugCA(){
     const labelText=label?label.text:'❌ SOUS SEUIL (< 55)';
 
     const cats=[
-      {name:'🎯 Tracker',   val:traderScore,  max:20},
-      {name:'🌐 Social',   val:socialScore,  max:26},
-      {name:'👥 Holders',  val:holderScore,  max:20},
-      {name:'🪙 Platform', val:platformScore,max:5},
-      {name:'⭐ Mcap',     val:mcapScore,    max:15},
-      {name:'⏱ Age',       val:ageScore,     max:10},
+      {name:'🎯 Tracker',   val:traderScore,  max:30},
+      {name:'🌐 Social',   val:socialScore,  max:31},
+      {name:'👥 Holders',  val:holderScore,  max:25},
+      {name:'🪙 Token', val:platformScore,max:15},
+      {name:'⭐ Mcap',     val:mcapScore,    max:20},
+      {name:'⏱ Age',       val:ageScore,     max:20},
       {name:'📈 Pattern',  val:patternScore, max:45},
     ];
 
@@ -4340,7 +4340,7 @@ PAIRE DEXSCR   : ${pairData?'✅ trouvée':'❌ non trouvée'}`;
       <div class="dca-score-display">
         <div class="dca-score-num" style="color:${scoreColor}">${score}</div>
         <div class="dca-score-label" style="color:${scoreColor}">${labelText}</div>
-        <div style="font-size:.65rem;color:var(--muted);margin-top:.3rem;font-family:var(--font-mono)">/ 150 pts max</div>
+        <div style="font-size:.65rem;color:var(--muted);margin-top:.3rem;font-family:var(--font-mono)">/ 170 pts max</div>
       </div>
       ${secHtml}
       <div class="dca-cats">${bars}</div>
