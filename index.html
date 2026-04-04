@@ -137,6 +137,7 @@ nav{position:sticky;top:0;z-index:100;background:rgba(10,6,18,.92);backdrop-filt
 .loading-state{text-align:center;padding:4rem 2rem;}
 .spinner{width:40px;height:40px;border:3px solid rgba(97,86,217,.15);border-top-color:var(--purple);border-right-color:rgba(97,86,217,.4);border-radius:50%;animation:spin .8s cubic-bezier(.5,.1,.5,.9) infinite;margin:0 auto 1rem;filter:drop-shadow(0 0 8px rgba(97,86,217,.3));}
 @keyframes spin{to{transform:rotate(360deg)}}
+@keyframes slideInRight{from{transform:translateX(120%);opacity:0}to{transform:translateX(0);opacity:1}}
 .pricing-section{padding:4rem;max-width:1200px;margin:0 auto;position:relative;z-index:1;}
 .pricing-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;margin-top:2.5rem;}
 .plan-card{background:linear-gradient(160deg,var(--card),var(--bg2));border:1px solid rgba(97,86,217,.12);border-radius:20px;padding:2.2rem;position:relative;transition:.35s;}
@@ -807,6 +808,34 @@ section{scroll-margin-top:70px;}
     </div>
   </div>
   <div id="panelHistory" style="display:none">
+    <!-- XP / STREAK BAR -->
+    <div id="xpBar" style="background:rgba(97,86,217,.08);border:1px solid rgba(97,86,217,.15);border-radius:12px;padding:.6rem 1.1rem;margin-bottom:.5rem;display:flex;align-items:center;justify-content:space-between;gap:.8rem;flex-wrap:wrap;">
+      <div style="display:flex;align-items:center;gap:.7rem;">
+        <div id="xpLevel" style="font-size:1.4rem;font-weight:800;color:var(--purple2);line-height:1;">🐸 Lv.1</div>
+        <div id="xpTitle" style="font-size:.85rem;color:var(--muted);font-weight:600;">Baby Degen</div>
+      </div>
+      <div style="flex:1;max-width:280px;min-width:120px;">
+        <div style="display:flex;justify-content:space-between;font-size:.6rem;color:var(--muted);margin-bottom:.2rem;">
+          <span id="xpText">0 / 100 XP</span>
+          <span id="xpNext">→ Lv.2</span>
+        </div>
+        <div style="height:8px;background:rgba(255,255,255,.06);border-radius:4px;overflow:hidden;">
+          <div id="xpFill" style="height:100%;width:0%;background:linear-gradient(90deg,var(--purple),var(--purple2));border-radius:4px;transition:width .6s ease;"></div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:.5rem;">
+        <div style="text-align:center;">
+          <div id="streakCount" style="font-size:1.3rem;font-weight:700;color:#ffaa00;line-height:1;">0</div>
+          <div style="font-size:.55rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;">🔥 Streak</div>
+        </div>
+        <div style="width:1px;height:22px;background:rgba(255,255,255,.06)"></div>
+        <div style="text-align:center;">
+          <div id="bestStreak" style="font-size:1.3rem;font-weight:700;color:var(--green);line-height:1;">0</div>
+          <div style="font-size:.55rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;">🏆 Best</div>
+        </div>
+      </div>
+    </div>
+
     <!-- WINRATE BANNER -->
     <div id="histWinrateBanner" style="background:rgba(97,86,217,.05);border:1px solid rgba(97,86,217,.15);border-radius:12px;padding:.7rem 1.1rem;margin-bottom:.75rem;display:flex;align-items:center;justify-content:space-between;gap:.8rem;flex-wrap:wrap;">
       <div style="display:flex;gap:1.4rem;align-items:center;flex-wrap:wrap;">
@@ -3488,6 +3517,190 @@ async function getCallData(addr){
 }
 
 // ============================================================
+// 🎮 XP / STREAK / CONFETTI / SOUND SYSTEM
+// ============================================================
+const XP_LEVELS = [
+  { level: 1, xp: 0,    title: 'Baby Degen',      emoji: '🐸' },
+  { level: 2, xp: 100,  title: 'Paper Hands',     emoji: '📄' },
+  { level: 3, xp: 300,  title: 'Diamond Spotter', emoji: '💎' },
+  { level: 4, xp: 600,  title: 'Gem Hunter',      emoji: '🔍' },
+  { level: 5, xp: 1000, title: 'Whale Watcher',   emoji: '🐋' },
+  { level: 6, xp: 1500, title: 'Moon Walker',     emoji: '🌙' },
+  { level: 7, xp: 2200, title: 'Chad Trader',      emoji: '⚡' },
+  { level: 8, xp: 3000, title: 'Alpha King',       emoji: '👑' },
+  { level: 9, xp: 4000, title: 'Degen God',        emoji: '☢️' },
+  { level: 10,xp: 5500, title: 'Solana Legend',    emoji: '🏆' },
+];
+
+let xpState = JSON.parse(localStorage.getItem('xpState') || 'null') || { xp: 0, streak: 0, bestStreak: 0, lastCallAddr: '' };
+function saveXP() { localStorage.setItem('xpState', JSON.stringify(xpState)); }
+
+function getLevel(xp) {
+  for (let i = XP_LEVELS.length - 1; i >= 0; i--) {
+    if (xp >= XP_LEVELS[i].xp) return XP_LEVELS[i];
+  }
+  return XP_LEVELS[0];
+}
+
+function getNextLevel(xp) {
+  for (const lv of XP_LEVELS) {
+    if (xp < lv.xp) return lv;
+  }
+  return null;
+}
+
+function renderXP() {
+  const lv = getLevel(xpState.xp);
+  const next = getNextLevel(xpState.xp);
+  const el = (id) => document.getElementById(id);
+  if (el('xpLevel')) el('xpLevel').textContent = `${lv.emoji} Lv.${lv.level}`;
+  if (el('xpTitle')) el('xpTitle').textContent = lv.title;
+  if (el('streakCount')) el('streakCount').textContent = xpState.streak;
+  if (el('bestStreak')) el('bestStreak').textContent = xpState.bestStreak;
+  if (next) {
+    const progress = ((xpState.xp - lv.xp) / (next.xp - lv.xp)) * 100;
+    if (el('xpFill')) el('xpFill').style.width = progress + '%';
+    if (el('xpText')) el('xpText').textContent = `${xpState.xp - lv.xp} / ${next.xp - lv.xp} XP`;
+    if (el('xpNext')) el('xpNext').textContent = `→ Lv.${next.level} ${next.title}`;
+  } else {
+    if (el('xpFill')) el('xpFill').style.width = '100%';
+    if (el('xpText')) el('xpText').textContent = `${xpState.xp} XP — MAX`;
+    if (el('xpNext')) el('xpNext').textContent = '🏆 MAX LEVEL';
+  }
+}
+
+function addXP(amount, reason) {
+  const oldLevel = getLevel(xpState.xp).level;
+  xpState.xp += amount;
+  const newLevel = getLevel(xpState.xp).level;
+  saveXP();
+  renderXP();
+  if (newLevel > oldLevel) {
+    const lv = getLevel(xpState.xp);
+    showToast(`⬆️ LEVEL UP! ${lv.emoji} Lv.${lv.level} — ${lv.title}`, 'levelup');
+    launchConfetti(40);
+    playSound('levelup');
+  }
+}
+
+// XP awards from calls
+function processCallXP(calls) {
+  if (!calls || typeof calls !== 'object') return;
+  const entries = Object.values(calls);
+  // Sort by callTime to process in order
+  entries.sort((a, b) => (a.callTime || 0) - (b.callTime || 0));
+  let streak = 0, bestStreak = xpState.bestStreak;
+
+  for (const c of entries) {
+    if (!c.callMcap || !c.athMcap) continue;
+    const xAth = c.athMcap / c.callMcap;
+    if (xAth >= 1.2) { streak++; } else { streak = 0; }
+    if (streak > bestStreak) bestStreak = streak;
+  }
+  xpState.streak = streak;
+  xpState.bestStreak = bestStreak;
+
+  // XP = 10 per call + bonus per win + streak bonus
+  const totalCalls = entries.filter(c => c.callMcap && c.athMcap).length;
+  const totalWins = entries.filter(c => c.callMcap && c.athMcap && (c.athMcap / c.callMcap) >= 1.2).length;
+  const x2Calls = entries.filter(c => c.callMcap && c.athMcap && (c.athMcap / c.callMcap) >= 2).length;
+  xpState.xp = (totalCalls * 10) + (totalWins * 15) + (x2Calls * 30) + (bestStreak * 20);
+  saveXP();
+  renderXP();
+}
+
+// ── NOTIFICATION SOUND ──
+const _audioCtx = typeof AudioContext !== 'undefined' ? new AudioContext() : null;
+function playSound(type) {
+  if (!_audioCtx) return;
+  try {
+    if (_audioCtx.state === 'suspended') _audioCtx.resume();
+    const osc = _audioCtx.createOscillator();
+    const gain = _audioCtx.createGain();
+    osc.connect(gain);
+    gain.connect(_audioCtx.destination);
+
+    if (type === 'newcall') {
+      // Ding-dong notification
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(880, _audioCtx.currentTime);
+      osc.frequency.setValueAtTime(1100, _audioCtx.currentTime + 0.1);
+      osc.frequency.setValueAtTime(880, _audioCtx.currentTime + 0.2);
+      gain.gain.setValueAtTime(0.15, _audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, _audioCtx.currentTime + 0.4);
+      osc.start(); osc.stop(_audioCtx.currentTime + 0.4);
+    } else if (type === 'levelup') {
+      osc.type = 'square';
+      osc.frequency.setValueAtTime(523, _audioCtx.currentTime);
+      osc.frequency.setValueAtTime(659, _audioCtx.currentTime + 0.1);
+      osc.frequency.setValueAtTime(784, _audioCtx.currentTime + 0.2);
+      osc.frequency.setValueAtTime(1047, _audioCtx.currentTime + 0.3);
+      gain.gain.setValueAtTime(0.1, _audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, _audioCtx.currentTime + 0.5);
+      osc.start(); osc.stop(_audioCtx.currentTime + 0.5);
+    } else if (type === 'x2') {
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(660, _audioCtx.currentTime);
+      osc.frequency.setValueAtTime(880, _audioCtx.currentTime + 0.08);
+      osc.frequency.setValueAtTime(1320, _audioCtx.currentTime + 0.16);
+      gain.gain.setValueAtTime(0.12, _audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, _audioCtx.currentTime + 0.35);
+      osc.start(); osc.stop(_audioCtx.currentTime + 0.35);
+    }
+  } catch(e) {}
+}
+
+// ── CONFETTI ──
+function launchConfetti(count = 30) {
+  const colors = ['#6156d9', '#7c6aff', '#00ff88', '#ffaa00', '#ff6b35', '#ff4444', '#fff'];
+  for (let i = 0; i < count; i++) {
+    const el = document.createElement('div');
+    el.style.cssText = `position:fixed;top:-10px;left:${Math.random()*100}vw;width:${6+Math.random()*6}px;height:${6+Math.random()*6}px;background:${colors[Math.floor(Math.random()*colors.length)]};border-radius:${Math.random()>.5?'50%':'2px'};pointer-events:none;z-index:99999;opacity:1;`;
+    document.body.appendChild(el);
+    const duration = 1500 + Math.random() * 2000;
+    const drift = (Math.random() - 0.5) * 200;
+    const spin = Math.random() * 720;
+    el.animate([
+      { transform: `translateY(0) translateX(0) rotate(0deg)`, opacity: 1 },
+      { transform: `translateY(${window.innerHeight + 50}px) translateX(${drift}px) rotate(${spin}deg)`, opacity: 0 }
+    ], { duration, easing: 'cubic-bezier(.15,.8,.3,1)' }).onfinish = () => el.remove();
+  }
+}
+
+// ── TOAST NOTIFICATION ──
+function showToast(msg, type='info') {
+  const toast = document.createElement('div');
+  const bg = type === 'levelup' ? 'linear-gradient(135deg,var(--purple),var(--purple2))' : type === 'call' ? 'linear-gradient(135deg,#00aa55,var(--green))' : 'rgba(30,25,50,.95)';
+  toast.style.cssText = `position:fixed;top:20px;right:20px;padding:14px 22px;background:${bg};border-radius:12px;color:#fff;font-size:15px;font-weight:700;font-family:var(--font);z-index:99999;box-shadow:0 4px 25px rgba(0,0,0,.4);animation:slideInRight .4s ease;max-width:400px;border:1px solid rgba(255,255,255,.15);`;
+  toast.textContent = msg;
+  document.body.appendChild(toast);
+  setTimeout(() => { toast.style.opacity = '0'; toast.style.transition = 'opacity .4s'; setTimeout(() => toast.remove(), 400); }, 4000);
+}
+
+// Track which addrs we already notified (avoid repeat sounds)
+const _notifiedAddrs = new Set();
+function onNewCall(token) {
+  if (_notifiedAddrs.has(token.addr)) return;
+  _notifiedAddrs.add(token.addr);
+  playSound('newcall');
+  showToast(`🚀 NEW CALL: $${token.symbol} — Score ${token.score} — $${fmtNum(token.mcap)}`, 'call');
+  addXP(10, 'new call');
+}
+
+function onX2Call(token, xAth) {
+  const key = token.addr || token;
+  if (_notifiedAddrs.has('x2_' + key)) return;
+  _notifiedAddrs.add('x2_' + key);
+  playSound('x2');
+  launchConfetti(50);
+  showToast(`🎉 x${xAth.toFixed(1)} GEM! $${token.symbol || '???'} 🚀🚀🚀`, 'levelup');
+  addXP(30, 'x2+ call');
+}
+
+// Init XP on page load
+setTimeout(renderXP, 500);
+
+// ============================================================
 // HELPERS
 // ============================================================
 function fmtNum(n){if(!n||isNaN(n))return'?';if(n>=1e6)return(n/1e6).toFixed(1)+'M';if(n>=1e3)return(n/1e3).toFixed(1)+'K';return n.toFixed(0);}
@@ -3616,6 +3829,7 @@ function applyCustomWr(){
 
 function updateWrStats(calls){
   _wrCalls=calls;
+  processCallXP(calls);
   const now=Date.now();
   const limits={'5m':5*60000,'1h':3600000,'day':86400000,'all':Infinity,'custom':_wrCustomMs||Infinity};
   const limit=limits[_wrPeriod]||Infinity;
@@ -4260,8 +4474,8 @@ async function fetchTokens(){
   const _now5 = Date.now();
   for(const t of finalScored){
     const existing=await getCallData(t.addr);
-    if(!existing){ await saveCall(t.addr,t.mcap,_now5,t.symbol,t.score||0,t.raw?.pairAddress||''); t._callTime=_now5; }
-    else{ if(t.mcap>(existing.athMcap||0))await updateAth(t.addr,t.mcap); t._callTime=existing.callTime||_now5; }
+    if(!existing){ await saveCall(t.addr,t.mcap,_now5,t.symbol,t.score||0,t.raw?.pairAddress||''); t._callTime=_now5; onNewCall(t); }
+    else{ if(t.mcap>(existing.athMcap||0)){await updateAth(t.addr,t.mcap); const xAth=t.mcap/(existing.callMcap||t.mcap); if(xAth>=2)onX2Call(t,xAth);} t._callTime=existing.callTime||_now5; }
   }
   const newAddrs=new Set(finalScored.map(t=>t.addr));
   for(const prev of lastScored){
