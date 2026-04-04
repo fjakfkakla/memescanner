@@ -713,6 +713,10 @@ section{scroll-margin-top:70px;}
   <button class="nav-btn btn-outline" onclick="openCode()">Se connecter</button>
   <button class="nav-btn btn-primary" onclick="document.getElementById('pricing').scrollIntoView()">S'inscrire</button>
   <button class="nav-btn btn-outline" onclick="openAdmin()" id="adminBtn">⚙ Admin</button>
+  <div id="streakBadge" style="display:flex;align-items:center;gap:4px;background:linear-gradient(135deg,rgba(255,170,0,.15),rgba(255,107,53,.1));border:1px solid rgba(255,170,0,.25);border-radius:10px;padding:5px 12px;cursor:default;" title="Jours de connexion consécutifs">
+    <span style="font-size:1.1rem;">🔥</span>
+    <span id="streakNum" style="font-size:1rem;font-weight:800;color:#ffaa00;">0</span>
+  </div>
 </nav>
 
 <section id="hero">
@@ -808,34 +812,6 @@ section{scroll-margin-top:70px;}
     </div>
   </div>
   <div id="panelHistory" style="display:none">
-    <!-- XP / STREAK BAR -->
-    <div id="xpBar" style="background:rgba(97,86,217,.08);border:1px solid rgba(97,86,217,.15);border-radius:12px;padding:.6rem 1.1rem;margin-bottom:.5rem;display:flex;align-items:center;justify-content:space-between;gap:.8rem;flex-wrap:wrap;">
-      <div style="display:flex;align-items:center;gap:.7rem;">
-        <div id="xpLevel" style="font-size:1.4rem;font-weight:800;color:var(--purple2);line-height:1;">🐸 Lv.1</div>
-        <div id="xpTitle" style="font-size:.85rem;color:var(--muted);font-weight:600;">Baby Degen</div>
-      </div>
-      <div style="flex:1;max-width:280px;min-width:120px;">
-        <div style="display:flex;justify-content:space-between;font-size:.6rem;color:var(--muted);margin-bottom:.2rem;">
-          <span id="xpText">0 / 100 XP</span>
-          <span id="xpNext">→ Lv.2</span>
-        </div>
-        <div style="height:8px;background:rgba(255,255,255,.06);border-radius:4px;overflow:hidden;">
-          <div id="xpFill" style="height:100%;width:0%;background:linear-gradient(90deg,var(--purple),var(--purple2));border-radius:4px;transition:width .6s ease;"></div>
-        </div>
-      </div>
-      <div style="display:flex;align-items:center;gap:.5rem;">
-        <div style="text-align:center;">
-          <div id="streakCount" style="font-size:1.3rem;font-weight:700;color:#ffaa00;line-height:1;">0</div>
-          <div style="font-size:.55rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;">🔥 Streak</div>
-        </div>
-        <div style="width:1px;height:22px;background:rgba(255,255,255,.06)"></div>
-        <div style="text-align:center;">
-          <div id="bestStreak" style="font-size:1.3rem;font-weight:700;color:var(--green);line-height:1;">0</div>
-          <div style="font-size:.55rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;">🏆 Best</div>
-        </div>
-      </div>
-    </div>
-
     <!-- WINRATE BANNER -->
     <div id="histWinrateBanner" style="background:rgba(97,86,217,.05);border:1px solid rgba(97,86,217,.15);border-radius:12px;padding:.7rem 1.1rem;margin-bottom:.75rem;display:flex;align-items:center;justify-content:space-between;gap:.8rem;flex-wrap:wrap;">
       <div style="display:flex;gap:1.4rem;align-items:center;flex-wrap:wrap;">
@@ -3517,97 +3493,35 @@ async function getCallData(addr){
 }
 
 // ============================================================
-// 🎮 XP / STREAK / CONFETTI / SOUND SYSTEM
+// 🔥 DAILY LOGIN STREAK / CONFETTI / SOUND SYSTEM
 // ============================================================
-const XP_LEVELS = [
-  { level: 1, xp: 0,    title: 'Baby Degen',      emoji: '🐸' },
-  { level: 2, xp: 100,  title: 'Paper Hands',     emoji: '📄' },
-  { level: 3, xp: 300,  title: 'Diamond Spotter', emoji: '💎' },
-  { level: 4, xp: 600,  title: 'Gem Hunter',      emoji: '🔍' },
-  { level: 5, xp: 1000, title: 'Whale Watcher',   emoji: '🐋' },
-  { level: 6, xp: 1500, title: 'Moon Walker',     emoji: '🌙' },
-  { level: 7, xp: 2200, title: 'Chad Trader',      emoji: '⚡' },
-  { level: 8, xp: 3000, title: 'Alpha King',       emoji: '👑' },
-  { level: 9, xp: 4000, title: 'Degen God',        emoji: '☢️' },
-  { level: 10,xp: 5500, title: 'Solana Legend',    emoji: '🏆' },
-];
 
-let xpState = JSON.parse(localStorage.getItem('xpState') || 'null') || { xp: 0, streak: 0, bestStreak: 0, lastCallAddr: '' };
-function saveXP() { localStorage.setItem('xpState', JSON.stringify(xpState)); }
+// ── STREAK DE CONNEXION JOURNALIER ──
+function initStreak() {
+  const data = JSON.parse(localStorage.getItem('loginStreak') || 'null') || { streak: 0, lastDate: '' };
+  const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+  const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
 
-function getLevel(xp) {
-  for (let i = XP_LEVELS.length - 1; i >= 0; i--) {
-    if (xp >= XP_LEVELS[i].xp) return XP_LEVELS[i];
-  }
-  return XP_LEVELS[0];
-}
-
-function getNextLevel(xp) {
-  for (const lv of XP_LEVELS) {
-    if (xp < lv.xp) return lv;
-  }
-  return null;
-}
-
-function renderXP() {
-  const lv = getLevel(xpState.xp);
-  const next = getNextLevel(xpState.xp);
-  const el = (id) => document.getElementById(id);
-  if (el('xpLevel')) el('xpLevel').textContent = `${lv.emoji} Lv.${lv.level}`;
-  if (el('xpTitle')) el('xpTitle').textContent = lv.title;
-  if (el('streakCount')) el('streakCount').textContent = xpState.streak;
-  if (el('bestStreak')) el('bestStreak').textContent = xpState.bestStreak;
-  if (next) {
-    const progress = ((xpState.xp - lv.xp) / (next.xp - lv.xp)) * 100;
-    if (el('xpFill')) el('xpFill').style.width = progress + '%';
-    if (el('xpText')) el('xpText').textContent = `${xpState.xp - lv.xp} / ${next.xp - lv.xp} XP`;
-    if (el('xpNext')) el('xpNext').textContent = `→ Lv.${next.level} ${next.title}`;
+  if (data.lastDate === today) {
+    // Déjà co aujourd'hui, pas de changement
+  } else if (data.lastDate === yesterday) {
+    // Co hier → streak continue
+    data.streak++;
+    data.lastDate = today;
+    localStorage.setItem('loginStreak', JSON.stringify(data));
+    if (data.streak >= 3) { launchConfetti(20); playSound('levelup'); }
+    showToast(`🔥 Streak ${data.streak} jours ! Continue comme ça`, 'levelup');
   } else {
-    if (el('xpFill')) el('xpFill').style.width = '100%';
-    if (el('xpText')) el('xpText').textContent = `${xpState.xp} XP — MAX`;
-    if (el('xpNext')) el('xpNext').textContent = '🏆 MAX LEVEL';
+    // Pas co hier → reset
+    data.streak = 1;
+    data.lastDate = today;
+    localStorage.setItem('loginStreak', JSON.stringify(data));
   }
+
+  const el = document.getElementById('streakNum');
+  if (el) el.textContent = data.streak;
 }
-
-function addXP(amount, reason) {
-  const oldLevel = getLevel(xpState.xp).level;
-  xpState.xp += amount;
-  const newLevel = getLevel(xpState.xp).level;
-  saveXP();
-  renderXP();
-  if (newLevel > oldLevel) {
-    const lv = getLevel(xpState.xp);
-    showToast(`⬆️ LEVEL UP! ${lv.emoji} Lv.${lv.level} — ${lv.title}`, 'levelup');
-    launchConfetti(40);
-    playSound('levelup');
-  }
-}
-
-// XP awards from calls
-function processCallXP(calls) {
-  if (!calls || typeof calls !== 'object') return;
-  const entries = Object.values(calls);
-  // Sort by callTime to process in order
-  entries.sort((a, b) => (a.callTime || 0) - (b.callTime || 0));
-  let streak = 0, bestStreak = xpState.bestStreak;
-
-  for (const c of entries) {
-    if (!c.callMcap || !c.athMcap) continue;
-    const xAth = c.athMcap / c.callMcap;
-    if (xAth >= 1.2) { streak++; } else { streak = 0; }
-    if (streak > bestStreak) bestStreak = streak;
-  }
-  xpState.streak = streak;
-  xpState.bestStreak = bestStreak;
-
-  // XP = 10 per call + bonus per win + streak bonus
-  const totalCalls = entries.filter(c => c.callMcap && c.athMcap).length;
-  const totalWins = entries.filter(c => c.callMcap && c.athMcap && (c.athMcap / c.callMcap) >= 1.2).length;
-  const x2Calls = entries.filter(c => c.callMcap && c.athMcap && (c.athMcap / c.callMcap) >= 2).length;
-  xpState.xp = (totalCalls * 10) + (totalWins * 15) + (x2Calls * 30) + (bestStreak * 20);
-  saveXP();
-  renderXP();
-}
+setTimeout(initStreak, 800);
 
 // ── NOTIFICATION SOUND ──
 const _audioCtx = typeof AudioContext !== 'undefined' ? new AudioContext() : null;
@@ -3684,7 +3598,6 @@ function onNewCall(token) {
   _notifiedAddrs.add(token.addr);
   playSound('newcall');
   showToast(`🚀 NEW CALL: $${token.symbol} — Score ${token.score} — $${fmtNum(token.mcap)}`, 'call');
-  addXP(10, 'new call');
 }
 
 function onX2Call(token, xAth) {
@@ -3694,11 +3607,7 @@ function onX2Call(token, xAth) {
   playSound('x2');
   launchConfetti(50);
   showToast(`🎉 x${xAth.toFixed(1)} GEM! $${token.symbol || '???'} 🚀🚀🚀`, 'levelup');
-  addXP(30, 'x2+ call');
 }
-
-// Init XP on page load
-setTimeout(renderXP, 500);
 
 // ============================================================
 // HELPERS
@@ -3829,7 +3738,6 @@ function applyCustomWr(){
 
 function updateWrStats(calls){
   _wrCalls=calls;
-  processCallXP(calls);
   const now=Date.now();
   const limits={'5m':5*60000,'1h':3600000,'day':86400000,'all':Infinity,'custom':_wrCustomMs||Infinity};
   const limit=limits[_wrPeriod]||Infinity;
