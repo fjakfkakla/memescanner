@@ -82,6 +82,7 @@ export function scoreTokenV2(p, walletData = { count: 0, wallets: [], clustered:
   const c1h    = p.priceChange?.h1 || 0;
   const c6h    = p.priceChange?.h6 || 0;
   const m5     = p.priceChange?.m5 || 0;
+  const m1     = p.priceChange?.m1 || 0;
   const hasSocials = !!(p.info?.socials?.length || p.info?.websites?.length || p.baseToken?.info?.socials?.length);
   const volAvgH  = (vol6 / 6) || (vol1 || 1);
   const volAccel = vol1 / volAvgH;
@@ -196,8 +197,10 @@ export function scoreTokenV2(p, walletData = { count: 0, wallets: [], clustered:
       traderScore, socialScore, holderScore, platformScore,
       mcapScore, ageScore, patternScore,
       walletCount: axiomCount, clustered: walletData.clustered,
-      buyRatio: buyR, volAccel, c1h, m5, ageH,
-      top10pct, axiomCount
+      buyRatio: buyR, volAccel, c1h, m5, c6h, m1, ageH,
+      top10pct, axiomCount,
+      volMcapH1: vol1/mcap,
+      sellBuyRatio: sells1/(buys1||1)
     }
   };
 }

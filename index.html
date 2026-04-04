@@ -1149,6 +1149,23 @@ section{scroll-margin-top:70px;}
 
       </div>
 
+      <!-- SMART FILTERS IA ADAPTATIFS -->
+      <div class="ai-section" style="border-color:rgba(97,86,217,.4);">
+        <div class="ai-section-title"><span>🤖 Filtres IA Adaptatifs (Smart Filters)</span></div>
+        <div style="font-size:13px;color:var(--muted);margin-bottom:12px;">
+          L'IA analyse tes calls passés et génère automatiquement des règles de filtrage.<br>
+          Elle trouve les seuils dangereux et les combinaisons toxiques qui mènent à des pertes.
+        </div>
+        <div style="text-align:center;margin:12px 0;">
+          <button class="btn-admin" onclick="runBuildFilters()" id="btnBuildFilters" style="font-size:14px;padding:10px 28px;background:linear-gradient(135deg,#ff6b35,#ff8c42);border-radius:12px;">
+            🔧 CONSTRUIRE / METTRE À JOUR LES FILTRES
+          </button>
+        </div>
+        <div id="smartFiltersDisplay">
+          <div class="ai-empty">Aucun filtre IA actif — lance la construction pour commencer</div>
+        </div>
+      </div>
+
       <!-- AI CURRENT WEIGHTS (toujours visible) -->
       <div class="ai-section">
         <div class="ai-section-title"><span>Poids actuels du scoring</span></div>
@@ -3069,6 +3086,7 @@ function checkPw(){
       renderCodes();document.getElementById('debugToggleBtn').style.display='inline-block';
       document.getElementById('tabDebugCA').style.display='inline-block';
       refreshAI();
+      loadSmartFiltersUI();
     }else{document.getElementById('pwErr').style.display='block';document.getElementById('adminPwInp').value='';}
   }).catch(()=>{document.getElementById('pwErr').style.display='block';document.getElementById('adminPwInp').value='';});
 }
@@ -3146,9 +3164,15 @@ async function runDeepAnalyze(){
     // SECTION 3 : Changements
     renderChanges(data.changes, data.currentWeights);
 
+    // Auto-rebuild smart filters après analyse
+    try{
+      const sfResp=await fetch(`${BACKEND_URL}/admin/ai/build-filters`,{method:'POST',signal:AbortSignal.timeout(20000)});
+      const sfData=await sfResp.json();
+      if(sfData.ok)renderSmartFilters(sfData);
+    }catch(e){}
+
     btn.textContent='✅ Analyse terminée !';btn.style.background='linear-gradient(135deg,var(--green),#00aa55)';
     setTimeout(()=>{btn.textContent='🧠 RELANCER L\'ANALYSE';btn.disabled=false;btn.style.background='';},4000);
-    // Refresh les stats aussi
     refreshAI();
   }catch(e){
     btn.textContent='❌ Erreur réseau';
@@ -3249,6 +3273,109 @@ function renderChanges(changes, weights){
       <div style="font-size:13px;color:var(--muted);line-height:1.5;padding-left:28px;border-left:2px solid rgba(97,86,217,.2);">${c.reason}</div>
     </div>`;
   }).join('');
+}
+
+// ── SMART FILTERS IA — Build & Display ──
+async function runBuildFilters(){
+  const btn=document.getElementById('btnBuildFilters');
+  btn.textContent='🔄 Construction en cours...';btn.disabled=true;
+  try{
+    const resp=await fetch(`${BACKEND_URL}/admin/ai/build-filters`,{method:'POST',signal:AbortSignal.timeout(30000)});
+    const data=await resp.json();
+    if(!data.ok){btn.textContent='❌ '+(data.reason||'Erreur');setTimeout(()=>{btn.textContent='🔧 CONSTRUIRE / METTRE À JOUR LES FILTRES';btn.disabled=false;},3000);return;}
+    renderSmartFilters(data);
+    btn.textContent='✅ Filtres construits !';btn.style.background='linear-gradient(135deg,var(--green),#00aa55)';
+    setTimeout(()=>{btn.textContent='🔧 RECONSTRUIRE LES FILTRES';btn.disabled=false;btn.style.background='';},4000);
+  }catch(e){
+    btn.textContent='❌ Erreur réseau';
+    setTimeout(()=>{btn.textContent='🔧 CONSTRUIRE / METTRE À JOUR LES FILTRES';btn.disabled=false;},3000);
+  }
+}
+
+function renderSmartFilters(data){
+  const el=document.getElementById('smartFiltersDisplay');
+  if(!data||(!data.singleRules?.length&&!data.comboRules?.length)){
+    el.innerHTML='<div class="ai-empty">Pas assez de données — il faut au moins 15 calls finalisés</div>';
+    return;
+  }
+
+  let html=`<div style="display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap;">
+    <div style="background:rgba(97,86,217,.1);border-radius:8px;padding:8px 16px;text-align:center;">
+      <div style="font-size:18px;font-weight:700;color:var(--purple2);">${data.sampleSize||'?'}</div>
+      <div style="font-size:11px;color:var(--muted);">Calls analysés</div>
+    </div>
+    <div style="background:rgba(0,255,136,.08);border-radius:8px;padding:8px 16px;text-align:center;">
+      <div style="font-size:18px;font-weight:700;color:var(--green);">${data.goodCount||0}</div>
+      <div style="font-size:11px;color:var(--muted);">Bons (≥x1.2)</div>
+    </div>
+    <div style="background:rgba(255,50,50,.08);border-radius:8px;padding:8px 16px;text-align:center;">
+      <div style="font-size:18px;font-weight:700;color:var(--red);">${data.badCount||0}</div>
+      <div style="font-size:11px;color:var(--muted);">Mauvais (<x1.2)</div>
+    </div>
+    <div style="background:rgba(255,170,0,.08);border-radius:8px;padding:8px 16px;text-align:center;">
+      <div style="font-size:18px;font-weight:700;color:#ffaa00;">${data.singleRules?.length||0}</div>
+      <div style="font-size:11px;color:var(--muted);">Règles simples</div>
+    </div>
+    <div style="background:rgba(255,107,53,.08);border-radius:8px;padding:8px 16px;text-align:center;">
+      <div style="font-size:18px;font-weight:700;color:#ff6b35;">${data.comboRules?.length||0}</div>
+      <div style="font-size:11px;color:var(--muted);">Combos toxiques</div>
+    </div>
+  </div>`;
+
+  // Single rules
+  if(data.singleRules?.length){
+    html+=`<div style="font-weight:700;font-size:15px;color:#fff;margin:12px 0 8px;">📊 Seuils détectés par l'IA</div>`;
+    html+=data.singleRules.map(r=>{
+      const isReject=r.action==='HARD_REJECT';
+      const bg=isReject?'rgba(255,50,50,.08)':'rgba(255,170,0,.06)';
+      const border=isReject?'rgba(255,50,50,.2)':'rgba(255,170,0,.15)';
+      const badge=isReject?'<span style="background:var(--red);color:#fff;font-size:11px;padding:2px 8px;border-radius:4px;font-weight:700;">HARD REJECT</span>':'<span style="background:rgba(255,170,0,.2);color:#ffaa00;font-size:11px;padding:2px 8px;border-radius:4px;font-weight:600;">PÉNALITÉ '+r.penalty+'</span>';
+      const dirTxt=r.direction==='high_is_bad'?'≥':'≤';
+      return`<div style="background:${bg};border:1px solid ${border};border-radius:10px;padding:12px 16px;margin-bottom:8px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
+          <div>
+            <span style="font-weight:700;font-size:14px;color:#fff;">${r.name}</span>
+            <span style="font-size:13px;color:var(--muted);margin-left:8px;">${dirTxt} ${typeof r.threshold==='number'?r.threshold.toFixed(2):r.threshold}</span>
+          </div>
+          ${badge}
+        </div>
+        <div style="font-size:13px;color:var(--muted);margin-top:6px;">${r.lossRate}% de loss sur ${r.samples} calls correspondants</div>
+      </div>`;
+    }).join('');
+  }
+
+  // Combo rules
+  if(data.comboRules?.length){
+    html+=`<div style="font-weight:700;font-size:15px;color:#fff;margin:16px 0 8px;">💀 Combinaisons toxiques</div>`;
+    html+=data.comboRules.map(c=>{
+      const isReject=c.lossRate>=85;
+      const bg=isReject?'rgba(255,50,50,.08)':'rgba(255,107,53,.06)';
+      const border=isReject?'rgba(255,50,50,.2)':'rgba(255,107,53,.15)';
+      return`<div style="background:${bg};border:1px solid ${border};border-radius:10px;padding:12px 16px;margin-bottom:8px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+          ${isReject?'🚫':'⚠️'}
+          <span style="font-weight:700;font-size:14px;color:#fff;">${c.description}</span>
+        </div>
+        <div style="font-size:13px;color:var(--muted);">${c.samples} calls matchés • ${isReject?'HARD REJECT':'Pénalité appliquée'}</div>
+      </div>`;
+    }).join('');
+  }
+
+  // Timestamp
+  if(data.generatedAt){
+    html+=`<div style="text-align:right;font-size:12px;color:var(--muted);margin-top:12px;">Dernière mise à jour : ${fmtTime(data.generatedAt)}</div>`;
+  }
+
+  el.innerHTML=html;
+}
+
+// Charger les smart filters au refresh admin
+async function loadSmartFiltersUI(){
+  try{
+    const resp=await fetch(`${BACKEND_URL}/admin/ai/smart-filters`);
+    const data=await resp.json();
+    if(data.ok)renderSmartFilters(data);
+  }catch(e){}
 }
 
 async function adminEditAth(key,addr,sym){

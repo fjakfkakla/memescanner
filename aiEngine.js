@@ -575,6 +575,302 @@ async function deepAnalyze() {
   }
 }
 
+// ══════════════════════════════════════════════════════════════
+// ── SMART FILTERS — IA ADAPTATIVE ──
+// L'IA analyse les calls passés et génère automatiquement :
+//   1. Des seuils par feature (ex: "si volMcapH1 > 9.2 → 82% de loss")
+//   2. Des combos toxiques (ex: "age < 5min ET c5m > 60 → 90% de loss")
+//   3. Des hard rejects dynamiques stockés dans Firebase
+// Le scanner appelle checkSmartFilters() avant chaque call.
+// ══════════════════════════════════════════════════════════════
+
+let smartFilters = { singleRules: [], comboRules: [], generatedAt: 0 };
+
+// Charge les smart filters depuis Firebase au démarrage
+async function loadSmartFilters() {
+  try {
+    const snap = await db.ref('ai/smartFilters').once('value');
+    const saved = snap.val();
+    if (saved && saved.singleRules) {
+      smartFilters = saved;
+      console.log(`[AI] Smart filters chargés: ${saved.singleRules.length} règles simples, ${saved.comboRules.length} combos`);
+    }
+  } catch (e) {
+    console.warn('[AI] loadSmartFilters error:', e.message);
+  }
+}
+
+// ── ANALYSE STATISTIQUE — Trouve les seuils optimaux par feature ──
+function findOptimalThreshold(goodCalls, badCalls, featureKey, direction) {
+  // direction: 'high_is_bad' (ex: volMcapH1) ou 'low_is_bad' (ex: buyRatio)
+  const allVals = [
+    ...goodCalls.map(c => ({ val: c[featureKey] || 0, win: true })),
+    ...badCalls.map(c => ({ val: c[featureKey] || 0, win: false })),
+  ].filter(v => v.val !== 0 && v.val !== undefined);
+
+  if (allVals.length < 10) return null;
+
+  // Trier par valeur
+  allVals.sort((a, b) => a.val - b.val);
+
+  // Tester chaque percentile comme seuil potentiel
+  let bestThreshold = null;
+  let bestScore = 0; // score = loss_rate au-delà du seuil × nb de samples
+
+  const step = Math.max(1, Math.floor(allVals.length / 20)); // 20 points de test
+  for (let i = step; i < allVals.length - step; i += step) {
+    const threshold = allVals[i].val;
+
+    let aboveWin = 0, aboveLose = 0, belowWin = 0, belowLose = 0;
+    for (const v of allVals) {
+      if (v.val >= threshold) { if (v.win) aboveWin++; else aboveLose++; }
+      else { if (v.win) belowWin++; else belowLose++; }
+    }
+
+    if (direction === 'high_is_bad') {
+      const aboveTotal = aboveWin + aboveLose;
+      if (aboveTotal < 3) continue;
+      const lossRate = aboveLose / aboveTotal;
+      const score = lossRate * Math.sqrt(aboveTotal); // pondéré par sample size
+      if (lossRate >= 0.70 && score > bestScore) {
+        bestScore = score;
+        bestThreshold = { threshold, lossRate: Math.round(lossRate * 100), samples: aboveTotal, direction };
+      }
+    } else {
+      const belowTotal = belowWin + belowLose;
+      if (belowTotal < 3) continue;
+      const lossRate = belowLose / belowTotal;
+      const score = lossRate * Math.sqrt(belowTotal);
+      if (lossRate >= 0.70 && score > bestScore) {
+        bestScore = score;
+        bestThreshold = { threshold, lossRate: Math.round(lossRate * 100), samples: belowTotal, direction };
+      }
+    }
+  }
+
+  return bestThreshold;
+}
+
+// ── DÉTECTION DE COMBOS TOXIQUES ──
+function findToxicCombos(goodCalls, badCalls) {
+  const combos = [];
+  const featurePairs = [
+    // Grosse bougie patterns
+    ['c5m', 'c1h'], ['m5', 'c1h'], ['c5m', 'volMcapH1'],
+    // Pump-dump patterns
+    ['c6h', 'c1h'], ['sellBuyRatio', 'volMcapH1'], ['sellBuyRatio', 'c1h'],
+    // Distribution patterns
+    ['top10pct', 'sellBuyRatio'], ['buyRatio', 'volMcapH1'],
+    // Momentum patterns
+    ['c5m', 'sellBuyRatio'], ['c1h', 'volMcapH1'],
+  ];
+
+  for (const [f1, f2] of featurePairs) {
+    // Calculer les médianes pour chaque feature sur les losers
+    const badF1 = badCalls.map(c => c[f1] || 0).filter(v => v !== 0).sort((a, b) => a - b);
+    const badF2 = badCalls.map(c => c[f2] || 0).filter(v => v !== 0).sort((a, b) => a - b);
+    if (badF1.length < 5 || badF2.length < 5) continue;
+
+    const medF1 = badF1[Math.floor(badF1.length / 2)];
+    const medF2 = badF2[Math.floor(badF2.length / 2)];
+
+    // Tester : les calls où f1 > medF1 ET f2 > medF2 sont-ils majoritairement des losers ?
+    const matchGood = goodCalls.filter(c => (c[f1] || 0) >= medF1 && (c[f2] || 0) >= medF2).length;
+    const matchBad = badCalls.filter(c => (c[f1] || 0) >= medF1 && (c[f2] || 0) >= medF2).length;
+    const total = matchGood + matchBad;
+    if (total < 4) continue;
+    const lossRate = matchBad / total;
+
+    if (lossRate >= 0.75) {
+      combos.push({
+        features: [f1, f2],
+        thresholds: [parseFloat(medF1.toFixed(2)), parseFloat(medF2.toFixed(2))],
+        operator: 'AND_ABOVE',
+        lossRate: Math.round(lossRate * 100),
+        samples: total,
+        description: `${f1} ≥ ${medF1.toFixed(1)} ET ${f2} ≥ ${medF2.toFixed(1)} → ${Math.round(lossRate * 100)}% de loss (${total} samples)`,
+      });
+    }
+
+    // Tester aussi f1 > med ET f2 < med (ex: c6h haut mais c1h bas = pump-dump)
+    const matchGood2 = goodCalls.filter(c => (c[f1] || 0) >= medF1 && (c[f2] || 0) < medF2).length;
+    const matchBad2 = badCalls.filter(c => (c[f1] || 0) >= medF1 && (c[f2] || 0) < medF2).length;
+    const total2 = matchGood2 + matchBad2;
+    if (total2 < 4) continue;
+    const lossRate2 = matchBad2 / total2;
+
+    if (lossRate2 >= 0.75) {
+      combos.push({
+        features: [f1, f2],
+        thresholds: [parseFloat(medF1.toFixed(2)), parseFloat(medF2.toFixed(2))],
+        operator: 'ABOVE_BELOW',
+        lossRate: Math.round(lossRate2 * 100),
+        samples: total2,
+        description: `${f1} ≥ ${medF1.toFixed(1)} ET ${f2} < ${medF2.toFixed(1)} → ${Math.round(lossRate2 * 100)}% de loss (${total2} samples)`,
+      });
+    }
+  }
+
+  // Trier par loss rate puis par samples, garder les 15 meilleures
+  combos.sort((a, b) => b.lossRate - a.lossRate || b.samples - a.samples);
+  return combos.slice(0, 15);
+}
+
+// ── BUILD SMART FILTERS — Appelé par le deep analyze ou manuellement ──
+async function buildSmartFilters() {
+  try {
+    const snap = await db.ref('calls').orderByChild('savedAt').limitToLast(300).once('value');
+    const allCalls = snap.val() || {};
+    const calls = Object.entries(allCalls)
+      .map(([key, c]) => ({ key, ...c }))
+      .filter(c => c.outcome?.result && (c.outcome?.features || c.debug));
+
+    if (calls.length < 15) {
+      return { ok: false, reason: `Pas assez de calls (${calls.length}/15 min)` };
+    }
+
+    // Extraire les features de chaque call
+    const extractFeatures = (c) => ({
+      score: c.score || 0,
+      callMcap: c.callMcap || 0,
+      athX: c.outcome.athX || 0,
+      traderScore: c.outcome.features?.traderScore || c.debug?.traderScore || 0,
+      socialScore: c.outcome.features?.socialScore || c.debug?.socialScore || 0,
+      holderScore: c.outcome.features?.holderScore || c.debug?.holderScore || 0,
+      patternScore: c.outcome.features?.patternScore || c.debug?.patternScore || 0,
+      buyRatio: c.outcome.features?.buyRatio || c.debug?.buyRatio || 0,
+      volAccel: c.outcome.features?.volAccel || c.debug?.volAccel || 0,
+      c1h: c.outcome.features?.c1h || c.debug?.c1h || 0,
+      m5: c.outcome.features?.m5 || c.debug?.m5 || 0,
+      c6h: c.outcome.features?.c6h || c.debug?.c6h || 0,
+      top10pct: c.outcome.features?.top10pct || c.debug?.top10pct || 0,
+      axiomCount: c.outcome.features?.axiomCount || c.debug?.axiomCount || 0,
+      mcap: c.outcome.features?.mcap || c.callMcap || 0,
+      liq: c.outcome.features?.liq || c.liq || 0,
+      volMcapH1: c.outcome.features?.volMcapH1 || c.debug?.volMcapH1 || 0,
+      sellBuyRatio: c.outcome.features?.sellBuyRatio || c.debug?.sellBuyRatio || 0,
+    });
+
+    const threshold = 1.2;
+    const goodCalls = calls.filter(c => (c.outcome.athX || 0) >= threshold).map(extractFeatures);
+    const badCalls = calls.filter(c => (c.outcome.athX || 0) < threshold).map(extractFeatures);
+
+    console.log(`[AI] Building smart filters: ${goodCalls.length} good, ${badCalls.length} bad calls`);
+
+    // ── 1. Trouver les seuils optimaux par feature ──
+    const featureConfigs = [
+      { key: 'volMcapH1', direction: 'high_is_bad', name: 'Volume/Mcap ratio' },
+      { key: 'sellBuyRatio', direction: 'high_is_bad', name: 'Ratio Sells/Buys' },
+      { key: 'c5m', direction: 'high_is_bad', name: 'Variation 5min (%)' },
+      { key: 'c1h', direction: 'high_is_bad', name: 'Variation 1h (%)' },
+      { key: 'top10pct', direction: 'high_is_bad', name: 'Top 10 holders (%)' },
+      { key: 'buyRatio', direction: 'low_is_bad', name: 'Buy Ratio' },
+      { key: 'patternScore', direction: 'low_is_bad', name: 'Score Pattern' },
+      { key: 'c6h', direction: 'high_is_bad', name: 'Variation 6h (%)' },
+      { key: 'liq', direction: 'low_is_bad', name: 'Liquidité' },
+    ];
+
+    const singleRules = [];
+    for (const fc of featureConfigs) {
+      const result = findOptimalThreshold(goodCalls, badCalls, fc.key, fc.direction);
+      if (result) {
+        singleRules.push({
+          feature: fc.key,
+          name: fc.name,
+          ...result,
+          action: result.lossRate >= 85 ? 'HARD_REJECT' : 'PENALTY',
+          penalty: result.lossRate >= 85 ? -999 : -Math.round(result.lossRate / 4),
+        });
+      }
+    }
+
+    // ── 2. Trouver les combos toxiques ──
+    const comboRules = findToxicCombos(goodCalls, badCalls);
+
+    // ── 3. Sauvegarder dans Firebase ──
+    smartFilters = {
+      singleRules,
+      comboRules,
+      generatedAt: Date.now(),
+      sampleSize: calls.length,
+      goodCount: goodCalls.length,
+      badCount: badCalls.length,
+      winrate: parseFloat((goodCalls.length / calls.length * 100).toFixed(1)),
+    };
+
+    await db.ref('ai/smartFilters').set(smartFilters);
+    console.log(`[AI] Smart filters saved: ${singleRules.length} single rules, ${comboRules.length} combos`);
+
+    return { ok: true, ...smartFilters };
+  } catch (e) {
+    console.warn('[AI] buildSmartFilters error:', e.message);
+    return { ok: false, reason: e.message };
+  }
+}
+
+// ── CHECK SMART FILTERS — Appelé par le scanner avant chaque call ──
+// Retourne { pass: true/false, reasons: [...] }
+function checkSmartFilters(tokenDebug) {
+  if (!smartFilters.singleRules.length && !smartFilters.comboRules.length) {
+    return { pass: true, reasons: [] };
+  }
+
+  const reasons = [];
+  let totalPenalty = 0;
+
+  // ── Check single rules ──
+  for (const rule of smartFilters.singleRules) {
+    const val = tokenDebug[rule.feature] || 0;
+    if (val === 0) continue;
+
+    let triggered = false;
+    if (rule.direction === 'high_is_bad' && val >= rule.threshold) triggered = true;
+    if (rule.direction === 'low_is_bad' && val <= rule.threshold) triggered = true;
+
+    if (triggered) {
+      if (rule.action === 'HARD_REJECT') {
+        return {
+          pass: false,
+          reasons: [`🚫 REJET IA: ${rule.name} = ${typeof val === 'number' ? val.toFixed(2) : val} (seuil: ${rule.threshold.toFixed(2)}, ${rule.lossRate}% de loss sur ${rule.samples} calls)`],
+        };
+      }
+      totalPenalty += rule.penalty;
+      reasons.push(`⚠️ ${rule.name} = ${typeof val === 'number' ? val.toFixed(2) : val} → ${rule.penalty} pts (${rule.lossRate}% loss rate)`);
+    }
+  }
+
+  // ── Check combo rules ──
+  for (const combo of smartFilters.comboRules) {
+    const [f1, f2] = combo.features;
+    const [t1, t2] = combo.thresholds;
+    const v1 = tokenDebug[f1] || 0;
+    const v2 = tokenDebug[f2] || 0;
+    if (v1 === 0 && v2 === 0) continue;
+
+    let triggered = false;
+    if (combo.operator === 'AND_ABOVE' && v1 >= t1 && v2 >= t2) triggered = true;
+    if (combo.operator === 'ABOVE_BELOW' && v1 >= t1 && v2 < t2) triggered = true;
+
+    if (triggered) {
+      if (combo.lossRate >= 85) {
+        return {
+          pass: false,
+          reasons: [`🚫 COMBO TOXIQUE: ${combo.description}`],
+        };
+      }
+      totalPenalty -= Math.round(combo.lossRate / 5);
+      reasons.push(`⚠️ COMBO: ${combo.description}`);
+    }
+  }
+
+  // Si les pénalités cumulées sont trop fortes → reject
+  if (totalPenalty <= -30) {
+    return { pass: false, reasons: [...reasons, `💀 Pénalités IA cumulées: ${totalPenalty} pts → REJET`] };
+  }
+
+  return { pass: true, penalty: totalPenalty, reasons };
+}
+
 // ── EXPORT ──
 export {
   dynamicWeights,
@@ -585,4 +881,8 @@ export {
   getAIPanel,
   getWinrateStats,
   deepAnalyze,
+  buildSmartFilters,
+  loadSmartFilters,
+  checkSmartFilters,
+  smartFilters,
 };

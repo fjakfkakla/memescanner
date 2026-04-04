@@ -2,7 +2,7 @@ import express from 'express';
 import cors    from 'cors';
 import { getCalls, getHistory } from './firebase.js';
 import { runScanCycle, getLiveTokens, checkTokenSecurityExport, checkAxiomWalletsExport, getHeliusStats } from './worker.js';
-import { trackOutcomes, autoAdjust, loadWeights, getAIPanel, getWinrateStats, deepAnalyze } from './aiEngine.js';
+import { trackOutcomes, autoAdjust, loadWeights, getAIPanel, getWinrateStats, deepAnalyze, buildSmartFilters, loadSmartFilters, checkSmartFilters, smartFilters } from './aiEngine.js';
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
@@ -112,6 +112,28 @@ app.post('/admin/ai/deep-analyze', async (_req, res) => {
   }
 });
 
+// Smart Filters — build/rebuild AI adaptive filters from historical data
+app.post('/admin/ai/build-filters', async (_req, res) => {
+  try {
+    const result = await buildSmartFilters();
+    res.json(result);
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+// Get current smart filters
+app.get('/admin/ai/smart-filters', (_req, res) => {
+  res.json({ ok: true, ...smartFilters });
+});
+
+// Check a token against smart filters (for testing)
+app.post('/admin/ai/check-token', (req, res) => {
+  const tokenDebug = req.body || {};
+  const result = checkSmartFilters(tokenDebug);
+  res.json({ ok: true, ...result });
+});
+
 // Debug CA — analyse complète d'un token à la demande (deep mode)
 app.get('/debug/:addr', async (req, res) => {
   const { addr } = req.params;
@@ -132,8 +154,9 @@ app.get('/debug/:addr', async (req, res) => {
 app.listen(PORT, () => {
   console.log(`[Server] Écoute sur port ${PORT}`);
 
-  // Charger les poids IA depuis Firebase
+  // Charger les poids IA + smart filters depuis Firebase
   loadWeights();
+  loadSmartFilters();
 
   // Premier cycle immédiat
   runScanCycle();
