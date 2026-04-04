@@ -575,13 +575,18 @@ section{scroll-margin-top:70px;}
 
 /* Rarity: MYTHIC (x10+) */
 .pnl-card.rarity-mythic{
-  --r1:rgba(255,50,100,.6);--r2:rgba(0,255,200,.4);
-  box-shadow:0 0 80px rgba(255,50,100,.15),0 0 120px rgba(0,255,200,.08),0 20px 60px rgba(0,0,0,.5);}
-.pnl-card.rarity-mythic::before{animation:pnl-border-spin 2s linear infinite;}
-.pnl-card.rarity-mythic .pnl-holo{opacity:.6 !important;}
+  --r1:rgba(255,50,100,.8);--r2:rgba(0,255,200,.6);
+  box-shadow:0 0 80px rgba(255,50,100,.2),0 0 150px rgba(0,255,200,.1),0 0 200px rgba(97,86,217,.08),0 20px 60px rgba(0,0,0,.5);
+  animation:pnl-mythic-pulse 2s ease-in-out infinite alternate;}
+.pnl-card.rarity-mythic::before{animation:pnl-border-spin 1.5s linear infinite;}
+.pnl-card.rarity-mythic .pnl-holo{opacity:.7 !important;animation:pnl-holo-shift 3s ease infinite;}
 .pnl-card.rarity-mythic .pnl-rarity-badge{
-  background:linear-gradient(135deg,#ff3366,#ffaa00,#00ffcc,#7c6aff);background-size:300% 300%;animation:gradient-shift 2s ease infinite;
-  color:#fff;border:none;font-weight:800;text-shadow:0 0 10px rgba(255,255,255,.4);}
+  background:linear-gradient(135deg,#ff3366,#ffaa00,#00ffcc,#7c6aff);background-size:300% 300%;animation:gradient-shift 1.5s ease infinite;
+  color:#fff;border:none;font-weight:800;text-shadow:0 0 10px rgba(255,255,255,.5);font-size:.75rem;}
+@keyframes pnl-mythic-pulse{
+  from{box-shadow:0 0 80px rgba(255,50,100,.2),0 0 150px rgba(0,255,200,.1),0 0 200px rgba(97,86,217,.08),0 20px 60px rgba(0,0,0,.5);}
+  to{box-shadow:0 0 100px rgba(255,50,100,.3),0 0 180px rgba(0,255,200,.15),0 0 250px rgba(97,86,217,.12),0 20px 60px rgba(0,0,0,.5);}}
+@keyframes pnl-holo-shift{0%,100%{background-position:0% 0%;}50%{background-position:100% 100%;}}
 
 .pnl-rarity-badge{position:absolute;top:12px;right:12px;font-size:.65rem;font-weight:700;
   padding:4px 10px;border-radius:6px;text-transform:uppercase;letter-spacing:.1em;
@@ -591,6 +596,30 @@ section{scroll-margin-top:70px;}
 .pnl-sparkle{position:absolute;width:3px;height:3px;border-radius:50%;pointer-events:none;z-index:2;
   animation:pnl-sparkle-float 2s ease-in-out infinite;}
 @keyframes pnl-sparkle-float{0%,100%{opacity:0;transform:translateY(0) scale(0);}50%{opacity:1;transform:translateY(-20px) scale(1);}}
+
+/* Card background patterns per rarity */
+.pnl-card.rarity-common .pnl-card-inner::before{content:'';position:absolute;inset:0;z-index:-1;opacity:.03;
+  background:repeating-linear-gradient(45deg,transparent,transparent 20px,rgba(255,255,255,.1) 20px,rgba(255,255,255,.1) 21px);}
+.pnl-card.rarity-rare .pnl-card-inner::before{content:'';position:absolute;inset:0;z-index:-1;opacity:.04;
+  background:radial-gradient(circle at 30% 20%,rgba(50,120,255,.3),transparent 50%),
+  radial-gradient(circle at 70% 80%,rgba(50,120,255,.2),transparent 50%);}
+.pnl-card.rarity-epic .pnl-card-inner::before{content:'';position:absolute;inset:0;z-index:-1;opacity:.06;
+  background:radial-gradient(circle at 50% 0%,rgba(160,80,255,.4),transparent 60%),
+  radial-gradient(circle at 20% 100%,rgba(97,86,217,.3),transparent 50%),
+  radial-gradient(circle at 80% 50%,rgba(200,100,255,.2),transparent 40%);}
+.pnl-card.rarity-legendary .pnl-card-inner::before{content:'';position:absolute;inset:0;z-index:-1;opacity:.08;
+  background:radial-gradient(circle at 50% 30%,rgba(255,200,0,.4),transparent 50%),
+  radial-gradient(circle at 20% 80%,rgba(255,150,0,.3),transparent 50%),
+  radial-gradient(circle at 85% 20%,rgba(255,220,50,.2),transparent 40%),
+  repeating-conic-gradient(from 0deg at 50% 50%,rgba(255,200,0,.02) 0deg,transparent 30deg);}
+.pnl-card.rarity-mythic .pnl-card-inner::before{content:'';position:absolute;inset:0;z-index:-1;
+  background:radial-gradient(circle at 30% 20%,rgba(255,50,100,.12),transparent 40%),
+  radial-gradient(circle at 70% 70%,rgba(0,255,200,.1),transparent 40%),
+  radial-gradient(circle at 50% 50%,rgba(97,86,217,.08),transparent 60%),
+  radial-gradient(circle at 10% 90%,rgba(255,200,0,.08),transparent 30%),
+  radial-gradient(circle at 90% 10%,rgba(50,120,255,.08),transparent 30%);
+  animation:pnl-bg-rotate 6s linear infinite;}
+@keyframes pnl-bg-rotate{from{filter:hue-rotate(0deg);}to{filter:hue-rotate(360deg);}}
 
 .pnl-card-inner{padding:1.8rem 1.6rem 1.2rem;text-align:center;position:relative;z-index:3;}
 .pnl-logo{font-family:var(--font-head);font-size:.9rem;font-weight:700;
@@ -1277,19 +1306,6 @@ section{scroll-margin-top:70px;}
           <div class="pnl-mcap-val" style="color:#00ff88" id="pnlAthVal">$—</div>
           <div class="pnl-mcap-lbl">ATH</div>
         </div>
-      </div>
-      <!-- SIMULATEUR PROFIT -->
-      <div style="margin:1rem 0;padding:.8rem;background:rgba(97,86,217,.06);border:1px solid rgba(97,86,217,.15);border-radius:12px;">
-        <div style="font-size:.72rem;color:var(--purple2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.5rem;font-weight:600;">💰 Simulateur de profit</div>
-        <div style="display:flex;align-items:center;gap:.5rem;justify-content:center;">
-          <span style="color:var(--muted);font-size:.85rem;">J'ai mis</span>
-          <input id="pnlInvestInput" type="number" value="100" min="1" style="width:80px;background:rgba(255,255,255,.06);border:1px solid rgba(97,86,217,.2);color:#fff;border-radius:8px;padding:.35rem .5rem;font-size:1rem;text-align:center;font-family:var(--font);font-weight:700;" oninput="updatePnlProfit()">
-          <span style="color:var(--muted);font-size:.85rem;">$</span>
-        </div>
-        <div id="pnlProfitResult" style="margin-top:.6rem;font-size:1.4rem;font-weight:800;color:var(--green);line-height:1.2;">
-          → $0 de profit
-        </div>
-        <div id="pnlProfitTotal" style="font-size:.75rem;color:var(--muted);margin-top:.2rem;">Total : $0</div>
       </div>
       <div class="pnl-footer-txt">DYOR · NFA 🐸</div>
     </div>
@@ -3654,6 +3670,41 @@ function launchConfetti(count = 30) {
   }
 }
 
+// ── FIREWORKS (for mythic/legendary) ──
+function launchFireworks(){
+  const colors=['#ff3366','#ffaa00','#00ffcc','#7c6aff','#ff6b35','#00ff88','#fff'];
+  // 3 explosion points
+  for(let burst=0;burst<3;burst++){
+    const cx=20+Math.random()*60; // 20-80% horizontal
+    const cy=20+Math.random()*40; // 20-60% vertical
+    setTimeout(()=>{
+      for(let i=0;i<18;i++){
+        const el=document.createElement('div');
+        const color=colors[Math.floor(Math.random()*colors.length)];
+        const angle=(i/18)*360;
+        const dist=60+Math.random()*100;
+        const dx=Math.cos(angle*Math.PI/180)*dist;
+        const dy=Math.sin(angle*Math.PI/180)*dist;
+        const size=2+Math.random()*4;
+        el.style.cssText=`position:fixed;left:${cx}vw;top:${cy}vh;width:${size}px;height:${size}px;background:${color};border-radius:50%;pointer-events:none;z-index:99999;box-shadow:0 0 6px ${color},0 0 12px ${color};`;
+        document.body.appendChild(el);
+        el.animate([
+          {transform:'translate(0,0) scale(1)',opacity:1},
+          {transform:`translate(${dx}px,${dy}px) scale(0)`,opacity:0}
+        ],{duration:800+Math.random()*400,easing:'cubic-bezier(.15,.8,.3,1)'}).onfinish=()=>el.remove();
+      }
+      // Flash circle
+      const flash=document.createElement('div');
+      flash.style.cssText=`position:fixed;left:${cx}vw;top:${cy}vh;width:8px;height:8px;background:white;border-radius:50%;pointer-events:none;z-index:99999;transform:translate(-50%,-50%);`;
+      document.body.appendChild(flash);
+      flash.animate([
+        {transform:'translate(-50%,-50%) scale(1)',opacity:1,boxShadow:'0 0 30px white'},
+        {transform:'translate(-50%,-50%) scale(8)',opacity:0,boxShadow:'0 0 60px white'}
+      ],{duration:500}).onfinish=()=>flash.remove();
+    },burst*300);
+  }
+}
+
 // ── TOAST NOTIFICATION ──
 function showToast(msg, type='info') {
   const toast = document.createElement('div');
@@ -4654,11 +4705,11 @@ function resetTilt(){
 
 // ── RARITY SYSTEM ──
 function getRarity(xAth){
-  if(xAth>=10) return{cls:'rarity-mythic',label:'✦ MYTHIC',emoji:'🌈'};
-  if(xAth>=5)  return{cls:'rarity-legendary',label:'★ LEGENDARY',emoji:'👑'};
-  if(xAth>=2)  return{cls:'rarity-epic',label:'◆ EPIC',emoji:'💎'};
-  if(xAth>=1.2)return{cls:'rarity-rare',label:'● RARE',emoji:'💙'};
-  return{cls:'rarity-common',label:'○ COMMON',emoji:'⚪'};
+  if(xAth>=10) return{cls:'rarity-mythic',label:'👻 MYTHIC',emoji:'👻'};
+  if(xAth>=5)  return{cls:'rarity-legendary',label:'👑 LEGENDARY',emoji:'👑'};
+  if(xAth>=2)  return{cls:'rarity-epic',label:'💎 EPIC',emoji:'💎'};
+  if(xAth>=1.2)return{cls:'rarity-rare',label:'🏆 RARE',emoji:'🏆'};
+  return{cls:'rarity-common',label:'⚪ COMMON',emoji:'⚪'};
 }
 
 // ── SPARKLE PARTICLES ──
@@ -4728,36 +4779,29 @@ function openScannerPnl(addr,sym,callMcap,athMcap,score){
   }
   requestAnimationFrame(tick);
 
-  // Confetti for epic+
-  if(xAth>=2) setTimeout(()=>launchConfetti(xAth>=10?60:xAth>=5?40:20),600);
-  if(xAth>=5) setTimeout(()=>playSound('x2'),400);
-
-  // Init profit simulator
-  document.getElementById('pnlInvestInput').value=100;
-  updatePnlProfit();
-}
-
-function updatePnlProfit(){
-  const invest=parseFloat(document.getElementById('pnlInvestInput').value)||0;
-  const total=invest*_pnlXAth;
-  const profit=total-invest;
-  const resultEl=document.getElementById('pnlProfitResult');
-  const totalEl=document.getElementById('pnlProfitTotal');
-  if(profit>=0){
-    resultEl.style.color='var(--green)';
-    resultEl.textContent='→ +$'+profit.toFixed(2)+' de profit 🚀';
-  }else{
-    resultEl.style.color='var(--red)';
-    resultEl.textContent='→ -$'+Math.abs(profit).toFixed(2)+' de perte';
+  // Effects per rarity
+  if(xAth>=10){
+    // MYTHIC — full fireworks show
+    setTimeout(()=>launchConfetti(80),300);
+    setTimeout(()=>launchFireworks(),500);
+    setTimeout(()=>launchConfetti(50),1200);
+    setTimeout(()=>launchFireworks(),1800);
+    setTimeout(()=>launchConfetti(30),2500);
+    playSound('levelup');
+    setTimeout(()=>playSound('x2'),600);
+  } else if(xAth>=5){
+    setTimeout(()=>launchConfetti(50),400);
+    setTimeout(()=>launchFireworks(),700);
+    playSound('x2');
+  } else if(xAth>=2){
+    setTimeout(()=>launchConfetti(25),500);
+    playSound('x2');
   }
-  totalEl.textContent='Total : $'+total.toFixed(2)+' (mise $'+invest.toFixed(0)+' × '+_pnlXAth.toFixed(2)+')';
 }
 
 function sharePnl(){
-  const invest=parseFloat(document.getElementById('pnlInvestInput').value)||100;
-  const total=invest*_pnlXAth;
-  const profit=total-invest;
-  const text=`🐸 MemecoinPump Call\n$${_pnlSym} → ${_pnlXAth.toFixed(2)}x\n💰 $${invest} → $${total.toFixed(2)} (+$${profit.toFixed(2)})\n\nDYOR · NFA 🔥`;
+  const rarity=getRarity(_pnlXAth);
+  const text=`🐸 MemecoinPump Call\n${rarity.emoji} $${_pnlSym} → ${_pnlXAth.toFixed(2)}x ${rarity.label}\n\nDYOR · NFA 🔥`;
   navigator.clipboard.writeText(text).then(()=>{
     showToast('📋 Copié ! Colle sur Twitter/Discord','info');
   }).catch(()=>{});
