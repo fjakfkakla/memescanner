@@ -56,12 +56,24 @@ function calculatePatternScore(p) {
   // 10. NEW — Liquidité > 0 = migré de bonding curve (signal fort)
   if (liq > 5000) score += 5;
 
+  // === BONUS EARLY TOKEN (<5 min) ===
+  const ageMinP = (Date.now() - (p.pairCreatedAt || 0)) / 60000;
+  if (ageMinP < 5) {
+    if (buysM5 >= 8 && buyRatioM5 >= 0.6) score += 12;
+    else if (buysM5 >= 5 && buyRatioM5 >= 0.55) score += 8;
+    else if (buysM5 >= 3) score += 4;
+    if (c5m > 5 && c5m < 50) score += 8;
+    if (sellsM5 <= 1 && buysM5 >= 3) score += 5;
+  } else if (ageMinP < 10) {
+    if (buysM5 >= 5 && buyRatioM5 >= 0.58) score += 8;
+    if (c5m > 0 && c5m < 30 && buysM5 > sellsM5) score += 5;
+  }
+
   // === PÉNALITÉS ANTI-RUG / FAUX PUMP ===
   if (c1h > 90 && c5m < -28) score -= 18;
   if (c6h > 140 && c1h < 20) score -= 15;
   if (sellsM5 > buysM5 * 1.7 && c1h > 30) score -= 12;
   if (c1h > 60 && c5m < -20) score -= 10;
-  // NEW — m5 dump violent (< -35%)
   if (c5m < -35) score -= 8;
 
   return Math.max(0, Math.min(45, Math.round(score)));

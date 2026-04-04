@@ -2894,6 +2894,22 @@ function calculatePatternScore(p) {
   // 10. Liquidité > 0 = migré (signal fort)
   if (liq > 5000) score += 5;
 
+  // === BONUS EARLY TOKEN (<5 min) — pas assez d'historique pour les patterns classiques ===
+  const ageMinP = (Date.now() - (p.pairCreatedAt || 0)) / 60000;
+  if (ageMinP < 5) {
+    // Token très frais : juger sur les signaux immédiats
+    if (buysM5 >= 8 && buyRatioM5 >= 0.6) score += 12;        // beaucoup d'achats rapides + ratio sain
+    else if (buysM5 >= 5 && buyRatioM5 >= 0.55) score += 8;   // activité correcte
+    else if (buysM5 >= 3) score += 4;                           // un peu d'activité
+
+    if (c5m > 5 && c5m < 50) score += 8;                       // montée douce (pas spike)
+    if (sellsM5 <= 1 && buysM5 >= 3) score += 5;               // quasi 0 sells = organique
+  } else if (ageMinP < 10) {
+    // Token frais (5-10 min) : mix signaux courts + début h1
+    if (buysM5 >= 5 && buyRatioM5 >= 0.58) score += 8;
+    if (c5m > 0 && c5m < 30 && buysM5 > sellsM5) score += 5;  // montée propre récente
+  }
+
   // === PÉNALITÉS ANTI-RUG / FAUX PUMP ===
   if (c1h > 90 && c5m < -28) score -= 18;
   if (c6h > 140 && c1h < 20) score -= 15;
@@ -2903,7 +2919,6 @@ function calculatePatternScore(p) {
 
   // === PATTERN 1 : GROSSE BOUGIE INITIALE (bundle launch spike) ===
   // Token jeune avec spike massif = achat bundle au launch, chart bizarre après
-  const ageMinP = (Date.now() - (p.pairCreatedAt || 0)) / 60000;
   if (ageMinP < 10 && c5m > 80) score -= 20;          // spike >80% en 5min sur token <10min
   if (ageMinP < 10 && c1h > 150) score -= 18;          // pump >150% sur token très jeune
   if (c1h > 120 && c5m < -15) score -= 15;              // pump massif puis dump = bougie initiale retombée
