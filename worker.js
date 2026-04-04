@@ -143,10 +143,14 @@ async function fetchDexScreener() {
     )
   );
   const tokenAddrs = new Set();
+  const paidTokens = new Set(); // tokens qui ont payé profil ou boost
   for (const res of profileResults) {
     if (res.status !== 'fulfilled' || !Array.isArray(res.value)) continue;
     for (const item of res.value) {
-      if (item.chainId === 'solana' && item.tokenAddress) tokenAddrs.add(item.tokenAddress);
+      if (item.chainId === 'solana' && item.tokenAddress) {
+        tokenAddrs.add(item.tokenAddress);
+        paidTokens.add(item.tokenAddress);
+      }
     }
   }
   console.log(`[DexScreener] Profiles/boosts: ${tokenAddrs.size} adresses Solana`);
@@ -184,8 +188,8 @@ async function fetchDexScreener() {
     } catch (e) { console.warn(`[DexScreener] search error: ${e.message}`); }
   }
 
-  console.log(`[DexScreener] Total unique: ${pairMap.size}`);
-  return [...pairMap.values()];
+  console.log(`[DexScreener] Total unique: ${pairMap.size}, paid: ${paidTokens.size}`);
+  return { pairs: [...pairMap.values()], paidTokens };
 }
 
 async function checkTokenSecurity(tokenAddr, pairAddr = null) {
@@ -376,7 +380,9 @@ export async function runScanCycle() {
 
   try {
     // 1a. Collecte DexScreener
-    const allPairs = await fetchDexScreener();
+    const dexResult = await fetchDexScreener();
+    const allPairs = dexResult.pairs;
+    const paidTokens = dexResult.paidTokens;
 
     // 1b. Découverte Helius : tokens achetés par les top Axiom wallets
     try {
@@ -456,6 +462,12 @@ export async function runScanCycle() {
           if (parseFloat(sec.top5Pct)  > 55) { rejected[`top5 ${sec.top5Pct}%`]  = (rejected[`top5 ${sec.top5Pct}%`]  || 0) + 1; continue; }
           p.security = sec;
         }
+
+        // Marquer les tokens dex paid (profil ou boost payé sur DexScreener)
+        const tokenAddr = p.baseToken?.address || '';
+        if (paidTokens.has(tokenAddr)) p._isPaid = true;
+        // Aussi checker info.imageUrl et profile (indicateurs de profil payé)
+        if (p.info?.imageUrl || p.profile?.icon || p.profile?.header) p._isPaid = true;
 
         const scored = scoreTokenV2(p, wData);
 

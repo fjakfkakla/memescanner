@@ -162,7 +162,10 @@ export function scoreTokenV2(p, walletData = { count: 0, wallets: [], clustered:
 
   // TOKEN (dex paid)
   let platformScore = 0;
-  if ((p.labels || []).some(l => (l.label || l || '').toLowerCase().includes('paid'))) platformScore += 15;
+  const isDexPaid = p._isPaid
+    || (p.labels || []).some(l => (l.label || l || '').toLowerCase().includes('paid'))
+    || !!(p.info?.imageUrl || p.profile?.icon || p.profile?.header);
+  if (isDexPaid) platformScore += 15;
   score += platformScore;
 
   // MCAP
