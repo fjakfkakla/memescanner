@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>MemeScanner — Solana Alpha</title>
 <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;600;700;800&family=Ubuntu:wght@500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
 :root {
   --bg: #0a0612;
@@ -4818,42 +4817,28 @@ function openScannerPnl(addr,sym,callMcap,athMcap,score){
 async function sharePnl(){
   const btn=document.querySelectorAll('.pnl-btn-dl')[1];
   const origText=btn.textContent;
-  btn.textContent='⏳ Capture...';
+  btn.textContent='⏳...';
   try{
-    const card=document.getElementById('pnlCard');
-    const actions=card.querySelector('.pnl-actions');
-    actions.style.display='none';
-    // Fixer le tilt à plat pour la capture
-    card.style.transform='perspective(800px) rotateX(0deg) rotateY(0deg)';
-    const canvas=await html2canvas(card,{
-      backgroundColor:null,
-      scale:2,
-      useCORS:true,
-      logging:false,
-      allowTaint:true
-    });
-    actions.style.display='';
-    card.style.transform='';
-    // Copier l'image dans le clipboard
+    const canvas=renderPnlCanvas();
     canvas.toBlob(async(blob)=>{
       try{
         await navigator.clipboard.write([new ClipboardItem({'image/png':blob})]);
         btn.textContent='✅ Image copiee !';
         showToast('📋 Image copiee ! Colle sur Twitter/Discord','info');
       }catch(e){
-        // Fallback: copier le texte si clipboard image pas supporte
-        const rarity=getRarity(_pnlXAth);
-        const text=`🐸 MemecoinPump Call\n${rarity.emoji} $${_pnlSym} → ${_pnlXAth.toFixed(2)}x ${rarity.label}\n\nDYOR · NFA 🔥`;
-        await navigator.clipboard.writeText(text);
-        btn.textContent='✅ Texte copie !';
-        showToast('📋 Copie en texte (image non supportee sur ce navigateur)','info');
+        // Fallback: telecharger si clipboard image pas supporte
+        const dataUrl=canvas.toDataURL('image/png');
+        const a=document.createElement('a');
+        a.href=dataUrl;a.download='pnl_'+_pnlSym+'_'+_pnlXAth.toFixed(1)+'x.png';
+        document.body.appendChild(a);a.click();document.body.removeChild(a);
+        btn.textContent='✅ Telecharge !';
+        showToast('📥 Image telechargee (copier non supporte sur ce navigateur)','info');
       }
       setTimeout(()=>btn.textContent=origText,2500);
     },'image/png');
   }catch(e){
     btn.textContent='⚠️ Erreur';
     setTimeout(()=>btn.textContent=origText,2000);
-    document.querySelector('.pnl-actions').style.display='';
   }
 }
 
@@ -5434,40 +5419,200 @@ function openRugPnl(addr,sym,callMcap,athMcap){
   document.getElementById('pnlOverlay').classList.add('open');
 }
 function closePnl(){document.getElementById('pnlOverlay').classList.remove('open');}
+// ── PNL CARD CANVAS RENDERER — Reproduit la vraie carte avec effets rarity ──
+function renderPnlCanvas(){
+  const sym=document.getElementById('pnlSym').textContent;
+  const mult=document.getElementById('pnlMult').textContent;
+  const call=document.getElementById('pnlCallVal').textContent;
+  const ath=document.getElementById('pnlAthVal').textContent;
+  const sub=document.getElementById('pnlSub').textContent;
+  const badge=document.getElementById('pnlRarityBadge').textContent;
+  const xVal=_pnlXAth||1;
+  const rarity=getRarity(xVal);
+
+  const S=2; // retina scale
+  const W=420*S, H=520*S;
+  const canvas=document.createElement('canvas');canvas.width=W;canvas.height=H;
+  const ctx=canvas.getContext('2d');
+
+  // Rarity color configs
+  const rarityColors={
+    'rarity-common':{border:'rgba(100,100,120,.5)',glow:null,bg1:'rgba(100,100,120,.08)',bg2:'rgba(60,60,80,.03)',multGrad:['#aaaacc','#8888aa'],badgeBg:'rgba(100,100,120,.4)',badgeColor:'#999'},
+    'rarity-rare':{border:'rgba(50,120,255,.7)',glow:'rgba(50,120,255,.15)',bg1:'rgba(50,120,255,.12)',bg2:'rgba(0,80,200,.05)',multGrad:['#4488ff','#66aaff'],badgeBg:'rgba(50,120,255,.3)',badgeColor:'#5599ff'},
+    'rarity-epic':{border:'rgba(160,80,255,.8)',glow:'rgba(160,80,255,.2)',bg1:'rgba(160,80,255,.15)',bg2:'rgba(97,86,217,.06)',multGrad:['#bb77ff','#dd99ff'],badgeBg:'rgba(160,80,255,.3)',badgeColor:'#bb77ff'},
+    'rarity-legendary':{border:'rgba(255,200,0,.85)',glow:'rgba(255,200,0,.2)',bg1:'rgba(255,200,0,.15)',bg2:'rgba(255,150,0,.06)',multGrad:['#ffcc00','#ffaa00'],badgeBg:'rgba(255,200,0,.35)',badgeColor:'#ffcc00'},
+    'rarity-mythic':{border:null,glow:'rgba(255,50,100,.25)',bg1:'rgba(255,50,100,.12)',bg2:'rgba(0,255,200,.08)',multGrad:['#ff3366','#00ffcc','#7c6aff'],badgeBg:null,badgeColor:'#fff'},
+  };
+  const rc=rarityColors[rarity.cls]||rarityColors['rarity-common'];
+  const R=18*S;
+
+  // ── Background ──
+  const bgGrad=ctx.createLinearGradient(0,0,W,H);
+  bgGrad.addColorStop(0,'#08061a');bgGrad.addColorStop(0.5,'#0f0c1e');bgGrad.addColorStop(1,'#08061a');
+  ctx.beginPath();ctx.roundRect(0,0,W,H,R);ctx.fillStyle=bgGrad;ctx.fill();
+
+  // ── Rarity glow radials ──
+  if(rc.glow){
+    const g1=ctx.createRadialGradient(W*0.3,H*0.2,0,W*0.3,H*0.2,W*0.5);
+    g1.addColorStop(0,rc.bg1);g1.addColorStop(1,'transparent');ctx.fillStyle=g1;ctx.fillRect(0,0,W,H);
+    const g2=ctx.createRadialGradient(W*0.7,H*0.75,0,W*0.7,H*0.75,W*0.45);
+    g2.addColorStop(0,rc.bg2);g2.addColorStop(1,'transparent');ctx.fillStyle=g2;ctx.fillRect(0,0,W,H);
+  }
+  // Mythic: extra color spots
+  if(rarity.cls==='rarity-mythic'){
+    const spots=[{x:.5,y:.5,c:'rgba(97,86,217,.08)',r:.6},{x:.1,y:.9,c:'rgba(255,200,0,.06)',r:.3},{x:.9,y:.1,c:'rgba(50,120,255,.06)',r:.3}];
+    for(const s of spots){const g=ctx.createRadialGradient(W*s.x,H*s.y,0,W*s.x,H*s.y,W*s.r);g.addColorStop(0,s.c);g.addColorStop(1,'transparent');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);}
+  }
+
+  // ── Border glow ──
+  ctx.save();ctx.beginPath();ctx.roundRect(0,0,W,H,R);ctx.lineWidth=3*S;
+  if(rarity.cls==='rarity-mythic'){
+    // Gradient border for mythic
+    const borderGrad=ctx.createLinearGradient(0,0,W,H);
+    borderGrad.addColorStop(0,'rgba(255,50,100,.8)');borderGrad.addColorStop(0.33,'rgba(255,200,0,.6)');
+    borderGrad.addColorStop(0.66,'rgba(0,255,200,.7)');borderGrad.addColorStop(1,'rgba(97,86,217,.8)');
+    ctx.strokeStyle=borderGrad;
+  } else {
+    ctx.strokeStyle=rc.border||'rgba(100,100,120,.3)';
+  }
+  ctx.stroke();ctx.restore();
+
+  // ── Outer glow (for legendary/mythic) ──
+  if(rarity.cls==='rarity-legendary'||rarity.cls==='rarity-mythic'){
+    ctx.save();ctx.shadowColor=rarity.cls==='rarity-mythic'?'rgba(255,50,100,.4)':'rgba(255,200,0,.3)';
+    ctx.shadowBlur=30*S;ctx.beginPath();ctx.roundRect(2*S,2*S,W-4*S,H-4*S,R);ctx.strokeStyle='transparent';ctx.lineWidth=1;ctx.stroke();ctx.restore();
+  }
+
+  // ── Rarity badge (top right) ──
+  ctx.save();
+  const badgeText=badge;
+  ctx.font=`bold ${11*S}px sans-serif`;
+  const badgeW=ctx.measureText(badgeText).width+16*S;
+  const badgeX=W-badgeW-14*S, badgeY=14*S;
+  ctx.beginPath();ctx.roundRect(badgeX,badgeY,badgeW,22*S,5*S);
+  if(rarity.cls==='rarity-mythic'){
+    const mg=ctx.createLinearGradient(badgeX,badgeY,badgeX+badgeW,badgeY+22*S);
+    mg.addColorStop(0,'rgba(255,50,100,.35)');mg.addColorStop(0.5,'rgba(255,200,0,.3)');mg.addColorStop(1,'rgba(0,255,200,.35)');
+    ctx.fillStyle=mg;
+  } else {
+    ctx.fillStyle=rc.badgeBg;
+  }
+  ctx.fill();
+  ctx.fillStyle=rc.badgeColor;ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText(badgeText,badgeX+badgeW/2,badgeY+11*S);
+  ctx.restore();
+
+  // ── Logo "MemecoinPump" ──
+  ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.font=`bold ${16*S}px sans-serif`;
+  const logoGrad=ctx.createLinearGradient(W*0.3,50*S,W*0.7,50*S);
+  logoGrad.addColorStop(0,'#6156d9');logoGrad.addColorStop(1,'#7c6aff');
+  ctx.fillStyle=logoGrad;
+  ctx.fillText('🐸 MemecoinPump',W/2,50*S);
+
+  // ── Symbol ──
+  ctx.font=`bold ${32*S}px sans-serif`;ctx.fillStyle='#ffffff';
+  ctx.shadowColor='rgba(97,86,217,.2)';ctx.shadowBlur=20*S;
+  ctx.fillText(sym,W/2,105*S);ctx.shadowBlur=0;
+
+  // ── "called at" ──
+  ctx.font=`${13*S}px sans-serif`;ctx.fillStyle='rgba(255,255,255,.4)';
+  ctx.fillText('called at '+call,W/2,135*S);
+
+  // ── Multiplier (THE BIG NUMBER) ──
+  const multSize=xVal>=100?52:xVal>=10?58:48;
+  ctx.font=`800 ${multSize*S}px sans-serif`;
+  const multGrad=ctx.createLinearGradient(W*0.2,160*S,W*0.8,300*S);
+  if(rarity.cls==='rarity-mythic'){
+    multGrad.addColorStop(0,'#ff3366');multGrad.addColorStop(0.5,'#00ffcc');multGrad.addColorStop(1,'#7c6aff');
+  } else if(xVal>=2){
+    multGrad.addColorStop(0,'#00ff88');multGrad.addColorStop(1,'#44ff44');
+  } else if(xVal>=1.2){
+    multGrad.addColorStop(0,'#4488ff');multGrad.addColorStop(1,'#66aaff');
+  } else {
+    multGrad.addColorStop(0,'#ffcc44');multGrad.addColorStop(1,'#ff8844');
+  }
+  ctx.fillStyle=multGrad;
+  // Glow behind multiplier
+  const glowColor=rarity.cls==='rarity-mythic'?'rgba(255,50,100,.4)':rarity.cls==='rarity-legendary'?'rgba(255,200,0,.35)':xVal>=2?'rgba(0,255,136,.3)':'rgba(255,200,0,.25)';
+  ctx.shadowColor=glowColor;ctx.shadowBlur=40*S;
+  ctx.fillText(mult,W/2,265*S);
+  ctx.shadowBlur=0;
+
+  // ── Subtitle ──
+  ctx.font=`${12*S}px sans-serif`;ctx.fillStyle='rgba(255,255,255,.3)';
+  ctx.fillText(sub,W/2,310*S);
+
+  // ── Separator line ──
+  ctx.beginPath();ctx.moveTo(W*0.15,340*S);ctx.lineTo(W*0.85,340*S);
+  ctx.strokeStyle=rc.border||'rgba(255,255,255,.08)';ctx.lineWidth=1*S;ctx.globalAlpha=0.3;ctx.stroke();ctx.globalAlpha=1;
+
+  // ── Call → ATH boxes ──
+  const boxW=100*S, boxH=52*S, boxR=8*S;
+  // Call box
+  const callBoxX=W*0.15, callBoxY=360*S;
+  ctx.beginPath();ctx.roundRect(callBoxX,callBoxY,boxW,boxH,boxR);
+  ctx.fillStyle='rgba(255,255,255,.02)';ctx.strokeStyle='rgba(255,255,255,.06)';ctx.lineWidth=1*S;ctx.fill();ctx.stroke();
+  ctx.font=`bold ${15*S}px sans-serif`;ctx.fillStyle='#ffaa44';ctx.textAlign='center';
+  ctx.fillText(call,callBoxX+boxW/2,callBoxY+22*S);
+  ctx.font=`${10*S}px sans-serif`;ctx.fillStyle='rgba(255,255,255,.25)';
+  ctx.fillText('CALL',callBoxX+boxW/2,callBoxY+40*S);
+
+  // Arrow
+  ctx.font=`${22*S}px sans-serif`;ctx.fillStyle='rgba(255,255,255,.25)';ctx.textAlign='center';
+  ctx.fillText('→',W/2,callBoxY+25*S);
+
+  // ATH box
+  const athBoxX=W*0.85-boxW;
+  ctx.beginPath();ctx.roundRect(athBoxX,callBoxY,boxW,boxH,boxR);
+  ctx.fillStyle='rgba(255,255,255,.02)';ctx.strokeStyle='rgba(255,255,255,.06)';ctx.lineWidth=1*S;ctx.fill();ctx.stroke();
+  ctx.font=`bold ${15*S}px sans-serif`;ctx.fillStyle='#00ff88';ctx.textAlign='center';
+  ctx.fillText(ath,athBoxX+boxW/2,callBoxY+22*S);
+  ctx.font=`${10*S}px sans-serif`;ctx.fillStyle='rgba(255,255,255,.25)';
+  ctx.fillText('ATH',athBoxX+boxW/2,callBoxY+40*S);
+
+  // ── Footer ──
+  ctx.font=`${11*S}px sans-serif`;ctx.fillStyle='rgba(255,255,255,.15)';ctx.textAlign='center';
+  ctx.fillText('DYOR  ·  NFA  🐸',W/2,465*S);
+
+  // ── Sparkle dots for legendary+ ──
+  if(xVal>=5){
+    ctx.save();
+    const sparkleCount=rarity.cls==='rarity-mythic'?20:10;
+    for(let i=0;i<sparkleCount;i++){
+      const sx=Math.random()*W, sy=Math.random()*H;
+      const sparkleSize=(1+Math.random()*2)*S;
+      const sparkleAlpha=0.2+Math.random()*0.5;
+      ctx.beginPath();ctx.arc(sx,sy,sparkleSize,0,Math.PI*2);
+      ctx.fillStyle=rarity.cls==='rarity-mythic'
+        ? `rgba(${[255,200,0,50,120,255,255,50,100,0,255,200][Math.floor(Math.random()*4)*3]},${[255,200,0,50,120,255,255,50,100,0,255,200][Math.floor(Math.random()*4)*3+1]},${[255,200,0,50,120,255,255,50,100,0,255,200][Math.floor(Math.random()*4)*3+2]},${sparkleAlpha})`
+        : `rgba(255,200,0,${sparkleAlpha})`;
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  return canvas;
+}
+
 async function downloadPnl(){
   const btn=document.querySelector('.pnl-btn-dl');
   const origText=btn.textContent;
-  btn.textContent='⏳ Capture...';
+  btn.textContent='⏳...';
   try{
-    const card=document.getElementById('pnlCard');
+    const canvas=renderPnlCanvas();
     const sym=document.getElementById('pnlSym').textContent;
     const mult=document.getElementById('pnlMult').textContent;
-    // Cacher les boutons d'action pour la capture
-    const actions=card.querySelector('.pnl-actions');
-    actions.style.display='none';
-    // Fixer le tilt à plat pour la capture
-    card.style.transform='perspective(800px) rotateX(0deg) rotateY(0deg)';
-    const canvas=await html2canvas(card,{
-      backgroundColor:null,
-      scale:2,
-      useCORS:true,
-      logging:false,
-      allowTaint:true
-    });
-    actions.style.display='';
-    card.style.transform='';
     const dataUrl=canvas.toDataURL('image/png');
     const a=document.createElement('a');
     a.href=dataUrl;
     a.download='pnl_'+sym.replace('$','')+'_'+mult+'.png';
     document.body.appendChild(a);a.click();document.body.removeChild(a);
-    btn.textContent='✅ Telecharge !';
-    setTimeout(()=>btn.textContent=origText,2500);
+    btn.textContent='✅ OK !';
+    setTimeout(()=>btn.textContent=origText,2000);
   }catch(e){
     btn.textContent='⚠️ Erreur';
     setTimeout(()=>btn.textContent=origText,2000);
-    const actions=document.querySelector('.pnl-actions');
-    if(actions)actions.style.display='';
   }
 }
 
