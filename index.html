@@ -1220,10 +1220,24 @@ section{scroll-margin-top:70px;}
           <div class="pnl-mcap-lbl">ATH</div>
         </div>
       </div>
+      <!-- SIMULATEUR PROFIT -->
+      <div style="margin:1rem 0;padding:.8rem;background:rgba(97,86,217,.06);border:1px solid rgba(97,86,217,.15);border-radius:12px;">
+        <div style="font-size:.72rem;color:var(--purple2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.5rem;font-weight:600;">💰 Simulateur de profit</div>
+        <div style="display:flex;align-items:center;gap:.5rem;justify-content:center;">
+          <span style="color:var(--muted);font-size:.85rem;">J'ai mis</span>
+          <input id="pnlInvestInput" type="number" value="100" min="1" style="width:80px;background:rgba(255,255,255,.06);border:1px solid rgba(97,86,217,.2);color:#fff;border-radius:8px;padding:.35rem .5rem;font-size:1rem;text-align:center;font-family:var(--font);font-weight:700;" oninput="updatePnlProfit()">
+          <span style="color:var(--muted);font-size:.85rem;">$</span>
+        </div>
+        <div id="pnlProfitResult" style="margin-top:.6rem;font-size:1.4rem;font-weight:800;color:var(--green);line-height:1.2;">
+          → $0 de profit
+        </div>
+        <div id="pnlProfitTotal" style="font-size:.75rem;color:var(--muted);margin-top:.2rem;">Total : $0</div>
+      </div>
       <div class="pnl-footer-txt">DYOR · NFA 🐸</div>
     </div>
     <div class="pnl-actions">
-      <button class="pnl-btn-dl" onclick="downloadPnl()">⬇ Télécharger</button>
+      <button class="pnl-btn-dl" onclick="downloadPnl()">⬇ Image</button>
+      <button class="pnl-btn-dl" onclick="sharePnl()" style="background:rgba(97,86,217,.12);border-color:rgba(97,86,217,.2);color:var(--purple2);">📋 Copier</button>
       <button class="pnl-btn-close" onclick="closePnl()">Fermer</button>
     </div>
   </div>
@@ -4558,25 +4572,79 @@ async function renderTokenTable(tokens){
 }
 
 // PnL pour le scanner (même style que rug snip)
+let _pnlXAth = 1;
+let _pnlSym = '';
+
 function openScannerPnl(addr,sym,callMcap,athMcap,score){
   const xAth=callMcap>0?(athMcap/callMcap):1;
+  _pnlXAth = xAth;
+  _pnlSym = sym;
   const scoreEmoji=getScoreEmoji(score);
   const multEl=document.getElementById('pnlMult');
-  const xStr=xAth>=10?xAth.toFixed(1)+'x':xAth.toFixed(2)+'x';
-  multEl.textContent=xStr;
-  multEl.className='pnl-mult'+(xAth>=5?' big-mult':'');
+
+  // Gradient color based on performance
   if(xAth>=5){multEl.style.background='linear-gradient(135deg,#00ff88,#00ffcc)';}
   else if(xAth>=2){multEl.style.background='linear-gradient(135deg,#88ff44,#ccff00)';}
   else if(xAth>=1){multEl.style.background='linear-gradient(135deg,#ffcc44,#ff8844)';}
   else{multEl.style.background='linear-gradient(135deg,#ff4466,#ff2244)';}
   multEl.style['-webkit-background-clip']='text';
   multEl.style['-webkit-text-fill-color']='transparent';
+  multEl.className='pnl-mult'+(xAth>=5?' big-mult':'');
+
   document.getElementById('pnlSym').textContent=scoreEmoji+' '+sym;
   document.getElementById('pnlCalled').textContent='called at $'+fmtNum(callMcap);
   document.getElementById('pnlCallVal').textContent='$'+fmtNum(callMcap);
   document.getElementById('pnlAthVal').textContent='$'+fmtNum(athMcap);
   document.getElementById('pnlSub').textContent='ATH depuis le call · '+new Date().toLocaleDateString('fr-FR');
   document.getElementById('pnlOverlay').classList.add('open');
+
+  // Animated counter
+  multEl.textContent='0.00x';
+  const target=xAth;
+  const duration=800;
+  const start=performance.now();
+  function tick(now){
+    const elapsed=now-start;
+    const progress=Math.min(1,elapsed/duration);
+    const eased=1-Math.pow(1-progress,3); // ease-out cubic
+    const current=target*eased;
+    multEl.textContent=(current>=10?current.toFixed(1):current.toFixed(2))+'x';
+    if(progress<1)requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+
+  // Confetti for big x
+  if(xAth>=3) setTimeout(()=>launchConfetti(30),500);
+
+  // Init profit simulator
+  document.getElementById('pnlInvestInput').value=100;
+  updatePnlProfit();
+}
+
+function updatePnlProfit(){
+  const invest=parseFloat(document.getElementById('pnlInvestInput').value)||0;
+  const total=invest*_pnlXAth;
+  const profit=total-invest;
+  const resultEl=document.getElementById('pnlProfitResult');
+  const totalEl=document.getElementById('pnlProfitTotal');
+  if(profit>=0){
+    resultEl.style.color='var(--green)';
+    resultEl.textContent='→ +$'+profit.toFixed(2)+' de profit 🚀';
+  }else{
+    resultEl.style.color='var(--red)';
+    resultEl.textContent='→ -$'+Math.abs(profit).toFixed(2)+' de perte';
+  }
+  totalEl.textContent='Total : $'+total.toFixed(2)+' (mise $'+invest.toFixed(0)+' × '+_pnlXAth.toFixed(2)+')';
+}
+
+function sharePnl(){
+  const invest=parseFloat(document.getElementById('pnlInvestInput').value)||100;
+  const total=invest*_pnlXAth;
+  const profit=total-invest;
+  const text=`🐸 MemecoinPump Call\n$${_pnlSym} → ${_pnlXAth.toFixed(2)}x\n💰 $${invest} → $${total.toFixed(2)} (+$${profit.toFixed(2)})\n\nDYOR · NFA 🔥`;
+  navigator.clipboard.writeText(text).then(()=>{
+    showToast('📋 Copié ! Colle sur Twitter/Discord','info');
+  }).catch(()=>{});
 }
 
 // ============================================================
