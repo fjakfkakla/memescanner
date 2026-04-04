@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>MemeScanner — Solana Alpha</title>
 <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;600;700;800&family=Ubuntu:wght@500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
 :root {
   --bg: #0a0612;
@@ -4814,12 +4815,46 @@ function openScannerPnl(addr,sym,callMcap,athMcap,score){
   }
 }
 
-function sharePnl(){
-  const rarity=getRarity(_pnlXAth);
-  const text=`🐸 MemecoinPump Call\n${rarity.emoji} $${_pnlSym} → ${_pnlXAth.toFixed(2)}x ${rarity.label}\n\nDYOR · NFA 🔥`;
-  navigator.clipboard.writeText(text).then(()=>{
-    showToast('📋 Copié ! Colle sur Twitter/Discord','info');
-  }).catch(()=>{});
+async function sharePnl(){
+  const btn=document.querySelectorAll('.pnl-btn-dl')[1];
+  const origText=btn.textContent;
+  btn.textContent='⏳ Capture...';
+  try{
+    const card=document.getElementById('pnlCard');
+    const actions=card.querySelector('.pnl-actions');
+    actions.style.display='none';
+    // Fixer le tilt à plat pour la capture
+    card.style.transform='perspective(800px) rotateX(0deg) rotateY(0deg)';
+    const canvas=await html2canvas(card,{
+      backgroundColor:null,
+      scale:2,
+      useCORS:true,
+      logging:false,
+      allowTaint:true
+    });
+    actions.style.display='';
+    card.style.transform='';
+    // Copier l'image dans le clipboard
+    canvas.toBlob(async(blob)=>{
+      try{
+        await navigator.clipboard.write([new ClipboardItem({'image/png':blob})]);
+        btn.textContent='✅ Image copiee !';
+        showToast('📋 Image copiee ! Colle sur Twitter/Discord','info');
+      }catch(e){
+        // Fallback: copier le texte si clipboard image pas supporte
+        const rarity=getRarity(_pnlXAth);
+        const text=`🐸 MemecoinPump Call\n${rarity.emoji} $${_pnlSym} → ${_pnlXAth.toFixed(2)}x ${rarity.label}\n\nDYOR · NFA 🔥`;
+        await navigator.clipboard.writeText(text);
+        btn.textContent='✅ Texte copie !';
+        showToast('📋 Copie en texte (image non supportee sur ce navigateur)','info');
+      }
+      setTimeout(()=>btn.textContent=origText,2500);
+    },'image/png');
+  }catch(e){
+    btn.textContent='⚠️ Erreur';
+    setTimeout(()=>btn.textContent=origText,2000);
+    document.querySelector('.pnl-actions').style.display='';
+  }
 }
 
 // ============================================================
@@ -5401,32 +5436,39 @@ function openRugPnl(addr,sym,callMcap,athMcap){
 function closePnl(){document.getElementById('pnlOverlay').classList.remove('open');}
 async function downloadPnl(){
   const btn=document.querySelector('.pnl-btn-dl');
-  const sym=document.getElementById('pnlSym').textContent;
-  const mult=document.getElementById('pnlMult').textContent;
-  const call=document.getElementById('pnlCallVal').textContent;
-  const ath=document.getElementById('pnlAthVal').textContent;
-  const W=840,H=560;
-  const canvas=document.createElement('canvas');canvas.width=W;canvas.height=H;
-  const ctx=canvas.getContext('2d');
-  const bg=ctx.createLinearGradient(0,0,W,H);bg.addColorStop(0,'#060a04');bg.addColorStop(0.5,'#0a1008');bg.addColorStop(1,'#060a04');
-  ctx.fillStyle=bg;if(ctx.roundRect){ctx.roundRect(0,0,W,H,24);}else{ctx.rect(0,0,W,H);}ctx.fill();
-  ctx.strokeStyle='rgba(0,255,136,.4)';ctx.lineWidth=2;if(ctx.roundRect){ctx.roundRect(2,2,W-4,H-4,22);}else{ctx.rect(2,2,W-4,H-4);}ctx.stroke();
-  const glow=ctx.createRadialGradient(W/2,H/2,0,W/2,H/2,W*0.6);glow.addColorStop(0,'rgba(0,255,136,.06)');glow.addColorStop(1,'transparent');ctx.fillStyle=glow;ctx.fillRect(0,0,W,H);
-  ctx.textAlign='center';
-  ctx.font='bold 20px monospace';ctx.fillStyle='rgba(0,255,136,.8)';ctx.fillText('🐸 MemecoinPump',W/2,55);
-  ctx.font='bold 58px sans-serif';ctx.fillStyle='#ffffff';ctx.fillText(sym,W/2,135);
-  ctx.font='18px monospace';ctx.fillStyle='rgba(255,255,255,.4)';ctx.fillText('called at '+call,W/2,170);
-  const xVal=parseFloat(mult)||1;
-  const g=ctx.createLinearGradient(0,190,0,340);
-  if(xVal>=2){g.addColorStop(0,'#00ff88');g.addColorStop(1,'#44ff44');}else{g.addColorStop(0,'#ffcc44');g.addColorStop(1,'#ff8844');}
-  ctx.font='bold 148px sans-serif';ctx.fillStyle=g;ctx.shadowColor=xVal>=2?'#00ff88':'#ffcc44';ctx.shadowBlur=35;ctx.fillText(mult,W/2,330);ctx.shadowBlur=0;
-  ctx.font='16px monospace';ctx.fillStyle='rgba(255,255,255,.35)';ctx.fillText('ATH depuis le call · '+new Date().toLocaleDateString('fr-FR'),W/2,368);
-  ctx.strokeStyle='rgba(0,255,136,.18)';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(W*0.18,392);ctx.lineTo(W*0.82,392);ctx.stroke();
-  ctx.font='bold 26px monospace';ctx.textAlign='left';ctx.fillStyle='#ffaa44';ctx.fillText(call,W*0.22,438);ctx.textAlign='center';ctx.fillStyle='rgba(255,255,255,.3)';ctx.fillText('→',W/2,438);ctx.textAlign='right';ctx.fillStyle='#00ff88';ctx.fillText(ath,W*0.78,438);
-  ctx.font='12px monospace';ctx.fillStyle='rgba(255,255,255,.25)';ctx.textAlign='left';ctx.fillText('CALL',W*0.22,458);ctx.textAlign='right';ctx.fillText('ATH',W*0.78,458);
-  ctx.font='13px monospace';ctx.fillStyle='rgba(255,255,255,.18)';ctx.textAlign='center';ctx.fillText('DYOR  ·  NFA  🐸',W/2,518);
-  try{const dataUrl=canvas.toDataURL('image/png');const a=document.createElement('a');a.href=dataUrl;a.download='pnl_'+sym.replace('$','')+'_'+mult+'.png';document.body.appendChild(a);a.click();document.body.removeChild(a);btn.textContent='✅ Téléchargé !';setTimeout(()=>btn.textContent='⬇ Télécharger',2000);}
-  catch(e){btn.textContent='⚠️ Erreur';setTimeout(()=>btn.textContent='⬇ Télécharger',2000);}
+  const origText=btn.textContent;
+  btn.textContent='⏳ Capture...';
+  try{
+    const card=document.getElementById('pnlCard');
+    const sym=document.getElementById('pnlSym').textContent;
+    const mult=document.getElementById('pnlMult').textContent;
+    // Cacher les boutons d'action pour la capture
+    const actions=card.querySelector('.pnl-actions');
+    actions.style.display='none';
+    // Fixer le tilt à plat pour la capture
+    card.style.transform='perspective(800px) rotateX(0deg) rotateY(0deg)';
+    const canvas=await html2canvas(card,{
+      backgroundColor:null,
+      scale:2,
+      useCORS:true,
+      logging:false,
+      allowTaint:true
+    });
+    actions.style.display='';
+    card.style.transform='';
+    const dataUrl=canvas.toDataURL('image/png');
+    const a=document.createElement('a');
+    a.href=dataUrl;
+    a.download='pnl_'+sym.replace('$','')+'_'+mult+'.png';
+    document.body.appendChild(a);a.click();document.body.removeChild(a);
+    btn.textContent='✅ Telecharge !';
+    setTimeout(()=>btn.textContent=origText,2500);
+  }catch(e){
+    btn.textContent='⚠️ Erreur';
+    setTimeout(()=>btn.textContent=origText,2000);
+    const actions=document.querySelector('.pnl-actions');
+    if(actions)actions.style.display='';
+  }
 }
 
 // ============================================================
