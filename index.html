@@ -1426,9 +1426,7 @@ window.addEventListener('unhandledrejection', function(e) { console.error('Promi
 // CONFIG
 // ============================================================
 // ADMIN_PW supprimé du frontend — vérification via backend Railway uniquement
-const HELIUS_KEY = '0f25b592-f8cd-449e-aac8-60812b2c4d50'; // conservé pour debug CA local uniquement
-const HELIUS_RPC = `https://mainnet.helius-rpc.com/?api-key=${HELIUS_KEY}`;
-const FB_URL = 'https://memescanner-calls-default-rtdb.firebaseio.com';
+// Clés API supprimées du frontend — tout passe par le backend Railway
 const BACKEND_URL = 'https://memescanner-production-342a.up.railway.app';
 const STORAGE_KEY = 'ms_calls_v1';
 const CODE_KEY = 'ms_codes_v1';
@@ -1452,1073 +1450,6 @@ let rugPriceTimer = null;
 let currentRugSort = 'recent';
 
 const EMOJIS = ['🐸','🚀','💎','🌙','🔥','⚡','🦊','🐶','🐱','🎰','🍌','🧸','🦍','🐻','🎯'];
-
-const AXIOM_WALLETS = new Set([
-  "niggerd597QYedtvjQDVHZTCCGyJrwHNm2i49dkm5zS",
-  "CWvdyvKHEu8Z6QqGraJT3sLPyp9bJfFhoXcxUYRKC8ou",
-  "nDpEvmCjGXixCXs191Fb1WEmHZSavWQe4gc2AEHx4VZ",
-  "CCUcjek5p6DLoH2YNtjizxYhAnStXAQAGVxhp1cYJF7w",
-  "HUpPyLU8KWisCAr3mzWy2FKT6uuxQ2qGgJQxyTpDoes5",
-  "vQ33AcEii7mciXznW7TAqzpv18Z77PQHxSfJ7xNBHwU",
-  "4YzpSZpxDdjNf3unjkCtdWEsz2FL5mok7e5XQaDNqry8",
-  "HXkaN7TAQYXsybY1UHLrn18cVa9jgM3mbReasbAoSjTv",
-  "98T65wcMEjoNLDTJszBHGZEX75QRe8QaANXokv4yw3Mp",
-  "9fR8gerfvGSycFGbK2VY1PFrPuU9jS6QM47S974yTUHC",
-  "qNGhUruCGJpXJdsnV74USHErcbm3CrXRsnP8D6Z34Hh",
-  "2JarGaaVhqcV2FbsxQPLagFpPi4qh3SuKt7adYk299hr",
-  "GVw1z8y8MooqD1uVRTx9dQyZQuXrV6wqant74rwMPWfZ",
-  "FXkGydbnG4jHVYqbBWWG4kkkwCpz6YEeVtM1vA6kZLaS",
-  "9ecRdqNCBxwReiY2pxtnLeayeBzE1CrSSmKKJJGdmsaJ",
-  "5Q544fKrFoe6tsEbD7S8EmxGTJYAKtTVhAW5Q5pge4j1",
-  "HiMomFaRLrcRuasmmpE9ixUrQKa4EgoP5r2HaHo73Qt1",
-  "BHREKFkPQgAtDs8Vb1UfLkUpjG6ScidTjHaCWFuG2AtX",
-  "rgPyefcNqJCsJj1wrWhdQqHVphVWFXLqU5wtiFStBEN",
-  "5FFP2fbd8RmhuqfkgwqFs2Q42NRCo4jj77yAkha8bex9",
-  "9nJ72hhtwyGHoUbEN3xfGuiLnrX3SnLYX52hkoahn2YH",
-  "5ZBHTpUYi4DhijgtCFCixsXx52ThPuxSfEJcmbL5Nkak",
-  "2jyzufCHXmQbhcfAsow84qPEhNRPfbFcfKfg6r6x9c1F",
-  "4S9U8HckRngscHWrW418cG6Suw62dhEZzmyrT2hxSye5",
-  "CwodPaTCAow3H5LygvkAXTuUKyNHavRLyiTCfWnXn2Zx",
-  "ADRSHrTbiwESzPpXEjFXHmNFDSZwhFPC1W2bDrgSQwPh",
-  "EApeEnqTpVboFZB2gqPwyzoqw8KxCT6Aud2p8R9n1wxY",
-  "BtMBMPkoNbnLF9Xn552guQq528KKXcsNBNNBre3oaQtr",
-  "Fpu64qHkvPDYUEsstSqXHAY3zUpCaVPZ8bntJ88YFtk4",
-  "8uDfUvwik5PxdUPsQ6J7anyhChXLx8hQYNoRsusox9XB",
-  "Hnnw2hAgPgGiFKouRWvM3fSk3HnYgRv4Xq1PjUEBEuWM",
-  "3NzhtFBULFCyvXTboAcFg6G5b9oS92cSfGtMSbhcWNCu",
-  "DZAa55HwXgv5hStwaTEJGXZz1DhHejvpb7Yr762urXam",
-  "C9fgBZaBoNmcZMknBnUdbQW8bUkkF6tdBKH74Ui7166r",
-  "ApRnQN2HkbCn7W2WWiT2FEKvuKJp9LugRyAE1a9Hdz1",
-  "86aD8K2bszxPemgHifvsC4vYkjfvawkSejdExx7KZUA7",
-  "FRDcU32jfiuo7bTM7e2SHtZnx6fSrLTS19iGScfCamPU",
-  "99i9uVA7Q56bY22ajKKUfTZTgTeP5yCtVGsrG9J4pDYQ",
-  "5R4RJojpoKNwBcJNgVYGtwXdmhyEHWXGDBQqUnSpLfcW",
-  "4BdKaxN8G6ka4GYtQQWk4G4dZRUTX2vQH9GcXdBREFUk",
-  "AonDkSa2EZ19U365YrY3bKLDbLf7cU1herGFTGxXYrcm",
-  "525LueqAyZJueCoiisfWy6nyh4MTvmF4X9jSqi6efXJT",
-  "52kPsnhTpjHZucGUQy4YDm8g9ykXPMC47iNVSVRscikb",
-  "A4DCAjDwkq5jYhNoZ5Xn2NbkTLimARkerVv81w2dhXgL",
-  "5V9zsFPtN2nxoA53Xm6FKbx797NBnBZFxMdr84H1QXNL",
-  "8yJFWmVTQq69p6VJxGwpzW7ii7c5J9GRAtHCNMMQPydj",
-  "9uyDy9VDBw4K7xoSkhmCAm8NAFCwu4pkF6JeHUCtVKcX",
-  "8RfH3LUSed9xM5bh7txdWKZFNbYGB8AeLCaeZjC9kN1o",
-  "HWTVoxH2HaknzqanZXRxPa2L5tUkVixiLn5ZxTMtWU9N",
-  "7SDs3PjT2mswKQ7Zo4FTucn9gJdtuW4jaacPA65BseHS",
-  "J23qr98GjGJJqKq9CBEnyRhHbmkaVxtTJNNxKu597wsA",
-  "4xxBGBnXqfCyUpsKRix1VaWm15uND2P83ForEzYDngbD",
-  "3jEWWG1patKqcwdD5qYJTtJPmBbsq6HLg4e2QA6TW8kE",
-  "2vkYVxq7HqrB2dzUH4VQ28wGAzv5c6ySt5uqPss5rGTJ",
-  "12qkHaZGnvc6tFA2AYs5ki5V2hNkWBxXJAPTbrF2AFwY",
-  "EDdEH4cESddXRGXycTHr2Cddr1SBVVZYpRTWSRcK5NPf",
-  "ETcmHKVYg2TrU83cZbP6BNoitfztUdGVagWNSmGyzycG",
-  "2m5498hY3hpSvm1pVyZwwyU6bpQGFGu3PADSoEoZFXQB",
-  "Avc4fcAvrXRNnoEjwRVgM61EjwKX6smdPspGQjeRWLV1",
-  "J3AoRAx4tHqx6V7mZFMAhKCft2iMzNVJUXNmtRRuWcyM",
-  "9ru9BSVFSUqSRQFwdjjnkzQGf9yUdpRTjpjXPKc4BvxX",
-  "ECCKBDWX3MkEcf3bULbLBb9FvrEQLsmPMFTKFpvjzqgP",
-  "Cbd7Y83SCHYxb7EV7Q3sgknaW9hNDJJJ2LJ1JHU4bt35",
-  "6RoLbZJWJHpTk4sdPsWzocEHiRtzPS36WcBjnMXuQrfU",
-  "EHg5YkU2SZBTvuT87rUsvxArGp3HLeye1fXaSDfuMyaf",
-  "FRbLA1pb1B3bbknPwDGiZgZ2aUM1GREVj3ivRHrk6iCB",
-  "9HhafAZc6jo6rXxeJ7F4RN1BQfsTm6xLRs6YYAq6nhAn",
-  "HbwmhJZh9c1PhAYUvtn3E86fpw2m7yxvoypTKm6Wfqnx",
-  "CGpDXPkpvPUxoijts2GPvwemLHvAVnF3NK7jA6JcUYYU",
-  "2itf6FWdZUqUb3fKUFPGnaTgqjjvWZwzrz129LCaqFa2",
-  "9vNcYofhYr48XEd5Wodc9De2e6Ngc7pN1giXKc6sNmmG",
-  "49cMoFp65xZ18A7zCXBs4kG6uCdLdEj5PnbhMVtYMdoZ",
-  "53BnNc49Ajgstciq3CRoyxuBpkkW1r8pgPyvr7JGYnsh",
-  "CgmwCcCoF5YNhWrVBz2R2iH4MopfvYLfxLgSZsrnemi6",
-  "2HWT2KLLdN2wxYTqdSuko5SBzg2SEJASgV4GE2tD7TML",
-  "HdxkiXqeN6qpK2YbG51W23QSWj3Yygc1eEk2zwmKJExp",
-  "73GkXB7DoTYAuepxQTGJG7Kn5Gy4jg3HjmpF3Uq6Yzam",
-  "FWznbcNXWQuHTawe9RxvQ2LdCENssh12dsznf4RiouN5",
-  "71CPXu3TvH3iUKaY1bNkAAow24k6tjH473SsKprQBABC",
-  "2AtFkEamLgK9ByuFX5XmG7WHZ9CVLFC6pxhWpfYkL1KZ",
-  "JDd3hy3gQn2V982mi1zqhNqUw1GfV2UL6g76STojCJPN",
-  "2ezv4U5HmPpkt2xLsKnw1FyyGmjFBeW7c166p99Hw2xB",
-  "A1m7rq5UgnSKEtwrhkt1FjJMgei94C5sugeD8W7a5yza",
-  "AAhnidQyZbh2ej1Ubqc3DAP7oKM72akPzxtYpaZpUe8r",
-  "Fxj1j5ohVoRos1yQnvx6bsvYCt493VGpyLbMiq4eLff3",
-  "G1pRtSyKuWSjTqRDcazzKBDzqEF96i1xSURpiXj3yFcc",
-  "6S8GezkxYUfZy9JPtYnanbcZTMB87Wjt1qx3c6ELajKC",
-  "As7HjL7dzzvbRbaD3WCun47robib2kmAKRXMvjHkSMB5",
-  "Gv7CnRo2L2SJ583XEfoKHKbmWK3wNoBDxVoJqMKJR4Nu",
-  "GVc8ZLvzn8WEFZSzLgyRkzpZSLZWxSFVfMtmUd1noAt7",
-  "c3XGUoDSBaJDA8qaJ5pUkCnamMERwZLJBVjxdkNepGo",
-  "58fnGhQQSLQebaXysboqY8Ske487j2KminKtyoyAkFRf",
-  "4Uq8kK9rzb1BhLKez5LgfzQLHUn2TTX1LRnyfkxFBrDo",
-  "2zvSYhoejqAdAsH52gmWHM1dm179yDmBGcFbFxatHf6x",
-  "F8kzAjgpnpaCWYfMF2neALx9TtYdCJ34ub312mBAAMUy",
-  "BrNoqdHUCcv9yTncnZeSjSov8kqhpmzv1nAiPbq1M95H",
-  "5M8ACGKEXG1ojKDTMH3sMqhTihTgHYMSsZc6W8i7QW3Y",
-  "DYAn4XpAkN5mhiXkRB7dGq4Jadnx6XYgu8L5b3WGhbrt",
-  "CfyPKSXiFRLnq8cKrefgHKEFjFunwFMDZootqdbeZdfE",
-  "HLZ2Qv4woaCTk2GYiNwinia4nomJDH5RXBK2UhkHSp9N",
-  "3ubt1SkopkPkL8raULj9sXMgnhh52LQZQRX7AzuFd8ux",
-  "Hf3wTio1tGCTMuCiemrS3opgNFkJaAT9YSSQgrHWJSiZ",
-  "2MPVeNeM6FTUwAGEyfNPJSDXhLx5FsPoyJ3XVm44ZXbG",
-  "831yhv67QpKqLBJjbmw2xoDUeeFHGUx8RnuRj9imeoEs",
-  "3w8N7ay9pvNaXxYUu7gFeZQ2zHg6FECSgwGWxcWwb8C8",
-  "7aQ2v6Eh5ocjcJzjTBHaVUgi6UuSRDFKnaVQzco2ygvg",
-  "984RPu3oz42QdRzsFomW1maNZQ3hWJod1dNwMABEZJ1C",
-  "5qvLmTd6yKMn7T7DP6RPPcASBH231Rtvjta1Pzao48PR",
-  "5CGEXBgHHhqJ7GHYooedLV4nSpAjphnhePyMccvjYgT1",
-  "5qBNzFpGNN1DYaDsVqCPYfBh5zmQsxbswSo93GPismm8",
-  "71o4R3L3AzAN5KA4PSUhoc2aH6buZ4dWJye4eYe1y76R",
-  "8Zrr2Zwi2qvqLdU4ZE7dSYLsVA1z3qQwHDeN1EjrzeiC",
-  "9jyqFiLnruggwNn4EQwBNFXwpbLM9hrA4hV59ytyAVVz",
-  "5rkPDK4JnVAumgzeV2Zu8vjggMTtHdDtrsd5o9dhGZHD",
-  "kwhcooMFSt8k8S1RbdygHiYkAtyVVwcPMhyqBecTzBU",
-  "4cXnf2z85UiZ5cyKsPMEULq1yufAtpkatmX4j4DBZqj2",
-  "EhQ7iJNjXFiajR5zwJmXoKo5faQc2X2JHtFx7zWJKTaV",
-  "wcVCiQSVStLBL67DQX59TooYfoVFotffiAuwSYR6jmQ",
-  "BLAPqE4CeHKNHCuutMjZY43d9okymafZHqbx9hdq4cX",
-  "7QZGS7MQ4S6hRmE8iXoFTXgQ2hXVUCho2ZhgeWvLNPZT",
-  "5PAhQiYdLBd6SVdjzBQDxUAEFyDdF5ExNPQfcscnPRj5",
-  "AMaokHvLumVnwgYTPGEut9VPwRWXZy2jJQQzCkvrPafT",
-  "BYjkvg63myNnKFG61MLUf5kA1FndU8rHXjadPPoMpi1S",
-  "EuWShE1btCSuj3qHC9E5WqgBFECFXovFsYc3perGxAeY",
-  "BaAx46GgHYM4RYVwDBwEf8zSriAZRNXz6hXheRJ3d7LP",
-  "Hzgn7Bjy4GG4aAoX2DYtPujSyximosPetwk2gebqtbTe",
-  "Gmminb9hQJN4TSzxTD5hc4d2r63SiERTc4DU8QVYVUR9",
-  "3jN1M8gWLk2ryTGnscrcwRK1Gy4Ttzq5QizWT8uizZsT",
-  "BD7oWkEQsUwE8sj4UT7jtrGjHC8Gq1iRqXY7U6DTbJpf",
-  "2esDRU8hgHZTu25tw4emYHhDGPrqnRMwFNQCsJNzSivz",
-  "BT2sdwJeDWqXNUNBJwtKWBD7RjquACfjo1rT9vpZLUSA",
-  "HCQb4Qrtk4qCfChDH8XvM5onymmCSmRj9bddV6QCPdRe",
-  "DHECPstf8wVjeR7NXkcvrnJHvHCRfNo7FmRP3QeGf6XL",
-  "8Hw9X9UwBso7Sp2CFnEEeUGW8pGDj9wghc78ccWFZWpU",
-  "1TXsKzewQzFb8MYidNCmvmPWTma1DWyC6fpvd5gQa7W",
-  "E69FvNvAc1d484uZMWyKR4LDSCmsTxsxaoGnhG5QyfRc",
-  "GfqQkmJZ8h8Th7epmpyJgBXBtm7JA11L8KbnPxisDeHc",
-  "3dNTS4e2pwtQsTLgdKNm3p6vVijAfM6c57EajDY4zrpt",
-  "GC1L8kEd3d7enstyMi6B1LKcRgtWKYrhb6jsGC4tHRUW",
-  "AbcX4XBm7DJ3i9p29i6sU8WLmiW4FWY5tiwB9D6UBbcE",
-  "m7Kaas3Kd8FHLnCioSjCoSuVDReZ6FDNBVM6HTNYuF7",
-  "8P3wdYH5o5sHywZSo7BYzvTHAaKg7kCGnM1mC4yPvWWL",
-  "8QVfDrEPy3NqgecFea7N9nhiv1ZtYur8TSx53TzNvNpb",
-  "3nqtkTh2HErytGoNt6arqwzPGZnh1qFgC19TBN1rjyi1",
-  "2huXTbjeBhtMZ1ugNwUGucYBRasRaaiypymUX6P1Kwjx",
-  "6XeLr9quvWaQ2RW742cAQJx6JqY8xVuPWjrLQkT2bmwA",
-  "XDgpjPubjN5soLAFmAMjD2uVR1XZxUKgNpMU6Eo97H7",
-  "9ha3rJRznYVzNkoJ5xyov3ZBjthrC8e8WNdjn48FQyDd",
-  "65jT5wk8FQyUWcSjgBsBRLU5NiSYGVYwRSKRiopPNAQ3",
-  "AVQ657tcxrjdysS4fenJC3SjcsJf7stXbjikXd9LbJ1n",
-  "DR7ghPiRVBJ3YeP3FUJRuSa4XaWq4Pkw8ZM4JYs1PyJ9",
-  "8xgu8h7zn6u6B1hGgygaAurYQfPsdB3JNF23Xbrb5jP5",
-  "HZkE8AKUVxK3tW7Bu5gSBz9udfHmHkEjMdEWUgbq1G6i",
-  "3uswT1DpBfrpkyJzwZndLV5ZuytAsUvr8dXjYx3pWccq",
-  "7ABz8qEFZTHPkovMDsmQkm64DZWN5wRtU7LEtD2ShkQ6",
-  "tYGCfzdZTXEkG9rvbxUH8f8AgGmPRNDdMPkR1ERcCu8",
-  "6Qs6joB349h7zu1z9xRgPgMSmpBYLDQb2wtAecY4LysH",
-  "45Y2i9ujmHYxrX6GvNC6EjUX57kd9zPw8GFsTLVrTJH5",
-  "86AArCufuDZ1bUYjjdfAbDLM7HFdkeeMhTbsEeEHXQAR",
-  "AoHnv7RA9oB7atFkNcqnCZAai9j6ff6HMZrUPiWzrpKJ",
-  "9jCSe7uPUJPGJgQfb98uj6EGXExhZht4NrSbY25oSkhc",
-  "VyGNiGZ3PS3kHmnk5h3fkrcMBjLKFgX5acsnS4qaYKy",
-  "HKxFFimmvHT7sdw29jqEsTcVVoRTAxTea5g4kgJbMTxB",
-  "3S7B49r7ToXNd8evFaPER1q23JtKg43TUD4Z2ncmvAGh",
-  "Dn18pmqqvtovxjiVwkfaGgfpiJ29G1PmUGjjuLKSXmbe",
-  "3ZtwP8peTwTfLUF1rgUQgUxwyeHCxfmoELXghQzKqnAJ",
-  "33ejysPvHzoXPirP6dGRnA6FbK8QknRYPL8yJ7uzECgY",
-  "FiwjgGxrWeq4Bjnf9nNFA1wdWZCCZyLqgureN7qpEowi",
-  "32sj5CARjaEVXJvQ6knfp8SusYaYhujbQTMCmvjzfxBi",
-  "EcJWNtETrzdbj8s2dXpaE4Tu4r7fxALD6TNw9H8S6ksz",
-  "6quKVtdvEjtxwRN7DnACboG1iiGyh17QB34ZfkdxJLH1",
-  "8DbXMETXyxuVkkkLGvQU5nw86UvoMFYBjsdhv7Ky1sSA",
-  "A532YfWRYyFoqVCuWTFwmyS6RPZ7BE1LzcGgr3wRspQX",
-  "FRbUNvGxYNC1eFngpn7AD3f14aKKTJVC6zSMtvj2dyCS",
-  "5Etkx7VQFFVMSTtTLWWZoYGn8iPWYLr1TrC3xyrY2fyf",
-  "GJA1HEbxGnqBhBifH9uQauzXSB53to5rhDrzmKxhSU65",
-  "6BqTPZzgNZx7XYK2u1fdFSqGfAj6sFk9rMhznYY171qP",
-  "71PCu3E4JP5RDBoY6wJteqzxkKNXLyE1byg5BTAL9UtQ",
-  "831qmkeGhfL8YpcXuhrug6nHj1YdK3aXMDQUCo85Auh1",
-  "9hD5wsPWy7xzU8aVxToZsgiAVvjhHgf4A6AmA1Cjn49o",
-  "BXNiM7pqt9Ld3b2Hc8iT3mA5bSwoe9CRrtkSUs15SLWN",
-  "GY1CSVXTwJ985czPq9WEvFsjmprLgoGyxgSPv5g1dtw2",
-  "bozo8DPprqrU6N3y5cUDMDBCA61wGrk7qfy24Wm5rLB",
-  "BLhQ4fWgkNAJ4MWXSdXaTnxwZxwHh7QTnMQb6i3Z2QYy",
-  "GQqUtzZ3izQcRUxb1VFmzGnR1ySkP25Wa78tiakNsY6E",
-  "FAicXNV5FVqtfbpn4Zccs71XcfGeyxBSGbqLDyDJZjke",
-  "CkKEPH2xc122HS3458tA3sB6rgPwTjtUveiBFDaSFWHR",
-  "E6CxuQh9YgBU2it6KcEqY7amoio3PjZmVRatzGNT25L3",
-  "HmBmSYwYEgEZuBUYuDs9xofyqBAkw4ywugB1d7R7sTGh",
-  "6m5sW6EAPAHncxnzapi1ZVJNRb9RZHQ3Bj7FD84X9rAF",
-  "oYYe854PaZtEgEoGb2QZN3MTfrGU1GQQHqqQZFQuV3K",
-  "48kx1v5iNdpwmWKAcfwNKL8brRCZqATJrmrCAw8wnN29",
-  "5qWya6UjwWnGVhdSBL3hyZ7B45jbk6Byt1hwd7ohEGXE",
-  "3EAAftccoF4zEeYviKXkNvRqqvzaCNtqQKvRxAkRvuXZ",
-  "7Bffdhza5V7zBK7EyEQ5eFQ4fkxvutjMsiJjJUs9ZfkC",
-  "orcACRJYTFjTeo2pV8TfYRTpmqfoYgbVi9GeANXTCc8",
-  "Fyv2htM47t4BRiRLUXNf1QYvUirREy7WDRn73E41J2h5",
-  "7CmXBbwsE5gcuDisSVC1syRgrVC5kYb9Lwb54M8ZadW1",
-  "Ay9wnuZCRTceZJuRpGZnuwYZuWdsviM4cMiCwFoSQiPH",
-  "3wDz7sGSimRFjLMjsCnxstk7gi7d7XpFfZaqUTn7mUwy",
-  "GzNus5Ka6kjJrqKCJRHmEVLiAS3HJ9RrBp1mdnxqGXTb",
-  "HJXRy9JA6xXhFPZCNfJhenAq6MpfTpV83X4p5nhzQiaz",
-  "5B79fMkcFeRTiwm7ehsZsFiKsC7m7n1Bgv9yLxPp9q2X",
-  "83gSufBz4koBLWdncdZaNdV2zXDbWzM3vxWynhXAFDJi",
-  "sAdNbe1cKNMDqDsa4npB3TfL62T14uAo2MsUQfLvzLT",
-  "DfMxre4cKmvogbLrPigxmibVTTQDuzjdXojWzjCXXhzj",
-  "242p259rfsb9J3X3mhnWw35UM2hfMDg14G47CQ66s9ZW",
-  "42cfcPtPRHN6YQkWMzFhD9N67XWNZnAARYdMoR7RjsLX",
-  "E4rEyEhJhtP2ceFUCemDN81Sx2t2Wf2p8jaqmGdVStPF",
-  "CvNiezB8hofusHCKqu8irJ6t2FKY7VjzpSckofMzk5mB",
-  "3h65MmPZksoKKyEpEjnWU2Yk2iYT5oZDNitGy5cTaxoE",
-  "7BbYhLfW74zRHuxBKW2thtFspuWHYfXBuCqjHvGqpwp2",
-  "5i4oaY3j8soBAW2JP293JPtbRZqjpPUAiTbE8dmYHDiZ",
-  "HgwaH89nW5sSyx2USkeKHN4PxkThnfTQ7GLfbVUZMMGD",
-  "Dz9MhrJmg7ENWjVc4YFGC6hps22iJg8KxmoWAnjQDfPr",
-  "7s5n36J9R5KCWufr18qD5R61kxVt6D3VhM42b2CmBX91",
-  "ikXys2iF822fsp4M2SwVs9AfRfedyJeCn72QE7BrxFo",
-  "G5nxEXuFMfV74DSnsrSatqCW32F34XUnBeq3PfDS7w5E",
-  "EtMfnrcmaV1zxK9HeFj2pNukj7ejwjxeCkibnZLCXeYi",
-  "J359swDwM6DMrpTveYZt6Z9AVhZHJ3mVs1y8Gn4wKYGF",
-  "EwTNPYTuwxMzrvL19nzBsSLXdAoEmVBKkisN87csKgtt",
-  "2F19ZXrvQDCoYXdBoFBiBcEmgrAKYAheZHnQxZksHQhN",
-  "HbkAXdVHv1QqcW22BMupnZn1Jg5K4Gnc2HED42Lpo5H1",
-  "HQxNmu4JNJQ6WmPPZFuFn6hePfDy8wWMjwRNn68aQNhK",
-  "F5jWYuiDLTiaLYa54D88YbpXgEsA6NKHzWy4SN4bMYjt",
-  "HneDDt1gZq3tUia2R7KkBiwK6Y6nVf6qQDSUUK2X9jRR",
-  "9qwaSWoucPKHpuMohsPLiV1zXu4LDjVnL6922EcQ7HDU",
-  "AP1o6r9mbp4cezW6RZnbc9YvyzbtoEkXjb5afrYXU32B",
-  "12zQYCKJbCkJtVQcNJd9hPtkC1YzUvU3EqLZAQ1JDN6m",
-  "2aDBRNNdGEnCq2Av6Wz447CqgdEbmEaDudfGW1M85MAC",
-  "ATmKENkRrL1JQQnoUNAQvkiwgjiHKUkzyncxTGxyzQL1",
-  "AtqScWPNA72St8uANmneoX7hhgXvMqthMzBckUwwqsX1",
-  "6Nh9gVwZ3wRazUq1ipZodAugaZhz5Yz8f5afPjC6qtDy",
-  "CDjiKpqT7XYRSSncmnK8Q5Fea1MrdszJXTmGf3B7HriZ",
-  "BpeXxwzT8fWn4xQP7Q8M7foadTBDqiougD2JTCbWJ8zR",
-  "2mGNGKYNGCNNz4EXrxz4TPckwGkiyGRNe447HncebYRg",
-  "3URnnJKdG8eTjrKo7G8rN5GjzweYwSZSxwyJm5Ut5UmL",
-  "2K9KyJ2SSMgornoAK7X3sDGPT2kCoWci1zmxEtrnnTvo",
-  "H2F75G1DMTLSpoqFjSU8NYydATBxpv4HzrZGJTRM1ZNj",
-  "H66T73iEqzZBrL4jP3sM7AmL1Be816nXysoS4KVxfP4t",
-  "H6RErn6vTw3ZSLBN9iNpP3cAq8CETh6dy6HVkEwPonjE",
-  "HABhDh9zrzf8mA4SBo1yro8M6AirH2hZdLNPpuvMH6iA",
-  "Haee7H5bKDCnm6dXLkeR9DcWw9Puhnkwk71QBUSHcpUt",
-  "v2yNhm4KkC87MdBkvvYiMVP7UdSyNYLrfXrFte8A5a7",
-  "ATaHBG9gPwWPm6q1DA6PLGLhxp28mux39CcdWtN7v9tc",
-  "ATKi3ZvMbo31pbgBgGSGQPDPKEbQ4oGzoDrwG2sms56k",
-  "2BU3NAzgRA2gg2MpzwwXpA8X4CCRaLgrf6TY1FKfJPX2",
-  "9peW76TTRt5dp4wiQid8dw2pmxpwpN5eXZ15bmLBNCsx",
-  "9UUEJrGeNbmRYF16iYdMgZqAk59XEKHyH6cgnb3bMy8P",
-  "9X5n5i1mugTjgGPhqf1KJDt8r4kD8TF3s62ttbxKzFHa",
-  "ASSw3FMwV99rh4CvxLAucTVHX8f4LQ2pmi2JjDA337sN",
-  "ATFRUwvyMh61w2Ab6AZxUyxsAfiiuG1RqL6iv3Vi9q2B",
-  "AJ6MGExeK7FXmeKkKPmALjcdXVStXYokYNv9uVfDRtvo",
-  "CKEzb9jRMNo5rYwJPfgKCg3vhx5RMLhSaZGHMzcmqzmZ",
-  "FxN3VZ4BosL5urG2yoeQ156JSdmavm9K5fdLxjkPmaMR",
-  "xXpRSpAe1ajq4tJP78tS3X1AqNwJVQ4Vvb1Swg4hHQh",
-  "DuQabFqdC9eeBULVa7TTdZYxe8vK8ct5DZr4Xcf7docy",
-  "5GCuB6Wq1Lrdkbp8qWKqpWmCyzVtcQMVdxvihyjhEheH",
-  "EZAGG2BHjPGgm8gCsApKK2kAfqRmH6gVSQYKb3jpowT1",
-  "CjqBxqmjMJMpYawAh5zVctjcWMEqG6XDhUfvx4D9NXN8",
-  "BTf4A2exGK9BCVDNzy65b9dUzXgMqB4weVkvTMFQsadd",
-  "HJqqAsg2MDwTpbB7rUEjNVbNvAGoXr6Ym2qENfc5RGtv",
-  "EY5udSh8BjxKq3zqKJVtNgRWr1jWkcJtCrHCvAoBLmRW",
-  "EXPw1tMuJFsx8vfpeHwuwxLXjMKcXj9vMEHAZNPrVbfU",
-  "6ZddMpdAgo1BNncaQkZcLCCj6ZGwMpLSpiwfMHg9cVxc",
-  "G4fiaoKwBPTXH2JMekciosBUqjAQY3rQpWyGwZzPpb98",
-  "CX6Gr1uZ3Daj2piEgnKZykHGoW3GpKABF9rBj8PDxgN5",
-  "75y2d7ij2vKE7qRJLA8Ts9rNg8NMg9PW7vwp62nagKXY",
-  "DeTdTFc3nfmhNTjDWMbUtbackYA5peLLkzRbaukv2hmE",
-  "CPydqKcEEeKTR6wt3L15G8S5Ea4bxjS2vvjiW9vw1UwK",
-  "13E1Ut5Tu4AzLeazjgEWyfU44QXP7jkfya5qRfxdUx48",
-  "AE3tJDEyUdwBM8ZoUb3iCo563gMbq26JtckfvjcVZbSa",
-  "GmSirgSRyrV2PmaHtiYbS7NFcqk7sZGSwv6FihbmH8Qr",
-  "4u3Baa6znzQ6pjQRLii8KV9tRhtNuXCqwVcY3b6nNpaZ",
-  "3Q86B4J5GQh9HU8UMz9YhGhpEavwemos9YzHLirRnYPv",
-  "ARN1garjVGC4Ru2JnGsHdLaUQBbQhSXGAi5To3mdeJDz",
-  "UxuuMeyX2pZPHmGZ2w3Q8MysvExCAquMtvEfqp2etvm",
-  "HetnuaUUbBjFCx5wFYoiQuTRmDFKbEwqj1z4MsEJ1jYf",
-  "FJtvN2AHd1EWWtZNerrthUSY2vVMJpdAdk5cKj21eJRg",
-  "5B52w1ZW9tuwUduueP5J7HXz5AcGfruGoX6YoAudvyxG",
-  "HTM87R4mgjDdiF6Yfn8duK9vbDmZxiPCTRbGvm7eCAJY",
-  "CEoJPnnCfYisckyJnqZLeefc559KeheVsFLbpfDuTPWo",
-  "2bu3tNi1NfDvyG6RMGPUWYiUvgsFKdKvAiN1tXtyCUxX",
-  "4DdrfiDHpmx55i4SPssxVzS9ZaKLb8qr45NKY9Er9nNh",
-  "9cD5EmRTp4vV9BhiyCVyuo3mZq49ofHeeauiRYvfaSpn",
-  "Gf9XgdmvNHt8fUTFsWAccNbKeyDXsgJyZN8iFJKg5Pbd",
-  "Hq7pctkq5xVRfX3APzMT4Yo8pYdGAHufPZt2j2mQEAsw",
-  "AQTXbUNNvGiekPD4NLQ8Tr2PUY2G4UsCqLm4YFAkv5mo",
-  "8fSnLTnRViK83dDesivTsPx2wiRhwti9xoafeMGjEyLJ",
-  "D2wBctC1K2mEtA17i8ZfdEubkiksiAH2j8F7ri3ec71V",
-  "77Zw9Y9uPqzLExaFXUxoBpdXVc9qSTexqZQFqNbNiYvE",
-  "DnjhUSUo9vaywQ1DMxx9KWo5xZ4pPHoAn5aVnG5VwAso",
-  "KYSGYZp17p7hGsoTJRB4ffy3dpu5M6Xi77YKvB9Z4hs",
-  "aSRkSqXSrfj6LsufqyoDSZXm51PiDGGhZgxowqtjfnY",
-  "GLkEcKTJG2EVAkbSpesQWBpAGv1jGJDpLPxTa4Fo1KKX",
-  "HGcXS42jHV5HLSaNi9njkVAXpGUnyrQc2kQUGn6zMoDK",
-  "EnQLCLB7NWojruXXNopgH7jhkwoHihTpuzsrtsM2UCSe",
-  "ACkvMCryf6XyAyZjUZomUHGGuL2eCTJLfCXgyJoCEVPR",
-  "E52UHci4hoT6rca5hfRvVp5BT2c5YpxjT1uzu6wS855U",
-  "DUQYDumJCrByjbSNtAzQsyG7iipmFQCXmF2EUeugRYMR",
-  "ACzzqa4zbRwgyYBd7dwrgZMFf4Fn7Wir1qA4zpeue3uU",
-  "J6TDXvarvpBdPXTaTU8eJbtso1PUCYKGkVtMKUUY8iEa",
-  "DMZcsXkw98dyc1RhLBtR9WkBySi93TAQ2ptq529v8o4C",
-  "BYhH8QatT4Aue5TxLCiYeHBcZ2ufr6KCwdQPQnedVewy",
-  "4Fz34tZXEHhQMu8spdyewW6hqno23CzoG14eVx1k12q4",
-  "2egyyfk5Zbit7vnJC28MqKaGSBWLxxdcZj9Wxmi8fuvj",
-  "4jRX4iW2F5wBnfYMyB7RjS2PU5MjXrST3fB9DoV4BjHa",
-  "BwJcdvMJAbnib1wV9KrzEa4hRzEERvHwoPWsy5fuwJHJ",
-  "DGcy9EJjLhyB7RELYjameYT2AyUyHSWEDetnMcnrkUyk",
-  "DKgvpfttzmJqZXdavDwTxwSVkajibjzJnN2FA99dyciK",
-  "2HpvvY7TcbSdr8uNrDBUyEvbD9mcjg4ssmWQFcQcwJap",
-  "A77HErqtfN1hLLpvZ9pCtu66FEtM8BveoaKbbMoZ4RiR",
-  "Act3pTw5yB8Xxk3mcTWqMQ3x9ctNCegnVAViMMnxMrkG",
-  "9AhEq8F28ZxcGzNa9LbFNrruxtzJFzuH2KTUZ74qNCeW",
-  "7N4bAyZX6z39RozQh7GC8VQmgjvjkkWmSyAt1wdMjEmq",
-  "3cFNBgLekrEYvpxHN828ZgP6ZeFSYoCxiFNSifssEuGH",
-  "26MqFM23yC6v9zv2MnDEW3o7YvkZUtGWSa2QZNv8WY4w",
-  "FZVdsFTRTWwZEy6XC5GCtHNWdcAwiQtAeJ2NSpH6cQNz",
-  "2M4mxdyofbN4PKoLKfqajip3wqFG4Cdd2rY9A5QosSWr",
-  "3QEvxoxv68zcCQV26CengvzC56qXf4PVHsFAMBhxtVfZ",
-  "5PA7XYpE4p78fWvH1HiSD1SQiRKGUWgbWc6jxzWiDpYT",
-  "578ZFJoH75jkPCVupRvwZAzbVHVMbKL4P7MKuG9iWEtH",
-  "8taFLhEeNQvgQFqAzfgFvE6rBdhjTfFL1FPbSVZz5YLP",
-  "Ab2baaggUWJMsVUtCvpRjq6iBRDk2Lxr5qzicHueHxM1",
-  "DYmsQudNqJyyDvq86XmzAvrU9T7xwfQEwh6gPQw9TPNF",
-  "7tQfpMCM8bPWgfLGaQ2G3RQ5gAgQneqHbtgAn4FdN2m1",
-  "FkzekjMLgbXC8NuSQQ2u53rmdh3jhfAZr2psDouDYvfR",
-  "3BLjRcxWGtR7WRshJ3hL25U3RjWr5Ud98wMcczQqk4Ei",
-  "8xi5GhYGFX8ZcWcFJxR2kbWdaLHjf1qBn5c5gqVSs6Pi",
-  "5atTxK74PA4X5onfMsnz3PnM6TjC1uZeHjRr3SAKo4ey",
-  "LJ2X58hCR38qtvLBTEhwVAMALz7bbqR1YVvq2mnVnqq",
-  "9eK3sPqr1mifF7ben69WvbbKH2YG9NFYRpv3UcJxZ9oQ",
-  "7ViAq5Vxy1R5NXxc3mMSrfEKEnXCYcJg6ajWBxALVR2f",
-  "CoDdw3cAX13dxwahw2C16ohsVhrDdrN3UVb4mvNLo9wD",
-  "72LTZ5geqmVbyxAtGqu4SLDKq5YmzKNLfHhEVRGqeE2d",
-  "3EcnKWyP7AMQreHWswPcht1V2YTWmps43CWo5JKygx8N",
-  "C5RS7Afq6qqvnYTCe2HZVQXLCvTPN3XRNbThPm7pdALi",
-  "G9fmyVHqWS94YRfyQjYVUdf8oPufkoxbUWCLiHJyR8Br",
-  "2EeRRdhxzmMMCSvvSHu2WXtkcoJhoi5dXXacK5mmHpXa",
-  "2epb7KomGyLRUCjuYwvC2F8DqZiiCKT9EavdsRUBubge",
-  "6HJetMbdHBuk3mLUainxAPpBpWzDgYbHGTS2TqDAUSX2",
-  "2Js8oghZWb5bHccCyEhKbSar7Ss2NEp4Bi5SL9WR535V",
-  "2JUsjGsrU9aKKWRFGxSKNV61HXbPZakM5JJYufwFaWhm",
-  "BuhkHhM3j4viF71pMTd23ywxPhF35LUnc2QCLAvUxCdW",
-  "CYc745Cyu7Y32dB2AExJRsLAMD9A7PmvzRiKKPaQVzQo",
-  "5vR5f7BtxvHCGw1EciwKuEv5EDyvnD3aavrHqRjXyevg",
-  "6fJD9T9WmU39f8P6xukg1ehT3ZJgS7n3YX14TmApNVHe",
-  "99UtKhdi1RfmMGRpi7kbWz6AQ2y4JkFmxC3swMVMDioZ",
-  "5W5vnVSX7NjaghpfMf1jyvtcQNyRffk7hDZS67rKXQpW",
-  "CJmZe1nbzex27sQ7qQ11qktExwBGMUQLc6BokrCwvHgM",
-  "B715k9UcvLbyf7qaFErzuLdh1NskmC143LYfsKyCsrkC",
-  "3rSZJHysEk2ueFVovRLtZ8LGnQBMZGg96H2Q4jErspAF",
-  "9MxN9TQo6XzBVWhcMo5PqvhV9ycGte6mFGWC7BsSC9cM",
-  "CA4keXLtGJWBcsWivjtMFBghQ8pFsGRWFxLrRCtirzu5",
-  "3UNPM7X6LbmxUms5ij6zm9P7J1Ev2Wd7TwwXmYrPX3n3",
-  "CAPn1yH4oSywsxGU456jfgTrSSUidf9jgeAnHceNUJdw",
-  "suqh5sHtr8HyJ7q8scBimULPkPpA557prMG47xCHQfK",
-  "ByfmBcWQjtNmodr1pL9wKpixi6ostRagE8Ws379SKNVY",
-  "GUtFKC1eztLxVCw5RNCRj7GSvE7MLvZGq4FoKVcxs5ZP",
-  "CmpNSvChsxKHGAL5M56aVsg1uNAQcGdUQFVEG3TBJGvK",
-  "AGvZF6SzYCJTJCgB33S2L5up1pBNdmTmkYo1976J9SCQ",
-  "AmnG2KXDqUuf6EskVddvuokYw2Hv2pCY5Yv4X6QpKe2R",
-  "G9VPG4XvHheUUbzPexNzx9Yyx97ii53WYb89PvdM2qQk",
-  "FFK3tP9EG1ZuFhhb5rVHMHMjrBddjQcGDhTxrkncNy2k",
-  "9gWSwyQagyxbsKUKc51GPD3VQCXsUakzxcUtY9k4ix2x",
-  "5mtbmPwj2SMkxPP9c93s9oD9bmMdByTqepNarM9Y7u7e",
-  "pmmgQLHq6ZZrcDez6V2pfRwAwctRBvgEGzJLDbPYqBQ",
-  "QsMmRq2sFT1kgFcMMNEwpczzydutjT1cAvGr4YBHz7w",
-  "vCNstpeZcuoRPcBrfj6h7KmTwLc6bQzU23rrZ19ND6y",
-  "9wpuL27tRTSzK8pZL8euLs1rTnTgx3ixKzSv9XjdZwux",
-  "DjpzbYPXReZzSPPgT4DntqdD9qxcrf4euMeb1dY7nqm6",
-  "32hH9cT3kerUBbt7oo6m9Q49pZLpD5Lgn4MaxAFR5Mgn",
-  "na9E1w4pXVEcVMtqxkQHDs93TayXggt1yrxZbE2epfZ",
-  "9cqgXsqhksd16hLnupey9jt86jKDfbD6ZWVANccW1233",
-  "2dmpNQDmhYDzUb66nhE13YbK7Vyb24XsxjdbAFcDiHjd",
-  "1zfW7KChXYaiXa6BDMKbCZeBaDfZuKxFhDUFn9HX9pg",
-  "96A2MQYickSrtMxRkhwFPG7opLNTeRKRAJbKwuG3PCnZ",
-  "HmZmsckwDJR7ujf3nhdJPoZHvSkGp4UBdmiDoYpPCJTi",
-  "AnsazR3Rf7LK2P6dKmwdyr6bzknaw8WyaVKzh5s8LXqM",
-  "7CeeipDnoTVE343cfmNuaEPL1BWLBzFKL2jzHcqBXN9c",
-  "FdvYZ99wuATUdd6fuSqyAMJRoGLrcHivnuWHxgst475p",
-  "DHEKS3dMShJfdqoUQ5EgGZA5DdKZopMwqD2hWqK2i6gW",
-  "EoBMm14Cke1rcQnVQL4uxWuLir7cdn6q49crF3ZFJ2rv",
-  "9hcQaDijYcqy6o8onsFLKzPy1DoKCorbb7LYocWU9PcM",
-  "E7bKJrv5mVRsbkwejKUZipTEasFb6wjP3mFJ5w3EcvDf",
-  "4Cb7A9Xuhv2Nnuk5vZ1xhnKkhDLnYjeZekzHv2zT5jjh",
-  "FVxeFYgyT4GC6D7gaLkMSu2qtSJfw2N4RVPZowi2A64Y",
-  "3JEhTroLiXdQC2CHtnv6KA7Jt8oqWn3xGUoQnmDpAQUJ",
-  "9VKYME2xdBfK9GVpR4zDjCrAFbDKVgrbJTh1Kjthch33",
-  "HAN61KQbgzjDBC4RpZJ1ET8v32S4zdKAjoD7EApJ96q6",
-  "5hfENg64jezkx1DKJZFR24s6nCq9wVTsShcd5GgMfMNb",
-  "GYQvX3sMGcKKVVMm1pg5TG6XHgdDwhJkc4q8n1JXjMXg",
-  "D9VNWx8oZX788VRQ9H4qyvHASiQLfWbd2MP3DHKSFvK5",
-  "B5ScJw8Dw7e1zXoh2ut2F81WVXmGaPWqZZ6JEYBZfAJK",
-  "6nnBeK1mLgdrBZFfXYKmGkuDHYTrBZZ18YEQfNUih9nm",
-  "FDV7kPFhYUsJwXhrNsMDd35EdBAfR72rf1fkBqgaNEEj",
-  "BDC19MFbzDpoF37QCxe4JR6i7UmXNMSiEqrxuQgJoWte",
-  "FPPAaipQw2hhJdNUzsfK2k1PBCcr9t11XFuEczMwsiNV",
-  "rp8ntGS7P2k3faTvsRSWxQLa3B68DetNbwe1GHLiTUK",
-  "4yc51C6KGirDBLjpymMr7rzYuM2wNd2TxXC2rArSPBES",
-  "4SbDMrX8Zfj7qZtRKTBSQEavPkc7BP1kiJfT2f3dn8RL",
-  "5t9xBNuDdGTGpjaPTx6hKd7sdRJbvtKS8Mhq6qVbo8Qz",
-  "FrNpLY7k6ktsp9em8c2fThYJe5yncE9iC4ArFXWLBs4g",
-  "2p2mgFLmzN82sShZeAaBGmj9zFpam4xu8g4g3wqx2ks6",
-  "7tiRXPM4wwBMRMYzmywRAE6jveS3gDbNyxgRrEoU6RLA",
-  "F56b6vrd4XhwHcRFRBSrUFb82TLwrNrhtNXJMKkbUm4N",
-  "8mh32sVjg2Ht8pz3TNYjRi5tBTtcDHMy2NL4W6jQUfzA",
-  "4EDTLThQyjGfu8PXKsQiAYCdpTcg6NnFVBHJDrvD9QVr",
-  "8mEWo5njoMR1CDemTQ739jDDkjvgHCcuQLL4cWojxKoT",
-  "3E1snK2HuGeYusCxGv4JCVrswir2Yde2qBMe8Sceec9E",
-  "BieeZkdnBAgNYknzo3RH2vku7FcPkFZMZmRJANh2TpW",
-  "FyVTsdN1C5qiKouL8735PA8zmB8EqhAb75aV82zcGuFm",
-  "ByunCz4G2eN5bpmWBRKpuoa6uxGKAg9CX1Tef5iHdjaD",
-  "2BSwyjCDsxVEXf7DNaqt8ySoaodfuufEpFTxifFHSrsV",
-  "2YJbcB9G8wePrpVBcT31o8JEed6L3abgyCjt5qkJMymV",
-  "562Ma8fb9ZZLj5swuy8TRHEMLzmLRS7VdvgKb52U9RVH",
-  "Ar8JscDM75cVTpFJVUwZ5HkgT4zGxxsMEk9tJqcB9NFC",
-  "GxceSANEY9hnqK3NWA992wk2i4Qj42MoubribSZrLGcG",
-  "8deJ9xeUvXSJwicYptA9mHsU2rN2pDx37KWzkDkEXhU6",
-  "Af8Zu4DMx4KTtpwwKTE4yoYo4B5zoRhcBsxGYp5RN4bE",
-  "FUCtc9NkQXWKFDJyA4Xjkvm1CdYNEnvTZkXpThNexnij",
-  "F1iTFVHNhjt6dsLik1gwyNjU3fNSnQL886WYSG6Jxg8K",
-  "5YkZmuaLhrPjFv4vtYE2mcR6J4JEXG1EARGh8YYFo8s4",
-  "719sfKUjiMThumTt2u39VMGn612BZyCcwbM5Pe8SqFYz",
-  "BKJ5zrmxPmEp27Qk7qowxsghsfCQsUc57yds7iEygYLo",
-  "2ntectnzhhShGguJQniVTj5gwsGdoAgxCH6E4Eqee9j6",
-  "9K18MstUaXmSFSBoa9qDTqWTnYhTZqdgEhuKRTVRgh6g",
-  "BCnqsPEtA1TkgednYEebRpkmwFRJDCjMQcKZMMtEdArc",
-  "2831MC5uak33SnwxE3DZ7gcZ8dYbjRCnVMqEuhqCve9a",
-  "4WPTQA7BB4iRdrPhgNpJihGcxKh8T43gLjMn5PbEVfQw",
-  "72RaebquajdLkrWffL4NR3PFuM7H2cQTn1BTnkkhwwUy",
-  "GasYZQh8LA6PvSs1sn74LYrffhgdvc3KTD1q9pKBfAcs",
-  "3GcR2XbNanPyeLZM4D2S9tD6i6evMAygEFyvqYmmQqJG",
-  "EpQAJcNcEaDAwFX5gXjtuMtGmRW6sUMFAEQnSEXoMwP1",
-  "GcvrwbW4Enidz4yoCDJF8Fy8JEyWuj3pw6L7TT4mDQ3d",
-  "CBY58P75FCVxr9bgdJ3FS4PCZVfRM9sKXuAM9uGnd9RX",
-  "BAtmPByLUJvcbfHfu4Ah4c35t1vmXJMZynQKXinrVDwo",
-  "FtGWiQYZR8h1yVoSApwY2JPVrWXc7BJyvyiS3Xr1yZ7C",
-  "BMBGVGR7CFanh3vw5K84y86NwaaPpbKmMdFeMSkAKqP9",
-  "EXEeLF1YiZxC1tFneoQPv6rcdq5VMUbKNGy3DLPEo2oH",
-  "6pkYrAM2hWWjQHPq5GYkRxzM8e4m7MKxa2iANNjTNj1p",
-  "28ipXVfkdmu1PDowCHbcSfzkpH9edZmSiVoDhY5xGVfR",
-  "HXkP2HJ3436u1urLnLsupqjtX1647bA2TtcHNWiDt49U",
-  "7tdWxh3FFta9y7MFKYpUd7mM8ov51KEnzVB6MFm7xyxM",
-  "GwiBqHCiQBK7kHgHXU3z75WGvC1tevLtpbzbUQgjqfB2",
-  "4tqHQiX1Y4qpqieaNZRn4XoAN5zmCPzvpG9NXHf2n85P",
-  "9MZ8EntFTY1g9QPBWwAq9NfQiyWcG2wL6oq4hgM1aJEa",
-  "Fn5MZYKw3FdnNwJzsmsFfngyJNJ6vZmFSnzQaAqxwd2N",
-  "F9TWs2Jmwpcvt8Zzr1wLnA9f4UQKj1huX74eM8vDoXTm",
-  "CjY7xaTLcw9G2WZbrNrv1bBcVAz2kRa5ghJ1KQ99NPzm",
-  "CzhpWb4CqhTA4MuATiCqeHZUWKPLY2HZkmerGj48WpEM",
-  "D99PkD3SaysoVW5rUuMjpRRRyxq2eXP8XiP6ceYYZeLD",
-  "GiVbC8SWEGTuUiF2vMsTQk8tuzdjq7q9VJVcaFuiq1fC",
-  "ANDhJc37Khjf7PKGofuXp2CD6aF3mXuhC31hkJsHVMtB",
-  "2QMXjBufQprAfEutzh4gMWRuMp1impcjk5BLpfYEHAsb",
-  "2PBRmZuPxeLAAmyHLCLQgikB5HGP1Y7mLzg6KpNNVJ16",
-  "HvNqQBTfoiksyvzGR5rrNAv46DjeNgGNMTB5YZpYh16W",
-  "5Z1nk3F8fWBYtFFSLPyxtE9qExaDnhLijurHFHjSNvWj",
-  "7VBTpiiEjkwRbRGHJFUz6o5fWuhPFtAmy8JGhNqwHNnn",
-  "3kMGZB5cUevjbeZ9qSFVmUtTmcHPVjodoHyD1o6XndjW",
-  "CQebvvvtypuCPELNxYEb6v57rJo65ZfKBY7utxqQ5E6R",
-  "HqFSouJjebYk1o25HvesioZczUj6pcFVZLkkWDYxwhaT",
-  "FzVQSzj8JJr6WMGqbUHzx2XH1KkrfxRrRPv6WcbbZmND",
-  "G3g1CKqKWSVEVURZDNMazDBv7YAhMNTjhJBVRTiKZygk",
-  "Fn5XEhYTD6EUV9HNXA2Y9mGVA71k94dWKTAaGFsyZQKz",
-  "HLv6yCEpgjQV9PcKsvJpem8ESyULTyh9HjHn9CtqSek1",
-  "F2SuErm4MviWJ2HzKXk2nuzBC6xe883CFWUDCPz6cyWm",
-  "CydL8ihQfhVk2tsXVBxKjMkmYkanqfaFg68rj3i95YXg",
-  "8xMFLDoN53fDP3HaNKqyBCme1Webt2pFq3ngcRrw8yT",
-  "BC8yiFFQWFEKrEEj75zYsuK3ZDCfv6QEeMRif9oZZ9TW",
-  "BmH7ocpV5DJVvv4qgsUUckpciEGbEYMLXRfb53HwzUyA",
-  "EuC9bwq7AhtvgqhzFG5TtB2q8PYmgWbQ7Eei7FaC4oG3",
-  "CtPxvpWo1pk7HtL6KwpCLMMdsXHC6fdqAN1bPiracaQq",
-  "48tnDo3bgKJW1iDhdMGSJq54N9Uv5pNixqGcF1yVC9JJ",
-  "BTCFpZvtExAMndZvxLxLaKfxT8GVGQyANq4pU4qL4CZr",
-  "Gfono81ApMYiEWiUAzyEiV7RZ1WmYzYfWqrrQz3rXchP",
-  "J6hnud6dtr84fV7yyoUeicyYDuFMomxT4i5X6e525PTu",
-  "GeXAHmmETnizW6af4E2e64ju8mTkLdEQzxUiAjJVo6NZ",
-  "XHjnThNqHtpkPbKzyG2iDwhPDsFiEoftSCVXwu26uGe",
-  "EdDCRfDDeiiDXdntrP59abH4DXHFNU48zpMPYisDMjA7",
-  "2Bhvy2CstmanoU1YmDQYsxCFnp2QUPfp5r8RAeg1NetU",
-  "DGviuAtXwkNhoZJp2zVewVfh5DpMjucQVKm1dL5csisv",
-  "Hbod3y29PUnpUxGT8zfWAB994JESwhSc5wasFqUgg2tD",
-  "DiTQyLH8aT9D7aPMNTxwcTbRddMuY8X9qm4gmVvTBPM3",
-  "3UtkmxsAGD3kYgLBXQZadXctb2gQMZCWQ4JDfg2j9awP",
-  "iWinRYGEWcaFFqWfgjh28jnqWL72XUMmUfhADpTQaRL",
-  "8RTDA7rQadKhCGyWdzxqhD5pm3mXg9MjmAGxn8BZ1S6C",
-  "97UKrjY8bt1A9XAMJfxqd2TCZw18eB9xezaYM7jvVzn2",
-  "BkpbQwJDwpUmCCbY81R2uFejdso6L2Qm1nwkd4DDki64",
-  "EDM6SGUziMUHsQKRUF68iRpXMCoqbFbC2nAuzdbFS6Sf",
-  "DKCDzhHof5Wv7TzArkmu4yBnp2eGYULmj3zsLgr9ykck",
-  "Es1hok7yv7bfDXSUSGmbJ6pXRq8dUJUY3ZWAVi3z6yfs",
-  "6kF1mbPwttxKTwZKeejQY9x3DdNo8eAodhjRubVzDdNt",
-  "nicom4SDQP5PpqdMzJHGA5ZtLi3A8hCZxNjC4vQTBF5",
-  "9jnafS92Q4uCFivMVc2C4hwowPg9TNYvdXeVqouqgbFX",
-  "4MsBT5DtyfcbmoFTnYrLRUs4eGt1TBs4ip97Lbf4YL54",
-  "8iRuMD31AxPHHVGhDNbKHdRnuYriBMHCQbNHVfGy4PTz",
-  "yYJdcAH3ik4jzHRjuSNjsyt8B4Wb2sgrZWHGBrpEEqt",
-  "2AicNQ2LSEkSsFPxq4JnGrZLbbHyT2dqkhDaWX2SJ84U",
-  "4evxU9DyfvooVm8wPmbqS8cqeRP7EBCddYa5WV3QsF4Y",
-  "5x8tfrJSn4Pt5gjQEMWDnoLvAzZ8rgJVTXiTpcwhbxmN",
-  "CNYdrnBpRb1qgdDkEtjAH3Rv2wGjx2DJkwR29mfj16WD",
-  "EgzjRCbcdRiPc1bW52tcvGDnKDbQWCzQbUhDBszD2BZm",
-  "BtM3og6qCSNLdAPf2rpsgbDM2DJ9Yk4uR7ri9vLjwyxv",
-  "HazeJRCXfkgUEWJbgJreWL7o88bSfTwYbTFrbYvrVnvC",
-  "8t3cbZoKvqMLbVKPWRaQ8ufgwygGvFDLSiv4unAv6kez",
-  "HD5fsofvcEaSimExUkPQxYPec3nT8g2tP2tw8oGPrpBT",
-  "GPowjEv4Hm84z2nbE7xsFwwBFDNouvqo8SbhzvKXg5xo",
-  "CaiYsjL9sesLPLxj6HMQtRUHNhKDpsufmZTwW3sciJfc",
-  "45yBcpnzFTqLYQJtjxsa1DdZkgrTYponCg6yLQ6LQPu6",
-  "YvEsBWpHK5PJ6Q8m4YrocwKeWys1NG67pbgi73UPnuX",
-  "4qftk4e9zZU6oxfD1B2BNicS3iNdis2JkPcrxVWA5q7v",
-  "2Wgscvn8z4NRjR9NchmRqm5iz8Ssr7bzp4GN4V2Sa8Du",
-  "BkWpyDT1BGN3AxVsnmpg2TF1LCTeXhHWNhwht2pwjkki",
-  "B55PH2b2mJjQpQShcwuaNFSp4LcARJqwx14tqtyhVRc3",
-  "2byqB8Pypvq6s8W126yJc9SxToTiWTfNFuDU3ZTq9CLT",
-  "E3oAi9yFZbHrJkws3fhR4PcVfbNjuyWPUd1wduHPnDSo",
-  "Aw1ici3XZ2AfBUfy6apUHRQiTEJGm2Hybhqj2Jfxf2mS",
-  "95PVJQnyC8ta8evd4tjPxKCNN1AnyTWyP3GDcDuJ57hk",
-  "3pkY4S76Jw1UDS8Qgz4wD3DxrTxz7QfyC8yTbXJoZcMT",
-  "5UG53RdfrC1YW8mWp9fipoh2FeQJLCeoiBWx2uiokupS",
-  "2m8Mc2ngJCmpbEEoYhwT9U929z6C4CPKLatWnR775u9a",
-  "GmM5UFm8xu6TnZD7avwYcQ1zq25hD5yvHfYyAksHu9vB",
-  "81xBSDNoCJQU6E1EzBWYHTBYEsgeJoWVcLrsLCEjQhNx",
-  "5TuiERc4X7EgZTxNmj8PHgzUAfNHZRLYHKp4DuiWevXv",
-  "FbvUU5qvD9JsU9jp3KDweCpZiVZHLoQBQ1PPCAAbd6FB",
-  "9BB6NFEcjBCtnNLFko2FqVQBq8HHM13kCyYcdQbgpump",
-  "7DCYBoCuLWwYaQHhXxv6F6SV5ZAmnuhR1oucNYgVZWLa",
-  "2pZsbRPLrKMNRaxXrKfgUnRhkvdpB1PhCgewxzWyJZKx",
-  "4qwHu62ukEZB2DPoMDdDsC5pY3NukxtchyFDVF91NqNw",
-  "FQh5cst4aKhCZbNxqunns4wZViD52Z2PVTNR3eSYQBhw",
-  "FEDt3TPMu2KTJpzPBMmxHN3zebs1oYGJrbxuE1ycKG9s",
-  "8kNdFZTnUyg5B9AaMVbUUTC98XEkipWdrirGmigadFXw",
-  "GrDM58GtyM1DzFagRsxMHVrrUsBc4u98n6E7DNykCAM9",
-  "AVAZvHLR2PcWpDf8BXY4rVxNHYRBytycHkcB5z5QNXYm",
-  "Cbj482ar1f5b7RvoEFJZEPCeZQ3SYEA5oxFYXmX4Wrio",
-  "CweihpVSti1gN8A4V86B1F2DcZjkgdwChaQnVuYKN7UF",
-  "CyaE1VxvBrahnPWkqm5VsdCvyS2QmNht2UFrKJHga54o",
-  "2V54c75rjibgh6NsDWP88tbpu8KjQ3APRrK5zNQVqx1T",
-  "32QqMDpda2bV91cJrkaG2ZYXSWG7XCFFrvL6JTmH3YPt",
-  "4kuweVrNm9sAeCRxCn1q91YFiYX1bFFrHtJEpkbEXe7B",
-  "4LFQ8MSN2h9y3omR2d9W2avrdXWkT9k9rit2XgpVt68P",
-  "5o5P6jK1suNxykvh8Rj8JLYCPTi5HRNrpTvRmHw9iZsC",
-  "7swY6WZyXXgagE3L1ca3RNmtikwJUjvFpzNxeM4qaQmH",
-  "8e1MDn3mx1p2ekKjbyALxZNtGD8pqapb1g6EjK4wf4AG",
-  "8EtTuouEFrqQfwjtQ6oPA2ZS6fQcew83kFH9zEYB9PJV",
-  "8W6mYze9UQHqmS1VkX35C6RWfZBuyh4gyvq9KEeeTT8b",
-  "8YDcHz6KbqEvjr1SQfo5k4enicHH3Ho2dTpqcudq9KwC",
-  "8zFZHuSRuDpuAR7J6FzwyF3vKNx4CVW3DFHJerQhc7Zd",
-  "924zuRoroyHF7GhSJBPGBhVtebd1FBd1Gp1csuuAHZa1",
-  "92iYee4tHCanKiiCpFk3rvA89k466NjgVKojZkpJdcvj",
-  "96LnVrNbNGaJZ3yXTC9wmFp7D3Ks1UoBgToVi8ybMrXW",
-  "9FNz4MjPUmnJqTf6yEDbL1D4SsHVh7uA8zRHhR5K138r",
-  "9hKZp6ub9SqCfPALuzWx8QmmKcqd2KkL8BVjHAc6wTnr",
-  "9QtfjkutLg1WH9iXQdoR9aXMCzruf4aVcHRWsYCvmYK5",
-  "GueGgggeNaCvkR4eg2PUifNwVi1wNsh9gse5bgTCok76",
-  "Gw5WHSB5FbXdXGVZK5RCdm4bzc2M64rX1GcftibKM4RX",
-  "GX9dnG2NET941qhCmbJmkJCzRbki2AzZ4CHK7YJME93Y",
-  "GZVSEAajExLJEvACHHQcujBw7nJq98GWUEZtood9LM9b",
-  "CjsbcKND5Dsb3QjwiLVMN7ggbvdNjY2h43Tk7nng7mAf",
-  "CLpDttr14kM4svu7jypK4rzsMKdJYAR8emGNPaWs7omB",
-  "CMxgFDUbfRbhhCL27VqDs8jtPR1ateVH1Apbodg6phfu",
-  "CRVidEDtEUTYZisCxBZkpELzhQc9eauMLR3FWg74tReL",
-  "CVK53d63891qJHWMcnpGzs4zyVGaW77vsLUZLbyQssYN",
-  "D1DhSivDh6nuS3ecXN3ddx38vBxxBbj35Ak98gwHoGnR",
-  "2eHQuhpB5yprGZ1CSFrEUS6oSzHGX1y8vkrpPXGhzA1g",
-  "2etgHx7nEvQWvdj5xMKrvcmJEvQaHbPM9whBx4hHGxtV",
-  "B8CdgWxMFm8vARVjXaR2cngTgAxYz9LJYBdikXHxi4dd",
-  "B9ChV8cBwMBDTjBzHeTHGLnuLu7f22GZjAZgDtxuxcKv",
-  "39qpCe9zdyC2g53UJeyGh5jwGBKjFwidCbnD5W53aVBW",
-  "3bKXGquu6NVjsxSGDSXdSiSUZfRmpNGt6zH1ivRCpVhv",
-  "3F4vYJB4ek26WGViLSZ8sW5Ab65wQh3jCm4Rt44iULT6",
-  "4NX2vftqtHTCSmC7PVDquH5Np8NWgRRhoSKSzbBnu1cX",
-  "4qWKgdUQTfV771dxKp2HeBqEzTXEKW7agijrfDfpsXPC",
-  "5EzUr1Z8nahDXXK7oki6pPeJ3aWoM8cxHJShFumJtsT9",
-  "7sA5em1nTKmLvGm8H85cpgA9hM9YvCoPp729mwe6akhh",
-  "G2mgnzpr59vYjKpwU9q5zVfS9yQ9HezMwjuqF7LACvR4",
-  "BiqkWhrJ4dfpE6TeNY34tA4GssG23SBH8CU8mqB7xZ6t",
-  "BkyCUgwb99KiA7aUgmCaTVc4CTEQ81ZuukdBBv1KFkU5",
-  "BU3Eto9HzT4GZHJ7GcJweHqTgydekXBZKZtLQFK7ujG1",
-  "BUsHXQcabNEMogJiagWFkGLjNxVGjhRsq7A8RWdeLPNp",
-  "CeKK8aDLxyTT98ZV8yKYRYjjQhtF3hPBJuu5Hzqn1bgq",
-  "CFNjTNoqr8Wpq7DVe5ymK9CKXNzoW5X6rMQQAPZh4kHg",
-  "ChjGfE1aKvtjhhqAQGQySmRT9Ju2KntG6UsEuYGJ4y4X",
-  "D3Z7weHeLGWA7eg1qwVB66NCs8YLxiDTBVE6Eb1tTmwg",
-  "D8gxyXxvmT9yFdVPD5o9rhjPTNww2xRbN5z9UZQU82NH",
-  "DatN81qe1wd2cGtLJfJ34i7P9o4HAtmQAGdpEzeKK6gL",
-  "DBmettWCbsQML9bwzZ2pAAiFukxCg4QkJrbg1bMDJfft",
-  "DecXrBS8ADaac7yqLcC6WxNNAfMhVsF1SHmvSNv66yDe",
-  "DFoR6f9aMWxjMC3jacMLQRfXDfWFt2LZjhjH5Jry3BJ6",
-  "DGPYpCdiVg2shab2TnNiZ2RnsjBQSmhgN71hJyWC5cYn",
-  "DH5picTwbyk6CrRxVBn4tYwRY2axzEkma1ywtZiuBkrF",
-  "DiddyP7tSoS5e26zzy43QVfgTQ3dJ8ZyLibC3uPAAwQk",
-  "DiMSeocybuZWi88Y65sWM4YMTTuuTMWYfMtGFtEJCAF3",
-  "DJobMrbVvwRsbTEM9UBNiT6KHQmiu1j3VEnugJaDTM4z",
-  "DKwybycDSWidrHfpMjaahUsT1Yid3kig86ncXPAGe7AU",
-  "DNfuF1L62WWyW3pNakVkyGGFzVVhj4Yr52jSmdTyeBHm",
-  "DNnebS2GXArnErtgmnvSeX9G44S66zd4MAXBf5qSDUGk",
-  "DScqtGwFoDTme2Rzdjpdb2w7CtuKc6Z8KF7hMhbx8ugQ",
-  "DSVc1Rd69sLcXBoZAsvkzK4jGFyJKP77K3J2CaFVNAFP",
-  "dVs7zZksjFuq73xbtUC62brFXYYuxCuPSG4wZeGiHck",
-  "2WfNxFN74pzJWKnXQ7NpkbnbEEhSLVJZGiB9NvxQ4Vpb",
-  "3hLHcRZdv5yRBP592Cy9BBedNwCszjC8HpLEdRfzfrM4",
-  "3HvQN8uxfRXaxzAPiaYquLZ5j1RTkeFvFHYyJKgiDFoY",
-  "3jgub3P9KP3XA9Dwh7XpKu35BiQNTZZXbPmfBAJMsroL",
-  "3tc4BVAdzjr1JpeZu6NAjLHyp4kK3iic7TexMBYGJ4Xk",
-  "3wynYQc7daEoNKvPXRTy4CFFm8j8S9gWuX79nFozyxcM",
-  "3YRMrgGgFS8YQ7E3gcSCbMRa5spMqZt2Q19CTyKoXJeM",
-  "4aDVcdMbRhmL2XtFVdBLE4mq8bvze8EN2RAnRxH6Z6hz",
-  "4Be9CvxqHW6BYiRAxW9Q3xu1ycTMWaL5z8NX4HR3ha7t",
-  "4Bq5yvgoiZDsukGERb7aM52jDmbVPCpoihbztscZ5PeM",
-  "4btaRjaRpakx3Rjtp3AdWnH8eC7mvH3nVMVruyFiYDYk",
-  "4CqecFud362LKgALvChyhj6276he3Sy8yKim1uvFNV1m",
-  "4D6kMkudsfBK56qujVmPyUAXCoAfBbAThdapvqWDuqBC",
-  "4dE3d4e2oob6otG1R624X59jCVBjj2faz45B3aL7sNhS",
-  "4M8QVddY7Ld8eAaHoYcWKPxQcwxVuZsXMFKsm8921Uzd",
-  "4nmSyCYLBmZUcw8z2bYQmYMDzbkbA7S1yAmr2cHAA2KJ",
-  "4sZm6CRqUTUz9EE3nE8wPfdTHBHzQHWj1Tcx4m1htfWX",
-  "4U3wrwgkxXodrVGQsxPimiLhtNCJNfFCDgGLe1pp2Gur",
-  "4UtsTXeM6DpYXJJbZRCrD1Zhsaby7mfFMmi9ZhqWeeus",
-  "4vQ4uSE5NbLJTn74mQczYm1y9jezRFAr36cYsWGnm2fm",
-  "4zq1iLpmepj2Rj7W6A3XQMRQA1HyjYqVpZiBzM6aPyH7",
-  "53L8zz6Z44Kaq7TwP2tuSWD7FXoBtDyrNwisWRVVKK2d",
-  "55yPXFXuJpWbh7dJsre5vNtPjdovu2EFE9nPa3jyn6Q4",
-  "57JMxCescrFBvb8bqjNwHPM9J7wPF12SV5KJa82HCd9B",
-  "5ARTXxRUjCLodrGQvGbPrcbD1b25iq81Nv6SfPGAFMDq",
-  "5C5NHuTyJ3t8iXuRQArXhZFkwmmxfcmRHBTA6fM8Qkwe",
-  "5CLVBtQ3CPsZfHxtDof1Uk7Bmzr1LYbBiFZDv35uU8tP",
-  "5LwtbNjQeDvRYB3dz8eVFrapGreCgz999LdR41ArFmNm",
-  "5TMR5GFPTzkNhprnty2ocXEFLoLur1uchg4NkEr5WEf4",
-  "5U1HMpLWyd8Qpq8YNBUSsRE8JmgFsJVwkuDP4kY3FD8u",
-  "5ua8SrN7XJYxGbmvxmyqUCetXXsU51HY7vv16NL88UJm",
-  "5UBWGr8tA4qxyz6cNx7homdWXPU44uZRLsnW94ques1v",
-  "5V7z2FLGprtHqUSqe7vMk2gknsb4AAbYvwx5BFyHCdof",
-  "5VD46CMUb98ryVF5K5KSUraaVeZ1REmUPWLyaeknvXrC",
-  "5WBE6v8rCbaNLV83fHQQZwZcpaMFojYSn5NvQwrv1k5m",
-  "5WYXL4gKimy8hhBaxXzBw9UxDzkesa2aANwXd59sexVU",
-  "62FZUSWPMX9pofoV1uWHMdzFJRjwMa1LHgh2zhdEB7Zj",
-  "636N7frU8bUwYfyUAtvMQQsXhTFRuSWjxnEZihr5axGV",
-  "666WTwF6YsiEVffGJKSAUWYCgcMCuN9cX459kG2wqrX9",
-  "66W4ypeod8MegVzMot5ZJPEh6QBUG4FriDxC72bEJxvT",
-  "68r74QNDsgV4dzuDZ2vrGofBKRMEASVscGemDDLKyjws",
-  "694X5Cuvx6xs4y2aDBu5U1RkZS4RTbcUCZ8qLbH7bVPc",
-  "6cpADLEZ9kgVD4yDFMxCsSV7eNnkagkF2dfVL9LXtNzG",
-  "6DmAGqHB5P19MJQqLg4M9Nh2saCu8UipdecfYmXkTkpH",
-  "6DtEedWf9Wk5hA7Xth82Eq441yf5DA4aGLqaQAVfDokm",
-  "6DWVQJr4Ep78Kz4Qj7shEx7Abx594MDo4AmeLXn7YV95",
-  "6eqPKHBtEEktxS89v1fmeFMkCaNAW6p98HBNE42ChHTD",
-  "6LChaYRYtEYjLEHhzo4HdEmgNwu2aia8CM8VhR9wn6n7",
-  "6nhskL8RVpXzWXC7mcC1UXpe3ze2p6P6og1jXVGUW88s",
-  "6nRzbpSDdrPTf9m98Xh94c8brSwfj9LZagutH9dezHB4",
-  "6oTuUiLduWkbD1WdF62YZgMtzUQa8YMLC4DUT17hdpqq",
-  "6ryvxoTHMYkVUgTTexpqntYLfY4La582UGX7TSX4KRh7",
-  "6vktKctTpVWMbSz7NNXQVAWqtp1MyibVG6FnnLKoCBTh",
-  "6y7Bc52kor6sn3QhbmpvxeBwZWLud4fFP1viz9RLSVQh",
-  "73KcgcTVyLYhnVX3PJbit8e4mC7jU8QotNGBFGix14jn",
-  "7cm7BtqSJHqy7QYJFh4cr7SybGR6q1zA7oXk6gdvWgTk",
-  "7e2sow2fQNLA1RcWhCbLmyyzpfQ5kY52t8SwduvcLFwp",
-  "7JmBfR2vRj8Hw4RBZfD2eh26EQ6dgb1UwMJdFnahrjWd",
-  "8GBWFfkUJw78tbdxD9W9yjSDGWt5LHxf3Vy6Mihiuk3Q",
-  "8MF6FoaC684sK1h2PhTtuJccbytQXa89XyBmoKtVQyQQ",
-  "8nwPeguVWHiZYLsg1pgUWHfAavqxfBBi7nU9RyQZcgoV",
-  "8vgu2Lb311V4qsyDQrYYXdRksJvynvtV264YL63ep8CP",
-  "91HANKimRsWTXMkfcDipLaDVmeTkj6m2eNSVobpkdUNz",
-  "9R2UJG1Wyoo5V376TKkHcp98hrKEQhmGMmx8jVtRLJoz",
-  "9Wagwcs6HVtMHaaxBjUbE7AKmxeg9nzEDcvXhN8bydUG",
-  "9wD97Gp2zFECtrRaSXVLEsXhNe1tyzMevn8EkB9REvy",
-  "9Z2JS8quQd25SkotoBQ9wN9WdKPnWwTFt7aenHiXm1Fq",
-  "A3d4nghJDz5BmBcQ2YKFMQfX1HhgYPSnJmrAfTCwWNHG",
-  "A4nTzSw1oZKK846zGv8diWw6dGXqnGPJwbxyJ85WM4Sg",
-  "DwHcRYVqV4onyrza3okN8YxyRFykmcMR2JAjqGfjX13Q",
-  "DwtF6KdjB9xgzKhCvcxKQLGU1NezdFFdVo8tLzSb7C8W",
-  "Dy4FYHkwPXnp1MRt83FodbktAa8coEtNCJiNJaN9dRKx",
-  "DyvfC79QMJHXPTCoVMP3fcWvBnsenbDeD19WWacDgvXb",
-  "E6gTYLyK5KJ3g3keUe7nNRiZVtzMAVop8GVDjaE6KQe4",
-  "E7p75ggvpWVfUt6XqL8T9yneNLPjK1k4uvwZBxk18CRM",
-  "E9mEz2zVQfjKYj43HXihgzCZ2Je8pDv8v7cH2rot5uno",
-  "EDmbDc7sY87dKszqyZ3rHczWbKcCyUvJQSJpE3Cg4RcZ",
-  "EgKVzMi4vydExJ3MN23DdGvLixiULM6UmenA95cCzJaq",
-  "Eh9gqdQGux4dKqsx7hSF1mfLQuffVSyfhQtq3wNJ5pgK",
-  "EjBiEMGNWpgK8jq3DGtPQBrNDaYd6wjbR8kLyNafJbw6",
-  "emmemiip3UroEr81wLeNm8vveLARzR2zV5t3T4YTU13",
-  "EsCk2ewGL1tEnL3zzai7ZUbBjDyYDxYoumVcCYKf6no3",
-  "EWH2o5SKFnLc8HQKdPBi5BvynzsV6SwkV6jHUMXaQdE6",
-  "Fa3Sd2ttv1W1mga8Vs6VTtqPyJTsHYk7meZHqSsZR4u3",
-  "FAwHi11KyJVh2pR2b2vNFEbbunTVkMFpdNBuD2dh9NRf",
-  "FbeT4rHCJNmqe5Rzs2Caw29cUrWJ13ZRzVD7v448ytUc",
-  "Fbf3gUZ8d5EENvR5Z8LCqyNZXrDfQVJjviNADPWRSXTL",
-  "FfjphfYFcZkWueoFJMfEV44wsV1QayRVs1JyBtb22BuG",
-  "Fi2hrxExy6TJnKcbPtQpo6iZzX9SUVbB9mDw6d29NgCn",
-  "Fkm7CbuXsHuq9BGcT2EUzbK1PWDDgYR9Az2rrRi4iuYF",
-  "FKy2QyHNz2H7K8c4pZnifdP3ogrG4JujwNEB5bTzFEL3",
-  "fLTnN43bDb5h8Shf5TjSD51FUL5XXvrZ8kFqLzAqJ32",
-  "Fo62XDVE3fg47xjeU5odUgQeMaX3s28NsMo3ib5mQEMj",
-  "Fs2f5rNW7MsyfBcdU6NfYsMkrnNSuACuRsNJvrLEDezC",
-  "FsMaCLmxF2zEKAQ5CGJMLi49LLjy4vjhjcozmKsLNLK2",
-  "FWbg3842q7cmow1fuH8MAQGrRvJoG8kQG9yWzB2mmHoi",
-  "fwHknyxZTgFGytVz9VPrvWqipW2V4L4D99gEb831t81",
-  "FyNrn5ELHtimjCscVqRK11Q59VaH3knzahtcaPpcmSro",
-  "G2VzymsKt3zNAn4CKBndYcS67w6Kny5sDEp7Y2W1aTf6",
-  "G32SLVumUnMfw5dpwht73gShY94wNVCSQ7b69Stuq7nT",
-  "GDR6Svdvfd2y8K8dsWFHosNWkxSqsv15nrSNCnLyikUn",
-  "GFJhtZuENEB9StZiacHUd1aoBoCtY2wWLskhgwcyfaYN",
-  "GfXQesPe3Zuwg8JhAt6Cg8euJDTVx751enp9EQQmhzPH",
-  "GG2TmwJf8zkfwSFgZxbXuaAhTHbk5U6UwXv4xEEJwzsD",
-  "GNqTGGVz3NpCeoUVKQpa9y365cxLLa9k1Zi2o57WHisY",
-  "GPpEjfHJZ4Ey9bSBLzd9sggsHFJKuQ5SxsjRYsRDWkH2",
-  "Gr34KrdUAQvH5Hz3VYpa2BiZLx9N4MDLccE4ksaHPubp",
-  "GTvBQnRvAPweU2qmYg8MDLND2PAAyYFKe35aKQGMRDaL",
-  "HaZtFxgw99iM97LxmwFuDW6k4MP1XwsWTGoy7GUoSELj",
-  "HDRfsGqhJFhhm3MKwNSFNurT71PzbbCrdy2UYL2WH9sL",
-  "HEibUTHW7JHt7VgKYtWpQCSX7a6YHBmRQrixZs9i4wGY",
-  "HJXP9JqEx396xNdg6vNKnrqWvyqXB2f7RDHjTWqbanYc",
-  "HmhrKQSVunAmkVoANZAp3AV3gSuh9wTWSk1et3rr6uYy",
-  "HmzcsdvZAqbQCSvinutMJzYTEgR9HaEPUVWFpUkv22KL",
-  "HooderpigTVYapoXi6PQzxwtWhq3U1cuGvyu89fGjruY",
-  "Hp2JBrAhny1TDaC4YhHJLB5jBmcfVXB3A2GTUZzPkQaD",
-  "Hqkk2zNPZYiQL7c9JhVed1EyQppoZToBKMCzaCX1m21y",
-  "HQnpJtH4t2TPwJZHAp17HFRPmz4dyYJ7H2rbCT77cjYz",
-  "HrTZPWV4ZPebBiwyzoTBajCD49kQqVwf4dwsLuYG8CXX",
-  "HsfSzb7BBv4oKNFamgoyBEQ4v6BHUhEREEmBnWzZJXLj",
-  "HtucFepgUkMpHdrYsxMqjBNN6qVBdjmFaLZneNXopuJm",
-  "Hus4uoc8UZNE2BKb2uHEfihLSRvvEGpx9KbPcU9T9fQx",
-  "HVajxfNTWqLGxsfJA9DFThnvddveKfJLK8re1kNpeCVv",
-  "j1opmdubY84LUeidrPCsSGskTCYmeJVzds1UWm6nngb",
-  "J3H2hLKTnxaGiDzG6XfVUgKQdAbzivo98ewXU6zVRyRs",
-  "J6f3FSHEP37ZoKgrXdqVgu7fpfQYy5Rudi4FFfZTNP9M",
-  "K4cT8gJgkfzShDjBoD41hfGKWaVqFkpwivcswdfnZhS",
-  "LeckTHCG66D9CcZoecas8P8AGkNmqbXfAt6LXCKDWhq",
-  "NFJKkZ7yeoAvfHLWNiqAw6CYKWnVAVAQu5PE3AC3qYt",
-  "ouKvBJLk8RejHwMCjMqtAfEbKQvjbj4oXbpwNWGMVdr",
-  "pndujwi7BeaRRenYHSShyNQXAdBNEzKDR5jgzbheJFT",
-  "RFSqPtn1JfavGiUD4HJsZyYXvZsycxf31hnYfbyG6iB",
-  "ve94tFcRnLnwMGf7e5mUXMyAkzzcS4qkzSKZGsQV4kk",
-  "zLJpQSjVD2b1CeLpexgaWaYRopVgnjQeuzetHNNhXh1",
-  "MiLSTQNcHDmZ1cHTo7fC5kvUYMFDBuEDk2HQ2hAGs3Y",
-  "BaLCEtq6qgPFruxfnjWBJBkWwCXdwmuodn4NUicQqMSw",
-  "HDWn4og2pEBuAwNoEp1Q1ee7YreL3ssxh4YjUbk9vnDo",
-  "A1QRKMAVzgnkqJyukUhjTkzhiV1kFC8crKwb95mB5qB",
-  "HyYNVYmnFmi87NsQqWzLJhUTPBKQUfgfhdbBa554nMFF",
-  "Bq5N5kQYFDT9ZNE3CaZL519oyYbS3TokSspouzqJvKjR",
-  "3xzTSh7KSFsnhzVvuGWXMmA3xaA89gCCM1MSS1Ga6ka6",
-  "41CMkTohu1nXSKNexVxWYK3Xwe8Zgox9ag4CBruFBBv7",
-  "9f2ornZ1JAe3T1gGx7ZdfwrfRioJdAf1W1JPSCDEU6Lz",
-  "UvsXNihusMGgQKUYKwYXUwXxd77xM3wXVybRmchgMcC",
-  "4Hq9UkSXjEwDZDBMAo9Lnri7VnbQCoomRAdrT6NGMh1c",
-  "BTWDNC2jHxQT8AfphvEJ5Dqr2Xd7wcBFhFPnAUPukueq",
-  "8HeDT75s5g4CtCimH5B5nySqCiQhtWii8UnZhxBtFo38",
-  "5pxkp8Rpg7xHekFf7URJ25i4P5ZXVk8hRQUaDKytU5K7",
-  "CuHEkY5sgJfQ3dT5ub1YFPGeifB482cCH3WUTsvfZ9iR",
-  "D6B4C5KopAs3TPibLGN2qKDEPjiLmpWdZuZies81cfyC",
-  "GGKs8NKMigXoZffMDB5bDJzBGbqKBgwuNcwWKygE7KwC",
-  "FY3cZS5qwxbZdCGwnHaTR5J4Ff7AuvJkgTpkqzQPXrbo",
-  "5skKDVJ77jhEa1YELXuARCdMLTupVSt83c6VxAYbYqpg",
-  "4xRGFR3k18DYba9BQDH6FNue2MVJJemA5vUjFefNs31c",
-  "433upk9SyfRhanvZkYzYKuiCQk4dBU7xGHMekhfQA6dF",
-  "G6fUXjMKPJzCY1rveAE6Qm7wy5U3vZgKDJmN1VPAdiZC",
-  "HYWo71Wk9PNDe5sBaRKazPnVyGnQDiwgXCFKvgAQ1ENp",
-  "ArfVe1K5gt5zsxzRCWSQeWc1rJSJjZzuuYxmvRh71mMQ",
-  "3vkpy5YHqnqJTnA5doWTpcgKyZiYsaXYzYM9wm8s3WTi",
-  "DjAfkjAV7qD6U2qjjU5RdcuzXwdk1gF3CtiWwGZc8pxJ",
-  "FpSJaWysgd1vRS8bPEp2D6JC89RrT4owCmoBx781vvJp",
-  "Gp33W3sRrzdva7byyrd6Kme5RnA25jeAdXJr32uepV9k",
-  "2WN4rnEmB9c9ouC7VTb4CBXbyiY7qTMcvWUxKKQ2D47T",
-  "Ctxhk46mXh2MUHKTGVgXLZjTHD4kpRoawcyhsgkQDnzE",
-  "CU35ZDB4JptaBVQWiq1gZsR8kso6dz1bQj8uR3xGn2kK",
-  "CVpxvMJiUJCiyg79SmaaCzVGhiXWC6jFHu6DUtHAVxo2",
-  "FXzJ6xwH2HfdKshERVAYiLh79PAUw9zC7ucngupt91ap",
-  "HMMCa4urRGSub1Emotaz5dJbG2YdAD5eEYSAocnpmVmf",
-  "FgfzLpCJhHYZVji6Sw7omJDEdTq5C12FrV72HzDtwvb5",
-  "rapistGfyUzNGKrcDvmcjMQ8t6tds5kNrLYV2gG1ytU",
-  "Bu8iZsGvS5dwuY3GiEDjUSDayEME7LthH4x7TRGTnMXA",
-  "9F1X92uBq9WSdUkj1KhfuQiNhMWtTd4NKBBk8oPnGfSJ",
-  "GiTjPLMYngDKZYxyc2MBFBwsS1Zt3NBCjJtAgsGb3AJv",
-  "HL3FZ8XWnLnn1HuktmgpNRyFRjuAxWbXNQVj5fPPzZwt",
-  "93aHwK6Dqvnc7M6drhZusYwEKEx5j4yAFYfef5NicUPU",
-  "7vHmzkGUBUGHyr2M5frNrLihrHyE8QNTFGZtDhKQvTfH",
-  "7Z4Qtu2Feih9Rma2YR5gac5z8g4KgLExF8u1WfHyq8H3",
-  "87MZqjjJgpuFvaU8GyQJKbZGnCFFhX82qAjBGLRXPfcn",
-  "8MCKzkyRsgB4VdQEpALnzjAnQq1DMZfQ7xttKy1g3AVQ",
-  "8rvAsDKeAcEjEkiZMug9k8v1y8mW6gQQiMobd89Uy7qR",
-  "9amWeN7XKy9HoLWjga1ADYwyFd8BhiUb5iQUU3tFc2F4",
-  "8kbkapCokSiMCgnoqJg36dgg8fXDcwFFJRfZrPWJpgrq",
-  "9KB7hpK4Lwi7pqP267YzUQNMi6XeoHc8SGSzVuLLCRRD",
-  "AE4ZYrdY3HVAvbuNHG5CU6Bo95jdNnxyAuKR8qCCqbpw",
-  "AE9iNfW4sis6XDcEQkm4w6aRgUFFxLePddb97nu176ki",
-  "AM84n1iLdxgVTAyENBcLdjXoyvjentTbu5Q6EpKV1PeG",
-  "AVvbhqsUUVyuMFxNbVSWida9gQmBsLLWj3bd1gwzJqQ9",
-  "AXyJF621sQqBv5c2TJ2RTjTb915JtiZvnvR4c5rxe8c2",
-  "B3wagQZiZU2hKa5pUCj6rrdhWsX3Q6WfTTnki9PjwzMh",
-  "BBKC8NkcfL4ZCfZwjke2A2JAPyLeNWtNW3k7VXPm92zU",
-  "G3K9kWBDUmtnxypFZSzZDdMS9d8GWnZUrbsvobSJkwVG",
-  "G8n4gBsc9Z4P1q5JFJQUfxZs58zD7kF1CqowcTft18RL",
-  "GmMkFTKsAofDMViWKKi3MZRgcsTRKqwRHJcRQ3bQeMdu",
-  "GrXjXop95XkVPYJafDJNCLFzK9K8LkpopxYcgUUn2H87",
-  "GtpUHgnumZKEuL2okMPEQHpaC95fyUBBWvBdFLGghCFj",
-  "mercyFDsQrEJk6FMXo6h9mwecQHt1TyYW7QKDpbM7e6",
-  "mp1V2SpFvcfJoyLPDNHLece3pYWBrmA97qco5GMMNP4",
-  "mpa4abUkjQoAvPzREkh5Mo75hZhPFQ2FSH6w7dWKuQ5",
-  "MVPoC32ZweNts37WJ3pn4vUtTkVM1Phrfa7RX8omkmb",
-  "mW4PZB45isHmnjGkLpJvjKBzVS5NXzTJ8UDyug4gTsM",
-  "7w7f4P284zJhv3zotjCUmaNsZSsrHQKtpXGBJFq8gdzq",
-  "2JKaXsACKyTKK7b5WPascrQpE2SwigoS2d4GVEB1VorQ",
-  "6B9YXryYGvAsHTj5RVn6JbMXgm5eXTViF1ytKenUtkQ1",
-  "EiGjwgAWG89bDMEWGVMAQJ7jKv7tV8hrxp4waCoiB1De",
-  "EJM2zrEd4uc6662LVVdDN5bH9iDFy2A4mDuhLttMkhby",
-  "EP5mvfhGv6x1XR33Fd8eioiYjtRXAawafPmkz9xBpDvG",
-  "ACFUm3nxWyydwazkVJYEMfGoDuLoPvMhKrQokbRetE4n",
-  "C9wE2tKWQvDRaEnC4jTLzgMawwwYJCzKvewSaJVLQFMG",
-  "5fm5pHB2GR8Py4YARY7fDire8E4oFBHCHCYRHPD4x48f",
-  "7vZBfAKXx1medCXn5jo9bjhUi17rh6XhSJgHmCXuMvNU",
-  "7w7BRXN3ge84KxzeDLLbwBcMWpLwagrZTZ7pWSg31dw7",
-  "7YndBV5gp3VvAiBbSfv8M7CoyMhFsiKeGYWkwee49fTg",
-  "9UWZFoiCHeYRLmzmDJhdMrP7wgrTw7DMSpPiT2eHgJHe",
-  "9Wf2Gbo6ZnbJpXrwm1TTPpULHZz59uPZaszTsECE9PRb",
-  "FxmuMAWVXRLkXpaYtQ8o41Tr7meVKMMmKtvMpasF645V",
-  "FXobn8QbTmzHeHu5GPWjDR31jh8HCW7TsqrczF8v7cKA",
-  "AWxr21P2srfkPLiPpqDYyWsKWR1bpJWtw5beVMiRxwZm",
-  "EDajBBK71iW7jeVjfsmiGeneraPEsq2YrPgeAQkiLd6R",
-  "BoBo3rgrjVwkNCjTd7EqB6sn3kzDbnew4KSKPFVByKjK",
-  "2FMGLCbrCbsuNBViefqNnwWq1pkej3544JZLictaGW1F",
-  "2h7s3FpSvc6v2oHke6Uqg191B5fPCeFTmMGnh5oPWhX7",
-  "2LEZBEKxx8hpGEVUVCqKr72zUbvk6iiKTdKwjWhpor3q",
-  "2YyBULF7gFU42TaVhbCawoAfEWL325cf9qV8X3MgVABM",
-  "36MZYxD491sezrMkPALuC3yV1Cc4FmBXnQdNnPjAGcvW",
-  "37yTBV9MbWEgS2gDhCBNV1qM4z6JtKNZawpa6V5BynY8",
-  "3cprtviUwxcTxjXnhFD64zF2ydYdW6vgGszh8c31HzSG",
-  "3diLgHoGz4Lxfyd3pRAx9s5UUixBjwT77mqYkJHyHAis",
-  "3DrfCcNC6Q5PFBgrgAcBAgvykcVBcBWcr8nnRmNyWXdA",
-  "3eiDfhs5daac6UgPmzchZL49RttEL7d99kq7oaP57gFW",
-  "3JoVBiQEA2QKsq7TzW5ez5jVRtbbYgTNijoZzp5qgkr2",
-  "3MBE2jqkBUDHcDpMcQw8jtSTZyJ4G9WgXANwdyPDvYaq",
-  "3PFXaTQ7QBquUgGCBd8HbkRGpLsCd47HqhwEc3nNhyNw",
-  "3pZ59YENxDAcjaKa3sahZJBcgER4rGYi4v6BpPurmsGj",
-  "49FvbfcoqwKPefpmj95BaWAFHUoPUFa4ZfQZJCpnmaFG",
-  "4Bdn33fA7LLZQuuXuFLSxtPWGAUnMBcreQHfh9MXuixe",
-  "4Bxf1mCFoaQmCxxB7obV4hjfYJqkCXVQVCTRkjT1YQuL",
-  "4GaqQnEeuP6XFcXVDZAvgEPQr14XKn7bomUhiygreiVm",
-  "4hSXPtxZgXFpo6Vxq9yqxNjcBoqWN3VoaPJWonUtupzD",
-  "4kvN7diP6HYKuzMbDduh8a7m4P2Yyj92wsYYs6V8yhJZ",
-  "4nwfXw7n98jEQn93VWY7Cuf1jnn1scHXuXCPGVYS9k6T",
-  "4sKEmneKj4tRyjBj7nLLtEMzPBoSVcBeQeLD5hH2wakN",
-  "4TS24wgLBMucbZt7zqhM3KakXwdNTT2ECxDXEpsn5AhZ",
-  "4U7WKe5o8ScS8n6Gy5tEmTdfsKHYeRNiKbqZ38Kp99Ps",
-  "4uojqvrE6jirqfqvmy5PngFJmgBy2tqXioHx4dv5zsCU",
-  "55ZBpYaDnpd9QyENdyVrkYWkm76ee15WRnLaKEDwS7Xq",
-  "5D1RFRESCwbFswtwMX6F9MdHZK2nJ7tJjxXwxB9az47h",
-  "5dzoivi2oG7Brpak98U2tZJZCwAhfLkiKdhQadW3Ef9P",
-  "5Ge6SzFcJnpyh3VbikYeS3bkHiEz3cR5pCf9R1r13t42",
-  "5owZXjEe27wZTRevqRUETwia3EctJiaYtKhpqmPzWHuj",
-  "5q7Xwc2T57sK1DKU6zuwVXvMPsxqB2xrJ3T5AonFYtcY",
-  "5sTQ5ih7xtctBhMXHr3f1aWdaXazWrWfoehqWdqWnTFP",
-  "5YkKg3dov1YG59PhbD5nCSTaA82YXpYEjby1RNrd3KfY",
-  "6EaWAqk7BAaZTYce1tMpUkSPiW1pxs21bJvi9JY4fLtF",
-  "6iLZbYvc7MrBRQvzAX8yJj85cb9cQF3Prvrn1D9vvLA2",
-  "6n87cC3KG3rzMYMc1RFp24woriFMQ8zqb61qzYkkXjvD",
-  "6qBMtRQpQotxEgDRsUZ9DDnZoFxBf9MxxLPs4CG6yKrv",
-  "75ZgszfwDM89rhJ4gxWoapa6gv4a4dYxGkgFWMdmB6fh",
-  "77kq9xNZg4Vb94UJMpeHsx7pKXUBU3Wpqsm5UXhjA9dd",
-  "7dEez77RSJxKCi37rsECMQi88Gswfu3ETNTCKeaWxCtF",
-  "7DkYsg1uyNCp7HeSy6wdN8wcGoV5x7VAGMur2Aa7wtVY",
-  "7F7hvmbT9hVBb3c3SKDsNhQBjtg9JyjrBWucZYorgYwD",
-  "7pEXhVH9pCEBeLMhbnybcowXgH54rRbb2P9TkANvRZhU",
-  "7sUFQdV7gK3hBXQHsoGocacbXvnSWqWDinHtQHSJnG7d",
-  "7SvvTJSwcpNQCDGEt14zuoPFoSsaveGd7UWgiJGQLAHN",
-  "7uTZLDL3mY6kDnwxuqqu3WGgtMiPsYMmCvX3NQt4W8VS",
-  "7V7jPL2b5QV2HmQg8neREtQyXY83PYjxhZqLuKWPu2FK",
-  "8fzuwRkhP45usiwbVia7MCQNmDRF97Rzs9oLiFqb4ZN2",
-  "8SQFRz77ZDWy3z6dmcfb7817qPzYMc78K6GBkWxvckJg",
-  "9cStCUnJnrH3dSQHGCmScuwRNH4nQ8xT2BZeVPsnGPuB",
-  "9EFpeiHD3Xnrah4aAGjNh7ThWsEsERxxQAkVyauUAq7H",
-  "9EyPAMyQvXaUWFxd2uQHvG8vpkKs33YdXvDvwmRXrUiH",
-  "9FE8V34esAoosqYqyV3fRGoPrfuR6WtH9TAhk31HJ7G8",
-  "8CZjFG1EV3FduGV918QWUh7fevUoZSTffVY8bK6M3wbu",
-  "CPcDUe51Xh8Jq7NdBsr8qd2wXN7tYov5iLGtNYskkXLb",
-  "Ez2jp3rwXUbaTx7XwiHGaWVgTPFdzJoSg8TopqbxfaJN",
-  "F72vY99ihQsYwqEDCfz7igKXA5me6vN2zqVsVUTpw6qL",
-  "FakHVp9d6JJDa5j4w4d1NetFjZafLkHx1LETWhDCyVxK",
-  "Fffc5CxTqeKwrg3xTMnNwfnmVn32m6Cuq3PB72gFNpip",
-  "FneFUpqkjBx5KNGVWtsBY7TuUnS3962BQEgctWNje7mL",
-  "Gmh3Wt423pU6GsS3FQyZjknifnAFW7g3J8HhbF2TrbZL",
-  "GYMhYoRn1kwK5rrtoQ2xppYmRCJDALuNEBpLDqAnFuXW",
-  "i8D8Qm9C1mjzr8xzQuoEVKmvQwJioETHNods4wEzbZa",
-  "JBKRd7yDg3npf5PDTrC4wGzLjS8tGPRMQ39k1AufvPkJ",
-  "9HCTuTPEiQvkUtLmTZvK6uch4E3pDynwJTbNw6jLhp9z",
-  "H812jAz5Z5t8cvfXoxbE27Q2F89eovpib5kpXawLAFdS",
-  "BYZxm7zMf2wkMMnh8KmZmEFoxL319w4QGkB4zQgEThkS",
-  "ErushyoogjNsr3WdvdxS8XKLYsJ6ZL5vAZvUUfCvF7Yo",
-  "EsDB2BmVKKUM64hKnaKT6ZLAcGrzdp72oBupmhBkUAue",
-  "Hbi1ubruHkQdX52uDewnCjeHtxsLoCXTnsBMPJZyxn28",
-  "AszsUFwSNY8tVZ5N8ukjutgmEbikPZYRzk5744U9JFNk",
-  "4H5cREJ2KvHFh8UvcKLek8DJgRte6kiaR2FSBTBVGUd3",
-  "ACHhRQMbTxuWqU3bmbBbgUNGsPsYnvB8KLcPkkXCY1C7",
-  "65paNEG8m7mCVoASVF2KbRdU21aKXdASSB9G3NjCSQuE",
-  "FateMietcaAAUvfQDHnnPDGmeYme7mvLqFYvLomWEmNw",
-  "2fg5QD1eD7rzNNCsvnhmXFm5hqNgwTTG8p7kQ6f3rx6f",
-  "7NAd2EpYGGeFofpyvgehSXhH5vg6Ry6VRMW2Y6jiqCu1",
-  "8DGbkGgQewL9mx4aXzZCUChr7hBVXvPK9fYqSqc7Ajpn",
-  "4iLVvoiPNQgjNjmx3STx3z3GV8Mf5fkjp5D1ebDENNQR",
-  "H31vEBxSJk1nQdUN11qZgZyhScyShhscKhvhZZU3dQoU",
-  "D7xK1ZLz8KQNWN8aU1jbzNAuT5xwqgFrCUUYodVU4G42",
-  "CgaA9a1JwAXJyfHuvZ7VW8YfTVRkdiT5mjBBSKcg7Rz5",
-  "AeLaMjzxErZt4drbWVWvcxpVyo8p94xu5vrg41eZPFe3",
-  "A88uMtYGRx5CF4TT8L4L7KxjbPeW1o21mKMwfNcmH1db",
-  "498g1rVnFcnjBjpfw1xyqA1WvgQXUU8RWuELjxkjAayQ",
-  "83b2LMf12aLec92kur3duRA8VvUkLaXUtML31aCcZNCM",
-  "71hrqoeuTKhfRogEQiDpY1mvRePBXMv8vuDYaV4YVpci",
-  "3QtkdYmRAGRVNWYQnv5bRL6GmZMHNDseJruTuzoLuGUB",
-  "DiaAmWrdWPF7RjyP75xENaapWLqYhG7ejH64xWVUsmuH",
-  "AZNV9zQXjWNgTxsmHobjV4KqCJPyjcmvjSmgTxEr2ztE",
-  "274vmGgKuYQp8Fxvb8n3cr9ZeY3SYM6LgeaXM6jS2nD6",
-  "4sAUSQFdvWRBxR8UoLBYbw8CcXuwXWxnN8pXa4mtm5nU",
-  "89HbgWduLwoxcofWpmn1EiF9wEdpgkNDEyPjzZ72mkDi",
-  "4vw54BmAogeRV3vPKWyFet5yf8DTLcREzdSzx4rw9Ud9",
-  "9tY7u1HgEt2RDcxym3RJ9sfvT3aZStiiUwXd44X9RUr8",
-  "D6QayRMD7iwWTFy2XeoCYMLAZyNeAd8gT5qxj71noptx",
-  "VJSDW6S74YXR4rRR9P4xwhMvLZJQMhrUb8XMFirUsy1",
-  "EDoonKrsParDnA4yJKJ3iDNEaFVfcaxSULqzQyNkwa61",
-  "AeLb2RpVwrqKZJ87PEiFdReiEXJXACQn17c8APQS1FHx",
-  "86AEJExyjeNNgcp7GrAvCXTDicf5aGWgoERbXFiG1EdD",
-  "215nhcAHjQQGgwpQSJQ7zR26etbjjtVdW74NLzwEgQjP",
-  "43Q33vir9vv2rgferWUw6zxv8ukLFRzdxmVctVRDufUB",
-  "G84Yz6fDA8wun3po1QG6SrGknK3cha2okXog9MmrqAQt",
-  "94JRjXuRjdo62mcyaxqmmYAFe9E73UZw5sRyJvQzzG2e",
-  "7iabBMwmSvS4CFPcjW2XYZY53bUCHzXjCFEFhxeYP4CY",
-  "5sLbBRU6KBpfSVXHrLtEWJmfyLtbbjidmVeiUzjPEMe5",
-  "ESfSy3R5M9tUTaxgWgJSwdqPCYz5T9TUUnm5Rh32H6Ab",
-  "DpNVrtA3ERfKzX4F8Pi2CVykdJJjoNxyY5QgoytAwD26",
-  "26kZ9rg8Y5pd4j1tdT4cbT8BQRu5uDbXkaVs3L5QasHy",
-  "JEETj9KvH3mm14NCUdrgZSZJf8U2rAbUa9gc6ADhA3of",
-  "Eq7vHwMDow22B8kJKEzYp478VpcYudfgvdvygeE1Q2Ys",
-  "GxNa3Fza4e3GSDqccT978EuheTwu7af3DaB6JkqPtjU5",
-  "3NzdGknBeQivGUoDzHhaHxLEDN7tNWUyKj5xkqyb4mui",
-  "DsqRyTUh1R37asYcVf1KdX4CNnz5DKEFmnXvgT4NfTPE",
-  "G4uvhRaa1sbBKpATd7DhYN5L3r2dDWj459naV51Tf8so",
-  "6V1ZnGc4sXtEJ26heqa9iZSMswqXgRsXB8NEAafPcSbw",
-  "FTg1gqW7vPm4kdU1LPM7JJnizbgPdRDy2PitKw6mY27j",
-  "6EDJ7JuynXSPaMvufzAX4swSRJZXv6uPi4s6jmo33xj5",
-  "dATMod1UTXYzvaXji4mBsvXTeAUAC73TNJQAejKS54X",
-  "7yhcD8sXi3rbCacekTwPNpsF55K3nN6WBJxsZHqr26o3",
-  "Hxm9JftymJVSoYFiwwA1owR5t2GH8WFZfEw4HZHRrMKk",
-  "4jSmEmBkuBi1JxZHM1khkf57xPR2oW1EnkRxqehq1cSK",
-  "4XMPyWFsYdNcCN4FG8geyytyTeUNacn4QundBzMqbGGT",
-  "Bi4rd5FH5bYEN8scZ7wevxNZyNmKHdaBcvewdPFxYdLt",
-  "CxnVxGM8iPkSXsxEUyLcqBVAKraWZ6U9FzcT9YoHMPmN",
-  "EABXkKHLdH8Cb8YjJ2Zcj4ybnY4xUDbXELs9cy6rMQi8",
-  "6JzaC7UFYdJYcz58EeBSjvYu5tyxg55igt2RyU9UiNm2",
-  "CkxVhktjqYuhsVfNQzqEZkwQ2gMU1wEFPM3FSSVXGjM9",
-  "96sErVjEN7LNJ6Uvj63bdRWZxNuBngj56fnT9biHLKBf",
-  "2N7qg9a3N6DXgDBXvgZ5JGnXvxUnX1YhBEC5Y7waqxmi",
-  "7r8t5zbZ3vNKh52iEwhL6ms8gZjzSALrSgJvcyz9iixQ",
-  "DgeoBRUzuuzpRYpLqFpSEkH5DBUAQR2WbSjcPobPFhb8",
-  "BFTCyf9BfP8WWuheCBoRfBWKz54JQ2aSQoGz1MGwwMNT",
-  "Dgehc8YMv6dHsiPJVoumvq4pSBkMVvrTgTUg7wdcYJPJ",
-  "9iJAzuBcDT1SRVALiNXSvWoHKTpNVACtdoQ3EnwzpqLK",
-  "5twwvp9YkX6WykbFuSe5xkmW5HQ4uwJyq7UPgcxLn1Ws",
-  "6ghddcbJBcnK4FgowbHPEsxRhkGxKhAkseDiL3tuEho4",
-  "Da59SHWe9G7vvHBxeYeypxw5HwqZibDKjpQLNFPpfbGt",
-  "7Sr67CKtXnuK38TtB2FGtAzu9fuJp5Zhpg5eFja931JX",
-  "8MaVa9kdt3NW4Q5HyNAm1X5LbR8PQRVDc1W8NMVK88D5",
-  "FWgwxkbvRPcTBA7AZ1weKp4kZJZMkwHhdDkmKncxAeC1",
-  "hahaXKR7g2VwnS7WguKvy7MQdZqi88EtKP7k2xTh4Qs",
-  "2sDCZ7mQJyphPeGpKCDUQvvUZEvGdK9PeLDuJ3n3M9V2",
-  "2iCmwtaM14u5XijJ6Wx6pbxSqvvPbvzUVXAhk1B4aEtr",
-  "BHhRbqadwedgwerPRKQYyf3QHvQyMJ6tFjt5rybaCxjU",
-  "HrWt6V3kjv26bfUTzBroVAp87W62AWD3LsRfsNdgXJrc",
-  "5afSYA7JRyTvpbiypNjTMj6SsYAopXjvZwSPpx6ZzdiU",
-  "89VB5UmvopuCFmp5Mf8YPX28fGvvqn79afCgouQuPyhY",
-  "73LnJ7G9ffBDjEBGgJDdgvLUhD5APLonKrNiHsKDCw5B",
-  "HQLeWLJRfhnzq4Ucdn3V1vgSw5ZLxRXT6QQa5bASXSdu",
-  "EVNLVqUuCdbU2ebAwmSPWRcQ73iR4W5cho6shH7fXXir",
-  "76ZUBj1JLz7arTVHSRJok5oSTEqDuVBgySFMVHtzxzZc",
-  "GNrmKZCxYyNiSUsjduwwPJzhed3LATjciiKVuSGrsHEC",
-  "E57hYjjwNAnvXe67C1q7nKRdC2jWMRGLWAJsBJAJrgzR",
-  "2CXbN6nuTTb4vCrtYM89SfQHMMKGPAW4mvFe6Ht4Yo6z",
-  "HkFt55P3PhRWHXoTFeuvkKEE4ab26xZ1bk6UmXV88Pwz",
-  "9HhLNKepBYJx4CLmatWD4PuQ7rHF6kXmzAzyF7pTbduT",
-  "CNudZYFgpbT26fidsiNrWfHeGTBMMeVWqruZXsEkcUPc",
-  "9GTVJLduxXwUR6otWSYgDLatYJCab61wHB8Vcoi2FNEf",
-  "kQdJVZvix2BPCz2i46ErUPk2a74Uf37QZL5jsRdAD8y",
-  "J8XcwF9NqgUdSV8LJGtUQjwRg1RhXjmFRDZUsAxWNaj4",
-  "H8QD9bFaGwnW3EYRLXmGFUG6aWsC1h7U8v7GnJwJ2Vys",
-  "6EDaVsS6enYgJ81tmhEkiKFcb4HuzPUVFZeom6PHUqN3",
-  "9ZzjXiwkGRDBwVHJitfx8AmnN2YUbnqW6M1tH38juEeJ",
-  "2NrrLM4TM4G5Qz3VXhQXMLFfA6KU76kS61iteBRkbmCR",
-  "FvTBarKFhrnhL9Q55bSJnMmAdXisayUb5u96eLejhMF9",
-  "EFgLmkDuqKt1bjLpee4s4Y5Xy26eYHVQLKULZeXSwdmd",
-  "6gHaLmWymSnpULsUkHPX7wKVjoiYFkeRQ2s6SBx5DY73",
-  "D18EmaqFyXJ35GA9XP41qecF72JsyJNo6ZtrTDfi5xGH",
-  "EmXjjMDbXQQG7miHGT82toR2H6DUQXHv4aJ9Cz6VfJbW",
-  "9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM",
-  "GdpQ9K3Z7k4CHuo9a8X417enk3qPAEPByNTza4bMn83u",
-  "frBh2eT1P2J3Shu6wYMXtM4o3EeFBvi7cs8cbq5DtjY",
-  "7w7tQnyfZUpdHNTbTX9MVZHhWdaNcYKZuWaSSweMJxUJ",
-  "DqrTpRqgiEE5GKePgYkhRyR2Vx9XnSJrV1Jd3ZZVECLF",
-  "4frBKrDzR63R8jAnZDkLTYRzUVByax6duBSruHeqdyv4",
-  "7M3AinEXjZ7okFPh8Xw7ESEayZFZzFAKGJTf6yNATPpn",
-  "GM7Hrz2bDq33ezMtL6KGidSWZXMWgZ6qBuugkb5H8NvN",
-  "5kV1MxKZd2cK7nJgUpxCdo9qwLeyLv4UzcCJLoGyEp7L",
-  "FyBQWMUXzzD7S6GAUWSqcTFhAiF86PQstyRHJdLfzz8J",
-  "5tzFkiKscXHK5ZXCGbXZxdw7gTjjD1mBwuoFbhUvuAi9",
-  "BTeqNydtKyDaSxQNRm8ByaUDPK3cpQ1FsXMtaF1Hfaom",
-  "unHEPBuKEQ5qf6JRRi1WZgJ1Pe5nuyCzSCDRyMkAn2X",
-  "HcPE7DGP3iRzBv9BJ4fYA5D5rLK84CHaRTn3dwukGxXe",
-  "286CHN57Km41GsAnDv866WKd6YB6HPSjFgF4rGDJTRLf",
-  "F5TjPySiUJMdvqMZHnPP85Rc1vErDGV5FR5P2vdVm429",
-  "3kebnKw7cPdSkLRfiMEALyZJGZ4wdiSRvmoN4rD1yPzV",
-  "2jHGY77pyUkSK4e2EVYJL6L24T3kNKRcZg1f4CV19Kgs",
-  "AT6FsbUy1jNR2AHE35WCVh3nSdDtYADtdhA2KitQXmL5",
-  "GKT2j5gPqY2ZKfhaGB5cn5bTHLSKTUrULe8wG1QwmLpt",
-  "3fEP8Ln26G4EXdBjjD4zH7sLXecv76aarneZcZhEFw6j",
-  "AMPhmcp3uVyYShFnaJDtLAM22CvJPLxwVFWarLHf2Fw5",
-  "EbHeQQp7B7nTQJDVN5WFL1wheficuMbp54ybsjmiXtsf",
-  "9NNS758mUGByRcFBSD79fLn2mYL3PGM9G9J5RjBV3kD4",
-  "EaVboaPxFCYanjoNWdkxTbPvt57nhXGu5i6m9m6ZS2kK",
-  "BoYHJoKntk3pjkaV8qFojEonSPWmWMfQocZTwDd1bcGG",
-  "7KpVvyBtxV962E4VEkycaguZkfys35iudnEwsKZAm4Ao",
-  "7qXC6p9U1wE4iGLAgpTfJHF8kvdvp3o9ekbuVADhNASm",
-  "RH6epK9UW5vA5rm23FcLi4rPuTJjwya6UQJeG1tigv3",
-  "2kv8X2a9bxnBM8NKLc6BBTX2z13GFNRL4oRotMUJRva9",
-  "7rxyLczJthc3s9SDtw5WaQ1bzcsSdChkbDQFUMFSN6zN",
-  "Av3xWHJ5EsoLZag6pr7LKbrGgLRTaykXomDD5kBhL9YQ",
-  "AGqjivJr1dSv73TVUvdtqAwogzmThzvYMVXjGWg2FYLm",
-  "8MoW9mtbEz6z3gPuAdYb1yWhjCAxQSYqpcTb1CQgN5qb",
-  "9N5pGaJFEsdwsRyB4XFuJPqTxmPqzUbj6SViTn4KHiTa",
-  "BCagckXeMChUKrHEd6fKFA1uiWDtcmCXMsqaheLiUPJd",
-  "D9gQ6RhKEpnobPBUdWY5bPQt2p3zGk3iVz6ChpUi2ArA",
-  "49LuRDK9EtRqQBFTtEJU8yPKWJQx3mSA7MtXNmwj8bqd",
-  "4FPtoaU6WmQk5jVygv14U5D7abh7cVTuQVAco7m5Djko",
-  "J3wA9xnAvuDYJ3BhtDvGh4VFPDUt5JXjEWiuvVtZDxTN",
-  "HrHJputHcA8mkwrcQB3GkrJ2u1f7Fm4LzAZptSYSsUcf",
-  "22kFm8b2Vb7itdz51dNGd1tn9hkKgF82sc2jNEQkGafp",
-  "7T6BwG26MHxgKYqG6Knzs7ViLcmwkcUHjjQu4ddn331o",
-  "BpycpQ7STrD8d73kjui5nzJmp7EBAgSmFfV8zeqMMX5z",
-  "ELSyW68qyAToytdaMkyQhgGL9FErGimoPA27AgingJtE",
-  "Gitmf7ap4gYgbEVzkaiy4sLtXev4kHPu8VYdbpcXTV3w",
-  "2WgDev67aT9sH8LBLxkaGuuXFdqyyGi3hkkgACQZJJw7",
-  "FKY9K9K2WjXP5i4FrAo3EZsyfqV4u9CjQAwj59QXh8Uv",
-  "AC5RDfQFmDS1deWZos921JfqscXdByf8BKHs5ACWjtW2",
-  "34ZEH778zL8ctkLwxxERLX5ZnUu6MuFyX9CWrs8kucMw",
-  "7Dt5oUpxHWuKH8bCTXDLz2j3JyxA7jEmtzqCG6pnh96X",
-  "4v98tazQGntQww6NbAGrKERohXLX79vfXqZJ8M1bL6DH",
-  "6RYVUPzp1rPaDQth8LaNLaMcZg4HRe3L9LhpJDV9ZZWf",
-  "9yYya3F5EJoLnBNKW6z4bZvyQytMXzDcpU5D6yYr4jqL",
-  "KANYEsXAntLxYUE6GtPJ5CahFGpEbaSbd5xhNFYbvq3",
-  "6EbQwK1bLmwwHPGYgUtGgH4PVA2Vq683SpmxauJXKC2m",
-  "A8sM47Xd1mA8zRjBKcKMHnhtGDwLtUNFq3n7YLej5ZZZ",
-  "ACTbvbNm5qTLuofNRPxFPMtHAAtdH1CtzhCZatYHy831",
-  "Dv4DyGEP2WinTUjBGLewQKYcgis46D8FZvt55y3Fsb39",
-  "HBAbw8VjQjCpE9hgBziwrGNoMsNKxH9WFvfBfVaP8C8L",
-  "4aDdi3EiDPMbeZ3e5BvbFMt4vfJaoahaHxZuwKQRtFc1",
-  "AqgRzTz1iPfR5jUVwnbiMLxcAK9er7Fu3x6QqEbL5dvz",
-  "ASAvw3GfTVH8CYnruEFLLYNkUP5tPLLGs4vU49P4tcj9",
-  "4ZjYSCH3Sib9iMSM3QN2sL2kwxNcXG2P4XCemSC2hsyb",
-  "CpGsmGiNYjiVwUpePRfGULbEdbkgDdv6WwnjZBVcyZ6D",
-  "E6pP9QF5nJXUrZXbq6egk5j8i5FPNNttvQKbowvcWK6s",
-  "GipUqsbqDCr4pkYi6UQASzRD92zJGFaJgw9jjCayYmcd",
-  "BfAgS1vsK2Wja56zxcBrMMdn6sFgTnMmZu3wi4XwiAt3",
-  "72e6QM7gn9MH5u1YpgQbduexm4WAon1cnsSXPqKnLQec",
-  "MNhBbrscBPmeid54buiqSgyWa4D8PY6uKHoK2wJsTJN",
-  "8DSii5GHqcRSufWsrQu1i3oDTnyFS5iD3Jc9PjE7XzWf",
-  "8M3ZArYWLNHbCTQpWwZzfZirmoCEj5uoggadfo5MG4f8",
-  "DAzemUqtoh1qH7A23YoDPSJwhEmdzUByors5m7Q11t5f",
-  "shottaxEfNihMUBWUHaQWjYc8n9XEMrUGTKwzY1tt1R",
-]);
 
 const KNOWN_RUGGERS = [];
 const RPC_ENDPOINT = 'https://api.mainnet-beta.solana.com';
@@ -2586,319 +1517,6 @@ async function checkAndAddRugger(rugToken) {
       ruggers[devAddr].rugs=dev.totalRugs; ruggers[devAddr].label=`Serial Rugger (${dev.totalRugs} rugs détectés)`;
       try { localStorage.setItem(RUGGERS_KEY,JSON.stringify(ruggers)); } catch(e) {}
     }
-  }
-}
-
-// ============================================================
-// HELIUS — Sécurité on-chain + Métadonnées Metaplex (socials)
-// Les socials (Twitter/Telegram/website) sont stockés dans les
-// métadonnées on-chain du token — lisibles gratuitement via Helius
-// C'est ce qu'affichent Axiom, Terminal, DexScreener etc.
-// Cache 10min pour économiser le quota
-// ============================================================
-const heliusCache = {};
-
-async function checkTokenSecurity(mintAddr, pairAddress = null) {
-  if (!mintAddr || mintAddr.length < 32) return null;
-  const now = Date.now();
-  if (heliusCache[mintAddr] && now - heliusCache[mintAddr].ts < 600000) {
-    return heliusCache[mintAddr].data;
-  }
-  try {
-    // 3 appels PARALLÈLES pour réduire la latence (avant : 3x5s = 15s max, maintenant : 8s max)
-    const [accRes, holdRes, dasRes] = await Promise.allSettled([
-      fetch(HELIUS_RPC, {
-        method:'POST', headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({jsonrpc:'2.0',id:1,method:'getAccountInfo',params:[mintAddr,{encoding:'jsonParsed'}]}),
-        signal:AbortSignal.timeout(8000)
-      }).then(r=>r.json()),
-      fetch(HELIUS_RPC, {
-        method:'POST', headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({jsonrpc:'2.0',id:2,method:'getTokenLargestAccounts',params:[mintAddr]}),
-        signal:AbortSignal.timeout(8000)
-      }).then(r=>r.json()),
-      fetch(HELIUS_RPC, {
-        method:'POST', headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({jsonrpc:'2.0',id:3,method:'getAsset',params:{id:mintAddr}}),
-        signal:AbortSignal.timeout(8000)
-      }).then(r=>r.json())
-    ]);
-
-    const accResp  = accRes.status==='fulfilled'  ? accRes.value  : null;
-    const holdResp = holdRes.status==='fulfilled' ? holdRes.value : null;
-    const dasResp  = dasRes.status==='fulfilled'  ? dasRes.value  : null;
-
-    const info = accResp?.result?.value?.data?.parsed?.info;
-    const mintAuthority   = info?.mintAuthority   ?? null;
-    const freezeAuthority = info?.freezeAuthority ?? null;
-    const supply          = parseFloat(info?.supply || 0);
-    const decimals        = info?.decimals ?? 6;
-
-    const holdersRaw = holdResp?.result?.value || [];
-    const supplyNum = supply / Math.pow(10, decimals);
-    // Exclure les program accounts connus
-    const KNOWN_PROGRAMS = new Set([
-      '11111111111111111111111111111111',
-      'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
-      'So11111111111111111111111111111111111111112',
-      '675kPX9MHTjS2zt1qfr1NYHuzeLXfQM9H24wFSUt1Mp8',
-      'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJe8bXP',
-    ]);
-    if (pairAddress) KNOWN_PROGRAMS.add(pairAddress);
-    const holdersFiltered = holdersRaw.filter(h => !KNOWN_PROGRAMS.has(h.address));
-    // Exclure le #1 holder (toujours le LP pool / bonding curve) → scorer les vrais wallets [2..11]
-    const holders = holdersFiltered.slice(1, 11);
-    const holderCount = holders.length;
-    const top1Pct  = supplyNum > 0 && holders[0] ? (parseFloat(holders[0].uiAmount)/supplyNum)*100 : 0;
-    const top5Pct  = supplyNum > 0 ? holders.slice(0,5).reduce((s,h)=>s+parseFloat(h.uiAmount||0),0)/supplyNum*100 : 0;
-    const top10Pct = supplyNum > 0 ? holders.slice(0,10).reduce((s,h)=>s+parseFloat(h.uiAmount||0),0)/supplyNum*100 : 0;
-
-    // Socials depuis DAS getAsset — même source qu'Axiom/Terminal
-    let twitter = null, telegram = null, website = null;
-    if (dasResp) {
-      const rd = dasResp?.result || {};
-      const links = rd?.content?.links || {};
-      const meta  = rd?.content?.metadata || {};
-      const ext   = meta?.extensions || {};
-      twitter  = links.twitter  || links['twitter']  || ext.twitter  || meta?.twitter || null;
-      telegram = links.telegram || links['telegram'] || ext.telegram || meta?.telegram || null;
-      website  = links.website  || links['external_url'] || ext.website || meta?.external_url || null;
-      const attrs = meta?.attributes || [];
-      for(const attr of attrs){
-        if(attr.trait_type==='twitter'||attr.trait_type==='Twitter')   twitter=twitter||attr.value;
-        if(attr.trait_type==='telegram'||attr.trait_type==='Telegram') telegram=telegram||attr.value;
-        if(attr.trait_type==='website'||attr.trait_type==='Website')   website=website||attr.value;
-      }
-      // Fetch JSON URI (metadata on-chain Pump.fun/Bonk) — source la plus fiable
-      // Le créateur y renseigne twitter/telegram directement au moment du mint
-      const jsonUri = rd?.content?.json_uri;
-      if (jsonUri && jsonUri.startsWith('http') && !twitter && !telegram) {
-        try {
-          const mj = await fetch(jsonUri, { signal: AbortSignal.timeout(5000) }).then(r => r.json());
-          twitter  = twitter  || mj?.twitter  || mj?.extensions?.twitter  || mj?.properties?.twitter  || null;
-          telegram = telegram || mj?.telegram || mj?.extensions?.telegram || mj?.properties?.telegram || null;
-          website  = website  || mj?.website  || mj?.extensions?.website  || mj?.external_url || null;
-        } catch(e) { /* optionnel */ }
-      }
-    }
-
-    const result = {
-      mintAuthority, freezeAuthority,
-      top1Pct:  top1Pct.toFixed(1),
-      top5Pct:  top5Pct.toFixed(1),
-      top10Pct: top10Pct.toFixed(1),
-      holderCount: holderCount,
-      safe: mintAuthority === null && freezeAuthority === null && top1Pct < 25 && top5Pct < 55,
-      // Socials on-chain (lus depuis Metaplex / Pump.fun metadata)
-      twitter, telegram, website,
-      hasTwitter:  !!twitter,
-      hasTelegram: !!telegram,
-      hasWebsite:  !!website,
-      socialCount: (twitter?1:0) + (telegram?1:0) + (website?1:0)
-    };
-    heliusCache[mintAddr] = { ts: now, data: result };
-    return result;
-  } catch(e) {
-    return null;
-  }
-}
-
-// swCache persisté en localStorage — les counts Axiom survivent aux rechargements de page
-// Jamais diminuer : un trader qui a vendu reste compté définitivement
-function swCacheLoad() {
-  try {
-    const raw = localStorage.getItem('swCache_v1');
-    if (!raw) return {};
-    const parsed = JSON.parse(raw);
-    const now = Date.now();
-    const clean = {};
-    for (const [k, v] of Object.entries(parsed)) {
-      // Garder max 7 jours pour éviter que localStorage grossisse
-      if (now - (v.ts || 0) < 7 * 24 * 3600 * 1000) clean[k] = v;
-    }
-    return clean;
-  } catch(e) { return {}; }
-}
-function swCacheSave(addr, entry) {
-  try {
-    const raw = localStorage.getItem('swCache_v1');
-    const all = raw ? JSON.parse(raw) : {};
-    all[addr] = entry;
-    localStorage.setItem('swCache_v1', JSON.stringify(all));
-  } catch(e) {}
-}
-const swCache = swCacheLoad();
-const scoreHistory = {}; // addr → {maxAxiom, maxSocial, maxHolder}
-
-// Helper : fetch avec retry automatique sur 429
-async function fetchRetry(url, options, retries = 2, delayMs = 800) {
-  for (let i = 0; i <= retries; i++) {
-    const resp = await fetch(url, options);
-    if (resp.status !== 429) return resp;
-    if (i < retries) await new Promise(r => setTimeout(r, delayMs * (i + 1)));
-  }
-  return fetch(url, options); // dernière tentative sans catch
-}
-
-// -- AXIOM wallet tracker -- verifie si des wallets AXIOM sont top holders --
-async function checkAxiomWallets(tokenAddr, pairAddr = null, deep = false) {
-  if (!tokenAddr) return { count: 0, wallets: [], clustered: false };
-  const now = Date.now();
-  const cached = swCache[tokenAddr];
-  // Cache 30min pour Axiom — évite les re-checks qui pourraient baisser le count
-  // Le MAX historique est aussi stocké dans maxEver pour double sécurité
-  if (cached && now - cached.ts < 1800000) return cached.result;
-  // Pour getSignaturesForAddress : utiliser pairAddress (bonding curve) si dispo
-  // Les swaps Pump.fun sont indexés sous la bonding curve, PAS sous le mint
-  const sigAddr = pairAddr || tokenAddr;
-
-  try {
-    // DOUBLE STRATÉGIE :
-    // A) getSignaturesForAddress → signatures → POST parseTransactions → feePayer (traders passés ET vendus)
-    // B) DAS getTokenAccounts (holders actuels avec balance > 0)
-
-    // Requêtes parallèles : pairAddr (pool actuel) + mintAddr (all-time) + DAS holders
-    // Double source sigs : couvre pré-migration (bonding curve) ET post-migration (PumpSwap)
-    // deep=true (Debug CA) : limite 500 pour couvrir tout l'historique même sur tokens gradués
-    const sigLimit = deep ? 500 : 100;
-    const [sigPairRes, sigMintRes, dasRes] = await Promise.allSettled([
-      // A1) Signatures via pairAddr (pool actuel — PumpSwap ou bonding curve)
-      fetchRetry(HELIUS_RPC, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ jsonrpc: '2.0', id: 'sigs1',
-          method: 'getSignaturesForAddress',
-          params: [sigAddr, { limit: sigLimit }] }),
-        signal: AbortSignal.timeout(20000)
-      }).then(r => r.json()),
-      // A2) Signatures via mintAddr (couvre toutes les txs depuis le lancement)
-      fetchRetry(HELIUS_RPC, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ jsonrpc: '2.0', id: 'sigs2',
-          method: 'getSignaturesForAddress',
-          params: [tokenAddr, { limit: sigLimit }] }),
-        signal: AbortSignal.timeout(20000)
-      }).then(r => r.json()),
-      // B) DAS tous les holders actuels
-      fetchRetry(`https://mainnet.helius-rpc.com/?api-key=${HELIUS_KEY}`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ jsonrpc: '2.0', id: 'das',
-          method: 'getTokenAccounts',
-          params: { mint: tokenAddr, limit: 1000, displayOptions: {} } }),
-        signal: AbortSignal.timeout(12000)
-      }).then(r => r.json())
-    ]);
-
-    // Fusionner : newest 50 + oldest 50 de chaque source → early buyers ET traders récents
-    const sigSetNew = new Set();
-    const sigSetOld = new Set();
-    [sigPairRes, sigMintRes].forEach(r => {
-      if (r.status === 'fulfilled') {
-        const sigs = r.value?.result || [];
-        sigs.slice(0, 50).forEach(s => { if (s?.signature) sigSetNew.add(s.signature); });
-        sigs.slice(-50).forEach(s => { if (s?.signature) sigSetOld.add(s.signature); });
-        // deep : aussi prendre le milieu pour couvrir l'intégralité
-        if (deep) sigs.forEach(s => { if (s?.signature) sigSetNew.add(s.signature); });
-      }
-    });
-    const sigList = deep
-      ? [...new Set([...sigSetNew, ...sigSetOld])]
-      : [...new Set([...sigSetNew, ...sigSetOld])].slice(0, 100);
-    const allOwners = new Set();
-
-    // A) parseTransactions POST — en batches de 100 (limite API Helius)
-    if (sigList.length > 0) {
-      console.log('[AXIOM] Signatures trouvées:', sigList.length, deep ? '(deep mode)' : '');
-      const parseBatches = [];
-      for (let i = 0; i < sigList.length; i += 100) parseBatches.push(sigList.slice(i, i + 100));
-      for (const batch of parseBatches) {
-        try {
-          const parseResp = await fetchRetry(
-            `https://api.helius.xyz/v0/transactions?api-key=${HELIUS_KEY}`,
-            {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ transactions: batch }),
-              signal: AbortSignal.timeout(20000)
-            },
-            3, 1000
-          );
-          const parsedTxs = await parseResp.json();
-          console.log('[AXIOM] parseTransactions batch', parseBatches.indexOf(batch)+1, '/', parseBatches.length, '— status:', parseResp.status, 'count:', Array.isArray(parsedTxs)?parsedTxs.length:'ERROR');
-          if (Array.isArray(parsedTxs)) {
-            parsedTxs.forEach(tx => {
-              // Filtrer uniquement les tokenTransfers du token analysé (évite faux positifs bundles Jito)
-              const relevantTTs = Array.isArray(tx?.tokenTransfers)
-                ? tx.tokenTransfers.filter(tt => tt?.mint === tokenAddr)
-                : [];
-              // feePayer compté UNIQUEMENT si la tx contient un vrai transfer du token
-              // (évite le cas Jito où un wallet Axiom paie les fees d'une tx qui n'est pas la sienne)
-              if (relevantTTs.length > 0 && tx?.feePayer && tx.feePayer.length >= 32) {
-                allOwners.add(tx.feePayer);
-              }
-              relevantTTs.forEach(tt => {
-                if (tt?.fromUserAccount && tt.fromUserAccount.length >= 32) allOwners.add(tt.fromUserAccount);
-                if (tt?.toUserAccount && tt.toUserAccount.length >= 32) allOwners.add(tt.toUserAccount);
-              });
-            });
-          }
-        } catch(e) { console.warn('[AXIOM] parseTransactions batch error:', e.message); }
-      }
-      console.log('[AXIOM] Total owners from parseTransactions:', allOwners.size);
-    }
-
-    // B) DAS holders actuels
-    if (dasRes.status === 'fulfilled') {
-      const dasAccounts = dasRes.value?.result?.token_accounts || [];
-      console.log('[AXIOM] DAS accounts:', dasAccounts.length, dasRes.value?.error||'');
-      dasAccounts.forEach(a => { if (a.owner) allOwners.add(a.owner); });
-    } else {
-      console.warn('[AXIOM] DAS failed:', dasRes.reason);
-    }
-
-    // On garde uniquement feePayer (signataires humains) + DAS owners (vrais holders actuels)
-
-    // Exclure les adresses système/programme connues avant le match
-    // Ces adresses ne sont JAMAIS des vrais traders humains
-    const KNOWN_PROGRAMS = new Set([
-      '11111111111111111111111111111111',
-      'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
-      'So11111111111111111111111111111111111111112',
-      '675kPX9MHTjS2zt1qfr1NYHuzeLXfQM9H24wFSUt1Mp8',
-      'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJe8bXP',
-      '6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P',
-      'ComputeBudget111111111111111111111111111111',
-      'JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4',
-      'TSLvdd1pWpHVjahSpsvCXUbgwsL3JAcvokwaKt1eokM',
-      'SysvarRent111111111111111111111111111111111',
-      'SysvarC1ock11111111111111111111111111111111',
-      'BQ72nSv9f3PRyRKCBnHLVrerrv37CYTHm5h3s9VSGQDV',
-    ]);
-    // Exclure aussi la bonding curve du token (pairAddr) — elle apparaît dans tous les tokenTransfers
-    if (pairAddr) KNOWN_PROGRAMS.add(pairAddr);
-    const allOwnersList = [...allOwners].filter(o => !KNOWN_PROGRAMS.has(o));
-    console.log('[AXIOM] Total unique owners (excl. programs):', allOwnersList.length);
-    const matchingOwners = allOwnersList.filter(o => AXIOM_WALLETS.has(o));
-    console.log('[AXIOM] Matching Axiom wallets:', matchingOwners.length, matchingOwners);
-    const newCount = matchingOwners.length;
-    const newWallets = matchingOwners.slice(0, 4).map(w => w.slice(0, 8) + '…');
-    // JAMAIS DIMINUER — garder le MAX historique absolu
-    // Un trader qui a vendu reste compté définitivement
-    const prevResult = swCache[tokenAddr]?.result;
-    const prevCount = prevResult?.count || 0;
-    const count = Math.max(newCount, prevCount);
-    const wallets = count > newCount && prevResult?.wallets?.length
-      ? prevResult.wallets  // conserver les wallets de la meilleure détection
-      : newWallets;
-    const result = { count, wallets, clustered: count >= 2 };
-    const cacheEntry = { ts: now, result, maxEver: count };
-    swCache[tokenAddr] = cacheEntry;
-    // Persister en localStorage → survit aux rechargements de page (jamais diminuer)
-    swCacheSave(tokenAddr, cacheEntry);
-    return result;
-
-  } catch(e) {
-    console.warn('checkAxiomWallets error:', e.message);
-    return { count: 0, wallets: [], clustered: false };
   }
 }
 
@@ -3221,13 +1839,13 @@ function submitReview(){const text=document.getElementById('revText').value.trim
 // CODES / SESSION
 // ============================================================
 async function loadCodesFromFB(){
-  try{const data=await fetch(`${FB_URL}/codes.json`).then(r=>r.json());if(data&&Array.isArray(data)&&data.length>0){localStorage.setItem(CODE_KEY,JSON.stringify(data));return data;}}catch(e){}
+  try{const data=await fetch(`${BACKEND_URL}/fb/codes`).then(r=>r.json());if(data&&Array.isArray(data)&&data.length>0){localStorage.setItem(CODE_KEY,JSON.stringify(data));return data;}}catch(e){}
   try{const local=JSON.parse(localStorage.getItem(CODE_KEY));if(local?.length)return local;}catch(e){}
   return getDefaultCodes();
 }
-async function saveCodesFB(codes){try{localStorage.setItem(CODE_KEY,JSON.stringify(codes));}catch(e){}try{await fetch(`${FB_URL}/codes.json`,{method:'PUT',body:JSON.stringify(codes)});}catch(e){}}
+async function saveCodesFB(codes){try{localStorage.setItem(CODE_KEY,JSON.stringify(codes));}catch(e){}try{await fetch(`${BACKEND_URL}/fb/codes`,{method:'PUT',body:JSON.stringify(codes)});}catch(e){}}
 function loadCodes(){try{const c=JSON.parse(localStorage.getItem(CODE_KEY));if(c?.length)return c;}catch(e){}return getDefaultCodes();}
-function saveCodes(c){localStorage.setItem(CODE_KEY,JSON.stringify(c));fetch(`${FB_URL}/codes.json`,{method:'PUT',body:JSON.stringify(c)}).catch(()=>{});}
+function saveCodes(c){localStorage.setItem(CODE_KEY,JSON.stringify(c));fetch(`${BACKEND_URL}/fb/codes`,{method:'PUT',body:JSON.stringify(c)}).catch(()=>{});}
 function getDefaultCodes(){return[{code:'CODE-DEMO-1234',plan:'alpha',used:false},{code:'BASE-TEST-0001',plan:'base',used:false},{code:'DUBA-MODE-9999',plan:'dubai',used:false}];}
 function checkSession(){try{const s=JSON.parse(localStorage.getItem(SESSION_KEY));if(s&&s.expires>Date.now()){isUnlocked=true;onUnlock(s.plan);}}catch(e){}}
 // Auto-déconnexion à expiration de session
@@ -3577,7 +2195,7 @@ async function adminEditAth(key,addr,sym){
   const athMcap=Math.round(parseFloat(raw.replace(/[^0-9.]/g,'')));
   if(isNaN(athMcap)||athMcap<=0){alert('Valeur invalide');return;}
   // Mise à jour Firebase (visible par tous)
-  try{await fetch(`${FB_URL}/calls/${key}.json`,{method:'PATCH',body:JSON.stringify({athMcap})});}catch(e){}
+  try{await fetch(`${BACKEND_URL}/fb/calls/${key}`,{method:'PATCH',body:JSON.stringify({athMcap})});}catch(e){}
   // Mise à jour localStorage
   try{
     const local=JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}');
@@ -3659,16 +2277,16 @@ function showDebug(idx){
 async function saveCall(addr,callMcap,callTime,symbol='',score=0,pairAddress=''){
   const entry={callMcap,callTime,athMcap:callMcap,addr,symbol,score,pairAddress};
   try{const all=JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}');if(!all[addr]){all[addr]=entry;localStorage.setItem(STORAGE_KEY,JSON.stringify(all));}}catch(e){}
-  try{const key=addr.replace(/[.#$\/\[\]]/g,'_');const ex=await fetch(`${FB_URL}/calls/${key}.json`).then(r=>r.json()).catch(()=>null);if(!ex)await fetch(`${FB_URL}/calls/${key}.json`,{method:'PUT',body:JSON.stringify(entry)});}catch(e){}
+  try{const key=addr.replace(/[.#$\/\[\]]/g,'_');const ex=await fetch(`${BACKEND_URL}/fb/calls/${key}`).then(r=>r.json()).catch(()=>null);if(!ex)await fetch(`${BACKEND_URL}/fb/calls/${key}`,{method:'PUT',body:JSON.stringify(entry)});}catch(e){}
 }
 async function updateAth(addr,currentMcap){
   try{const all=JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}');if(all[addr]&&currentMcap>(all[addr].athMcap||0)){all[addr].athMcap=currentMcap;localStorage.setItem(STORAGE_KEY,JSON.stringify(all));}}catch(e){}
-  try{const key=addr.replace(/[.#$\/\[\]]/g,'_');const ex=await fetch(`${FB_URL}/calls/${key}.json`).then(r=>r.json()).catch(()=>null);if(ex&&currentMcap>(ex.athMcap||0))await fetch(`${FB_URL}/calls/${key}.json`,{method:'PATCH',body:JSON.stringify({athMcap:currentMcap})});}catch(e){}
+  try{const key=addr.replace(/[.#$\/\[\]]/g,'_');const ex=await fetch(`${BACKEND_URL}/fb/calls/${key}`).then(r=>r.json()).catch(()=>null);if(ex&&currentMcap>(ex.athMcap||0))await fetch(`${BACKEND_URL}/fb/calls/${key}`,{method:'PATCH',body:JSON.stringify({athMcap:currentMcap})});}catch(e){}
 }
 async function getCallData(addr){
   try{
     const key=addr.replace(/[.#$\/\[\]]/g,'_');
-    const data=await fetch(`${FB_URL}/calls/${key}.json`).then(r=>r.json());
+    const data=await fetch(`${BACKEND_URL}/fb/calls/${key}`).then(r=>r.json());
     if(data && (data.callTime || data.calledAt || data.savedAt)) {
       // Normaliser les champs
       data.callTime = data.callTime || data.calledAt || data.savedAt;
@@ -4063,7 +2681,7 @@ async function renderHistory(){
   container.innerHTML='<div class="hist-empty"><div class="hist-empty-icon">⏳</div><div style="color:var(--muted)">Chargement...</div></div>';
   // Charger depuis Firebase + localStorage, garder le meilleur ATH des 2
   let calls={};
- try{const fb=await fetch(`${FB_URL}/calls.json`,{signal:AbortSignal.timeout(5000)}).then(r=>r.json());
+ try{const fb=await fetch(`${BACKEND_URL}/fb/calls`,{signal:AbortSignal.timeout(5000)}).then(r=>r.json());
     if(fb&&typeof fb==='object')Object.entries(fb).forEach(([k,v])=>{if(v&&v.callTime)calls[k]=v;});}catch(e){}
   try{const local=JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}');
     Object.entries(local).forEach(([addr,val])=>{
@@ -4146,7 +2764,7 @@ async function renderHistory(){
   // Sauvegarder les nouveaux ATH en Firebase en batch (non bloquant)
   if(athUpdates.length){
     athUpdates.forEach(({key,athMcap})=>{
-      fetch(`${FB_URL}/calls/${key}.json`,{method:'PATCH',body:JSON.stringify({athMcap})}).catch(()=>{});
+      fetch(`${BACKEND_URL}/fb/calls/${key}`,{method:'PATCH',body:JSON.stringify({athMcap})}).catch(()=>{});
     });
     // Mettre à jour localStorage aussi
     try{
@@ -4251,7 +2869,7 @@ function toggleLang(){
 // RESET FUNCTIONS
 // ============================================================
 function resetLive(){if(!confirm('Vider tous les calls live ?'))return;lastScored=[];document.getElementById('scannerContent').innerHTML='<div class="empty-state"><div class="empty-icon">🗑</div><div class="empty-title">Liste vidée</div><div class="empty-sub">Refresh pour recharger</div></div>';const lc=document.getElementById('liveCount');if(lc)lc.textContent='';}
-function resetHistory(){if(!confirm('Supprimer tout l\'historique des calls ? Cette action est irréversible.'))return;try{localStorage.removeItem(STORAGE_KEY);}catch(e){}try{fetch(`${FB_URL}/calls.json`,{method:'DELETE'}).catch(()=>{});}catch(e){}const hc=document.getElementById('histCount');if(hc)hc.textContent='';const container=document.getElementById('historyContent');if(container)container.innerHTML='<div class="hist-empty"><div class="hist-empty-icon">🗑</div><div>Historique supprimé</div></div>';}
+function resetHistory(){if(!confirm('Supprimer tout l\'historique des calls ? Cette action est irréversible.'))return;try{localStorage.removeItem(STORAGE_KEY);}catch(e){}try{fetch(`${BACKEND_URL}/fb/calls`,{method:'DELETE'}).catch(()=>{});}catch(e){}const hc=document.getElementById('histCount');if(hc)hc.textContent='';const container=document.getElementById('historyContent');if(container)container.innerHTML='<div class="hist-empty"><div class="hist-empty-icon">🗑</div><div>Historique supprimé</div></div>';}
 
 // ============================================================
 // DEBUG CA — Outil admin pour analyser n'importe quel token
@@ -4434,7 +3052,7 @@ async function fetchTokens(){
   // recharger les calls récents depuis Firebase pour les afficher en Live
   if(lastScored.length===0){
     try{
-      const fb=await fetch(`${FB_URL}/calls.json`,{signal:AbortSignal.timeout(5000)}).then(r=>r.json());
+      const fb=await fetch(`${BACKEND_URL}/fb/calls`,{signal:AbortSignal.timeout(5000)}).then(r=>r.json());
       if(fb&&typeof fb==='object'){
         const twoHoursAgo=Date.now()-2*3600000;
         const recentCalls=Object.values(fb)
@@ -4463,68 +3081,7 @@ async function fetchTokens(){
     try{const resp=await fetch(url,{signal:AbortSignal.timeout(9000)});const data=await resp.json();let raw=data;if(data.contents){try{raw=JSON.parse(data.contents);}catch(e){}}if(raw.pairs&&Array.isArray(raw.pairs))return raw.pairs;if(Array.isArray(raw))return raw;if(raw.data&&Array.isArray(raw.data))return raw.data;if(raw.tokenAddresses||(Array.isArray(raw)&&raw[0]?.tokenAddress)){const addrs=(raw.tokenAddresses||raw.map(x=>x.tokenAddress)).slice(0,30).join(',');if(addrs){const r2=await fetch(`https://api.dexscreener.com/latest/dex/tokens/${addrs}`,{signal:AbortSignal.timeout(9000)}).then(x=>x.json()).catch(()=>({}));return r2.pairs||[];}}}catch(e){}return[];
   }
 
-  // ── HELIUS : nouveaux tokens Pump.fun via transactions recentes ──────────
-  // Recupere les 100 dernieres signatures du programme Pump.fun,
-  // extrait les mint addresses, fetch DexScreener.
-  // Couvre TOUS les tokens crees dans la derniere heure sans keyword.
-  async function fetchNewPumpTokens(){
-    const PUMP_PROGRAM='6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P';
-    const now=Date.now();
-    const oneHourAgo=Math.floor((now-3600000)/1000);
-    try{
-      // Etape 1 : signatures recentes du programme Pump.fun
-      const sigsResp=await fetch(HELIUS_RPC,{
-        method:'POST',headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({jsonrpc:'2.0',id:'pump-sigs',method:'getSignaturesForAddress',
-          params:[PUMP_PROGRAM,{limit:100}]}),
-        signal:AbortSignal.timeout(9000)
-      }).then(r=>r.json());
-      const sigs=(sigsResp?.result||[])
-        .filter(s=>s.blockTime&&s.blockTime>=oneHourAgo&&!s.err)
-        .map(s=>s.signature);
-      if(!sigs.length)return[];
-
-      // Etape 2 : Enhanced API Helius -> mint addresses des tokens crees
-      const txResp=await fetch(
-        `https://api.helius.xyz/v0/transactions?api-key=${HELIUS_KEY}`,
-        {method:'POST',headers:{'Content-Type':'application/json'},
-         body:JSON.stringify({transactions:sigs.slice(0,50)}),
-         signal:AbortSignal.timeout(12000)}
-      ).then(r=>r.json());
-      if(!Array.isArray(txResp))return[];
-
-      const mintAddrs=new Set();
-      for(const tx of txResp){
-        if(!tx)continue;
-        // tokenTransfers : mint = adresse du nouveau token
-        for(const t of(tx.tokenTransfers||[])){
-          if(t?.mint&&t.mint.length>30)mintAddrs.add(t.mint);
-        }
-        // accountData : comptes crees (rent paye = solChange negatif)
-        for(const a of(tx.accountData||[])){
-          if(a?.account&&a.account.length>30&&(a.nativeBalanceChange||0)<0)mintAddrs.add(a.account);
-        }
-      }
-      if(!mintAddrs.size)return[];
-
-      // Etape 3 : DexScreener batch pour tous ces mints
-      const addrsArr=[...mintAddrs].slice(0,30);
-      const allPairs=[];
-      for(let i=0;i<addrsArr.length;i+=15){
-        try{
-          const dex=await fetch(
-            `https://api.dexscreener.com/latest/dex/tokens/${addrsArr.slice(i,i+15).join(',')}`,
-            {signal:AbortSignal.timeout(9000)}
-          ).then(r=>r.json());
-          if(dex.pairs)allPairs.push(...dex.pairs);
-        }catch(e){}
-      }
-      return allPairs;
-    }catch(e){
-      console.warn('[HeliusPump] error:',e.message);
-      return[];
-    }
-  }
+  // fetchNewPumpTokens supprimé — discovery faite côté backend uniquement
   function geckoToDex(pool){try{const a=pool.attributes;if(!a)return null;const mcap=parseFloat(a.market_cap_usd||a.fdv_usd||0),liq=parseFloat(a.reserve_in_usd||0);const created=a.pool_created_at?new Date(a.pool_created_at).getTime():Date.now()-3600000;const addr=pool.relationships?.base_token?.data?.id?.split('_')[1]||'';return{chainId:'solana',pairCreatedAt:created,baseToken:{symbol:a.name?.split('/')[0]||'UNK',address:addr},liquidity:{usd:liq},marketCap:mcap,fdv:mcap,volume:{h1:parseFloat(a.volume_usd?.h1||0),h6:parseFloat(a.volume_usd?.h6||0),h24:parseFloat(a.volume_usd?.h24||0)},priceChange:{m5:parseFloat(a.price_change_percentage?.m5||0),h1:parseFloat(a.price_change_percentage?.h1||0),h6:parseFloat(a.price_change_percentage?.h6||0),h24:parseFloat(a.price_change_percentage?.h24||0)},txns:{h1:{buys:parseInt(a.transactions?.h1?.buys||0),sells:parseInt(a.transactions?.h1?.sells||0)}},info:{socials:a.websites?[{url:a.websites[0]}]:[],websites:[]},url:`https://dexscreener.com/solana/${addr}`};}catch(e){return null;}}
   const ENDPOINTS=[
     // ── Sources "new pools" — TOUS les nouveaux tokens chronologiquement ──
@@ -4544,59 +3101,41 @@ async function fetchTokens(){
     'https://api.dexscreener.com/latest/dex/search?q=solana+launch',
     'https://api.dexscreener.com/latest/dex/search?q=solana+token+2025',
   ];
-  // Lancer DexScreener endpoints ET Helius Pump.fun en parallele
-  const [dexResults, heliusPairs] = await Promise.all([
-    Promise.allSettled(ENDPOINTS.map(fetchPairs)),
-    fetchNewPumpTokens()
-  ]);
+  // Lancer DexScreener endpoints uniquement (Helius discovery côté backend)
+  const dexResults = await Promise.allSettled(ENDPOINTS.map(fetchPairs));
   const seen=new Set();let pairs=[];
   const _48H=48*3600000,_now=Date.now();
-  // 1. Integrer les tokens DexScreener
   for(const r of dexResults){if(r.status!=='fulfilled')continue;for(const p of r.value){const conv=p.attributes?geckoToDex(p):p;if(!conv)continue;if(!conv.chainId||conv.chainId!=='solana')continue;const m=conv.marketCap||conv.fdv||0;if(m>200000||m<5000)continue;
   if(conv.pairCreatedAt&&(_now-conv.pairCreatedAt)>_48H)continue;const addr=conv.baseToken?.address||conv.pairAddress||Math.random().toString();if(seen.has(addr))continue;seen.add(addr);pairs.push(conv);}}
-  // 2. Integrer les tokens Helius (couvre TOUS les tokens Pump.fun recents)
-  // Ces tokens sont absents des endpoints search car leur nom ne match aucun keyword
-  for(const p of(heliusPairs||[])){
-    if(!p||p.chainId!=='solana')continue;
-    const m=p.marketCap||p.fdv||0;
-    if(m>200000||m<5000)continue;
-    if(p.pairCreatedAt&&(_now-p.pairCreatedAt)>_48H)continue;
-    const addr=p.baseToken?.address||p.pairAddress||'';
-    if(!addr||seen.has(addr))continue;
-    seen.add(addr);pairs.push(p);
-  }
-  console.log(`[Scanner] ${pairs.length} paires total (dont ${(heliusPairs||[]).filter(p=>p?.chainId==='solana').length} via Helius Pump.fun)`);
+  console.log(`[Scanner] ${pairs.length} paires DexScreener`);
   const rejected={};
   // ── ÉTAPE 1 : Score TOUS les tokens <1h (sans hardFilter en amont) ─
   const candidates=pairs.filter(p=>{const ah=(Date.now()-(p.pairCreatedAt||0))/3600000;return ah>=0.02&&ah<=1;});
   let preScored=candidates.map(p=>scoreTokenV2(p)).filter(t=>t.score>=30);
   preScored.sort((a,b)=>b.score-a.score);preScored=preScored.slice(0,25);
-  // ── PARALLÉLISATION PAR BATCH : évite les 429 Helius (rate limit) ──
-  // Batch de 3 tokens + 600ms entre batches → ~15 req simultanées max
+  // ── ANALYSE VIA BACKEND — Helius jamais appelé côté client ──
   const parallelResults = [];
-  for (let i = 0; i < preScored.length; i += 3) {
-    const batch = preScored.slice(i, i + 3);
-    const batchRes = await Promise.allSettled(
-      batch.map(async t => {
-        const [sec, wData] = await Promise.allSettled([
-          checkTokenSecurity(t.addr, t.raw?.pairAddress || null),
-          checkAxiomWallets(t.addr, t.raw?.pairAddress || null)
-        ]);
-        return {
-          t,
-          sec: sec.status==='fulfilled' ? sec.value : null,
-          wData: wData.status==='fulfilled' ? wData.value : {count:0,wallets:[],clustered:false}
-        };
-      })
-    );
-    parallelResults.push(...batchRes);
-    if (i + 3 < preScored.length) await new Promise(r => setTimeout(r, 600));
+  for (let i = 0; i < preScored.length; i += 5) {
+    const batch = preScored.slice(i, i + 5);
+    try {
+      const resp = await fetch(`${BACKEND_URL}/analyze-batch`, {
+        method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ tokens: batch.map(t => ({ addr: t.addr, pair: t.raw?.pairAddress || null })) }),
+        signal: AbortSignal.timeout(20000)
+      });
+      const json = await resp.json();
+      if (json.ok && Array.isArray(json.data)) {
+        for (const d of json.data) {
+          const t = batch.find(b => b.addr === d.addr);
+          if (t) parallelResults.push({ t, sec: d.sec, wData: d.wData || {count:0,wallets:[],clustered:false} });
+        }
+      }
+    } catch(e) { console.warn('[Scanner] analyze-batch error:', e.message); }
   }
 
   const finalScored=[];
   for(const res of parallelResults){
-    if(res.status!=='fulfilled')continue;
-    const {t, sec, wData} = res.value;
+    const {t, sec, wData} = res;
     try{
       // Filtres sécurité
       if(sec){
@@ -5356,7 +3895,7 @@ async function fetchRugs(){
     showRugs(mergedRugs,false);
 
   // Firebase merge non-bloquant
-  fetch(`${FB_URL}/rugs.json`).then(r=>r.json()).then(fbData=>{
+  fetch(`${BACKEND_URL}/fb/rugs`).then(r=>r.json()).then(fbData=>{
     if(fbData&&typeof fbData==='object'&&!Array.isArray(fbData)&&Object.keys(fbData).length>0){
       mergedRugs={...fbData,...mergedRugs};
       try{localStorage.setItem(RUGS_KEY,JSON.stringify(mergedRugs));}catch(e){}
@@ -5440,7 +3979,7 @@ async function fetchRugs(){
   }
 
   try{localStorage.setItem(RUGS_KEY,JSON.stringify(storedRugs));}catch(e){}
-  fetch(`${FB_URL}/rugs.json`,{method:'PUT',body:JSON.stringify(storedRugs)}).catch(()=>{});
+  fetch(`${BACKEND_URL}/fb/rugs`,{method:'PUT',body:JSON.stringify(storedRugs)}).catch(()=>{});
 
   const allRugs=Object.values(storedRugs).sort((a,b)=>(b.danger||0)-(a.danger||0));
   lastRugs=allRugs;
@@ -5542,7 +4081,7 @@ async function refreshRugPrices(){
 
   if(updated){
     try{localStorage.setItem(RUGS_KEY,JSON.stringify(storedRugs));}catch(e){}
-    fetch(`${FB_URL}/rugs.json`,{method:'PUT',body:JSON.stringify(storedRugs)}).catch(()=>{});
+    fetch(`${BACKEND_URL}/fb/rugs`,{method:'PUT',body:JSON.stringify(storedRugs)}).catch(()=>{});
   }
 
   // Re-sync lastRugs et re-render
@@ -5985,7 +4524,7 @@ async function downloadPnl(){
 // RESET FUNCTIONS
 // ============================================================
 function resetLive(){if(!confirm('Vider tous les calls live ?'))return;lastScored=[];document.getElementById('scannerContent').innerHTML='<div class="empty-state"><div class="empty-icon">🗑</div><div class="empty-title">Liste vidée</div><div class="empty-sub">Refresh pour recharger</div></div>';const lc=document.getElementById('liveCount');if(lc)lc.textContent='';}
-function resetHistory(){if(!confirm('Supprimer tout l\'historique des calls ? Cette action est irréversible.'))return;try{localStorage.removeItem(STORAGE_KEY);}catch(e){}try{fetch(`${FB_URL}/calls.json`,{method:'DELETE'}).catch(()=>{});}catch(e){}const hc=document.getElementById('histCount');if(hc)hc.textContent='';const container=document.getElementById('historyContent');if(container)container.innerHTML='<div class="hist-empty"><div class="hist-empty-icon">🗑</div><div>Historique supprimé</div></div>';}
+function resetHistory(){if(!confirm('Supprimer tout l\'historique des calls ? Cette action est irréversible.'))return;try{localStorage.removeItem(STORAGE_KEY);}catch(e){}try{fetch(`${BACKEND_URL}/fb/calls`,{method:'DELETE'}).catch(()=>{});}catch(e){}const hc=document.getElementById('histCount');if(hc)hc.textContent='';const container=document.getElementById('historyContent');if(container)container.innerHTML='<div class="hist-empty"><div class="hist-empty-icon">🗑</div><div>Historique supprimé</div></div>';}
 function resetRugs(){if(!confirm('Supprimer toute la liste des rugs détectés ?'))return;try{localStorage.removeItem(RUGS_KEY);}catch(e){}try{localStorage.removeItem(DEV_RUGS_KEY);}catch(e){}lastRugs=[];document.getElementById('rsStatDetected').textContent='0';document.getElementById('rsTokenCount').textContent='';document.getElementById('rsTokenContent').innerHTML='<div class="rs-empty">🗑 Liste des rugs supprimée<br><span style="font-size:.7rem;opacity:.6">Refresh pour recharger</span></div>';}
 function resetRuggers(){if(!confirm('Supprimer toute la liste des ruggeurs ?'))return;try{localStorage.removeItem(RUGGERS_KEY);}catch(e){}try{localStorage.removeItem(DEV_RUGS_KEY);}catch(e){}document.getElementById('rsStatRuggers').textContent='0';document.getElementById('rsAddrCount').textContent='';document.getElementById('rsAddrContent').innerHTML='<div class="rs-empty">🗑 Liste des ruggeurs supprimée</div>';}
 
