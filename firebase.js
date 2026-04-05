@@ -88,3 +88,51 @@ export async function getHistory(limit = 200) {
   const data = snap.val() || {};
   return Object.values(data).sort((a, b) => b.savedAt - a.savedAt);
 }
+
+// Codes
+export async function getCodes() {
+  const snap = await db.ref('codes').once('value');
+  return snap.val() || [];
+}
+export async function saveCodes(codes) {
+  await db.ref('codes').set(codes);
+}
+
+// Calls - individual
+export async function getCall(key) {
+  const snap = await db.ref(`calls/${key}`).once('value');
+  return snap.val();
+}
+export async function putCall(key, data) {
+  await db.ref(`calls/${key}`).set(data);
+}
+export async function patchCall(key, data) {
+  await db.ref(`calls/${key}`).update(data);
+}
+
+// All calls
+export async function getAllCalls() {
+  const snap = await db.ref('calls').once('value');
+  return snap.val() || {};
+}
+
+// Rugs
+export async function getRugs() {
+  const snap = await db.ref('rugs').once('value');
+  return snap.val() || {};
+}
+export async function putRugs(data) {
+  await db.ref('rugs').set(data);
+}
+export async function patchRugs(data) {
+  await db.ref('rugs').update(data);
+}
+
+// Reviews
+export async function getReviews() {
+  const snap = await db.ref('reviews').once('value');
+  return snap.val() || [];
+}
+export async function putReviews(data) {
+  await db.ref('reviews').set(data);
+}
