@@ -511,10 +511,10 @@ export async function runScanCycle() {
           scored.debug.aiReasons = smartCheck.reasons;
         }
 
-        if (scored.score >= 80) {
+        if (scored.score >= 90) {
           finalScored.push(scored);
         } else {
-          rejected[`score<80 (${scored.score})`] = (rejected[`score<80 (${scored.score})`] || 0) + 1;
+          rejected[`score<90 (${scored.score})`] = (rejected[`score<90 (${scored.score})`] || 0) + 1;
         }
       } catch (e) {
         console.warn('[Worker] Scoring error:', e.message);
