@@ -420,7 +420,7 @@ export async function runScanCycle() {
       if (!f.pass) { rejected[f.reason] = (rejected[f.reason] || 0) + 1; return false; }
       const mcap = p.marketCap || p.fdv || 0;
       const addr = p.baseToken?.address || '';
-      if (mcap < 5000 || mcap > 200000) { rejected['mcap hors range'] = (rejected['mcap hors range'] || 0) + 1; return false; }
+      if (mcap < 15000 || mcap > 200000) { rejected['mcap hors range'] = (rejected['mcap hors range'] || 0) + 1; return false; }
       if (!addr || addr.length < 32) return false;
       return true;
     });
@@ -640,9 +640,18 @@ export async function runFastDiscovery() {
       const addr = p.baseToken?.address;
       if (!addr || existingAddrs.has(addr)) continue;
       const mcap = p.marketCap || p.fdv || 0;
-      if (mcap < 5000 || mcap > 200000) continue;
+      if (mcap < 15000 || mcap > 200000) continue;
       const ageH = (now - (p.pairCreatedAt || 0)) / 3600000;
       if (ageH > 1 || ageH < 0.005) continue;
+
+      // Platform check
+      const dexId = (p.dexId || '').toLowerCase();
+      const pairUrl = (p.url || '').toLowerCase();
+      const isPump = dexId.includes('pump') || pairUrl.includes('pump');
+      const isBonk = dexId.includes('bonk') || dexId.includes('launchlab');
+      const isRay = dexId.includes('raydium') || dexId.includes('cpmm') || dexId.includes('clmm');
+      const isBags = dexId.includes('bags');
+      if (!isPump && !isBonk && !isRay && !isBags) continue;
 
       // Check security + axiom
       try {
@@ -651,6 +660,8 @@ export async function runFastDiscovery() {
           checkAxiomWallets(addr, p.pairAddress || null),
         ]);
         if (!sec || sec.mintAuthority !== null || sec.freezeAuthority !== null) continue;
+        if (parseFloat(sec.top1Pct) > 20) continue;
+        if (parseFloat(sec.top5Pct) > 55) continue;
         if ((wData?.count || 0) < 1) continue;
 
         p.security = sec;
