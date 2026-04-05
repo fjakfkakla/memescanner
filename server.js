@@ -1,7 +1,7 @@
 import express from 'express';
 import cors    from 'cors';
 import { getCalls, getHistory, getCodes, saveCodes, getCall, putCall, patchCall, getAllCalls, getRugs, putRugs, patchRugs, getReviews, putReviews } from './firebase.js';
-import { runScanCycle, runFastDiscovery, getLiveTokens, checkTokenSecurityExport, checkAxiomWalletsExport, getHeliusStats } from './worker.js';
+import { runScanCycle, runFastDiscovery, getLiveTokens, addLiveToken, checkTokenSecurityExport, checkAxiomWalletsExport, getHeliusStats } from './worker.js';
 import { trackOutcomes, autoAdjust, loadWeights, getAIPanel, getWinrateStats, deepAnalyze, buildSmartFilters, loadSmartFilters, checkSmartFilters, smartFilters } from './aiEngine.js';
 
 const app  = express();
@@ -187,6 +187,44 @@ app.post('/analyze-batch', async (req, res) => {
       .filter(r => r.status === 'fulfilled')
       .map(r => r.value);
     res.json({ ok: true, data });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+// Submit token — le frontend peut soumettre un token qualifié pour le live
+app.post('/submit-token', async (req, res) => {
+  const { addr, pair } = req.body || {};
+  if (!addr || addr.length < 32) return res.status(400).json({ ok: false, error: 'adresse invalide' });
+  try {
+    const [sec, wData] = await Promise.all([
+      checkTokenSecurityExport(addr, pair || null),
+      checkAxiomWalletsExport(addr, pair || null, true),
+    ]);
+    if (!sec || sec.mintAuthority !== null || sec.freezeAuthority !== null) return res.json({ ok: false, reason: 'security' });
+    if ((wData?.count || 0) < 1) return res.json({ ok: false, reason: 'no_axiom' });
+
+    // Fetch pair data
+    const dexResp = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${addr}`, { signal: AbortSignal.timeout(8000) }).then(r => r.json()).catch(() => ({}));
+    const p = (dexResp.pairs || []).filter(x => x.chainId === 'solana').sort((a,b) => (b.volume?.h1||0) - (a.volume?.h1||0))[0];
+    if (!p) return res.json({ ok: false, reason: 'no_pair' });
+    p.security = sec;
+    if (p.info?.imageUrl || p.profile?.icon || p.profile?.header) p._isPaid = true;
+
+    const { scoreTokenV2 } = await import('./scorer.js');
+    const scored = scoreTokenV2(p, wData);
+    if (scored.score < 90) return res.json({ ok: false, reason: `score_${scored.score}` });
+
+    // Ajouter en live
+    const { saveCall } = await import('./firebase.js');
+    const now = Date.now();
+    const token = { ...scored, calledAt: now, lastSeenAt: now, droppedAt: null };
+    const added = addLiveToken(token);
+    if (!added) return res.json({ ok: false, reason: 'already_live' });
+
+    await saveCall({ addr: scored.addr, symbol: scored.symbol, score: scored.score, mcap: scored.mcap, liq: scored.liq, rugRisk: scored.rugRisk, socials: scored.socials, pairUrl: scored.pairUrl, debug: scored.debug, calledAt: now });
+    console.log(`[Submit] CALL: ${scored.symbol} score=${scored.score} mcap=$${scored.mcap}`);
+    res.json({ ok: true, score: scored.score, symbol: scored.symbol });
   } catch (e) {
     res.status(500).json({ ok: false, error: e.message });
   }
