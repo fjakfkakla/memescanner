@@ -3246,7 +3246,9 @@ async function submitCode(){
   // Suppression du code (usage unique)
   const remaining=codes.filter(c=>c.code!==val);
   await saveCodesFB(remaining);
-  localStorage.setItem(SESSION_KEY,JSON.stringify({plan:found.plan,expires}));
+  const existingSession=JSON.parse(localStorage.getItem(SESSION_KEY)||'null');
+  const registeredAt=existingSession?.registeredAt||Date.now();
+  localStorage.setItem(SESSION_KEY,JSON.stringify({plan:found.plan,expires,registeredAt}));
   isUnlocked=true;closeCode();onUnlock(found.plan);
 }
 function onUnlock(plan){loadReviews();fetchTokens();fetchRugs().then(()=>{if(rugPriceTimer)clearTimeout(rugPriceTimer);rugPriceTimer=setTimeout(refreshRugPrices,3000);});}
@@ -4002,8 +4004,11 @@ function updateWrStats(calls){
   const now=Date.now();
   const limits={'5m':5*60000,'1h':3600000,'day':86400000,'all':Infinity,'custom':_wrCustomMs||Infinity};
   const limit=limits[_wrPeriod]||Infinity;
+  let registeredAt=0;
+  if(!isAdminMode){try{const sess=JSON.parse(localStorage.getItem(SESSION_KEY)||'null');if(sess?.registeredAt)registeredAt=sess.registeredAt;}catch(e){}}
   const filtered=Object.values(calls).filter(v=>{
     if(!v.callTime)return false;
+    if(registeredAt&&v.callTime<registeredAt)return false;
     return (now-v.callTime)<=limit;
   });
   const total=filtered.length;
@@ -4067,7 +4072,10 @@ async function renderHistory(){
       else{if(!calls[key].addr)calls[key].addr=addr;
         if((val.athMcap||0)>(calls[key].athMcap||0))calls[key].athMcap=val.athMcap;}
     });}catch(e){}
-  const entries=Object.entries(calls);
+  // Filtrer : l'utilisateur ne voit que les calls depuis son inscription (admin voit tout)
+  let registeredAt=0;
+  if(!isAdminMode){try{const sess=JSON.parse(localStorage.getItem(SESSION_KEY)||'null');if(sess?.registeredAt)registeredAt=sess.registeredAt;}catch(e){}}
+  const entries=Object.entries(calls).filter(([,v])=>!registeredAt||(v.callTime||0)>=registeredAt);
   if(!entries.length){
     const hc=document.getElementById('histCount');if(hc)hc.textContent='';
     container.innerHTML='<div class="hist-empty"><div class="hist-empty-icon">📭</div><div>Aucun call encore</div></div>';return;}
