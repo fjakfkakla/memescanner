@@ -50,7 +50,7 @@ async function fetchRetry(url, options = {}, retries = 2, delayMs = 800) {
 }
 
 // ── Découverte de tokens via Helius : surveiller les achats récents des top Axiom wallets ──
-const DISCOVERY_WALLETS = AXIOM_WALLETS.slice(0, 10); // Top 10 wallets (réduit conso Helius)
+const DISCOVERY_WALLETS = AXIOM_WALLETS.slice(0, 25); // Top 25 wallets pour couvrir plus de traders
 const discoveryCache = new Map(); // wallet → { ts, tokens }
 
 async function discoverTokensFromAxiom() {
@@ -63,9 +63,9 @@ async function discoverTokensFromAxiom() {
     const batch = DISCOVERY_WALLETS.slice(i, i + 5);
     const results = await Promise.allSettled(
       batch.map(async wallet => {
-        // Cache 5 min par wallet (réduit conso Helius)
+        // Cache 90s par wallet — refresh rapide pour capter les achats tôt
         const cached = discoveryCache.get(wallet);
-        if (cached && now - cached.ts < 300000) {
+        if (cached && now - cached.ts < 90000) {
           cached.tokens.forEach(t => discovered.add(t));
           return;
         }
@@ -606,6 +606,72 @@ export async function runScanCycle() {
     console.log(`[Worker] Live tokens: ${liveTokens.size}`);
   } catch (e) {
     console.error('[Worker] Cycle error:', e.message);
+  }
+}
+
+// ── FAST DISCOVERY CYCLE — toutes les 15s, uniquement Axiom discovery ──
+// Détecte les tokens achetés par les top wallets et les qualifie immédiatement
+// sans attendre le cycle principal DexScreener (45s)
+export async function runFastDiscovery() {
+  try {
+    const axiomTokens = await discoverTokensFromAxiom();
+    if (!axiomTokens.length) return;
+
+    // Fetch pair data depuis DexScreener pour ces tokens
+    const existingAddrs = new Set([...liveTokens.keys()]);
+    const newTokens = axiomTokens.filter(t => !existingAddrs.has(t));
+    if (!newTokens.length) return;
+
+    const allPairs = [];
+    for (let i = 0; i < newTokens.length; i += 30) {
+      try {
+        const batch = newTokens.slice(i, i + 30).join(',');
+        const resp = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${batch}`, { signal: AbortSignal.timeout(10000) });
+        const data = await resp.json();
+        if (data.pairs) allPairs.push(...data.pairs.filter(p => p.chainId === 'solana'));
+      } catch (e) {}
+    }
+    if (!allPairs.length) return;
+
+    // Quick filter + score + qualify
+    const now = Date.now();
+    let fastCalls = 0;
+    for (const p of allPairs) {
+      const addr = p.baseToken?.address;
+      if (!addr || existingAddrs.has(addr)) continue;
+      const mcap = p.marketCap || p.fdv || 0;
+      if (mcap < 5000 || mcap > 200000) continue;
+      const ageH = (now - (p.pairCreatedAt || 0)) / 3600000;
+      if (ageH > 1 || ageH < 0.005) continue;
+
+      // Check security + axiom
+      try {
+        const [sec, wData] = await Promise.all([
+          checkTokenSecurity(addr, p.pairAddress || null),
+          checkAxiomWallets(addr, p.pairAddress || null),
+        ]);
+        if (!sec || sec.mintAuthority !== null || sec.freezeAuthority !== null) continue;
+        if ((wData?.count || 0) < 1) continue;
+
+        p.security = sec;
+        if (p.info?.imageUrl || p.profile?.icon || p.profile?.header) p._isPaid = true;
+
+        const scored = scoreTokenV2(p, wData);
+        if (scored.score < 90) continue;
+
+        // Qualifié ! Ajouter en live
+        const token = { ...scored, calledAt: now, lastSeenAt: now, droppedAt: null };
+        liveTokens.set(scored.addr, token);
+        existingAddrs.add(scored.addr);
+        fastCalls++;
+
+        try { await saveCall({ addr: scored.addr, symbol: scored.symbol, score: scored.score, mcap: scored.mcap, liq: scored.liq, rugRisk: scored.rugRisk, socials: scored.socials, pairUrl: scored.pairUrl, debug: scored.debug, calledAt: now }); } catch(e) {}
+        console.log(`[FastDisc] 🚀 EARLY CALL: ${scored.symbol} score=${scored.score} mcap=$${scored.mcap} (${Math.round(ageH*60)}min old)`);
+      } catch (e) {}
+    }
+    if (fastCalls > 0) console.log(`[FastDisc] ${fastCalls} nouveaux calls via discovery rapide`);
+  } catch (e) {
+    console.warn('[FastDisc] Error:', e.message);
   }
 }
 
