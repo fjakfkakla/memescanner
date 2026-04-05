@@ -79,7 +79,7 @@ async function discoverTokensFromAxiom() {
           trackHelius();
           const sigData = await sigResp.json();
           const sigs = (sigData?.result || [])
-            .filter(s => s?.signature && (!s.blockTime || (now/1000 - s.blockTime) < 600)) // dernières 10 min
+            .filter(s => s?.signature && (!s.blockTime || (now/1000 - s.blockTime) < 1800)) // dernières 30 min
             .map(s => s.signature);
 
           if (sigs.length === 0) { discoveryCache.set(wallet, { ts: now, tokens: [] }); return; }
@@ -648,7 +648,7 @@ export async function runFastDiscovery() {
       const mcap = p.marketCap || p.fdv || 0;
       if (mcap < 15000 || mcap > 200000) continue;
       const ageH = (now - (p.pairCreatedAt || 0)) / 3600000;
-      if (ageH > 1 || ageH < 0.005) continue;
+      if (ageH > 2 || ageH < 0.005) continue;
 
       // Platform check
       const dexId = (p.dexId || '').toLowerCase();
