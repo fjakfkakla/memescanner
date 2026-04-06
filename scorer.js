@@ -56,26 +56,18 @@ function calculatePatternScore(p) {
   // 10. NEW — Liquidité > 0 = migré de bonding curve (signal fort)
   if (liq > 5000) score += 5;
 
-  // === BONUS EARLY TOKEN (<5 min) — seulement si le prix tient ===
+  // === BONUS EARLY TOKEN (<5 min) ===
   const ageMinP = (Date.now() - (p.pairCreatedAt || 0)) / 60000;
-  if (ageMinP < 5 && m1 >= -5 && c5m > -10) {
-    // Bonus seulement si m1 pas en chute et c5m pas en dump
-    if (buysM5 >= 8 && buyRatioM5 >= 0.6 && sellsM5 < buysM5) score += 10;
-    else if (buysM5 >= 5 && buyRatioM5 >= 0.55) score += 6;
-    else if (buysM5 >= 3) score += 3;
-    if (c5m > 5 && c5m < 40) score += 6;
-    if (sellsM5 <= 1 && buysM5 >= 3) score += 4;
-  } else if (ageMinP < 10 && m1 >= -8) {
-    if (buysM5 >= 5 && buyRatioM5 >= 0.58) score += 6;
-    if (c5m > 0 && c5m < 30 && buysM5 > sellsM5) score += 4;
+  if (ageMinP < 5) {
+    if (buysM5 >= 8 && buyRatioM5 >= 0.6) score += 12;
+    else if (buysM5 >= 5 && buyRatioM5 >= 0.55) score += 8;
+    else if (buysM5 >= 3) score += 4;
+    if (c5m > 5 && c5m < 50) score += 8;
+    if (sellsM5 <= 1 && buysM5 >= 3) score += 5;
+  } else if (ageMinP < 10) {
+    if (buysM5 >= 5 && buyRatioM5 >= 0.58) score += 8;
+    if (c5m > 0 && c5m < 30 && buysM5 > sellsM5) score += 5;
   }
-
-  // === PÉNALITÉS SPIKE INITIAL (grosse bougie launch → dump) ===
-  if (ageMinP < 5 && m1 < -8) score -= 15;               // prix en chute libre sur token frais
-  if (ageMinP < 10 && c5m > 80) score -= 18;              // spike >80% en 5min = achat bundle
-  if (ageMinP < 10 && c1h > 150) score -= 15;             // pump >150% token jeune = artificiel
-  if (c5m < -15 && sellsM5 > buysM5) score -= 12;         // dump + sells > buys = exit en cours
-  if (m1 < -10) score -= 10;                               // m1 très négatif = dump actif
 
   // === PÉNALITÉS ANTI-RUG / FAUX PUMP ===
   if (c1h > 90 && c5m < -28) score -= 18;
@@ -84,7 +76,7 @@ function calculatePatternScore(p) {
   if (c1h > 60 && c5m < -20) score -= 10;
   if (c5m < -35) score -= 8;
 
-  return Math.max(0, Math.min(30, Math.round(score)));
+  return Math.max(0, Math.min(45, Math.round(score)));
 }
 
 export function scoreTokenV2(p, walletData = { count: 0, wallets: [], clustered: false }) {
@@ -114,14 +106,14 @@ export function scoreTokenV2(p, walletData = { count: 0, wallets: [], clustered:
 
   let score = 0;
 
-  // AXIOM CONSENSUS (max 35)
+  // TRADERS AXIOM
   let traderScore = 0;
   const axiomCount = walletData.count || 0;
-  if      (axiomCount >= 6) traderScore = 35;
-  else if (axiomCount >= 5) traderScore = 30;
-  else if (axiomCount === 4) traderScore = 25;
-  else if (axiomCount === 3) traderScore = 18;
-  else if (axiomCount === 2) traderScore = 10;
+  if      (axiomCount >= 6) traderScore = 30;
+  else if (axiomCount >= 5) traderScore = 20;
+  else if (axiomCount === 4) traderScore = 15;
+  else if (axiomCount === 3) traderScore = 10;
+  else if (axiomCount === 2) traderScore =  8;
   else if (axiomCount === 1) traderScore =  5;
   score += traderScore;
 
@@ -139,14 +131,14 @@ export function scoreTokenV2(p, walletData = { count: 0, wallets: [], clustered:
   const gotGH  = dexSocials.some(s => (s.type || '').toLowerCase().includes('github') || (s.url || '').includes('github.com'));
   const hasCashback = !!(p.profile?.icon || p.profile?.banner || p.info?.imageUrl);
   let socialScore = 0;
-  // LÉGITIMITÉ (max 25) — Twitter: minute +8, heure +4, sinon +2
+  // Twitter: dans la minute +10, dans l'heure +5, sinon +2
   if (gotX) {
-    if (ageMin <= 1) socialScore += 8;
-    else if (ageH < 1) socialScore += 4;
+    if (ageMin <= 1) socialScore += 10;
+    else if (ageH < 1) socialScore += 5;
     else socialScore += 2;
   }
-  if (gotTG || gotWEB) socialScore += 6;
-  if (gotX && (gotTG || gotWEB)) socialScore += 6;
+  if (gotTG || gotWEB) socialScore += 8;
+  if (gotX && (gotTG || gotWEB)) socialScore += 8;
   if (gotGH || hasCashback) socialScore += 5;
   if (socialScore === 0) {
     if      (ageMin < 5 && buys1 >= 5)  socialScore += 8;
@@ -155,54 +147,47 @@ export function scoreTokenV2(p, walletData = { count: 0, wallets: [], clustered:
   }
   score += socialScore;
 
-  // DISTRIBUTION (max 25)
+  // HOLDERS
   const top5pct = sec ? parseFloat(sec.top5Pct || 0) : 0;
   let holderScore = 0;
   if (top10pct > 0) {
-    if      (top10pct <= 15) holderScore += 15;
-    else if (top10pct <= 25) holderScore += 12;
-    else if (top10pct <= 35) holderScore +=  8;
-    else if (top10pct <= 50) holderScore +=  3;
+    if      (top10pct <= 20) holderScore += 15;
+    else if (top10pct <= 35) holderScore += 10;
+    else if (top10pct <= 50) holderScore +=  2;
   }
   const totalTxns = (p.txns?.h1?.buys || 0) + (p.txns?.h1?.sells || 0) + (p.txns?.h6?.buys || 0) + (p.txns?.h6?.sells || 0);
   const hasProTraders = axiomCount >= 3 || (totalTxns >= 100 && top10pct <= 60) || (totalTxns >= 50 && top10pct <= 30);
   if (hasProTraders) holderScore += 10;
   score += holderScore;
 
-  // DEX PAID (max 10)
+  // TOKEN (dex paid)
   let platformScore = 0;
   const isDexPaid = p._isPaid
     || (p.labels || []).some(l => (l.label || l || '').toLowerCase().includes('paid'))
     || !!(p.info?.imageUrl || p.profile?.icon || p.profile?.header);
-  if (isDexPaid) platformScore += 10;
+  if (isDexPaid) platformScore += 15;
   score += platformScore;
 
-  // MCAP SWEET SPOT (max 15)
+  // MCAP
   let mcapScore = 0;
-  if      (mcap >= 15000 && mcap <= 20000)  mcapScore = 15;
-  else if (mcap >  20000 && mcap <= 40000)  mcapScore = 12;
-  else if (mcap >  40000 && mcap <= 80000)  mcapScore =  8;
-  else if (mcap >  80000 && mcap <= 120000) mcapScore =  4;
+  if      (mcap >= 15000 && mcap <= 20000)  mcapScore = 20;
+  else if (mcap >  20000 && mcap <= 60000)  mcapScore = 15;
+  else if (mcap >  60000 && mcap <= 120000) mcapScore = 10;
   else if (mcap > 150000)                   mcapScore = -5;
   score += mcapScore;
 
-  // TIMING (max 10)
+  // AGE
   let ageScore = 0;
-  if      (ageMin >= 0.5 && ageMin <= 2)  ageScore = 10;
-  else if (ageMin >  2  && ageMin <= 5)  ageScore =  7;
-  else if (ageMin >  5  && ageMin <= 10) ageScore =  3;
+  if      (ageMin >= 0.5 && ageMin <= 2)  ageScore = 20;
+  else if (ageMin >  2  && ageMin <= 5)  ageScore = 10;
+  else if (ageMin >  5  && ageMin <= 15) ageScore =  5;
   score += ageScore;
 
   // PATTERN
   const patternScore = calculatePatternScore(p);
   score += patternScore;
 
-  // MINIMUMS OBLIGATOIRES par catégorie — rejet si pas atteint
-  if (traderScore < 5)  return { score: 0, _minFail: 'axiom', symbol: (p.baseToken?.symbol || 'UNKNOWN').toUpperCase().slice(0, 12), addr: p.baseToken?.address || '', mcap, liq, socials: hasSocials, rugRisk: 'HIGH', walletData, pairUrl: p.url || '', raw: p, debug: { traderScore, socialScore, holderScore, platformScore, mcapScore, ageScore, patternScore, axiomCount, buyRatio: buyR, volAccel, c1h, m5, c6h, m1, ageH, top10pct, volMcapH1: vol1/mcap, sellBuyRatio: sells1/(buys1||1) } };
-  if (patternScore < 3) return { score: 0, _minFail: 'chart', symbol: (p.baseToken?.symbol || 'UNKNOWN').toUpperCase().slice(0, 12), addr: p.baseToken?.address || '', mcap, liq, socials: hasSocials, rugRisk: 'HIGH', walletData, pairUrl: p.url || '', raw: p, debug: { traderScore, socialScore, holderScore, platformScore, mcapScore, ageScore, patternScore, axiomCount, buyRatio: buyR, volAccel, c1h, m5, c6h, m1, ageH, top10pct, volMcapH1: vol1/mcap, sellBuyRatio: sells1/(buys1||1) } };
-  if (holderScore < 3)  return { score: 0, _minFail: 'distrib', symbol: (p.baseToken?.symbol || 'UNKNOWN').toUpperCase().slice(0, 12), addr: p.baseToken?.address || '', mcap, liq, socials: hasSocials, rugRisk: 'HIGH', walletData, pairUrl: p.url || '', raw: p, debug: { traderScore, socialScore, holderScore, platformScore, mcapScore, ageScore, patternScore, axiomCount, buyRatio: buyR, volAccel, c1h, m5, c6h, m1, ageH, top10pct, volMcapH1: vol1/mcap, sellBuyRatio: sells1/(buys1||1) } };
-
-  const finalScore = Math.min(140, Math.max(0, Math.round(score)));
+  const finalScore = Math.min(170, Math.max(0, Math.round(score)));
 
   // RUG RISK
   let rugPts = 0;
