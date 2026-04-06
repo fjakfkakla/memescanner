@@ -1791,7 +1791,7 @@ function scoreTokenV2(p,walletData={count:0,wallets:[],clustered:false}){
   // ── MINIMUMS OBLIGATOIRES ─────────────────────────────────────────────────
   const _mkFail = (reason) => ({ score: 0, _minFail: reason, _realScore: Math.min(140, Math.max(0, Math.round(score))), symbol: (p.baseToken?.symbol||'UNKNOWN').toUpperCase().slice(0,12), addr: p.baseToken?.address||'', mcap, liq, socials: hasSocials, rugRisk: 'HIGH', walletData, pairUrl: p.url||'', raw: p, debug: { traderScore, socialScore, holderScore, platformScore, mcapScore, ageScore, patternScore, axiomCount, buyRatio: buyR, volAccel, c1h, m5, c6h, m1, ageH, top10pct, volMcapH1: vol1/mcap, sellBuyRatio: sells1/(buys1||1) } });
   if (traderScore < 5)  return _mkFail('axiom');
-  if (patternScore < 3 && ageMin > 3) return _mkFail('chart'); // skip pattern minimum sur tokens < 3min (pas assez de données)
+  if (patternScore < 3) return _mkFail('chart');
   if (holderScore < 3)  return _mkFail('distrib');
 
   // ── CALCUL FINAL ──────────────────────────────────────────────────────────
