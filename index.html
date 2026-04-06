@@ -968,7 +968,6 @@ section{scroll-margin-top:70px;}
     <div class="scanner-controls">
       <span style="font-size:.75rem;color:var(--muted);font-family:var(--font-mono)" id="lastUpdate"></span>
       <button class="scan-btn scan-btn-outline" onclick="toggleDebugMode()" id="debugToggleBtn" style="display:none">🟠 Debug OFF</button>
-      <button class="scan-btn scan-btn-outline" onclick="demoPvp()" id="pvpDemoBtn" style="display:none;border-color:rgba(255,68,68,.4);color:#ff4444">⚔️ PVP</button>
       <button class="scan-btn scan-btn-green" onclick="fetchTokens()">↻ Refresh</button>
     </div>
   </div>
@@ -2576,19 +2575,6 @@ function triggerPvp(token1, token2){
   setTimeout(()=>{if(_pvpActive)closePvp();},10000);
 }
 
-// Demo PVP — admin only
-function demoPvp(){
-  if(lastScored.length>=2){
-    // Prendre 2 tokens live
-    triggerPvp(lastScored[0],lastScored[1]);
-  } else {
-    // Fake tokens pour la demo
-    const fake1={symbol:'DOGE',score:112,mcap:45000,addr:'FakeAddr1...pump',_callTime:Date.now()-60000,debug:{traderScore:25,socialScore:21,holderScore:18,platformScore:10,mcapScore:12,ageScore:7,patternScore:19}};
-    const fake2={symbol:'DOGE',score:97,mcap:38000,addr:'FakeAddr2...pump',_callTime:Date.now(),debug:{traderScore:18,socialScore:15,holderScore:22,platformScore:10,mcapScore:15,ageScore:10,patternScore:7}};
-    triggerPvp(fake1,fake2);
-  }
-}
-
 // Détection de doublons de symbole dans les calls actifs
 const _pvpTriggered = new Set();
 function checkPvp(newToken){
@@ -3229,7 +3215,6 @@ async function fetchTokens(){
     document.getElementById('scanDot').style.background='var(--green)';
     document.getElementById('lastUpdate').textContent='Updated '+new Date().toLocaleTimeString();
     document.getElementById('debugToggleBtn').style.display=isAdminMode?'inline-block':'none';
-  document.getElementById('pvpDemoBtn').style.display=isAdminMode?'inline-block':'none';
     if(finalScored.length===0){
       content.innerHTML=`<div class="empty-state"><div class="empty-icon">🔍</div><div class="empty-title">0 signal pour l'instant</div><div class="empty-sub">Le backend scan toutes les 45s — refresh auto</div></div>`;
     } else {
@@ -3415,7 +3400,6 @@ async function fetchTokens(){
   document.getElementById('scanDot').style.background='var(--green)';
   document.getElementById('lastUpdate').textContent='Updated '+new Date().toLocaleTimeString();
   document.getElementById('debugToggleBtn').style.display=isAdminMode?'inline-block':'none';
-  document.getElementById('pvpDemoBtn').style.display=isAdminMode?'inline-block':'none';
   if(finalScored.length===0){const rejSorted=Object.entries(rejected).sort((a,b)=>b[1]-a[1]);const rejRows=rejSorted.slice(0,8).map(([r,n])=>`<tr><td style="color:var(--muted);padding:.2rem .5rem;font-size:.72rem">${r}</td><td style="color:var(--red);padding:.2rem .5rem;font-size:.72rem;text-align:right">×${n}</td></tr>`).join('');const allSc=candidates.map(p=>scoreTokenV2(p)).sort((a,b)=>b.score-a.score);const near=allSc.slice(0,5).map(t=>`<tr><td style="color:var(--text);font-size:.72rem;padding:.2rem .5rem">${t.symbol}</td><td style="color:#ffaa00;font-size:.72rem;padding:.2rem .5rem;text-align:right">${t.score}pts</td><td style="color:var(--muted);font-size:.72rem;padding:.2rem .5rem">$${fmtNum(t.mcap)}</td></tr>`).join('');content.innerHTML=`<div class="empty-state" style="text-align:left;max-width:600px;margin:0 auto"><div style="text-align:center;margin-bottom:1.2rem"><div class="empty-icon">🔍</div><div class="empty-title">0 signal · ${pairs.length} paires analysées · ${candidates.length} dans fenêtre 1h</div></div>${pairs.length===0?'<div style="color:var(--red);font-size:.85rem;text-align:center;padding:1rem;background:rgba(255,60,60,.08);border-radius:8px;margin-bottom:1rem">⚠️ FETCH ÉCHOUÉ — API indisponible</div>':''}<div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem"><div><div style="font-size:.72rem;color:var(--green);font-weight:700;margin-bottom:.4rem;text-transform:uppercase">Rejets (${pairs.length-candidates.length})</div><table style="width:100%;border-collapse:collapse">${rejRows||'<tr><td style="color:var(--muted);font-size:.72rem;padding:.3rem">—</td></tr>'}</table></div><div><div style="font-size:.72rem;color:#ffaa00;font-weight:700;margin-bottom:.4rem;text-transform:uppercase">Proches du seuil</div><table style="width:100%;border-collapse:collapse">${near||'<tr><td style="color:var(--muted);font-size:.72rem">—</td></tr>'}</table></div></div><div style="text-align:center;margin-top:1rem;font-size:.7rem;color:var(--muted)">Refresh auto 45s</div></div>`;}
   else{await renderTokenTable(finalScored);}
   if(currentTab==='history')renderHistory();
