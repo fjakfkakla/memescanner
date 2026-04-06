@@ -170,14 +170,20 @@ async function fetchDexScreener() {
 
   // ── ÉTAPE 3 : Search trending (requêtes variées — max de tokens frais) ──
   const searchQueries = [
-    'pumpfun',              // 24 fresh tokens — meilleure source
-    'SOL pump',             // 7 fresh
-    'pump.fun',             // 2 fresh + différents de pumpfun
-    'pump.fun solana',      // variantes
-    'pumpswap',             // tokens migrés
-    'bonk solana new',      // launchlab
-    'solana memecoin',      // memecoins généraux
-    'solana new token',     // nouveaux tokens
+    'pumpfun',
+    'SOL pump',
+    'pump.fun',
+    'pump.fun solana',
+    'pumpswap',
+    'pumpswap solana',
+    'bonk solana new',
+    'launchlab solana',
+    'solana memecoin',
+    'solana new token',
+    'solana meme',
+    'solana coin new',
+    'solana token 2025',
+    'solana launch',
   ];
   for (const q of searchQueries) {
     try {
@@ -688,6 +694,7 @@ export async function runFastDiscovery() {
 
 // Exports pour server.js
 export function getLiveTokens() { return [...liveTokens.values()]; }
+export function addLiveToken(token) { if (!liveTokens.has(token.addr)) { liveTokens.set(token.addr, token); return true; } return false; }
 export function getHeliusStats() {
   return { ...heliusCalls, limit: HELIUS_DAILY_LIMIT, remaining: Math.max(0, HELIUS_DAILY_LIMIT - heliusCalls.today), limitReached: heliusCalls.today >= HELIUS_DAILY_LIMIT };
 }
