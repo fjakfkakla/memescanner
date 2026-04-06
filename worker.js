@@ -281,7 +281,7 @@ async function checkAxiomWallets(tokenAddr, pairAddr = null, deep = false) {
   if (!canCallHelius()) return { count: 0, wallets: [], clustered: false };
 
   const sigAddr  = pairAddr || tokenAddr;
-  const sigLimit = deep ? 200 : 80; // Augmenté pour capter plus d'Axiom wallets sur tokens actifs
+  const sigLimit = deep ? 100 : 30; // Réduit: was 500/100, économise ~70% crédits Enhanced API
 
   try {
     trackHelius(3); // 2x getSignaturesForAddress + getTokenAccounts
@@ -307,11 +307,11 @@ async function checkAxiomWallets(tokenAddr, pairAddr = null, deep = false) {
     [sigPairRes, sigMintRes].forEach(r => {
       if (r.status === 'fulfilled') {
         const sigs = r.value?.result || [];
-        // Prendre suffisamment de sigs pour détecter les Axiom wallets (même early buys)
-        sigs.slice(0, deep ? 150 : 60).forEach(s => { if (s?.signature) sigSet.add(s.signature); });
+        // Prendre les plus récentes uniquement (suffisant pour détecter Axiom wallets)
+        sigs.slice(0, deep ? 50 : 20).forEach(s => { if (s?.signature) sigSet.add(s.signature); });
       }
     });
-    const sigList = [...sigSet].slice(0, deep ? 200 : 80); // Max 80 sigs en normal, 200 en deep
+    const sigList = [...sigSet].slice(0, deep ? 80 : 30); // Max 30 sigs en normal, 80 en deep
     const allOwners = new Set();
 
     if (sigList.length > 0) {
