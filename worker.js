@@ -18,7 +18,7 @@ const scoreHistory  = new Map(); // addr → { maxAxiom }
 const liveTokens    = new Map(); // addr → { token data, calledAt, lastSeenAt, droppedAt }
 
 // Compteur d'appels Helius + hard limit journalier
-const HELIUS_DAILY_LIMIT = parseInt(process.env.HELIUS_DAILY_LIMIT || '300000'); // 300k crédits/jour par défaut
+const HELIUS_DAILY_LIMIT = parseInt(process.env.HELIUS_DAILY_LIMIT || '200000'); // 200k crédits/jour par défaut
 let heliusCalls = { total: 0, today: 0, dayStart: Date.now(), blocked: 0 };
 function trackHelius(n = 1) {
   if (Date.now() - heliusCalls.dayStart > 86400000) {
