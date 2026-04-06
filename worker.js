@@ -307,13 +307,11 @@ async function checkAxiomWallets(tokenAddr, pairAddr = null, deep = false) {
     [sigPairRes, sigMintRes].forEach(r => {
       if (r.status === 'fulfilled') {
         const sigs = r.value?.result || [];
-        // Newest : traders récents + Oldest : early buyers (wallets qui ont vendu depuis)
-        sigs.slice(0, deep ? 150 : 40).forEach(s => { if (s?.signature) sigSet.add(s.signature); });
-        sigs.slice(-(deep ? 150 : 40)).forEach(s => { if (s?.signature) sigSet.add(s.signature); });
-        if (deep) sigs.forEach(s => { if (s?.signature) sigSet.add(s.signature); });
+        // Prendre suffisamment de sigs pour détecter les Axiom wallets (même early buys)
+        sigs.slice(0, deep ? 150 : 60).forEach(s => { if (s?.signature) sigSet.add(s.signature); });
       }
     });
-    const sigList = [...sigSet].slice(0, deep ? 300 : 100); // Max 100 sigs en normal, 300 en deep
+    const sigList = [...sigSet].slice(0, deep ? 200 : 80); // Max 80 sigs en normal, 200 en deep
     const allOwners = new Set();
 
     if (sigList.length > 0) {
