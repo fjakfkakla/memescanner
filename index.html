@@ -3306,7 +3306,7 @@ async function fetchTokens(){
   const dexResults = await Promise.allSettled(ENDPOINTS.map(fetchPairs));
   const seen=new Set();let pairs=[];
   const _48H=48*3600000,_now=Date.now();
-  for(const r of dexResults){if(r.status!=='fulfilled')continue;for(const p of r.value){const conv=p.attributes?geckoToDex(p):p;if(!conv)continue;if(!conv.chainId||conv.chainId!=='solana')continue;const m=conv.marketCap||conv.fdv||0;if(m>200000||m<15000)continue;
+  for(const r of dexResults){if(r.status!=='fulfilled')continue;for(const p of r.value){const conv=p.attributes?geckoToDex(p):p;if(!conv)continue;if(!conv.chainId||conv.chainId!=='solana')continue;const m=conv.marketCap||conv.fdv||0;if(m>200000||m<5000)continue;
   if(conv.pairCreatedAt&&(_now-conv.pairCreatedAt)>_48H)continue;const addr=conv.baseToken?.address||conv.pairAddress||Math.random().toString();if(seen.has(addr))continue;seen.add(addr);pairs.push(conv);}}
   console.log(`[Scanner] ${pairs.length} paires DexScreener`);
   const rejected={};
