@@ -1,7 +1,7 @@
 import express from 'express';
 import cors    from 'cors';
 import { getCalls, getHistory, getCodes, saveCodes, getCall, putCall, patchCall, getAllCalls, getRugs, putRugs, patchRugs, getReviews, putReviews } from './firebase.js';
-import { runScanCycle, runFastDiscovery, getLiveTokens, checkTokenSecurityExport, checkAxiomWalletsExport, getHeliusStats } from './worker.js';
+import { runScanCycle, getLiveTokens, checkTokenSecurityExport, checkAxiomWalletsExport, getHeliusStats } from './worker.js';
 import { trackOutcomes, autoAdjust, loadWeights, getAIPanel, getWinrateStats, deepAnalyze, buildSmartFilters, loadSmartFilters, checkSmartFilters, smartFilters } from './aiEngine.js';
 
 const app  = express();
@@ -218,10 +218,8 @@ app.listen(PORT, () => {
 
   // Premier cycle immédiat
   runScanCycle();
-  // Cycle principal toutes les 45s
+  // Cycle toutes les 45s
   setInterval(runScanCycle, 45000);
-  // Fast discovery toutes les 15s — détecte les achats Axiom wallets rapidement
-  setInterval(runFastDiscovery, 15000);
 
   // AI: track outcomes toutes les 5 min (check prix des calls passés)
   setInterval(trackOutcomes, 5 * 60 * 1000);
