@@ -1,6 +1,6 @@
 import express from 'express';
 import cors    from 'cors';
-import { getCalls, getHistory, getCodes, saveCodes, getCall, putCall, patchCall, getAllCalls, getRugs, putRugs, patchRugs, getReviews, putReviews } from './firebase.js';
+import { getCalls, getHistory } from './firebase.js';
 import { runScanCycle, getLiveTokens, checkTokenSecurityExport, checkAxiomWalletsExport, getHeliusStats } from './worker.js';
 import { trackOutcomes, autoAdjust, loadWeights, getAIPanel, getWinrateStats, deepAnalyze, buildSmartFilters, loadSmartFilters, checkSmartFilters, smartFilters } from './aiEngine.js';
 
@@ -132,64 +132,6 @@ app.post('/admin/ai/check-token', (req, res) => {
   const tokenDebug = req.body || {};
   const result = checkSmartFilters(tokenDebug);
   res.json({ ok: true, ...result });
-});
-
-// ── FIREBASE PROXY — protège l'URL Firebase du frontend ──────────
-app.get('/fb/codes', async (_req, res) => {
-  try { res.json(await getCodes()); } catch(e) { res.status(500).json({ error: e.message }); }
-});
-app.put('/fb/codes', async (req, res) => {
-  try { await saveCodes(req.body); res.json({ ok: true }); } catch(e) { res.status(500).json({ error: e.message }); }
-});
-app.get('/fb/calls', async (_req, res) => {
-  try { res.json(await getAllCalls()); } catch(e) { res.status(500).json({ error: e.message }); }
-});
-app.get('/fb/calls/:key', async (req, res) => {
-  try { res.json(await getCall(req.params.key)); } catch(e) { res.status(500).json({ error: e.message }); }
-});
-app.put('/fb/calls/:key', async (req, res) => {
-  try { await putCall(req.params.key, req.body); res.json({ ok: true }); } catch(e) { res.status(500).json({ error: e.message }); }
-});
-app.patch('/fb/calls/:key', async (req, res) => {
-  try { await patchCall(req.params.key, req.body); res.json({ ok: true }); } catch(e) { res.status(500).json({ error: e.message }); }
-});
-app.get('/fb/rugs', async (_req, res) => {
-  try { res.json(await getRugs()); } catch(e) { res.status(500).json({ error: e.message }); }
-});
-app.put('/fb/rugs', async (req, res) => {
-  try { await putRugs(req.body); res.json({ ok: true }); } catch(e) { res.status(500).json({ error: e.message }); }
-});
-app.patch('/fb/rugs', async (req, res) => {
-  try { await patchRugs(req.body); res.json({ ok: true }); } catch(e) { res.status(500).json({ error: e.message }); }
-});
-app.get('/fb/reviews', async (_req, res) => {
-  try { res.json(await getReviews()); } catch(e) { res.status(500).json({ error: e.message }); }
-});
-app.put('/fb/reviews', async (req, res) => {
-  try { await putReviews(req.body); res.json({ ok: true }); } catch(e) { res.status(500).json({ error: e.message }); }
-});
-
-// Batch analyze — proxy pour le frontend scanner
-app.post('/analyze-batch', async (req, res) => {
-  const { tokens } = req.body || {};
-  if (!Array.isArray(tokens) || !tokens.length) return res.status(400).json({ ok: false, error: 'tokens array required' });
-  try {
-    const results = await Promise.allSettled(
-      tokens.slice(0, 10).map(async ({ addr, pair }) => {
-        const [sec, wData] = await Promise.all([
-          checkTokenSecurityExport(addr, pair || null),
-          checkAxiomWalletsExport(addr, pair || null),
-        ]);
-        return { addr, sec, wData };
-      })
-    );
-    const data = results
-      .filter(r => r.status === 'fulfilled')
-      .map(r => r.value);
-    res.json({ ok: true, data });
-  } catch (e) {
-    res.status(500).json({ ok: false, error: e.message });
-  }
 });
 
 // Debug CA — analyse complète d'un token à la demande (deep mode)
