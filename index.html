@@ -3184,22 +3184,6 @@ PAIRE DEXSCR   : ${pairData?'✅ trouvée':'❌ non trouvée'}`;
       <div class="dca-details">${details}</div>
       ${pairData?`<div style="margin-top:.8rem;text-align:center"><a href="${pairData.url||'https://dexscreener.com/solana/'+addr}" target="_blank" class="sc-btn-dex" style="display:inline-block">Voir sur DexScreener →</a></div>`:''}
     `;
-
-    // AUTO-SUBMIT : si score ≥ 90, soumettre automatiquement au backend pour le live
-    if(score >= 90 && !minFailReason && pairData){
-      try{
-        const submitResp = await fetch(`${BACKEND_URL}/submit-token`,{
-          method:'POST',
-          headers:{'Content-Type':'application/json'},
-          body:JSON.stringify({addr, pair: pairData.pairAddress || null})
-        }).then(r=>r.json());
-        if(submitResp.ok){
-          result.innerHTML += `<div style="margin-top:.6rem;padding:.5rem .8rem;background:rgba(0,255,136,.1);border:1px solid rgba(0,255,136,.3);border-radius:8px;text-align:center;color:var(--green);font-size:.75rem;font-weight:600">✅ Auto-soumis au Live ! Score ${submitResp.score}</div>`;
-        } else if(submitResp.reason === 'already_live'){
-          result.innerHTML += `<div style="margin-top:.6rem;padding:.5rem .8rem;background:rgba(255,170,0,.08);border:1px solid rgba(255,170,0,.2);border-radius:8px;text-align:center;color:#ffaa00;font-size:.75rem">⚡ Déjà en Live</div>`;
-        }
-      }catch(e){ /* submit silencieux */ }
-    }
   }catch(e){
     result.innerHTML=`<div class="dca-loading" style="color:var(--red)">⚠️ Erreur: ${e.message}</div>`;
   }
