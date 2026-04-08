@@ -4687,10 +4687,12 @@ async function fetchTokens(){
       const isBags=rdex.includes('bags')||rurl.includes('bags');
       if(!isPump&&!isBonk&&!isBags){rejected[`platform:${rdex||'?'}`]=(rejected[`platform:${rdex||'?'}`]||0)+1;continue;}
 
-      // HARD FILTER 2 — Mcap : 15K → 75K (réduit pour éviter entrées tardives)
+      // HARD FILTER 2 — Mcap : 15K → 75K (120K si ≥2 Axiom wallets — fast pumpers légitimes)
       const rmc=rescored.mcap||0;
+      const axiomBoost=(rescored.debug?.axiomCount||0)>=2;
+      const mcapCeil=axiomBoost?120000:75000;
       if(rmc<15000){rejected[`mcap<15K`]=(rejected['mcap<15K']||0)+1;continue;}
-      if(rmc>75000){rejected[`mcap>75K`]=(rejected['mcap>75K']||0)+1;continue;}
+      if(rmc>mcapCeil){rejected[`mcap>${axiomBoost?'120K':'75K'}`]=(rejected[`mcap>${axiomBoost?'120K':'75K'}`]||0)+1;continue;}
 
       // HARD FILTER 3 — Âge < 1h
       const rage=(Date.now()-(rp?.pairCreatedAt||0))/3600000;
