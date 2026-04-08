@@ -788,6 +788,15 @@ section{scroll-margin-top:70px;}
 /* Tracker wallets tag */
 .sc-axiom{font-size:.72rem;background:linear-gradient(135deg,rgba(255,215,0,.08),rgba(255,170,0,.05));
   border:1px solid rgba(255,215,0,.18);color:var(--gold);padding:.22rem .55rem;border-radius:6px;}
+/* ── PVP ─────────────────────────────────────────────────────── */
+.sc-card.pvp-winner{border-color:rgba(255,140,0,.5);box-shadow:0 4px 24px rgba(255,140,0,.18),inset 0 0 40px rgba(255,140,0,.04);}
+.sc-card.pvp-winner::before{background:linear-gradient(90deg,transparent,#ff8c00,#ffcc00,#ff8c00,transparent);background-size:300%;animation:pvp-shimmer 1.5s linear infinite;}
+@keyframes pvp-shimmer{0%{background-position:200%}100%{background-position:-100%}}
+.sc-card.pvp-loser{opacity:.55;filter:grayscale(.3);border-color:rgba(255,80,80,.18);}
+.sc-pvp-badge{font-size:.68rem;font-weight:800;padding:.2rem .5rem;border-radius:5px;letter-spacing:.04em;white-space:nowrap;}
+.sc-pvp-badge.pvp-w{background:rgba(255,140,0,.18);color:#ffaa22;border:1px solid rgba(255,140,0,.35);animation:pvp-badge-pulse 1.2s ease-in-out infinite alternate;}
+.sc-pvp-badge.pvp-l{background:rgba(255,60,60,.1);color:#ff6655;border:1px solid rgba(255,60,60,.2);}
+@keyframes pvp-badge-pulse{from{box-shadow:0 0 4px rgba(255,140,0,.3)}to{box-shadow:0 0 12px rgba(255,140,0,.7)}}
 
 /* ── DEBUG CA PANEL ─── */
 .dca-panel{background:linear-gradient(160deg,var(--bg2),var(--bg));border:1px solid rgba(97,86,217,.15);border-radius:16px;padding:1.6rem;margin-top:.5rem;box-shadow:0 4px 30px rgba(0,0,0,.3);}
@@ -4704,6 +4713,34 @@ async function fetchTokens(){
     }catch(e){if(t.score>=80)finalScored.push(t);}
   }
   finalScored.sort((a,b)=>b.score-a.score);
+
+  // ── PVP DETECTION — deux tokens avec le même nom (copies/forks) ──
+  const pvpBySymbol = {};
+  for (const t of finalScored) {
+    const sym = (t.symbol||'').toUpperCase().trim();
+    if (!sym || sym === 'UNKNOWN') continue;
+    if (!pvpBySymbol[sym]) pvpBySymbol[sym] = [];
+    pvpBySymbol[sym].push(t);
+  }
+  const pvpNewSymbols = [];
+  for (const [sym, tokens] of Object.entries(pvpBySymbol)) {
+    if (tokens.length < 2) continue;
+    // Déjà triés par score desc → tokens[0] = winner
+    tokens[0].pvp = 'winner';
+    tokens[0].pvpCount = tokens.length;
+    tokens[0].pvpOpponentScore = tokens[1].score;
+    for (let i = 1; i < tokens.length; i++) {
+      tokens[i].pvp = 'loser';
+      tokens[i].pvpWinnerScore = tokens[0].score;
+    }
+    pvpNewSymbols.push({ sym, winner: tokens[0], loser: tokens[1] });
+    console.log(`[PVP] ⚔️ ${sym} — winner: ${tokens[0].addr.slice(0,8)} (${tokens[0].score}pts) vs loser: ${tokens[1].addr.slice(0,8)} (${tokens[1].score}pts)`);
+  }
+  // Toast PVP pour les nouvelles détections
+  for (const { sym, winner, loser } of pvpNewSymbols) {
+    showToast(`⚔️ PVP DÉTECTÉ: $${sym} — Winner ${winner.score}pts vs Loser ${loser.score}pts`, 'call');
+  }
+
   console.log(`[Scanner] ${finalScored.length} calls | rejected:`, JSON.stringify(rejected));
   const _now5 = Date.now();
   for(const t of finalScored){
@@ -4829,12 +4866,19 @@ async function renderTokenTable(tokens){
         ${s.hasWebsite?'<span class="sc-sec-chip" style="background:rgba(255,255,255,.05);color:rgba(255,255,255,.5)">WEB</span>':''}
       </div>`;
     }
-    cards.push(`<div class="sc-card">
+    // PVP badge + card class
+    const pvpCls = t.pvp==='winner'?'pvp-winner':t.pvp==='loser'?'pvp-loser':'';
+    const pvpBadge = t.pvp==='winner'
+      ? `<span class="sc-pvp-badge pvp-w">⚔️ PVP WIN</span>`
+      : t.pvp==='loser'
+        ? `<span class="sc-pvp-badge pvp-l">⚔️ PVP LOSE</span>`
+        : '';
+    cards.push(`<div class="sc-card ${pvpCls}">
       <div class="sc-header">
         <span style="font-size:1.2rem;flex-shrink:0">${scoreEmoji}</span>
         <span class="sc-sym">${t.symbol}</span>
         <div style="display:flex;gap:.3rem;align-items:center;flex-shrink:0">
-          ${axiomBadge}${debugBtn}
+          ${pvpBadge}${axiomBadge}${debugBtn}
           <span class="sc-badge ${badgeCls}">${label.text} ${t.score}</span>
         </div>
       </div>
