@@ -96,14 +96,14 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;line-
 <div class="hero">
   <h1>🐸 MemecoinPump</h1>
   <div class="sub">Documentation du Scoring & Filtrage</div>
-  <div class="version">v2.0 — Avril 2026</div>
+  <div class="version">v2.3 — 8 Avril 2026</div>
 </div>
 
 <!-- ═══════════════════ OVERVIEW ═══════════════════ -->
 <div class="section">
   <div class="section-title">
     <span class="icon">📊</span> Vue d'ensemble
-    <span class="tag tag-pts">170 PTS MAX</span>
+    <span class="tag tag-pts">150 PTS MAX</span>
   </div>
   <div class="cards-grid">
     <div class="info-card card-green">
@@ -113,7 +113,7 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;line-
     </div>
     <div class="info-card card-red">
       <h3>🛡️ Hard Filters</h3>
-      <div class="val pts-red">8 filtres</div>
+      <div class="val pts-red">6 filtres</div>
       <p>Vérifications de sécurité obligatoires. Si un seul échoue, le token est rejeté immédiatement, peu importe son score.</p>
     </div>
     <div class="info-card card-purple">
@@ -151,9 +151,9 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;line-
     <div class="pipe-step">
       <div class="pipe-num">3</div>
       <div class="pipe-content">
-        <h4>🔬 Vérifications Helius (parallèle)</h4>
-        <p>Security check (mint/freeze authority, holders) + Axiom wallets detection</p>
-        <div class="pipe-reject">❌ Rejet si mint/freeze authority, top1 > 20%, top5 > 55%</div>
+        <h4>🔬 Vérifications Helius (séquentiel — économie crédits)</h4>
+        <p>1) Security check d'abord (mint/freeze/holders) → 2) Axiom wallets seulement si security OK</p>
+        <div class="pipe-reject">❌ Rejet si mint/freeze authority, top1 > 25%, top5 > 55%</div>
       </div>
     </div>
     <div class="pipe-connector"></div>
@@ -178,7 +178,7 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;line-
     <div class="pipe-step">
       <div class="pipe-num">6</div>
       <div class="pipe-content">
-        <h4>📊 Scoring 170 pts (7 catégories)</h4>
+        <h4>📊 Scoring 150 pts (7 catégories)</h4>
         <p>Calcul du score final : Traders + Social + Holders + Token + Mcap + Age + Pattern</p>
       </div>
     </div>
@@ -208,19 +208,19 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;line-
 <div class="section">
   <div class="section-title">
     <span class="icon">🎯</span> 1. Traders Axiom
-    <span class="tag tag-pts">MAX +30</span>
+    <span class="tag tag-pts">MAX +35</span>
   </div>
-  <p style="color:var(--muted);font-size:.85rem;margin-bottom:.8rem;">Wallets de la liste Axiom détectés parmi les top holders du token (via Helius getAsset).</p>
+  <p style="color:var(--muted);font-size:.85rem;margin-bottom:.8rem;">Wallets de la liste Axiom détectés parmi les top holders du token (via Helius getAsset + feePayer).</p>
   <table class="score-table">
     <thead><tr><th>Axiom wallets détectés</th><th>Points</th></tr></thead>
     <tbody>
-      <tr><td>≥ 6 wallets</td><td><span class="pts pts-green">+30</span></td></tr>
-      <tr><td>5 wallets</td><td><span class="pts pts-green">+20</span></td></tr>
-      <tr><td>4 wallets</td><td><span class="pts pts-green">+15</span></td></tr>
-      <tr><td>3 wallets</td><td><span class="pts pts-green">+10</span></td></tr>
-      <tr><td>2 wallets</td><td><span class="pts pts-blue">+8</span></td></tr>
+      <tr><td>≥ 6 wallets</td><td><span class="pts pts-green">+35</span></td></tr>
+      <tr><td>5 wallets</td><td><span class="pts pts-green">+30</span></td></tr>
+      <tr><td>4 wallets</td><td><span class="pts pts-green">+25</span></td></tr>
+      <tr><td>3 wallets</td><td><span class="pts pts-green">+18</span></td></tr>
+      <tr><td>2 wallets</td><td><span class="pts pts-blue">+10</span></td></tr>
       <tr><td>1 wallet</td><td><span class="pts pts-blue">+5</span></td></tr>
-      <tr><td>0 wallets</td><td><span class="pts pts-muted">0</span></td></tr>
+      <tr><td>0 wallets</td><td><span class="pts pts-muted">0 (rejeté)</span></td></tr>
     </tbody>
   </table>
   <div class="note note-info"><span class="note-icon">ℹ️</span> Un minimum de 1 wallet Axiom est requis en hard filter (étape 4). Sans Axiom = pas de call.</div>
@@ -257,9 +257,10 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;line-
   <table class="score-table">
     <thead><tr><th>Top 10 holders %</th><th>Points</th></tr></thead>
     <tbody>
-      <tr><td>≤ 20% (excellent)</td><td><span class="pts pts-green">+15</span></td></tr>
-      <tr><td>≤ 35% (très bien)</td><td><span class="pts pts-green">+10</span></td></tr>
-      <tr><td>≤ 50% (correct)</td><td><span class="pts pts-muted">+2</span></td></tr>
+      <tr><td>≤ 15% (excellent)</td><td><span class="pts pts-green">+15</span></td></tr>
+      <tr><td>≤ 25% (très bien)</td><td><span class="pts pts-green">+12</span></td></tr>
+      <tr><td>≤ 35% (correct)</td><td><span class="pts pts-blue">+8</span></td></tr>
+      <tr><td>≤ 50% (limite)</td><td><span class="pts pts-muted">+3</span></td></tr>
       <tr><td>> 50%</td><td><span class="pts pts-muted">0</span></td></tr>
     </tbody>
   </table>
@@ -278,12 +279,12 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;line-
 <div class="section">
   <div class="section-title">
     <span class="icon">🪙</span> 4. Token (Dex Paid)
-    <span class="tag tag-pts">MAX +15</span>
+    <span class="tag tag-pts">MAX +10</span>
   </div>
   <table class="score-table">
     <thead><tr><th>Critère</th><th>Points</th></tr></thead>
     <tbody>
-      <tr><td>✅ Dex Paid (bannière/profil payé sur DexScreener)</td><td><span class="pts pts-green">+15</span></td></tr>
+      <tr><td>✅ Dex Paid (bannière/profil payé sur DexScreener)</td><td><span class="pts pts-green">+10</span></td></tr>
       <tr><td>❌ Pas de Dex Paid</td><td><span class="pts pts-muted">0</span></td></tr>
     </tbody>
   </table>
@@ -293,16 +294,17 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;line-
 <div class="section">
   <div class="section-title">
     <span class="icon">⭐</span> 5. Market Cap
-    <span class="tag tag-pts">-5 à +20</span>
+    <span class="tag tag-pts">-5 à +15</span>
   </div>
+  <p style="color:var(--muted);font-size:.85rem;margin-bottom:.8rem;">Zone 15-25K = sweet spot optimal (YOSHI 37x, 81 5x tous callés à ~$15K). Hard filter : max $75K.</p>
   <table class="score-table">
     <thead><tr><th>Market Cap</th><th>Points</th></tr></thead>
     <tbody>
-      <tr><td>$15K — $20K (sweet spot)</td><td><span class="pts pts-green">+20</span></td></tr>
-      <tr><td>$20K — $60K</td><td><span class="pts pts-green">+15</span></td></tr>
-      <tr><td>$60K — $120K</td><td><span class="pts pts-blue">+10</span></td></tr>
-      <tr><td>$120K — $150K</td><td><span class="pts pts-muted">0</span></td></tr>
-      <tr><td>> $150K (trop gros)</td><td><span class="pts pts-red">-5</span></td></tr>
+      <tr><td>$15K — $25K <span style="color:var(--green);font-size:.75rem;">★ sweet spot</span></td><td><span class="pts pts-green">+15</span></td></tr>
+      <tr><td>$25K — $40K</td><td><span class="pts pts-green">+11</span></td></tr>
+      <tr><td>$40K — $60K</td><td><span class="pts pts-blue">+5</span></td></tr>
+      <tr><td>$60K — $75K</td><td><span class="pts pts-muted">+1</span></td></tr>
+      <tr><td>> $75K (hard filtré)</td><td><span class="pts pts-red">-5</span></td></tr>
     </tbody>
   </table>
 </div>
@@ -311,15 +313,15 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;line-
 <div class="section">
   <div class="section-title">
     <span class="icon">⏱️</span> 6. Age du token
-    <span class="tag tag-pts">MAX +20</span>
+    <span class="tag tag-pts">MAX +10</span>
   </div>
   <table class="score-table">
     <thead><tr><th>Age</th><th>Points</th></tr></thead>
     <tbody>
-      <tr><td>30 sec — 2 min (ultra-fresh)</td><td><span class="pts pts-green">+20</span></td></tr>
-      <tr><td>2 min — 5 min</td><td><span class="pts pts-green">+10</span></td></tr>
-      <tr><td>5 min — 15 min</td><td><span class="pts pts-blue">+5</span></td></tr>
-      <tr><td>> 15 min</td><td><span class="pts pts-muted">0</span></td></tr>
+      <tr><td>30 sec — 2 min (ultra-fresh)</td><td><span class="pts pts-green">+10</span></td></tr>
+      <tr><td>2 min — 5 min</td><td><span class="pts pts-green">+7</span></td></tr>
+      <tr><td>5 min — 10 min</td><td><span class="pts pts-blue">+3</span></td></tr>
+      <tr><td>> 10 min</td><td><span class="pts pts-muted">0</span></td></tr>
     </tbody>
   </table>
 </div>
@@ -328,25 +330,40 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;line-
 <div class="section">
   <div class="section-title">
     <span class="icon">📈</span> 7. Pattern Score
-    <span class="tag tag-pts">MAX +45</span>
+    <span class="tag tag-pts">MAX +40</span>
   </div>
-  <p style="color:var(--muted);font-size:.85rem;margin-bottom:.8rem;">Analyse du price action en temps réel — détecte les patterns sains et les signaux de rug.</p>
+  <p style="color:var(--muted);font-size:.85rem;margin-bottom:.8rem;">Analyse du price action en temps réel — détecte les patterns sains et les signaux de rug. Cappé à 40 pts.</p>
 
-  <p style="font-weight:700;margin-bottom:.5rem;color:var(--green);">✅ Bonus positifs</p>
+  <p style="font-weight:700;margin-bottom:.5rem;color:var(--gold);">🚀 Signaux graduation rapide (nouveaux — déduits de Satoshi)</p>
+  <table class="score-table">
+    <thead><tr><th>Signal</th><th>Condition</th><th>Pts</th></tr></thead>
+    <tbody>
+      <tr><td>Graduation ultra-rapide 🔥</td><td>age &lt; 30min + c6h &gt; 200% + volMcapH6 &gt; 0.5 + buyRatioH6 ≥ 60%</td><td><span class="pts pts-gold">+18</span></td></tr>
+      <tr><td>Graduation rapide</td><td>age &lt; 60min + c6h &gt; 100% + buyRatioH6 ≥ 58%</td><td><span class="pts pts-green">+10</span></td></tr>
+    </tbody>
+  </table>
+
+  <p style="font-weight:700;margin:.8rem 0 .5rem;color:var(--green);">✅ Bonus price action</p>
   <table class="score-table">
     <thead><tr><th>Pattern</th><th>Condition</th><th>Pts</th></tr></thead>
     <tbody>
-      <tr><td>Montée douce (Staircase)</td><td>c1h > 35%, c5m 0-20%, c1h > c5m×3</td><td><span class="pts pts-green">+15</span></td></tr>
+      <tr><td>Montée douce (Staircase)</td><td>c1h &gt; 35%, c5m 0-20%, c1h &gt; c5m×3</td><td><span class="pts pts-green">+15</span></td></tr>
       <tr><td>Correction saine</td><td>c1h entre -20% et -5%</td><td><span class="pts pts-green">+10</span></td></tr>
-      <tr><td>Multi-pump</td><td>c1h > 35% ET c6h > 55%</td><td><span class="pts pts-green">+10</span></td></tr>
-      <tr><td>Super pump</td><td>c6h > 75%</td><td><span class="pts pts-blue">+5</span></td></tr>
-      <tr><td>Consolidation propre</td><td>|c5m| < 7% ET c1h > 22%</td><td><span class="pts pts-blue">+8</span></td></tr>
-      <tr><td>Pas de dump</td><td>c5m > -25% ET m1 > -16%</td><td><span class="pts pts-blue">+5</span></td></tr>
-      <tr><td>Volume organique</td><td>buysM5 > sellsM5 × 1.55</td><td><span class="pts pts-blue">+7</span></td></tr>
-      <tr><td>Buy ratio fort</td><td>buyRatio m5 ≥ 0.58</td><td><span class="pts pts-blue">+5</span></td></tr>
-      <tr><td>Vol/Mcap sain</td><td>volMcapH1 entre 1 et 7</td><td><span class="pts pts-blue">+5</span></td></tr>
+      <tr><td>Multi-pump</td><td>c1h &gt; 35% ET c6h &gt; 55%</td><td><span class="pts pts-green">+10</span></td></tr>
+      <tr><td>Super pump</td><td>c6h &gt; 75%</td><td><span class="pts pts-blue">+5</span></td></tr>
+      <tr><td>Consolidation propre</td><td>|c5m| &lt; 7% ET c1h &gt; 22%</td><td><span class="pts pts-blue">+8</span></td></tr>
+      <tr><td>Pas de dump</td><td>c5m &gt; -25% ET m1 &gt; -16%</td><td><span class="pts pts-blue">+5</span></td></tr>
+      <tr><td>Volume ultra-clean 🆕</td><td>buysM5 &gt; sellsM5 × 3.0</td><td><span class="pts pts-green">+12</span></td></tr>
+      <tr><td>Volume organique</td><td>buysM5 &gt; sellsM5 × 1.55</td><td><span class="pts pts-blue">+7</span></td></tr>
+      <tr><td>Buy ratio m5 fort</td><td>buyRatioM5 ≥ 0.58</td><td><span class="pts pts-blue">+5</span></td></tr>
+      <tr><td>Vol/Mcap h1 sain</td><td>volMcapH1 entre 1 et 7</td><td><span class="pts pts-blue">+5</span></td></tr>
       <tr><td>Smart money</td><td>Avg tx ≥ $80</td><td><span class="pts pts-blue">+5</span></td></tr>
-      <tr><td>Migré (liquidité)</td><td>Liquidité > $5K</td><td><span class="pts pts-blue">+5</span></td></tr>
+      <tr><td>Migré (liquidité)</td><td>Liquidité &gt; $5K</td><td><span class="pts pts-blue">+5</span></td></tr>
+      <tr><td>Multi-TF momentum 🆕</td><td>m1 &gt; 0 ET c5m &gt; 0 ET c1h &gt; 5%</td><td><span class="pts pts-blue">+8</span></td></tr>
+      <tr><td>Momentum propre 🆕</td><td>c5m &gt; 3% ET c1h &gt; 15% ET buyRatioM5 ≥ 0.55</td><td><span class="pts pts-green">+10</span></td></tr>
+      <tr><td>Buy ratio h6 élevé 🆕</td><td>buyRatioH6 ≥ 65% (Chiikawa: 74%)</td><td><span class="pts pts-green">+8</span></td></tr>
+      <tr><td>Buy ratio h6 correct 🆕</td><td>buyRatioH6 ≥ 58%</td><td><span class="pts pts-blue">+4</span></td></tr>
+      <tr><td>Vol h6/mcap fort 🆕</td><td>volMcapH6 ≥ 2 ET buyRatioH6 ≥ 55%</td><td><span class="pts pts-blue">+7</span></td></tr>
     </tbody>
   </table>
 
@@ -367,7 +384,16 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;line-
     <thead><tr><th>Condition</th><th>Pts</th></tr></thead>
     <tbody>
       <tr><td>buysM5 ≥ 5 ET buyRatio ≥ 0.58</td><td><span class="pts pts-blue">+8</span></td></tr>
-      <tr><td>c5m 0-30% ET buys > sells</td><td><span class="pts pts-blue">+5</span></td></tr>
+      <tr><td>c5m 0-30% ET buys &gt; sells</td><td><span class="pts pts-blue">+5</span></td></tr>
+    </tbody>
+  </table>
+
+  <p style="font-weight:700;margin:.8rem 0 .5rem;color:var(--muted);">⏱️ Pénalités stagnation tardive 🆕</p>
+  <table class="score-table">
+    <thead><tr><th>Condition</th><th>Pts</th></tr></thead>
+    <tbody>
+      <tr><td>Token &gt; 20min, plat ou en baisse (c5m ≤ 0 ET c1h &lt; 10%)</td><td><span class="pts pts-red">-8</span></td></tr>
+      <tr><td>Token &gt; 40min ET c5m ≤ 0</td><td><span class="pts pts-red">-5 supp.</span></td></tr>
     </tbody>
   </table>
 
@@ -375,17 +401,19 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;line-
   <table class="score-table">
     <thead><tr><th>Signal</th><th>Condition</th><th>Pts</th></tr></thead>
     <tbody>
-      <tr><td>Pump & crash</td><td>c1h > 90% ET c5m < -28%</td><td><span class="pts pts-red">-18</span></td></tr>
-      <tr><td>Pump-dump tardif</td><td>c6h > 140% ET c1h < 20%</td><td><span class="pts pts-red">-15</span></td></tr>
-      <tr><td>Sell wall</td><td>sells > buys × 1.7 ET c1h > 30%</td><td><span class="pts pts-red">-12</span></td></tr>
-      <tr><td>Late dump</td><td>c1h > 60% ET c5m < -20%</td><td><span class="pts pts-red">-10</span></td></tr>
-      <tr><td>Dump violent 5min</td><td>c5m < -35%</td><td><span class="pts pts-red">-8</span></td></tr>
-      <tr><td>Vol/Mcap manipulation</td><td>volMcapH1 > 12</td><td><span class="pts pts-red">-8</span></td></tr>
-      <tr><td>Buy ratio faible</td><td>buyRatio < 0.45</td><td><span class="pts pts-red">-5</span></td></tr>
-      <tr><td>Bots détectés</td><td>avgTx < $40 ET txns > 100</td><td><span class="pts pts-red">-5</span></td></tr>
+      <tr><td>Pump & crash</td><td>c1h &gt; 90% ET c5m &lt; -28%</td><td><span class="pts pts-red">-18</span></td></tr>
+      <tr><td>Pump-dump tardif</td><td>c6h &gt; 140% ET c1h &lt; 20%</td><td><span class="pts pts-red">-15</span></td></tr>
+      <tr><td>Sell wall</td><td>sellsM5 &gt; buysM5 × 1.7 ET c1h &gt; 30%</td><td><span class="pts pts-red">-12</span></td></tr>
+      <tr><td>Late dump</td><td>c1h &gt; 60% ET c5m &lt; -20%</td><td><span class="pts pts-red">-10</span></td></tr>
+      <tr><td>Dump violent 5min</td><td>c5m &lt; -35%</td><td><span class="pts pts-red">-8</span></td></tr>
+      <tr><td>Vol/Mcap manipulation</td><td>volMcapH1 &gt; 12</td><td><span class="pts pts-red">-8</span></td></tr>
+      <tr><td>Buy ratio faible</td><td>buyRatioM5 &lt; 0.45</td><td><span class="pts pts-red">-5</span></td></tr>
+      <tr><td>Bots détectés</td><td>avgTx &lt; $40 ET txns &gt; 100</td><td><span class="pts pts-red">-5</span></td></tr>
+      <tr><td>Bundle launch spike</td><td>age &lt; 10min ET c5m &gt; 80%</td><td><span class="pts pts-red">-20</span></td></tr>
+      <tr><td>Pump-dump cycles</td><td>volMcapH1 &gt; 8 ET sellBuyRatio 0.8–1.3</td><td><span class="pts pts-red">-18</span></td></tr>
     </tbody>
   </table>
-  <div class="note note-info"><span class="note-icon">ℹ️</span> Le pattern score est cappé entre 0 et 45. Les pénalités ne peuvent pas le rendre négatif.</div>
+  <div class="note note-info"><span class="note-icon">ℹ️</span> Le pattern score est cappé entre 0 et <strong>40</strong>. Les pénalités ne peuvent pas le rendre négatif.</div>
 </div>
 
 <!-- ═══════════════════ BLACKLISTS & HARD FILTERS ═══════════════════ -->
@@ -401,13 +429,12 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;line-
     <tbody>
       <tr><td>🔴 Mint Authority</td><td>!= null</td><td>Le créateur peut mint des tokens à l'infini → rug garanti</td></tr>
       <tr><td>🔴 Freeze Authority</td><td>!= null</td><td>Le créateur peut geler les wallets → impossible de vendre</td></tr>
-      <tr><td>🔴 Top 1 Holder</td><td>> 20%</td><td>Un seul wallet détient trop → risque de dump massif</td></tr>
+      <tr><td>🔴 Top 1 Holder</td><td>> 25%</td><td>Un seul wallet détient trop → risque de dump massif</td></tr>
       <tr><td>🔴 Top 5 Holders</td><td>> 55%</td><td>Concentration excessive → manipulation probable</td></tr>
       <tr><td>🔴 Axiom Wallets</td><td>= 0</td><td>Aucun smart wallet détecté → pas de signal alpha</td></tr>
-      <tr><td>🔴 Platform</td><td>Hors liste</td><td>Seuls Pump.fun, PumpSwap, Bonk, Raydium, Bags acceptés</td></tr>
-      <tr><td>🔴 Mcap minimum</td><td>&lt; $15K</td><td>Trop petit, risque de manipulation</td></tr>
-      <tr><td>🔴 Mcap range</td><td>&lt; $5K ou &gt; $200K</td><td>Hors du range de détection optimal</td></tr>
-      <tr><td>🔴 Age maximum</td><td>> 20 min</td><td>Trop vieux pour un early call</td></tr>
+      <tr><td>🔴 Platform</td><td>Hors liste</td><td>Seuls Pump.fun, PumpSwap, Bonk/LaunchLab, Bags acceptés</td></tr>
+      <tr><td>🔴 Mcap</td><td>&lt; $15K ou &gt; $75K</td><td>Sweet spot 15-75K. Au-delà le potentiel de x est trop faible.</td></tr>
+      <tr><td>🔴 Age maximum</td><td>> 1h</td><td>Trop vieux pour un early call</td></tr>
     </tbody>
   </table>
 </div>
