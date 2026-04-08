@@ -4609,13 +4609,15 @@ async function fetchTokens(){
         // 1) Security check (102 cr) — filtre mint/freeze/top1 avant d'aller plus loin
         const secRes = await checkTokenSecurity(t.addr, t.raw?.pairAddress || null).catch(()=>null);
         const sec = secRes;
-        // 2) Hard security pre-filter — skip Axiom si token rejeté d'office
-        const skipAxiom = !sec
-          || sec.mintAuthority !== null
+        // 2) Hard security pre-filter — skip Axiom si token CLAIREMENT rejeté
+        // NB: si sec=null (erreur API/timeout), on lance quand même Axiom pour ne pas rater de calls
+        const skipAxiom = sec && (
+             sec.mintAuthority !== null
           || sec.freezeAuthority !== null
           || parseFloat(sec.top1Pct||0) > 25
-          || parseFloat(sec.top5Pct||0) > 55;
-        // 3) Axiom check (202 cr) — seulement si security ok → économie ~40% crédits
+          || parseFloat(sec.top5Pct||0) > 55
+        );
+        // 3) Axiom check — skippé seulement si security a explicitement échoué (pas si sec=null)
         const wData = skipAxiom
           ? { count: 0, wallets: [], clustered: false }
           : await checkAxiomWallets(t.addr, t.raw?.pairAddress || null).catch(()=>({count:0,wallets:[],clustered:false}));
