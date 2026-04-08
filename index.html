@@ -4838,9 +4838,11 @@ async function renderTokenTable(tokens){
       if(c6<-5) {const e=t.mcap/Math.max(0.001,1+c6/100); if(e<cap)athEst=Math.max(athEst,e);}
       if(c1<-5) {const e=t.mcap/Math.max(0.001,1+c1/100); if(e<cap)athEst=Math.max(athEst,e);}
       athMcap=Math.max(athMcap,Math.round(athEst));
-      // Sauvegarder si meilleur
-      if(athMcap>(callData?.athMcap||0))updateAth(t.addr,athMcap).catch(()=>{});
     }
+    // NOW est toujours un candidat ATH valide (ATH ne peut jamais être < NOW)
+    athMcap=Math.max(athMcap,nowMcap);
+    if(athMcap>(callData?.athMcap||0))updateAth(t.addr,athMcap).catch(()=>{});
+    t._athMcap=athMcap; // stocké pour refreshLiveMcap
     const mult=callMcap>0?t.mcap/callMcap:1;
     const athMult=callMcap>0?athMcap/callMcap:1;
     const d=t.debug;
@@ -4905,13 +4907,13 @@ async function renderTokenTable(tokens){
           <div class="sc-stat-lbl">⏰ NOW</div>
           <div class="sc-stat-val live-mcap-val" style="color:${nowColor}">$${fmtNum(nowMcap||t.mcap)}</div>
         </div>
-        <div class="sc-stat">
+        <div class="sc-stat" data-live-ath="${t.addr}" data-call-mcap2="${callMcap}">
           <div class="sc-stat-lbl">🏆 ATH</div>
-          <div class="sc-stat-val" style="color:${athColor}">$${fmtNum(athMcap)}</div>
+          <div class="sc-stat-val live-ath-val" style="color:${athColor}">$${fmtNum(athMcap)}</div>
         </div>
-        <div class="sc-stat gold">
+        <div class="sc-stat gold" data-live-xath="${t.addr}">
           <div class="sc-stat-lbl">🎯 × ATH</div>
-          <div class="sc-stat-val" style="color:${xColor};font-size:.82rem">${xAth.toFixed(2)}x</div>
+          <div class="sc-stat-val live-xath-val" style="color:${xColor};font-size:.82rem">${xAth.toFixed(2)}x</div>
         </div>
       </div>
       <div class="sc-footer">
@@ -6116,7 +6118,7 @@ async function refreshLiveMcap() {
     for (const p of (data?.pairs || [])) {
       if (p?.pairAddress) pairMap[p.pairAddress] = p.marketCap || p.fdv || 0;
     }
-    // Mise à jour DOM ciblée — seulement les cellules NOW
+    // Mise à jour DOM ciblée — NOW + ATH + xATH
     document.querySelectorAll('[data-live-addr]').forEach(cell => {
       const addr = cell.dataset.liveAddr;
       const callMcap = parseFloat(cell.dataset.callMcap) || 0;
@@ -6124,12 +6126,26 @@ async function refreshLiveMcap() {
       if (!t) return;
       const pairAddr = t.raw?.pairAddress || '';
       const newMcap = pairMap[pairAddr] || t.mcap || 0;
-      if (newMcap > 0) {
-        t.mcap = newMcap; // mise à jour en mémoire aussi
-        const val = cell.querySelector('.live-mcap-val');
-        if (val) {
-          val.textContent = `$${fmtNum(newMcap)}`;
-          val.style.color = newMcap > callMcap ? '#44ff88' : newMcap < callMcap * 0.7 ? '#ff5577' : '#ffcc44';
+      if (newMcap <= 0) return;
+      t.mcap = newMcap;
+      // NOW
+      const nowVal = cell.querySelector('.live-mcap-val');
+      if (nowVal) {
+        nowVal.textContent = `$${fmtNum(newMcap)}`;
+        nowVal.style.color = newMcap > callMcap ? '#44ff88' : newMcap < callMcap * 0.7 ? '#ff5577' : '#ffcc44';
+      }
+      // ATH — mise à jour si newMcap > ATH actuel
+      if (newMcap > (t._athMcap || 0)) {
+        t._athMcap = newMcap;
+        updateAth(addr, newMcap).catch(()=>{});
+        const athCell = document.querySelector(`[data-live-ath="${addr}"] .live-ath-val`);
+        if (athCell) athCell.textContent = `$${fmtNum(newMcap)}`;
+        // xATH
+        const xAthCell = document.querySelector(`[data-live-xath="${addr}"] .live-xath-val`);
+        if (xAthCell && callMcap > 0) {
+          const xAth = newMcap / callMcap;
+          xAthCell.textContent = `${xAth.toFixed(2)}x`;
+          xAthCell.style.color = xAth >= 3 ? '#00ff88' : xAth >= 2 ? '#88ff44' : xAth >= 1.5 ? '#ffcc44' : '#ff8866';
         }
       }
     });
