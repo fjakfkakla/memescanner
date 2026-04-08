@@ -4901,9 +4901,9 @@ async function renderTokenTable(tokens){
           <div class="sc-stat-lbl">📍 CALL</div>
           <div class="sc-stat-val" style="color:#ffaa44">$${fmtNum(callMcap)}</div>
         </div>
-        <div class="sc-stat">
+        <div class="sc-stat" data-live-addr="${t.addr}" data-call-mcap="${callMcap}">
           <div class="sc-stat-lbl">⏰ NOW</div>
-          <div class="sc-stat-val" style="color:${nowColor}">$${fmtNum(nowMcap||t.mcap)}</div>
+          <div class="sc-stat-val live-mcap-val" style="color:${nowColor}">$${fmtNum(nowMcap||t.mcap)}</div>
         </div>
         <div class="sc-stat">
           <div class="sc-stat-lbl">🏆 ATH</div>
@@ -6097,6 +6097,45 @@ function resetLive(){if(!confirm('Vider tous les calls live ?'))return;lastScore
 function resetHistory(){if(!confirm('Supprimer tout l\'historique des calls ? Cette action est irréversible.'))return;try{localStorage.removeItem(STORAGE_KEY);}catch(e){}try{fetch(`${FB_URL}/calls.json`,{method:'DELETE'}).catch(()=>{});}catch(e){}const hc=document.getElementById('histCount');if(hc)hc.textContent='';const container=document.getElementById('historyContent');if(container)container.innerHTML='<div class="hist-empty"><div class="hist-empty-icon">🗑</div><div>Historique supprimé</div></div>';}
 function resetRugs(){if(!confirm('Supprimer toute la liste des rugs détectés ?'))return;try{localStorage.removeItem(RUGS_KEY);}catch(e){}try{localStorage.removeItem(DEV_RUGS_KEY);}catch(e){}lastRugs=[];document.getElementById('rsStatDetected').textContent='0';document.getElementById('rsTokenCount').textContent='';document.getElementById('rsTokenContent').innerHTML='<div class="rs-empty">🗑 Liste des rugs supprimée<br><span style="font-size:.7rem;opacity:.6">Refresh pour recharger</span></div>';}
 function resetRuggers(){if(!confirm('Supprimer toute la liste des ruggeurs ?'))return;try{localStorage.removeItem(RUGGERS_KEY);}catch(e){}try{localStorage.removeItem(DEV_RUGS_KEY);}catch(e){}document.getElementById('rsStatRuggers').textContent='0';document.getElementById('rsAddrCount').textContent='';document.getElementById('rsAddrContent').innerHTML='<div class="rs-empty">🗑 Liste des ruggeurs supprimée</div>';}
+
+// ============================================================
+// LIVE MCAP REFRESH — toutes les 12s, sans re-render complet
+// ============================================================
+async function refreshLiveMcap() {
+  if (!lastScored.length) return;
+  // Collecter les pairAddresses des tokens live
+  const pairs = lastScored
+    .map(t => t.raw?.pairAddress || '')
+    .filter(p => p.length > 10)
+    .slice(0, 10); // DexScreener limite à ~10 par batch
+  if (!pairs.length) return;
+  try {
+    const url = `https://api.dexscreener.com/latest/dex/pairs/solana/${pairs.join(',')}`;
+    const data = await fetch(url, { signal: AbortSignal.timeout(6000) }).then(r => r.json());
+    const pairMap = {};
+    for (const p of (data?.pairs || [])) {
+      if (p?.pairAddress) pairMap[p.pairAddress] = p.marketCap || p.fdv || 0;
+    }
+    // Mise à jour DOM ciblée — seulement les cellules NOW
+    document.querySelectorAll('[data-live-addr]').forEach(cell => {
+      const addr = cell.dataset.liveAddr;
+      const callMcap = parseFloat(cell.dataset.callMcap) || 0;
+      const t = lastScored.find(x => x.addr === addr);
+      if (!t) return;
+      const pairAddr = t.raw?.pairAddress || '';
+      const newMcap = pairMap[pairAddr] || t.mcap || 0;
+      if (newMcap > 0) {
+        t.mcap = newMcap; // mise à jour en mémoire aussi
+        const val = cell.querySelector('.live-mcap-val');
+        if (val) {
+          val.textContent = `$${fmtNum(newMcap)}`;
+          val.style.color = newMcap > callMcap ? '#44ff88' : newMcap < callMcap * 0.7 ? '#ff5577' : '#ffcc44';
+        }
+      }
+    });
+  } catch(e) { /* silencieux */ }
+}
+setInterval(refreshLiveMcap, 12000);
 
 // ============================================================
 // INIT
