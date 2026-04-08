@@ -2601,7 +2601,7 @@ const heliusCache = {};
 async function checkTokenSecurity(mintAddr, pairAddress = null) {
   if (!mintAddr || mintAddr.length < 32) return null;
   const now = Date.now();
-  if (heliusCache[mintAddr] && now - heliusCache[mintAddr].ts < 600000) {
+  if (heliusCache[mintAddr] && now - heliusCache[mintAddr].ts < 1200000) {
     return heliusCache[mintAddr].data;
   }
   try {
@@ -2747,7 +2747,7 @@ async function checkAxiomWallets(tokenAddr, pairAddr = null, deep = false) {
   const cached = swCache[tokenAddr];
   // Cache 30min pour Axiom — évite les re-checks qui pourraient baisser le count
   // Le MAX historique est aussi stocké dans maxEver pour double sécurité
-  if (cached && now - cached.ts < 1800000) return cached.result;
+  if (cached && now - cached.ts < 3600000) return cached.result;
   // Pour getSignaturesForAddress : utiliser pairAddress (bonding curve) si dispo
   // Les swaps Pump.fun sont indexés sous la bonding curve, PAS sous le mint
   const sigAddr = pairAddr || tokenAddr;
@@ -2760,7 +2760,7 @@ async function checkAxiomWallets(tokenAddr, pairAddr = null, deep = false) {
     // Requêtes parallèles : pairAddr (pool actuel) + mintAddr (all-time) + DAS holders
     // Double source sigs : couvre pré-migration (bonding curve) ET post-migration (PumpSwap)
     // deep=true (Debug CA) : limite 500 pour couvrir tout l'historique même sur tokens gradués
-    const sigLimit = deep ? 500 : 100;
+    const sigLimit = deep ? 500 : 60;
     const [sigPairRes, sigMintRes, dasRes] = await Promise.allSettled([
       // A1) Signatures via pairAddr (pool actuel — PumpSwap ou bonding curve)
       fetchRetry(HELIUS_RPC, {
@@ -4580,23 +4580,28 @@ async function fetchTokens(){
   // ── ÉTAPE 1 : Score TOUS les tokens <1h (sans hardFilter en amont) ─
   const candidates=pairs.filter(p=>{const ah=(Date.now()-(p.pairCreatedAt||0))/3600000;return ah>=0.02&&ah<=1;});
   let preScored=candidates.map(p=>scoreTokenV2(p)).filter(t=>t.score>=30);
-  preScored.sort((a,b)=>b.score-a.score);preScored=preScored.slice(0,25);
-  // ── PARALLÉLISATION PAR BATCH : évite les 429 Helius (rate limit) ──
-  // Batch de 3 tokens + 600ms entre batches → ~15 req simultanées max
+  preScored.sort((a,b)=>b.score-a.score);preScored=preScored.slice(0,15); // réduit 25→15 : -40% crédits Helius
+  // ── SÉQUENTIEL : Security d'abord → Axiom seulement si security OK ──
+  // Évite de brûler 200 crédits Axiom sur des tokens qui échouent le security check
   const parallelResults = [];
   for (let i = 0; i < preScored.length; i += 3) {
     const batch = preScored.slice(i, i + 3);
     const batchRes = await Promise.allSettled(
       batch.map(async t => {
-        const [sec, wData] = await Promise.allSettled([
-          checkTokenSecurity(t.addr, t.raw?.pairAddress || null),
-          checkAxiomWallets(t.addr, t.raw?.pairAddress || null)
-        ]);
-        return {
-          t,
-          sec: sec.status==='fulfilled' ? sec.value : null,
-          wData: wData.status==='fulfilled' ? wData.value : {count:0,wallets:[],clustered:false}
-        };
+        // 1) Security check (102 cr) — filtre mint/freeze/top1 avant d'aller plus loin
+        const secRes = await checkTokenSecurity(t.addr, t.raw?.pairAddress || null).catch(()=>null);
+        const sec = secRes;
+        // 2) Hard security pre-filter — skip Axiom si token rejeté d'office
+        const skipAxiom = !sec
+          || sec.mintAuthority !== null
+          || sec.freezeAuthority !== null
+          || parseFloat(sec.top1Pct||0) > 25
+          || parseFloat(sec.top5Pct||0) > 55;
+        // 3) Axiom check (202 cr) — seulement si security ok → économie ~40% crédits
+        const wData = skipAxiom
+          ? { count: 0, wallets: [], clustered: false }
+          : await checkAxiomWallets(t.addr, t.raw?.pairAddress || null).catch(()=>({count:0,wallets:[],clustered:false}));
+        return { t, sec, wData };
       })
     );
     parallelResults.push(...batchRes);
