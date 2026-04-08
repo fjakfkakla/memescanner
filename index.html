@@ -4744,6 +4744,8 @@ async function fetchTokens(){
   console.log(`[Scanner] ${finalScored.length} calls | rejected:`, JSON.stringify(rejected));
   const _now5 = Date.now();
   for(const t of finalScored){
+    // PVP loser → affiché en UI mais jamais sauvegardé comme call
+    if(t.pvp==='loser'){t._callTime=_now5;continue;}
     const existing=await getCallData(t.addr);
     if(!existing){ await saveCall(t.addr,t.mcap,_now5,t.symbol,t.score||0,t.raw?.pairAddress||''); t._callTime=_now5; onNewCall(t); }
     else{ if(t.mcap>(existing.athMcap||0)){await updateAth(t.addr,t.mcap); const xAth=t.mcap/(existing.callMcap||t.mcap); if(xAth>=2)onX2Call(t,xAth);} t._callTime=existing.callTime||_now5; }
