@@ -3039,6 +3039,12 @@ function calculatePatternScore(p) {
   if (sellsM5 > buysM5 * 1.7 && c1h > 30) score -= 12;
   if (c1h > 60 && c5m < -20) score -= 10;
   if (c5m < -35) score -= 8;
+  // Réversion M1 — pump M5 déjà retourné : on est dans le dump, pas le pump
+  // Signal : c5m fort (pompe récente) MAIS m1 déjà négatif (les SS ont commencé)
+  if (c5m > 15 && m1 < -5)  score -= 20;  // dump rapide en cours = sniper exit
+  if (c5m > 8  && m1 < -10) score -= 15;  // retournement brutal même sur pump modéré
+  // Spike sans acheteurs : grosse hausse M5 mais vente dominante = fake pump
+  if (c5m > 30 && sellsM5 > buysM5 * 1.3) score -= 18;
 
   // === PATTERN 1 : GROSSE BOUGIE INITIALE (bundle launch spike) ===
   // Token jeune avec spike massif = achat bundle au launch, chart bizarre après
