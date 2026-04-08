@@ -2948,8 +2948,9 @@ function calculatePatternScore(p) {
   if (Math.abs(c5m) < 7 && c1h > 22) score += 8;
   // 5. Pas de dump violent
   if (c5m > -25 && m1 > -16) score += 5;
-  // 6. Volume organique (anti-bundle)
-  if (buysM5 > sellsM5 * 1.55) score += 7;
+  // 6. Volume organique (anti-bundle) — 2 paliers
+  if      (buysM5 > sellsM5 * 3.0)  score += 12;  // ultra clean : quasi 0 sells
+  else if (buysM5 > sellsM5 * 1.55) score +=  7;  // organique standard
   // 7. Buy ratio m5 élevé (bon: >0.55, mauvais: <0.50)
   if (buyRatioM5 >= 0.58) score += 5;
   else if (buyRatioM5 < 0.45) score -= 5;
@@ -2961,6 +2962,9 @@ function calculatePatternScore(p) {
   else if (avgTxSize < 40 && totalTxH1 > 100) score -= 5;
   // 10. Liquidité > 0 = migré (signal fort)
   if (liq > 5000) score += 5;
+  // 11. Multi-timeframe momentum : tous les TF positifs = pompe organique en cours
+  if (m1 > 0 && c5m > 0 && c1h > 5)                    score += 8;   // 3 TF verts = élan réel
+  if (c5m > 3 && c1h > 15 && buyRatioM5 >= 0.55)        score += 10;  // momentum propre + acheteurs majoritaires
 
   // === BONUS EARLY TOKEN (<5 min) — pas assez d'historique pour les patterns classiques ===
   const ageMinP = (Date.now() - (p.pairCreatedAt || 0)) / 60000;
@@ -2976,6 +2980,10 @@ function calculatePatternScore(p) {
     // Token frais (5-10 min) : mix signaux courts + début h1
     if (buysM5 >= 5 && buyRatioM5 >= 0.58) score += 8;
     if (c5m > 0 && c5m < 30 && buysM5 > sellsM5) score += 5;  // montée propre récente
+  } else if (ageMinP > 20) {
+    // Token vieux sans élan récent = entrée tardive risquée
+    if (c5m <= 0 && c1h < 10)  score -= 8;   // stagnation sur un token de 20min+
+    if (ageMinP > 40 && c5m <= 0) score -= 5; // encore plus vieux et plat = danger
   }
 
   // === PÉNALITÉS ANTI-RUG / FAUX PUMP ===
@@ -3000,7 +3008,7 @@ function calculatePatternScore(p) {
   if (c6h > 60 && c1h < 0) score -= 12;                       // c6h positif mais c1h négatif = pattern dump
   if (sellsH1 > buysH1 * 1.3 && c1h > 40) score -= 10;       // beaucoup de sells malgré pump = distribution
 
-  return Math.max(0, Math.min(30, Math.round(score)));
+  return Math.max(0, Math.min(40, Math.round(score)));
 }
 
 function scoreTokenV2(p,walletData={count:0,wallets:[],clustered:false}){
@@ -3123,12 +3131,14 @@ function scoreTokenV2(p,walletData={count:0,wallets:[],clustered:false}){
   score += platformScore;
 
   // ── ⭐ MCAP ───────────────────────────────────────────────────────────────
+  // Zone 15-25K = sweet spot optimal (YOSHI, 81 → 5x-37x)
+  // Au-delà de 40K le potentiel de x diminue fortement
   let mcapScore = 0;
-  if      (mcap >= 15000 && mcap <= 20000)  mcapScore = 15;
-  else if (mcap >  20000 && mcap <= 40000)  mcapScore = 12;
-  else if (mcap >  40000 && mcap <= 80000)  mcapScore =  8;
-  else if (mcap >  80000 && mcap <= 120000) mcapScore =  4;
-  else if (mcap > 150000)                   mcapScore = -5;
+  if      (mcap >= 15000 && mcap <= 25000)  mcapScore = 15;  // sweet spot maximal
+  else if (mcap >  25000 && mcap <= 40000)  mcapScore = 11;  // encore bon
+  else if (mcap >  40000 && mcap <= 60000)  mcapScore =  5;  // acceptable (ex-NFORGE $33K → ok)
+  else if (mcap >  60000 && mcap <= 75000)  mcapScore =  1;  // limite, potentiel réduit
+  else if (mcap > 75000)                    mcapScore = -5;  // trop tard, pénalisé
   score += mcapScore;
 
   // ── ⏱ AGE ─────────────────────────────────────────────────────────────────
@@ -3149,7 +3159,7 @@ function scoreTokenV2(p,walletData={count:0,wallets:[],clustered:false}){
   if (holderScore < 3)  return _mkFail('distrib');
 
   // ── CALCUL FINAL ──────────────────────────────────────────────────────────
-  const finalScore = Math.min(140, Math.max(0, Math.round(score)));
+  const finalScore = Math.min(150, Math.max(0, Math.round(score)));
 
   // Rug risk inchangé (basé sur données disponibles)
   let rugPts = 0;
@@ -3645,7 +3655,7 @@ function toggleDebugMode(){debugModeOn=!debugModeOn;const btn=document.getElemen
 function showDebug(idx){
   const t=lastScored[idx];if(!t)return;
   document.getElementById('debugOverlay').classList.add('open');
-  const cats=[{label:'TRACKER',val:t.debug.traderScore,max:35},{label:'SOCIAL',val:t.debug.socialScore,max:25},{label:'HOLDERS',val:t.debug.holderScore,max:25},{label:'TOKEN',val:t.debug.platformScore,max:10},{label:'MCAP',val:t.debug.mcapScore,max:15},{label:'AGE',val:t.debug.ageScore,max:10},{label:'PATTERN',val:t.debug.patternScore,max:30}];
+  const cats=[{label:'TRACKER',val:t.debug.traderScore,max:35},{label:'SOCIAL',val:t.debug.socialScore,max:25},{label:'HOLDERS',val:t.debug.holderScore,max:25},{label:'TOKEN',val:t.debug.platformScore,max:10},{label:'MCAP',val:t.debug.mcapScore,max:15},{label:'AGE',val:t.debug.ageScore,max:10},{label:'PATTERN',val:t.debug.patternScore,max:40}];
   const bars=cats.map(c=>{const pct=Math.max(0,Math.min(100,(Math.max(0,c.val)/c.max)*100));const color=c.val<0?'var(--red)':c.val>c.max*.7?'var(--green)':'#ffaa00';return`<div class="debug-bar-row"><div class="debug-bar-label">${c.label}</div><div class="debug-bar-track"><div class="debug-bar-fill" style="width:${pct}%;background:${color}"></div></div><div class="debug-bar-val">${c.val>0?'+':''}${c.val}</div></div>`;}).join('');
   const scoreColor=t.score>=110?'var(--gold)':t.score>=80?'var(--green)':t.score>=55?'var(--blue)':'var(--red)';
   const d=t.debug;
@@ -4302,7 +4312,7 @@ async function debugCA(){
       {name:'🪙 Token', val:platformScore,max:10},
       {name:'⭐ Mcap',     val:mcapScore,    max:15},
       {name:'⏱ Age',       val:ageScore,     max:10},
-      {name:'📈 Pattern',  val:patternScore, max:30},
+      {name:'📈 Pattern',  val:patternScore, max:40},
     ];
 
     const bars=cats.map(c=>{
@@ -4632,10 +4642,10 @@ async function fetchTokens(){
       const isBags=rdex.includes('bags')||rurl.includes('bags');
       if(!isPump&&!isBonk&&!isBags){rejected[`platform:${rdex||'?'}`]=(rejected[`platform:${rdex||'?'}`]||0)+1;continue;}
 
-      // HARD FILTER 2 — Mcap : 15K → 100K
+      // HARD FILTER 2 — Mcap : 15K → 75K (réduit pour éviter entrées tardives)
       const rmc=rescored.mcap||0;
       if(rmc<15000){rejected[`mcap<15K`]=(rejected['mcap<15K']||0)+1;continue;}
-      if(rmc>100000){rejected[`mcap>100K`]=(rejected['mcap>100K']||0)+1;continue;}
+      if(rmc>75000){rejected[`mcap>75K`]=(rejected['mcap>75K']||0)+1;continue;}
 
       // HARD FILTER 3 — Âge < 1h
       const rage=(Date.now()-(rp?.pairCreatedAt||0))/3600000;
