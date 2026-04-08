@@ -2939,6 +2939,7 @@ function calculatePatternScore(p) {
   const buyRatioM5 = buysM5 / ((buysM5 + sellsM5) || 1);
   const volMcapH1  = volH1 / mcap;
   const avgTxSize  = volH1 / totalTxH1;
+  const ageMinP    = (Date.now() - (p.pairCreatedAt || 0)) / 60000; // déclaré ici pour tout le scope
 
   // 0. GRADUATION RAPIDE — bonding curve remplie vite = demande explosive (signal #1 Satoshi)
   // Détecté via : token jeune (<30min) + h6 massif (tout le pump = les premières minutes)
@@ -2985,7 +2986,6 @@ function calculatePatternScore(p) {
   if (volMcapH6 >= 2 && buyRatioH6 >= 0.55) score += 7; // beaucoup de volume ET acheteurs = runner
 
   // === BONUS EARLY TOKEN (<5 min) — pas assez d'historique pour les patterns classiques ===
-  const ageMinP = (Date.now() - (p.pairCreatedAt || 0)) / 60000;
   if (ageMinP < 5) {
     // Token très frais : juger sur les signaux immédiats
     if (buysM5 >= 8 && buyRatioM5 >= 0.6) score += 12;        // beaucoup d'achats rapides + ratio sain
