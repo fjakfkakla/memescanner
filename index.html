@@ -2760,7 +2760,7 @@ async function checkAxiomWallets(tokenAddr, pairAddr = null, deep = false) {
     // Requêtes parallèles : pairAddr (pool actuel) + mintAddr (all-time) + DAS holders
     // Double source sigs : couvre pré-migration (bonding curve) ET post-migration (PumpSwap)
     // deep=true (Debug CA) : limite 500 pour couvrir tout l'historique même sur tokens gradués
-    const sigLimit = deep ? 500 : 60;
+    const sigLimit = deep ? 500 : 100;
     const [sigPairRes, sigMintRes, dasRes] = await Promise.allSettled([
       // A1) Signatures via pairAddr (pool actuel — PumpSwap ou bonding curve)
       fetchRetry(HELIUS_RPC, {
@@ -2826,19 +2826,22 @@ async function checkAxiomWallets(tokenAddr, pairAddr = null, deep = false) {
           console.log('[AXIOM] parseTransactions batch', parseBatches.indexOf(batch)+1, '/', parseBatches.length, '— status:', parseResp.status, 'count:', Array.isArray(parsedTxs)?parsedTxs.length:'ERROR');
           if (Array.isArray(parsedTxs)) {
             parsedTxs.forEach(tx => {
-              // Filtrer uniquement les tokenTransfers du token analysé (évite faux positifs bundles Jito)
               const relevantTTs = Array.isArray(tx?.tokenTransfers)
                 ? tx.tokenTransfers.filter(tt => tt?.mint === tokenAddr)
                 : [];
-              // feePayer compté UNIQUEMENT si la tx contient un vrai transfer du token
-              // (évite le cas Jito où un wallet Axiom paie les fees d'une tx qui n'est pas la sienne)
-              if (relevantTTs.length > 0 && tx?.feePayer && tx.feePayer.length >= 32) {
+
+              if (relevantTTs.length > 0) {
+                // Cas normal (PumpSwap migré) : tokenTransfers présents → feePayer + accounts
+                if (tx?.feePayer && tx.feePayer.length >= 32) allOwners.add(tx.feePayer);
+                relevantTTs.forEach(tt => {
+                  if (tt?.fromUserAccount && tt.fromUserAccount.length >= 32) allOwners.add(tt.fromUserAccount);
+                  if (tt?.toUserAccount   && tt.toUserAccount.length   >= 32) allOwners.add(tt.toUserAccount);
+                });
+              } else if (tx?.feePayer && tx.feePayer.length >= 32) {
+                // Cas bonding curve : Helius ne retourne pas tokenTransfers pour les txs pump.fun
+                // Les signatures viennent déjà d'addresses spécifiques au token → feePayer = vrai acheteur
                 allOwners.add(tx.feePayer);
               }
-              relevantTTs.forEach(tt => {
-                if (tt?.fromUserAccount && tt.fromUserAccount.length >= 32) allOwners.add(tt.fromUserAccount);
-                if (tt?.toUserAccount && tt.toUserAccount.length >= 32) allOwners.add(tt.toUserAccount);
-              });
             });
           }
         } catch(e) { console.warn('[AXIOM] parseTransactions batch error:', e.message); }
