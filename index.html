@@ -2858,6 +2858,25 @@ async function checkAxiomWallets(tokenAddr, pairAddr = null, deep = false) {
       console.warn('[AXIOM] DAS failed:', dasRes.reason);
     }
 
+    // C) Pump.fun public API — gratuit, sans clé, fonctionne bonding curve ET pumpswap
+    try {
+      const pumpResp = await fetch(
+        `https://frontend-api-v3.pump.fun/trades/all/${tokenAddr}?limit=200&offset=0`,
+        { signal: AbortSignal.timeout(8000) }
+      );
+      if (pumpResp.ok) {
+        const pumpTrades = await pumpResp.json();
+        if (Array.isArray(pumpTrades)) {
+          pumpTrades.forEach(trade => {
+            if (trade?.user && trade.user.length >= 32) allOwners.add(trade.user);
+          });
+          console.log('[AXIOM] Pump.fun trades:', pumpTrades.length, '— owners after:', allOwners.size);
+        }
+      } else {
+        console.warn('[AXIOM] pump.fun API status:', pumpResp.status);
+      }
+    } catch(e) { console.warn('[AXIOM] pump.fun API error:', e.message); }
+
     // On garde uniquement feePayer (signataires humains) + DAS owners (vrais holders actuels)
 
     // Exclure les adresses système/programme connues avant le match
