@@ -4580,7 +4580,7 @@ async function fetchTokens(){
   // ── ÉTAPE 1 : Score TOUS les tokens <1h (sans hardFilter en amont) ─
   const candidates=pairs.filter(p=>{const ah=(Date.now()-(p.pairCreatedAt||0))/3600000;return ah>=0.02&&ah<=1;});
   let preScored=candidates.map(p=>scoreTokenV2(p)).filter(t=>t.score>=30);
-  preScored.sort((a,b)=>b.score-a.score);preScored=preScored.slice(0,15); // réduit 25→15 : -40% crédits Helius
+  preScored.sort((a,b)=>b.score-a.score);preScored=preScored.slice(0,20); // réduit 25→20 : compromis crédits/couverture
   // ── SÉQUENTIEL : Security d'abord → Axiom seulement si security OK ──
   // Évite de brûler 200 crédits Axiom sur des tokens qui échouent le security check
   const parallelResults = [];
