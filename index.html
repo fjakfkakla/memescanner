@@ -2937,6 +2937,16 @@ function calculatePatternScore(p) {
   const volMcapH1  = volH1 / mcap;
   const avgTxSize  = volH1 / totalTxH1;
 
+  // 0. GRADUATION RAPIDE — bonding curve remplie vite = demande explosive (signal #1 Satoshi)
+  // Détecté via : token jeune (<30min) + h6 massif (tout le pump = les premières minutes)
+  // + volume énorme = acheteurs qui se battent pour rentrer
+  const volMcapH6 = (p.volume?.h6 || 0) / mcap;
+  const buysH6  = p.txns?.h6?.buys  || 0;
+  const sellsH6 = p.txns?.h6?.sells || 0;
+  const buyRatioH6 = buysH6 / ((buysH6 + sellsH6) || 1);
+  if (ageMinP < 30 && c6h > 200 && volMcapH6 > 0.5 && buyRatioH6 >= 0.60) score += 18; // graduation rapide confirmée
+  else if (ageMinP < 60 && c6h > 100 && buyRatioH6 >= 0.58)                score += 10; // fort depuis le début
+
   // 1. Montée douce / Staircase : c1h fort mais c5m modéré = croissance régulière
   if (c1h > 35 && c5m > 0 && c5m < 20 && c1h > c5m * 3) score += 15;
   // 2. Correction saine (pas trop violente)
@@ -2965,6 +2975,11 @@ function calculatePatternScore(p) {
   // 11. Multi-timeframe momentum : tous les TF positifs = pompe organique en cours
   if (m1 > 0 && c5m > 0 && c1h > 5)                    score += 8;   // 3 TF verts = élan réel
   if (c5m > 3 && c1h > 15 && buyRatioM5 >= 0.55)        score += 10;  // momentum propre + acheteurs majoritaires
+  // 12. Buy ratio h6 élevé = acheteurs constants depuis le début (signal Chiikawa 74%)
+  if (buyRatioH6 >= 0.65)      score += 8;   // acheteurs très majoritaires sur 6h
+  else if (buyRatioH6 >= 0.58) score += 4;   // légère majorité acheteuse sur 6h
+  // 13. Volume h6/mcap fort = activité intense et soutenue depuis launch
+  if (volMcapH6 >= 2 && buyRatioH6 >= 0.55) score += 7; // beaucoup de volume ET acheteurs = runner
 
   // === BONUS EARLY TOKEN (<5 min) — pas assez d'historique pour les patterns classiques ===
   const ageMinP = (Date.now() - (p.pairCreatedAt || 0)) / 60000;
