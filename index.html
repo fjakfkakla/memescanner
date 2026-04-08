@@ -2745,9 +2745,10 @@ async function checkAxiomWallets(tokenAddr, pairAddr = null, deep = false) {
   if (!tokenAddr) return { count: 0, wallets: [], clustered: false };
   const now = Date.now();
   const cached = swCache[tokenAddr];
-  // Cache 30min pour Axiom — évite les re-checks qui pourraient baisser le count
-  // Le MAX historique est aussi stocké dans maxEver pour double sécurité
-  if (cached && now - cached.ts < 3600000) return cached.result;
+  // Cache adaptatif : 5min si count=0 (permet re-check si wallets achetent plus tard),
+  // 60min si count>0 (on a déjà détecté des wallets, pas besoin de refaire)
+  const cacheTTL = (cached?.result?.count || 0) > 0 ? 3600000 : 300000;
+  if (cached && now - cached.ts < cacheTTL) return cached.result;
   // Pour getSignaturesForAddress : utiliser pairAddress (bonding curve) si dispo
   // Les swaps Pump.fun sont indexés sous la bonding curve, PAS sous le mint
   const sigAddr = pairAddr || tokenAddr;
