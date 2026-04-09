@@ -7,21 +7,23 @@
 <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;600;700;800&family=Ubuntu:wght@500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <style>
 :root {
-  --bg: #0a0612;
-  --bg2: #0f0a1a;
-  --bg3: #150f22;
-  --card: #1a1228;
-  --border: #2a1f40;
+  --bg: #060a0f;
+  --bg2: #090d14;
+  --bg3: #0d1219;
+  --card: #0b0f18;
+  --border: #1a2030;
   --green: #00ff88;
   --green2: #00cc6a;
   --gold: #ffd700;
-  --red: #ff4466;
+  --red: #ff3355;
   --blue: #4488ff;
-  --purple: #6156d9;
-  --purple2: #7c6aff;
+  --orange: #ff6d00;
+  --orange2: #ff9500;
+  --purple: #ff6d00;
+  --purple2: #ff9500;
   --cyan: #00e5ff;
-  --text: #eeeef6;
-  --muted: #8a82b0;
+  --text: #e4e8f0;
+  --muted: #4a5568;
   --font-head: 'Ubuntu', sans-serif;
   --font-mono: 'Space Mono', monospace;
   --font: 'Open Sans', sans-serif;
@@ -29,11 +31,14 @@
 *{margin:0;padding:0;box-sizing:border-box;}
 body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:15px;min-height:100vh;overflow-x:hidden;line-height:1.6;}
 body::before{content:'';position:fixed;top:0;left:0;right:0;bottom:0;background:
-  radial-gradient(ellipse at 15% 15%,rgba(97,86,217,.1) 0%,transparent 50%),
-  radial-gradient(ellipse at 85% 20%,rgba(124,106,255,.07) 0%,transparent 45%),
-  radial-gradient(ellipse at 50% 80%,rgba(0,255,136,.04) 0%,transparent 45%),
-  radial-gradient(ellipse at 80% 80%,rgba(97,86,217,.05) 0%,transparent 50%);
+  radial-gradient(ellipse at 5% 10%,rgba(255,109,0,.09) 0%,transparent 45%),
+  radial-gradient(ellipse at 95% 5%,rgba(0,255,136,.07) 0%,transparent 40%),
+  radial-gradient(ellipse at 50% 90%,rgba(255,109,0,.05) 0%,transparent 45%),
+  radial-gradient(ellipse at 80% 60%,rgba(0,229,255,.03) 0%,transparent 40%);
   pointer-events:none;z-index:0;}
+body::after{content:'';position:fixed;inset:0;
+  background-image:linear-gradient(rgba(0,255,136,.018) 1px,transparent 1px),linear-gradient(90deg,rgba(0,255,136,.018) 1px,transparent 1px);
+  background-size:44px 44px;pointer-events:none;z-index:0;}
 nav{position:sticky;top:0;z-index:100;background:rgba(10,6,18,.92);backdrop-filter:blur(20px) saturate(1.4);border-bottom:1px solid rgba(97,86,217,.15);padding:0 2rem;display:flex;align-items:center;gap:1rem;height:68px;box-shadow:0 4px 30px rgba(0,0,0,.5);}
 .nav-logo{display:flex;align-items:center;gap:.6rem;cursor:pointer;text-decoration:none;flex-shrink:0;}
 .nav-logo svg{width:38px;height:38px;flex-shrink:0;filter:drop-shadow(0 0 10px rgba(97,86,217,.4));}
@@ -714,6 +719,27 @@ section{scroll-margin-top:70px;}
 .pnl-explosion{position:absolute;border-radius:50%;pointer-events:none;z-index:5;}
 @keyframes explode-out{0%{transform:translate(0,0) scale(1);opacity:1;}100%{opacity:0;}}
 @keyframes gradient-shift{0%{background-position:0% 50%;}50%{background-position:100% 50%;}100%{background-position:0% 50%;}}
+@keyframes ticker-scroll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+.tk-item{font-size:10px;font-family:'Space Mono',monospace;color:rgba(255,255,255,.5);padding:0 14px;letter-spacing:.03em;}
+.tk-sep{color:rgba(255,109,0,.3);font-size:10px;}
+/* Boutons orange */
+.btn-primary{background:linear-gradient(135deg,#ff6d00,#ff9500);color:#fff;box-shadow:0 2px 16px rgba(255,109,0,.3);}
+.btn-primary:hover{box-shadow:0 4px 24px rgba(255,109,0,.4);transform:translateY(-1px);}
+.cta-green{background:linear-gradient(135deg,#ff6d00,#ff9500);color:#fff;box-shadow:0 4px 24px rgba(255,109,0,.3);}
+.cta-green:hover{transform:translateY(-2px);box-shadow:0 8px 36px rgba(255,109,0,.4);}
+.scan-btn-green{background:linear-gradient(135deg,#ff6d00,#ff9500);color:#fff;box-shadow:0 2px 16px rgba(255,109,0,.25);}
+.scan-btn-green:hover{box-shadow:0 4px 22px rgba(255,109,0,.35);transform:translateY(-1px);}
+/* Nav orange glow */
+nav{border-bottom:1px solid rgba(255,109,0,.2)!important;box-shadow:0 4px 30px rgba(0,0,0,.6),0 1px 0 rgba(255,109,0,.08)!important;}
+.nav-links a:hover{color:#ff9500!important;}
+/* Hero title gradient orange */
+.hero-title span{background:linear-gradient(135deg,#ff6d00 0%,#ff9500 45%,#00ff88 100%)!important;-webkit-background-clip:text!important;-webkit-text-fill-color:transparent!important;background-clip:text!important;}
+/* Scanner header accent */
+.scanner-title{text-shadow:0 0 30px rgba(255,109,0,.2);}
+/* Status dot stays green */
+.status-dot{background:var(--green)!important;}
+/* Scan dot stays green */
+#scanDot{background:var(--green)!important;}
 
 .pnl-rarity-badge{position:absolute;top:12px;right:12px;font-size:.65rem;font-weight:700;
   padding:4px 10px;border-radius:6px;text-transform:uppercase;letter-spacing:.1em;
@@ -884,6 +910,37 @@ section{scroll-margin-top:70px;}
 </style>
 </head>
 <body>
+
+<!-- TICKER STRIP -->
+<div id="tickerStrip" style="background:#000;border-bottom:1px solid rgba(255,109,0,.25);padding:0;height:28px;overflow:hidden;position:relative;z-index:200;">
+  <div id="tickerTrack" style="display:flex;align-items:center;height:28px;white-space:nowrap;animation:ticker-scroll 35s linear infinite;width:max-content;">
+    <span style="color:rgba(255,255,255,.25);font-size:10px;font-family:'Space Mono',monospace;padding:0 18px;">◈ LIVE FEED</span>
+    <span class="tk-item up">SOL <span style="color:#00ff88">+2.4%</span></span>
+    <span class="tk-sep">|</span>
+    <span class="tk-item up">PUMP.FUN <span style="color:#00ff88">+5.1%</span></span>
+    <span class="tk-sep">|</span>
+    <span class="tk-item">CALLS 24H <span style="color:#ff9500" id="tkCalls24">—</span></span>
+    <span class="tk-sep">|</span>
+    <span class="tk-item">WINRATE <span style="color:#00ff88" id="tkWinrate">—</span></span>
+    <span class="tk-sep">|</span>
+    <span class="tk-item up">AXIOM <span style="color:#00ff88">ONLINE</span></span>
+    <span class="tk-sep">|</span>
+    <span class="tk-item">SCAN <span style="color:#ff9500">45s</span></span>
+    <span class="tk-sep">|</span>
+    <span style="color:rgba(255,255,255,.25);font-size:10px;font-family:'Space Mono',monospace;padding:0 18px;">◈ ALPHA ZONE</span>
+    <span class="tk-item up">SOL <span style="color:#00ff88">+2.4%</span></span>
+    <span class="tk-sep">|</span>
+    <span class="tk-item up">PUMP.FUN <span style="color:#00ff88">+5.1%</span></span>
+    <span class="tk-sep">|</span>
+    <span class="tk-item">CALLS 24H <span style="color:#ff9500" id="tkCalls24b">—</span></span>
+    <span class="tk-sep">|</span>
+    <span class="tk-item">WINRATE <span style="color:#00ff88" id="tkWinrateb">—</span></span>
+    <span class="tk-sep">|</span>
+    <span class="tk-item up">AXIOM <span style="color:#00ff88">ONLINE</span></span>
+    <span class="tk-sep">|</span>
+    <span class="tk-item">SCAN <span style="color:#ff9500">45s</span></span>
+  </div>
+</div>
 
 <div class="cursor-glow" id="cursorGlow"></div>
 <div class="floater" style="left:3%;animation-duration:20s;animation-delay:0s">🐸</div>
