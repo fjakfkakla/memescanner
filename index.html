@@ -275,6 +275,49 @@ nav{position:sticky;top:0;z-index:100;background:rgba(10,6,18,.92);backdrop-filt
 .ai-weight-val{color:var(--purple2);font-weight:700;}
 .ai-empty{text-align:center;padding:30px;color:var(--muted);font-size:14px;}
 .ai-divider{height:1px;background:linear-gradient(90deg,transparent,rgba(97,86,217,.3),transparent);margin:28px 0;}
+/* ── ANALYSE NOCTURNE IA ─────────────────────────────────────── */
+.nightly-card{background:linear-gradient(140deg,rgba(10,6,25,.95),rgba(20,10,40,.9));border:1.5px solid rgba(150,100,255,.3);border-radius:18px;padding:24px;margin-bottom:20px;position:relative;overflow:hidden;}
+.nightly-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,#6156d9,#a855f7,#00e5ff,#a855f7,#6156d9);background-size:300%;animation:nightly-shimmer 3s linear infinite;}
+@keyframes nightly-shimmer{0%{background-position:200%}100%{background-position:-100%}}
+.nightly-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:10px;}
+.nightly-title{font-family:var(--font-head);font-size:20px;font-weight:900;background:linear-gradient(135deg,#a855f7,#00e5ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;display:flex;align-items:center;gap:8px;}
+.nightly-badge{font-size:10px;font-weight:700;padding:4px 12px;border-radius:20px;letter-spacing:.06em;text-transform:uppercase;}
+.nightly-badge.idle{background:rgba(150,100,255,.12);border:1px solid rgba(150,100,255,.25);color:#a855f7;}
+.nightly-badge.ok{background:rgba(0,255,136,.1);border:1px solid rgba(0,255,136,.25);color:#00ff88;}
+.nightly-badge.warn{background:rgba(255,170,0,.1);border:1px solid rgba(255,170,0,.25);color:#ffaa00;}
+.nightly-badge.running{background:rgba(0,229,255,.1);border:1px solid rgba(0,229,255,.25);color:#00e5ff;animation:nightly-pulse .8s ease-in-out infinite alternate;}
+@keyframes nightly-pulse{from{opacity:.6}to{opacity:1}}
+.nightly-meta{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px;}
+.nightly-meta-item{background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.06);border-radius:10px;padding:10px 12px;text-align:center;}
+.nightly-meta-label{font-size:9px;color:rgba(255,255,255,.35);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;}
+.nightly-meta-val{font-size:14px;font-weight:700;color:#fff;font-family:var(--font-mono);}
+.nightly-meta-val.green{color:#00ff88;}
+.nightly-meta-val.orange{color:#ffaa00;}
+.nightly-meta-val.red{color:#ff4466;}
+.nightly-key-row{display:flex;gap:8px;margin-bottom:16px;}
+.nightly-key-inp{flex:1;background:rgba(0,0,0,.4);border:1px solid rgba(150,100,255,.2);border-radius:10px;padding:10px 14px;font-family:var(--font-mono);font-size:11px;color:#c4b5fd;outline:none;transition:.2s;}
+.nightly-key-inp:focus{border-color:#a855f7;box-shadow:0 0 0 2px rgba(168,85,247,.1);}
+.nightly-key-inp::placeholder{color:rgba(196,181,253,.3);}
+.btn-nightly{background:linear-gradient(135deg,#a855f7,#6156d9);color:#fff;border:none;padding:10px 18px;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;transition:.2s;white-space:nowrap;letter-spacing:.03em;}
+.btn-nightly:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(168,85,247,.3);}
+.btn-nightly.secondary{background:transparent;border:1px solid rgba(150,100,255,.3);color:#a855f7;}
+.btn-nightly.secondary:hover{background:rgba(150,100,255,.08);}
+.nightly-log{border-radius:12px;overflow:hidden;margin-bottom:8px;border:1px solid rgba(255,255,255,.06);}
+.nightly-log-header{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;cursor:pointer;transition:.15s;}
+.nightly-log-header:hover{background:rgba(255,255,255,.04);}
+.nightly-log.win .nightly-log-header{background:rgba(0,255,136,.05);}
+.nightly-log.warn .nightly-log-header{background:rgba(255,170,0,.05);}
+.nightly-log.bad .nightly-log-header{background:rgba(255,68,102,.05);}
+.nightly-log-date{font-size:11px;font-family:var(--font-mono);color:rgba(255,255,255,.5);}
+.nightly-log-wr{font-size:13px;font-weight:700;}
+.nightly-log.win .nightly-log-wr{color:#00ff88;}
+.nightly-log.bad .nightly-log-wr{color:#ff4466;}
+.nightly-log.warn .nightly-log-wr{color:#ffaa00;}
+.nightly-log-body{padding:14px;background:rgba(0,0,0,.25);border-top:1px solid rgba(255,255,255,.04);display:none;font-size:12px;line-height:1.7;color:rgba(255,255,255,.7);}
+.nightly-log-body.open{display:block;}
+.nightly-insight{background:rgba(168,85,247,.06);border:1px solid rgba(168,85,247,.15);border-radius:8px;padding:10px 12px;margin-bottom:8px;}
+.nightly-insight-title{font-size:10px;font-weight:700;color:#a855f7;text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px;}
+.nightly-adj-chip{display:inline-flex;align-items:center;gap:5px;background:rgba(0,229,255,.08);border:1px solid rgba(0,229,255,.2);color:#00e5ff;font-size:10px;font-weight:700;padding:3px 8px;border-radius:5px;margin:2px;font-family:var(--font-mono);}
 .debug-overlay{position:fixed;inset:0;background:rgba(0,0,0,.88);backdrop-filter:blur(10px);z-index:300;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:.3s;}
 .debug-overlay.open{opacity:1;pointer-events:all;}
 .debug-box{background:linear-gradient(160deg,var(--bg2),var(--bg));border:1px solid rgba(97,86,217,.2);border-radius:18px;padding:2rem;width:90%;max-width:620px;max-height:85vh;overflow-y:auto;position:relative;box-shadow:0 24px 60px rgba(0,0,0,.5);}
@@ -1333,6 +1376,45 @@ section{scroll-margin-top:70px;}
       <div class="ai-section">
         <div class="ai-section-title"><span>Poids actuels du scoring</span></div>
         <div class="ai-weights" id="aiWeights"><div class="ai-empty">Chargement...</div></div>
+      </div>
+
+      <div class="ai-divider"></div>
+
+      <!-- ── ANALYSE NOCTURNE IA ── -->
+      <div class="nightly-card">
+        <div class="nightly-header">
+          <div class="nightly-title">🌙 Analyse Nocturne IA</div>
+          <div class="nightly-badge idle" id="nightlyBadge">EN ATTENTE</div>
+        </div>
+        <div class="nightly-meta">
+          <div class="nightly-meta-item">
+            <div class="nightly-meta-label">Dernière analyse</div>
+            <div class="nightly-meta-val" id="nightlyLastRun">—</div>
+          </div>
+          <div class="nightly-meta-item">
+            <div class="nightly-meta-label">Winrate hier</div>
+            <div class="nightly-meta-val" id="nightlyLastWr">—</div>
+          </div>
+          <div class="nightly-meta-item">
+            <div class="nightly-meta-label">Prochaine analyse</div>
+            <div class="nightly-meta-val" id="nightlyNextRun">22:00</div>
+          </div>
+        </div>
+        <div style="font-size:11px;color:rgba(255,255,255,.35);margin-bottom:12px;line-height:1.6;">
+          Chaque soir à 22h, le système calcule le winrate du jour. Si inférieur à 70%, Claude analyse les mauvais calls et suggère des ajustements de scoring. Actif depuis aujourd'hui (08 Avr 2026).
+        </div>
+        <div class="nightly-key-row">
+          <input class="nightly-key-inp" type="password" id="claudeApiKeyInp" placeholder="Clé Claude API  —  sk-ant-api03-...">
+          <button class="btn-nightly" onclick="saveClaudeApiKey()">SAUVER</button>
+          <button class="btn-nightly secondary" onclick="runNightlyNow()" id="btnNightlyNow">🔄 Analyser maintenant</button>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">
+          <div style="width:8px;height:8px;border-radius:50%;background:#a855f7;" id="nightlyKeyDot"></div>
+          <span style="font-size:10px;color:rgba(255,255,255,.35);" id="nightlyKeyStatus">Aucune clé configurée</span>
+        </div>
+        <!-- Historique des analyses -->
+        <div style="font-size:10px;font-weight:700;color:rgba(168,85,247,.6);text-transform:uppercase;letter-spacing:.1em;margin-bottom:10px;">Historique des analyses</div>
+        <div id="nightlyHistory"><div class="ai-empty" style="padding:16px;font-size:12px;">Aucune analyse nocturne pour l'instant — première analyse ce soir à 22h</div></div>
       </div>
 
       <div class="ai-divider"></div>
@@ -3349,6 +3431,238 @@ function checkPw(){
 function changePw(){const m=document.getElementById('pwOkMsg');m.textContent='Changez ADMIN_PW dans Railway Variables';m.style.display='block';setTimeout(()=>m.style.display='none',4000);}
 
 // ── AI ENGINE PANEL ──
+// ═══════════════════════════════════════════════════════════════
+// 🌙 ANALYSE NOCTURNE IA — Auto-amélioration quotidienne
+// ═══════════════════════════════════════════════════════════════
+const NIGHTLY_LS   = 'nightlyLogs_v2';
+const CLAUDE_KEY_LS = 'claudeApiKey_v1';
+
+function saveClaudeApiKey() {
+  const k = document.getElementById('claudeApiKeyInp').value.trim();
+  if (!k) return;
+  localStorage.setItem(CLAUDE_KEY_LS, k);
+  nightlyKeyStatusUpdate();
+  showToast('✅ Clé Claude sauvegardée', 'call');
+}
+
+function nightlyKeyStatusUpdate() {
+  const k = localStorage.getItem(CLAUDE_KEY_LS) || '';
+  const dot = document.getElementById('nightlyKeyDot');
+  const st  = document.getElementById('nightlyKeyStatus');
+  const inp = document.getElementById('claudeApiKeyInp');
+  if (!dot || !st) return;
+  if (k) {
+    dot.style.background = '#00ff88';
+    st.textContent = 'Clé configurée — ' + k.slice(0,14) + '…';
+    if (inp) inp.placeholder = k.slice(0,14) + '…';
+  } else {
+    dot.style.background = '#ff4466';
+    st.textContent = 'Aucune clé configurée';
+  }
+}
+
+// ── Charger logs nocturnes depuis localStorage ──
+function nightlyLogsLoad() {
+  try { return JSON.parse(localStorage.getItem(NIGHTLY_LS) || '[]'); } catch(e) { return []; }
+}
+function nightlyLogsSave(logs) {
+  try { localStorage.setItem(NIGHTLY_LS, JSON.stringify(logs.slice(0, 30))); } catch(e) {}
+}
+
+// ── Calculer winrate du jour depuis Firebase ──
+async function getTodayWinrate() {
+  try {
+    const resp = await fetch(`${FB_URL}/calls.json?orderBy="callTime"&limitToLast=200`, { signal: AbortSignal.timeout(8000) });
+    const raw  = await resp.json();
+    if (!raw) return null;
+    const today = new Date(); today.setHours(0,0,0,0);
+    const calls = Object.values(raw).filter(c => c?.callTime && c.callTime >= today.getTime());
+    if (calls.length < 3) return null;
+    const finished = calls.filter(c => c.athMcap && c.callMcap && (Date.now() - c.callTime) > 3600000);
+    if (finished.length < 2) return null;
+    const wins = finished.filter(c => (c.athMcap / c.callMcap) >= 1.2).length;
+    return { winrate: Math.round((wins / finished.length) * 100), total: finished.length, wins, bad: finished.length - wins, calls: finished };
+  } catch(e) { return null; }
+}
+
+// ── Appel Claude API — analyse des mauvais calls ──
+async function callClaudeNightly(badCalls, winrate) {
+  const key = localStorage.getItem(CLAUDE_KEY_LS);
+  if (!key) return null;
+
+  const summary = badCalls.slice(0, 12).map(c => ({
+    sym:   c.symbol || '?',
+    score: c.score  || 0,
+    mcap:  Math.round((c.callMcap||0)/1000) + 'K',
+    ath:   ((c.athMcap||0)/(c.callMcap||1)).toFixed(2) + 'x',
+    axiom: c.debug?.axiomCount || 0,
+    pattern: c.debug?.patternScore || 0,
+    buyR: (c.debug?.buyRatio||0).toFixed(2),
+    c5m:  c.debug?.m5 || 0,
+    m1:   c.debug?.m1 || 0,
+  }));
+
+  const prompt = `Tu es expert en analyse de memecoins Solana. Aujourd'hui le scanner a eu un winrate de ${winrate}% (objectif: 70%).
+
+Voici les ${badCalls.length} mauvais calls (ATH < x1.2) :
+${JSON.stringify(summary, null, 2)}
+
+Scoring actuel (max 150pts) : Axiom traders (35), Social (26), Holders (25), Token (10), Mcap (15), Age (10), Pattern (40).
+Hard filters actuels : mcap 15K-75K (120K si axiom≥2), age<1h, score≥80, ≥1 Axiom wallet obligatoire.
+
+Analyse les patterns communs des mauvais calls et réponds UNIQUEMENT avec ce JSON (sans markdown) :
+{
+  "insights": ["insight 1 court", "insight 2 court", "insight 3 court"],
+  "adjustments": [
+    {"param": "nom_param", "old": "valeur_actuelle", "new": "valeur_suggérée", "reason": "pourquoi"}
+  ],
+  "summary": "résumé en 1 phrase de la cause principale d'échec"
+}`;
+
+  try {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': key,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 800,
+        messages: [{ role: 'user', content: prompt }]
+      }),
+      signal: AbortSignal.timeout(25000)
+    });
+    const data = await resp.json();
+    const text = data?.content?.[0]?.text || '';
+    return JSON.parse(text);
+  } catch(e) { console.warn('[Nightly] Claude API error:', e.message); return null; }
+}
+
+// ── Analyse principale ──
+async function runNightlyNow(silent = false) {
+  const btn = document.getElementById('btnNightlyNow');
+  const badge = document.getElementById('nightlyBadge');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Analyse…'; }
+  if (badge) { badge.className = 'nightly-badge running'; badge.textContent = 'EN COURS'; }
+
+  try {
+    const wr = await getTodayWinrate();
+    if (!wr) {
+      if (badge) { badge.className = 'nightly-badge idle'; badge.textContent = 'PAS ASSEZ DE DONNÉES'; }
+      if (btn) { btn.disabled = false; btn.textContent = '🔄 Analyser maintenant'; }
+      if (!silent) showToast('Pas assez de calls finalisés aujourd\'hui', '');
+      return;
+    }
+
+    const log = { date: Date.now(), winrate: wr.winrate, total: wr.total, wins: wr.wins, bad: wr.bad, insights: [], adjustments: [], summary: '' };
+
+    if (wr.winrate < 70 && wr.bad > 0) {
+      const analysis = await callClaudeNightly(wr.calls.filter(c => (c.athMcap/c.callMcap) < 1.2), wr.winrate);
+      if (analysis) {
+        log.insights    = analysis.insights    || [];
+        log.adjustments = analysis.adjustments || [];
+        log.summary     = analysis.summary     || '';
+      }
+    }
+
+    const logs = nightlyLogsLoad();
+    logs.unshift(log);
+    nightlyLogsSave(logs);
+
+    if (badge) {
+      const cls = wr.winrate >= 70 ? 'ok' : wr.winrate >= 50 ? 'warn' : 'bad';
+      const lbl = wr.winrate >= 70 ? '✅ WINRATE OK' : wr.winrate >= 50 ? '⚠️ SOUS OBJECTIF' : '❌ MAUVAIS JOUR';
+      badge.className = `nightly-badge ${cls}`; badge.textContent = lbl;
+    }
+    renderNightlyHistory();
+    nightlyMetaUpdate(log);
+    if (!silent) showToast(`🌙 Analyse nocturne : ${wr.winrate}% winrate (${wr.wins}/${wr.total})`, wr.winrate >= 70 ? 'call' : '');
+  } catch(e) {
+    if (badge) { badge.className = 'nightly-badge idle'; badge.textContent = 'ERREUR'; }
+    console.warn('[Nightly] error:', e);
+  }
+  if (btn) { btn.disabled = false; btn.textContent = '🔄 Analyser maintenant'; }
+}
+
+// ── Mettre à jour les meta (dernière analyse, winrate) ──
+function nightlyMetaUpdate(log) {
+  const el = document.getElementById('nightlyLastRun');
+  const wr = document.getElementById('nightlyLastWr');
+  if (el && log) el.textContent = new Date(log.date).toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' });
+  if (wr && log) {
+    wr.textContent = log.winrate + '%';
+    wr.className = 'nightly-meta-val ' + (log.winrate >= 70 ? 'green' : log.winrate >= 50 ? 'orange' : 'red');
+  }
+}
+
+// ── Afficher l'historique des analyses ──
+function renderNightlyHistory() {
+  const el = document.getElementById('nightlyHistory');
+  if (!el) return;
+  const logs = nightlyLogsLoad();
+  if (!logs.length) {
+    el.innerHTML = '<div class="ai-empty" style="padding:16px;font-size:12px;">Aucune analyse nocturne pour l\'instant — première analyse ce soir à 22h</div>';
+    return;
+  }
+  el.innerHTML = logs.map((log, i) => {
+    const cls   = log.winrate >= 70 ? 'win' : log.winrate >= 50 ? 'warn' : 'bad';
+    const emoji = log.winrate >= 70 ? '✅' : log.winrate >= 50 ? '⚠️' : '❌';
+    const dateStr = new Date(log.date).toLocaleDateString('fr-FR', { weekday:'short', day:'2-digit', month:'short' }) + ' ' + new Date(log.date).toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' });
+    const insightsHtml = log.insights?.length
+      ? log.insights.map(ins => `<div class="nightly-insight"><div class="nightly-insight-title">💡 Insight</div>${ins}</div>`).join('')
+      : '';
+    const adjHtml = log.adjustments?.length
+      ? '<div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:4px;">' + log.adjustments.map(a => `<span class="nightly-adj-chip">⚙️ ${a.param}: ${a.old}→${a.new}</span>`).join('') + '</div>'
+      : '';
+    const summaryHtml = log.summary ? `<div style="font-size:11px;color:rgba(255,255,255,.5);margin-bottom:10px;font-style:italic;">"${log.summary}"</div>` : '';
+    const bodyContent = (log.winrate >= 70 && !log.insights?.length)
+      ? '<span style="color:#00ff88;font-size:12px;">Winrate objectif atteint — aucune modification nécessaire 🎉</span>'
+      : summaryHtml + insightsHtml + adjHtml;
+    return `<div class="nightly-log ${cls}">
+      <div class="nightly-log-header" onclick="this.nextElementSibling.classList.toggle('open')">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span>${emoji}</span>
+          <span class="nightly-log-wr">${log.winrate}% winrate</span>
+          <span style="font-size:11px;color:rgba(255,255,255,.35);">${log.wins}/${log.total} calls</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span class="nightly-log-date">${dateStr}</span>
+          <span style="font-size:10px;color:rgba(255,255,255,.25);">▼</span>
+        </div>
+      </div>
+      <div class="nightly-log-body">${bodyContent || '<span style="color:rgba(255,255,255,.3)">Aucune donnée Claude (clé non configurée)</span>'}</div>
+    </div>`;
+  }).join('');
+  // Mettre à jour les meta avec le log le plus récent
+  nightlyMetaUpdate(logs[0]);
+}
+
+// ── Scheduler 22h00 chaque soir ──
+function scheduleNightlyAnalysis() {
+  const now    = new Date();
+  const target = new Date(); target.setHours(22, 0, 0, 0);
+  if (now >= target) target.setDate(target.getDate() + 1);
+  const msUntil = target - now;
+  const h = Math.floor(msUntil / 3600000);
+  const m = Math.floor((msUntil % 3600000) / 60000);
+  const nextEl = document.getElementById('nightlyNextRun');
+  if (nextEl) nextEl.textContent = `22:00 (dans ${h}h${m < 10 ? '0'+m : m})`;
+  setTimeout(() => {
+    runNightlyNow(true);
+    setInterval(() => runNightlyNow(true), 24 * 3600 * 1000);
+  }, msUntil);
+}
+
+// ── Init nightly ──
+function initNightly() {
+  nightlyKeyStatusUpdate();
+  renderNightlyHistory();
+  scheduleNightlyAnalysis();
+}
+
 async function refreshAI(){
   try{
     const resp=await fetch(`${BACKEND_URL}/admin/ai`,{signal:AbortSignal.timeout(10000)});
@@ -4721,12 +5035,20 @@ async function fetchTokens(){
   finalScored.sort((a,b)=>b.score-a.score);
 
   // ── PVP DETECTION — deux tokens avec le même nom (copies/forks) ──
+  // Inclut lastScored pour détecter les PVP inter-cycles (token A callé avant, token B callé maintenant)
   const pvpBySymbol = {};
   for (const t of finalScored) {
     const sym = (t.symbol||'').toUpperCase().trim();
     if (!sym || sym === 'UNKNOWN') continue;
     if (!pvpBySymbol[sym]) pvpBySymbol[sym] = [];
     pvpBySymbol[sym].push(t);
+  }
+  // Ajouter les tokens déjà affichés (lastScored) qui ont le même symbol qu'un token de ce cycle
+  for (const prev of lastScored) {
+    const sym = (prev.symbol||'').toUpperCase().trim();
+    if (!sym || !pvpBySymbol[sym]) continue;                        // symbol pas dans ce cycle → pas de PVP
+    if (pvpBySymbol[sym].some(t => t.addr === prev.addr)) continue; // déjà dans la liste
+    pvpBySymbol[sym].push(prev);
   }
   const pvpNewSymbols = [];
   for (const [sym, tokens] of Object.entries(pvpBySymbol)) {
