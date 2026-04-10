@@ -888,54 +888,80 @@ nav{border-bottom:1px solid rgba(255,109,0,.2)!important;box-shadow:0 4px 30px r
 @keyframes pvp-badge-pulse{from{box-shadow:0 0 4px rgba(255,140,0,.3)}to{box-shadow:0 0 12px rgba(255,140,0,.7)}}
 
 /* ── PAPER BOT ──────────────────────────────────────────────── */
+/* ===== PAPER TRADING BOT UI ===== */
 .pt-wrap{padding:.5rem 0;}
-.pt-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px;}
-.pt-title{font-family:var(--font-head);font-size:1.3rem;font-weight:900;color:#fff;}
-.pt-sub{font-size:11px;color:var(--muted);margin-top:2px;}
-.pt-toggle{width:44px;height:24px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:12px;cursor:pointer;position:relative;transition:.25s;}
-.pt-toggle.on{background:rgba(255,109,0,.3);border-color:rgba(255,109,0,.5);}
-.pt-toggle-knob{position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:#555;transition:.25s;}
-.pt-toggle.on .pt-toggle-knob{left:23px;background:#ff6d00;}
-.pt-stats{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-bottom:14px;}
+.pt-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px;}
+.pt-title{font-family:'Space Mono',monospace;font-size:1rem;font-weight:700;color:#fff;letter-spacing:.04em;}
+.pt-sub{font-size:10px;color:var(--muted);margin-top:2px;font-family:'Space Mono',monospace;}
+.pt-toggle{width:40px;height:22px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:11px;cursor:pointer;position:relative;transition:.25s;}
+.pt-toggle.on{background:rgba(255,109,0,.25);border-color:rgba(255,109,0,.45);}
+.pt-toggle-knob{position:absolute;top:3px;left:3px;width:14px;height:14px;border-radius:50%;background:#444;transition:.25s;}
+.pt-toggle.on .pt-toggle-knob{left:21px;background:#ff6d00;}
+/* Stats bar */
+.pt-stats{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-bottom:12px;}
 @media(max-width:700px){.pt-stats{grid-template-columns:repeat(3,1fr);}}
-.pt-stat{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:10px;padding:10px 8px;text-align:center;}
-.pt-stat.green{border-color:rgba(0,255,136,.2);background:rgba(0,255,136,.04);}
-.pt-stat.gold{border-color:rgba(255,215,0,.2);background:rgba(255,215,0,.04);}
-.pt-stat-val{font-size:17px;font-weight:900;font-family:var(--font-head);color:#fff;line-height:1.1;}
+.pt-stat{background:rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.06);border-radius:8px;padding:8px 6px;text-align:center;}
+.pt-stat.green{border-color:rgba(0,255,136,.18);background:rgba(0,255,136,.03);}
+.pt-stat.gold{border-color:rgba(255,215,0,.18);background:rgba(255,215,0,.03);}
+.pt-stat-val{font-size:13px;font-weight:900;font-family:'Space Mono',monospace;color:#fff;line-height:1.1;}
 .pt-stat.green .pt-stat-val{color:#00ff88;}
 .pt-stat.gold .pt-stat-val{color:#ffd700;}
-.pt-stat-lbl{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-top:3px;}
-.pt-equity-wrap{background:rgba(0,0,0,.3);border:1px solid rgba(255,109,0,.12);border-radius:10px;padding:10px 14px;margin-bottom:14px;}
-.pt-equity-label{font-size:9px;color:rgba(255,109,0,.5);text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px;font-family:var(--font-mono);}
-.pt-equity-svg{width:100%;height:60px;display:block;}
-.pt-config-details{background:rgba(0,0,0,.2);border:1px solid rgba(255,255,255,.07);border-radius:10px;margin-bottom:14px;overflow:hidden;}
-.pt-config-summary{padding:10px 14px;font-size:12px;font-weight:700;color:rgba(255,255,255,.5);cursor:pointer;list-style:none;transition:.2s;}
+.pt-stat-lbl{font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-top:2px;}
+/* Equity */
+.pt-equity-wrap{background:rgba(0,0,0,.4);border:1px solid rgba(255,109,0,.1);border-radius:8px;padding:8px 12px;margin-bottom:12px;}
+.pt-equity-label{font-size:8px;color:rgba(255,109,0,.4);text-transform:uppercase;letter-spacing:.12em;margin-bottom:4px;font-family:'Space Mono',monospace;}
+.pt-equity-svg{width:100%;height:55px;display:block;}
+/* Config */
+.pt-config-details{background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.06);border-radius:8px;margin-bottom:12px;overflow:hidden;}
+.pt-config-summary{padding:8px 12px;font-size:11px;font-weight:700;color:rgba(255,255,255,.4);cursor:pointer;list-style:none;transition:.2s;font-family:'Space Mono',monospace;}
 .pt-config-summary:hover{color:#fff;}
-.pt-config-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:8px 14px 10px;}
-.pt-config-item label{font-size:10px;color:var(--muted);display:block;margin-bottom:3px;}
-.pt-inp{width:100%;background:rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.1);border-radius:7px;padding:6px 10px;color:#fff;font-size:12px;font-family:var(--font-mono);outline:none;transition:.2s;}
-.pt-inp:focus{border-color:rgba(255,109,0,.4);box-shadow:0 0 0 2px rgba(255,109,0,.08);}
-.pt-btn{background:linear-gradient(135deg,#ff6d00,#ff9500);color:#fff;border:none;padding:8px 18px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;transition:.2s;}
-.pt-btn:hover{transform:translateY(-1px);box-shadow:0 4px 16px rgba(255,109,0,.3);}
-.pt-btn.secondary{background:transparent;border:1px solid rgba(255,255,255,.15);color:rgba(255,255,255,.5);}
-.pt-section{margin-bottom:16px;}
-.pt-section-title{font-size:11px;font-weight:700;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;display:flex;align-items:center;gap:8px;}
-.pt-badge{background:rgba(255,109,0,.15);color:#ff9500;font-size:9px;padding:2px 7px;border-radius:10px;border:1px solid rgba(255,109,0,.25);}
-.pt-empty{text-align:center;padding:20px;color:var(--muted);font-size:12px;}
-.pt-table{width:100%;border-collapse:collapse;font-size:11px;}
-.pt-table th{font-size:9px;color:rgba(255,255,255,.3);text-transform:uppercase;letter-spacing:.06em;padding:5px 8px;text-align:left;border-bottom:1px solid rgba(255,255,255,.06);}
-.pt-table td{padding:7px 8px;border-bottom:1px solid rgba(255,255,255,.03);vertical-align:middle;}
-.pt-table tr:hover td{background:rgba(255,255,255,.02);}
-.pt-pnl.pos{color:#00ff88;font-weight:700;}
-.pt-pnl.neg{color:#ff4466;font-weight:700;}
-.pt-pnl.neu{color:#ffaa00;}
-.pt-reason{font-size:9px;padding:2px 6px;border-radius:4px;font-weight:700;letter-spacing:.04em;}
-.pt-reason.tp{background:rgba(0,255,136,.1);color:#00ff88;}
-.pt-reason.sl{background:rgba(255,68,102,.1);color:#ff4466;}
-.pt-reason.time{background:rgba(255,170,0,.1);color:#ffaa00;}
-.pt-reason.open{background:rgba(255,109,0,.1);color:#ff9500;}
-.pt-close-btn{font-size:10px;padding:2px 8px;background:rgba(255,68,102,.1);border:1px solid rgba(255,68,102,.2);color:#ff4466;border-radius:5px;cursor:pointer;transition:.15s;}
-.pt-close-btn:hover{background:rgba(255,68,102,.2);}
+.pt-config-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:6px 12px 10px;}
+.pt-config-item label{font-size:9px;color:var(--muted);display:block;margin-bottom:2px;font-family:'Space Mono',monospace;}
+.pt-inp{width:100%;background:rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.08);border-radius:6px;padding:5px 8px;color:#fff;font-size:11px;font-family:'Space Mono',monospace;outline:none;transition:.2s;}
+.pt-inp:focus{border-color:rgba(255,109,0,.4);box-shadow:0 0 0 2px rgba(255,109,0,.07);}
+.pt-btn{background:linear-gradient(135deg,#ff6d00,#ff9500);color:#fff;border:none;padding:7px 14px;border-radius:7px;font-size:11px;font-weight:700;cursor:pointer;transition:.2s;font-family:'Space Mono',monospace;}
+.pt-btn:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(255,109,0,.3);}
+.pt-btn.secondary{background:transparent;border:1px solid rgba(255,255,255,.12);color:rgba(255,255,255,.4);}
+/* Sections */
+.pt-section{margin-bottom:14px;}
+.pt-section-title{font-size:9px;font-weight:700;color:rgba(255,255,255,.35);text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px;display:flex;align-items:center;gap:6px;font-family:'Space Mono',monospace;}
+.pt-badge{background:rgba(255,109,0,.12);color:#ff9500;font-size:8px;padding:1px 6px;border-radius:8px;border:1px solid rgba(255,109,0,.2);}
+.pt-empty{text-align:center;padding:16px;color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;}
+/* Open positions table */
+.pt-open-table{width:100%;border-collapse:collapse;}
+.pt-open-table th{font-size:8px;color:rgba(255,255,255,.25);text-transform:uppercase;letter-spacing:.07em;padding:4px 8px;text-align:left;border-bottom:1px solid rgba(255,255,255,.05);}
+.pt-open-table td{padding:6px 8px;border-bottom:1px solid rgba(255,255,255,.03);vertical-align:middle;}
+.pt-open-table tr:hover td{background:rgba(255,109,0,.03);}
+/* ATH progress bar */
+.pt-ath-bar-wrap{position:relative;height:4px;background:rgba(255,255,255,.06);border-radius:2px;width:80px;margin-top:2px;}
+.pt-ath-bar-fill{height:100%;border-radius:2px;transition:width .5s;}
+.pt-ath-bar-tp1,.pt-ath-bar-tp2{position:absolute;top:-2px;width:1px;height:8px;background:rgba(255,255,255,.3);}
+/* Trade history cards */
+.pt-trade-row{background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.05);border-radius:8px;padding:9px 12px;margin-bottom:5px;transition:.2s;}
+.pt-trade-row:hover{border-color:rgba(255,109,0,.15);background:rgba(255,109,0,.03);}
+.pt-trade-row.win{border-left:2px solid rgba(0,255,136,.3);}
+.pt-trade-row.loss{border-left:2px solid rgba(255,68,102,.3);}
+.pt-trade-top{display:flex;align-items:center;gap:8px;margin-bottom:5px;}
+.pt-trade-sym{font-family:'Space Mono',monospace;font-size:12px;font-weight:700;color:#fff;}
+.pt-trade-score{font-size:9px;color:var(--muted);background:rgba(255,255,255,.05);padding:1px 5px;border-radius:4px;}
+.pt-trade-entry{font-family:'Space Mono',monospace;font-size:9px;color:rgba(255,255,255,.3);margin-left:auto;}
+.pt-trade-pnl{font-family:'Space Mono',monospace;font-size:13px;font-weight:900;margin-left:10px;}
+.pt-trade-pnl.pos{color:#00ff88;}
+.pt-trade-pnl.neg{color:#ff4466;}
+.pt-trade-pnl.neu{color:#ffaa00;}
+/* Sell badges in history */
+.pt-sells{display:flex;flex-wrap:wrap;gap:4px;align-items:center;}
+.pt-sell-badge{font-family:'Space Mono',monospace;font-size:9px;padding:2px 7px;border-radius:4px;display:inline-flex;align-items:center;gap:3px;}
+.pt-sell-badge.tp1{background:rgba(0,180,100,.12);color:#00cc77;border:1px solid rgba(0,180,100,.2);}
+.pt-sell-badge.tp2{background:rgba(0,255,136,.12);color:#00ff88;border:1px solid rgba(0,255,136,.2);}
+.pt-sell-badge.tp3{background:rgba(255,215,0,.12);color:#ffd700;border:1px solid rgba(255,215,0,.2);}
+.pt-sell-badge.trail{background:rgba(100,180,255,.1);color:#88ccff;border:1px solid rgba(100,180,255,.2);}
+.pt-sell-badge.sl{background:rgba(255,68,102,.1);color:#ff4466;border:1px solid rgba(255,68,102,.2);}
+.pt-sell-badge.time{background:rgba(255,170,0,.1);color:#ffaa00;border:1px solid rgba(255,170,0,.2);}
+.pt-sell-badge.manual{background:rgba(150,150,150,.1);color:#888;border:1px solid rgba(150,150,150,.15);}
+/* kept old helpers */
+.pt-close-btn{font-size:9px;padding:2px 7px;background:rgba(255,68,102,.08);border:1px solid rgba(255,68,102,.15);color:#ff4466;border-radius:4px;cursor:pointer;transition:.15s;}
+.pt-close-btn:hover{background:rgba(255,68,102,.18);}
 /* ── DEBUG CA PANEL ─── */
 .dca-panel{background:linear-gradient(160deg,var(--bg2),var(--bg));border:1px solid rgba(97,86,217,.15);border-radius:16px;padding:1.6rem;margin-top:.5rem;box-shadow:0 4px 30px rgba(0,0,0,.3);}
 .dca-input-row{display:flex;gap:.6rem;margin-bottom:1.2rem;}
@@ -1371,20 +1397,32 @@ nav{background:rgba(0,0,0,.96)!important;border-bottom:1px solid rgba(255,109,0,
       <summary class="pt-config-summary">⚙️ Configuration</summary>
       <div class="pt-config-grid">
         <div class="pt-config-item">
-          <label>Mise par trade ($)</label>
+          <label>Mise/trade ($)</label>
           <input type="number" id="ptCfgSize" value="100" min="1" max="10000" class="pt-inp">
         </div>
         <div class="pt-config-item">
-          <label>TP1 (×)</label>
+          <label>TP1 (×) — 30%</label>
           <input type="number" id="ptCfgTp1" value="2" min="1.1" step="0.1" class="pt-inp">
         </div>
         <div class="pt-config-item">
-          <label>TP2 (×)</label>
+          <label>TP2 (×) — 30%</label>
           <input type="number" id="ptCfgTp2" value="4" min="1.5" step="0.5" class="pt-inp">
         </div>
         <div class="pt-config-item">
-          <label>Stop Loss (%)</label>
-          <input type="number" id="ptCfgSl" value="50" min="10" max="90" class="pt-inp">
+          <label>TP3 (×) — 20%</label>
+          <input type="number" id="ptCfgTp3" value="8" min="3" step="1" class="pt-inp">
+        </div>
+        <div class="pt-config-item">
+          <label>Trail ATH (%)</label>
+          <input type="number" id="ptCfgTrail" value="28" min="10" max="50" class="pt-inp" title="Sell remaining if drops X% from ATH">
+        </div>
+        <div class="pt-config-item">
+          <label>SL dur (%)</label>
+          <input type="number" id="ptCfgSl" value="45" min="10" max="90" class="pt-inp">
+        </div>
+        <div class="pt-config-item">
+          <label>Early exit (min)</label>
+          <input type="number" id="ptCfgEarly" value="20" min="5" max="60" class="pt-inp" title="Exit fast if no pump in X minutes">
         </div>
         <div class="pt-config-item">
           <label>Max hold (h)</label>
@@ -4219,11 +4257,18 @@ async function runBacktest() {
 // ═══════════════════════════════════════════════════════════════
 // 🤖 PAPER TRADING BOT
 // ═══════════════════════════════════════════════════════════════
-const PT_LS       = 'paperTrades_v1';
-const PT_CFG_LS   = 'paperConfig_v1';
-const PT_EQUITY_LS= 'paperEquity_v1';
+const PT_LS       = 'paperTrades_v2';
+const PT_CFG_LS   = 'paperConfig_v2';
+const PT_EQUITY_LS= 'paperEquity_v2';
 
-const PT_CFG_DEFAULT = { enabled:false, posSize:100, tp1:2.0, tp2:4.0, sl:50, maxHoldH:4, minScore:80 };
+const PT_CFG_DEFAULT = {
+  enabled:false, posSize:100,
+  tp1:2.0, tp2:4.0, tp3:8.0,
+  trailPct:28,   // trailing stop: sell rest at ATH * (1 - trailPct/100)
+  sl:45,         // hard SL if never hit TP1
+  earlyMin:20,   // early exit: if no pump after X minutes AND down -35%
+  maxHoldH:4, minScore:80
+};
 
 function ptConfig()  { try{ return {...PT_CFG_DEFAULT,...JSON.parse(localStorage.getItem(PT_CFG_LS)||'{}')}; }catch(e){ return {...PT_CFG_DEFAULT}; } }
 function ptTrades()  { try{ return JSON.parse(localStorage.getItem(PT_LS)||'[]'); }catch(e){ return []; } }
@@ -4231,62 +4276,66 @@ function ptSaveTrades(arr){ try{ localStorage.setItem(PT_LS, JSON.stringify(arr)
 function ptEquity()  { try{ return JSON.parse(localStorage.getItem(PT_EQUITY_LS)||'[]'); }catch(e){ return []; } }
 function ptSaveEquity(arr){ try{ localStorage.setItem(PT_EQUITY_LS, JSON.stringify(arr.slice(-200))); }catch(e){} }
 
-// ── Toggle bot on/off ──
+// ── Toggle ──
 function ptToggleBot(){
-  const cfg = ptConfig();
-  cfg.enabled = !cfg.enabled;
+  const cfg = ptConfig(); cfg.enabled = !cfg.enabled;
   localStorage.setItem(PT_CFG_LS, JSON.stringify(cfg));
   ptUpdateToggleUI(cfg.enabled);
-  showToast(cfg.enabled ? '🤖 Paper Bot activé — trade sur chaque call' : '⏸ Paper Bot désactivé', 'call');
+  showToast(cfg.enabled ? '🤖 Paper Bot ON — trade sur chaque call' : '⏸ Paper Bot OFF', 'call');
 }
 function ptUpdateToggleUI(on){
-  const tog = document.getElementById('ptToggle');
-  const st  = document.getElementById('ptStatusText');
-  if(tog){ tog.classList.toggle('on', on); }
+  const tog=document.getElementById('ptToggle'), st=document.getElementById('ptStatusText');
+  if(tog) tog.classList.toggle('on',on);
   if(st)  st.textContent = on ? '✅ Actif' : 'Désactivé';
 }
 
-// ── Sauvegarder config depuis les inputs ──
+// ── Save config ──
 function ptSaveConfig(){
+  const v = id => parseFloat(document.getElementById(id)?.value||0);
   const cfg = {
     enabled:  ptConfig().enabled,
-    posSize:  parseFloat(document.getElementById('ptCfgSize')?.value  || 100),
-    tp1:      parseFloat(document.getElementById('ptCfgTp1')?.value   || 2),
-    tp2:      parseFloat(document.getElementById('ptCfgTp2')?.value   || 4),
-    sl:       parseFloat(document.getElementById('ptCfgSl')?.value    || 50),
-    maxHoldH: parseFloat(document.getElementById('ptCfgTime')?.value  || 4),
-    minScore: parseFloat(document.getElementById('ptCfgScore')?.value || 80),
+    posSize:  v('ptCfgSize')||100,
+    tp1:      v('ptCfgTp1')||2,
+    tp2:      v('ptCfgTp2')||4,
+    tp3:      v('ptCfgTp3')||8,
+    trailPct: v('ptCfgTrail')||28,
+    sl:       v('ptCfgSl')||45,
+    earlyMin: v('ptCfgEarly')||20,
+    maxHoldH: v('ptCfgTime')||4,
+    minScore: v('ptCfgScore')||80,
   };
   localStorage.setItem(PT_CFG_LS, JSON.stringify(cfg));
   showToast('💾 Config Paper Bot sauvegardée', 'call');
   ptRender();
 }
 
-// ── Ouvrir un trade sur un nouveau call ──
+// ── Ouvrir un trade ──
 function ptOpenTrade(token){
   const cfg = ptConfig();
   if(!cfg.enabled) return;
   if((token.score||0) < cfg.minScore) return;
   const trades = ptTrades();
-  if(trades.some(t => t.addr === token.addr && t.status === 'open')) return; // déjà ouvert
+  if(trades.some(t => t.addr === token.addr && t.status === 'open')) return;
   const trade = {
-    id:         'pt_' + Date.now(),
-    addr:       token.addr,
-    symbol:     (token.symbol||'?').toUpperCase(),
-    score:      token.score || 0,
-    axiom:      token.debug?.axiomCount || token.walletData?.count || 0,
-    entryMcap:  token.mcap || 0,
-    entryTime:  Date.now(),
-    posSize:    cfg.posSize,
-    tp1Hit:     false,
-    tp2Hit:     false,
-    status:     'open',
-    exitMcap:   null,
-    exitTime:   null,
-    exitReason: null,
-    pnlUsd:     null,
-    pnlPct:     null,
-    pairUrl:    token.pairUrl || '',
+    id:             'pt_' + Date.now(),
+    addr:           token.addr,
+    symbol:         (token.symbol||'?').toUpperCase(),
+    score:          token.score || 0,
+    axiom:          token.debug?.axiomCount || 0,
+    entryMcap:      token.mcap || 0,
+    entryTime:      Date.now(),
+    posSize:        cfg.posSize,
+    status:         'open',
+    // Trailing ATH tracking
+    athX:           1.0,           // highest multiple reached
+    remainFraction: 1.0,           // fraction of position still open
+    sells:          [],            // [{reason, xAt, fraction, pnlUsd, time}]
+    totalPnlUsd:    0,
+    // Final exit
+    exitMcap:       null,
+    exitTime:       null,
+    exitReason:     null,
+    pairUrl:        token.pairUrl || '',
   };
   trades.unshift(trade);
   ptSaveTrades(trades);
@@ -4294,14 +4343,14 @@ function ptOpenTrade(token){
   if(cnt) cnt.textContent = '(' + trades.filter(t=>t.status==='open').length + ')';
 }
 
-// ── Vérifier et fermer les positions ── (appelé chaque cycle scanner)
+// ── Vérifier positions (chaque cycle scanner) ──
 async function ptCheckPositions(){
   const cfg = ptConfig();
   const trades = ptTrades();
   const open = trades.filter(t => t.status === 'open');
   if(!open.length) return;
 
-  // Fetch prix actuels via DexScreener batch
+  // Fetch mcap actuel
   const addrs = [...new Set(open.map(t=>t.addr))].slice(0,20);
   let priceMap = {};
   try{
@@ -4313,42 +4362,96 @@ async function ptCheckPositions(){
 
   let changed = false;
   const now = Date.now();
+  const trailFactor = 1 - cfg.trailPct / 100;
 
   for(const t of open){
     const curMcap = priceMap[t.addr] || 0;
     if(!curMcap || !t.entryMcap) continue;
-    const xNow = curMcap / t.entryMcap;
+    const xNow  = curMcap / t.entryMcap;
     const holdH = (now - t.entryTime) / 3600000;
-    let reason = null;
+    const holdM = holdH * 60;
 
-    if(xNow >= cfg.tp2 && !t.tp2Hit)       reason = 'TP2';
-    else if(xNow >= cfg.tp1 && !t.tp1Hit)  reason = 'TP1';
-    else if(xNow <= (1 - cfg.sl/100))      reason = 'SL';
-    else if(holdH >= cfg.maxHoldH)         reason = 'TIME';
+    // Migrate old trades that don't have new fields
+    if(t.sells===undefined){ t.sells=[]; t.athX=1; t.remainFraction=1; t.totalPnlUsd=0; }
 
-    if(reason){
-      t.status     = reason === 'TP1' ? 'open' : 'closed'; // TP1 = vente partielle, reste ouvert
-      t.exitMcap   = curMcap;
-      t.exitTime   = now;
-      t.exitReason = reason;
-      // P&L simplifié : sortie totale sur TP2/SL/TIME, 50% sur TP1
-      const fraction = reason === 'TP1' ? 0.5 : 1.0;
-      t.pnlPct = ((xNow - 1) * 100 * fraction);
-      t.pnlUsd = t.posSize * (xNow - 1) * fraction;
-      if(reason === 'TP1'){ t.tp1Hit = true; t.status = 'open'; } // reste ouvert pour TP2
-      else { t.status = 'closed'; }
+    // Update ATH
+    if(xNow > t.athX) t.athX = xNow;
+
+    const hasSoldAny = t.sells.length > 0;
+    const hasTp1 = t.sells.some(s=>s.reason==='TP1');
+    const hasTp2 = t.sells.some(s=>s.reason==='TP2');
+    const hasTp3 = t.sells.some(s=>s.reason==='TP3');
+
+    // ── Helper: exécuter une vente partielle ──
+    const doSell = (reason, fraction, toastEmoji='📊') => {
+      const realFrac = Math.min(fraction, t.remainFraction);
+      if(realFrac <= 0) return;
+      const pnlUsd = t.posSize * realFrac * (xNow - 1);
+      const sell = { reason, xAt:xNow, fraction:realFrac, pnlUsd, time:now };
+      t.sells.push(sell);
+      t.remainFraction = Math.max(0, t.remainFraction - realFrac);
+      t.totalPnlUsd = (t.totalPnlUsd||0) + pnlUsd;
       changed = true;
+      const sign = pnlUsd >= 0 ? '+' : '';
+      showToast(`🤖 ${t.symbol} ${reason} @${xNow.toFixed(2)}x — ${sign}$${pnlUsd.toFixed(1)}`, pnlUsd>=0?'call':'');
+    };
 
-      // Mise à jour equity curve
-      if(reason !== 'TP1'){
-        const eq = ptEquity();
-        const last = eq.length ? eq[eq.length-1].val : cfg.posSize;
-        eq.push({ ts: now, val: Math.round((last + t.pnlUsd)*100)/100 });
-        ptSaveEquity(eq);
-      }
-      showToast(`🤖 ${t.symbol} ${reason} — ${t.pnlUsd>=0?'+':''}$${t.pnlUsd?.toFixed(1)} (${xNow.toFixed(2)}x)`, reason==='SL'?'':'call');
+    // ── EARLY EXIT : dead token — aucun pump en X minutes + en baisse ──
+    const earlyThresh = 1 - 35/100; // -35%
+    if(!hasSoldAny && holdM >= cfg.earlyMin && t.athX < 1.15 && xNow <= earlyThresh){
+      doSell('EARLY', t.remainFraction);
+      t.status = 'closed'; t.exitReason = 'EARLY'; t.exitMcap = curMcap; t.exitTime = now;
+      ptRecordEquity(t, cfg);
+      continue;
+    }
+
+    // ── HARD SL : jamais touché TP1, drop brutal ──
+    if(!hasTp1 && xNow <= (1 - cfg.sl/100)){
+      doSell('SL', t.remainFraction);
+      t.status = 'closed'; t.exitReason = 'SL'; t.exitMcap = curMcap; t.exitTime = now;
+      ptRecordEquity(t, cfg);
+      continue;
+    }
+
+    // ── TP1 : vend 30% à tp1x ──
+    if(!hasTp1 && xNow >= cfg.tp1){
+      doSell('TP1', 0.30);
+    }
+
+    // ── TP2 : vend 30% à tp2x ──
+    if(hasTp1 && !hasTp2 && xNow >= cfg.tp2){
+      doSell('TP2', 0.30);
+    }
+
+    // ── TP3 : vend 20% à tp3x ──
+    if(hasTp2 && !hasTp3 && xNow >= cfg.tp3){
+      doSell('TP3', 0.20);
+    }
+
+    // ── TRAILING STOP : une fois qu'on a ATH >= tp1x, trailing sur le reste ──
+    if(hasTp1 && t.athX >= cfg.tp1 && xNow <= t.athX * trailFactor && t.remainFraction > 0){
+      doSell('TRAIL', t.remainFraction);
+      t.status = 'closed'; t.exitReason = 'TRAIL'; t.exitMcap = curMcap; t.exitTime = now;
+      ptRecordEquity(t, cfg);
+      continue;
+    }
+
+    // ── TIME : sortie temporelle — vend le reste au prix actuel ──
+    if(holdH >= cfg.maxHoldH && t.remainFraction > 0){
+      doSell('TIME', t.remainFraction);
+      t.status = 'closed'; t.exitReason = 'TIME'; t.exitMcap = curMcap; t.exitTime = now;
+      ptRecordEquity(t, cfg);
+      continue;
+    }
+
+    // Si tout vendu (via TPs successifs sans trailing), fermer
+    if(t.remainFraction <= 0 && t.status === 'open'){
+      t.status = 'closed'; t.exitReason = t.sells[t.sells.length-1]?.reason||'DONE';
+      t.exitMcap = curMcap; t.exitTime = now;
+      ptRecordEquity(t, cfg);
     }
   }
+
   if(changed){
     ptSaveTrades(trades);
     if(currentTab==='paperbot') ptRender();
@@ -4357,148 +4460,154 @@ async function ptCheckPositions(){
   }
 }
 
+function ptRecordEquity(trade, cfg){
+  const eq = ptEquity();
+  const last = eq.length ? eq[eq.length-1].val : cfg.posSize;
+  eq.push({ ts: trade.exitTime, val: Math.round((last + (trade.totalPnlUsd||0))*100)/100 });
+  ptSaveEquity(eq);
+}
+
 // ── Fermeture manuelle ──
 function ptCloseManual(id){
   const trades = ptTrades();
   const t = trades.find(x=>x.id===id);
   if(!t||t.status!=='open') return;
   t.status='closed'; t.exitTime=Date.now(); t.exitReason='MANUAL';
-  t.pnlPct=null; t.pnlUsd=null;
+  if(!t.sells) t.sells=[];
   ptSaveTrades(trades);
   ptRender();
 }
 
-// ── Reset tout ──
+// ── Reset ──
 function ptResetAll(){
   if(!confirm('Supprimer tous les trades paper ?')) return;
-  localStorage.removeItem(PT_LS);
-  localStorage.removeItem(PT_EQUITY_LS);
-  ptRender();
-  showToast('🗑 Paper Bot réinitialisé','');
+  localStorage.removeItem(PT_LS); localStorage.removeItem(PT_EQUITY_LS);
+  ptRender(); showToast('🗑 Paper Bot réinitialisé','');
 }
 
-// ── Calcul stats ──
+// ── Stats ──
 function ptCalcStats(){
   const trades = ptTrades();
-  const closed = trades.filter(t=>t.status==='closed'&&t.pnlUsd!=null);
+  const closed = trades.filter(t=>t.status==='closed');
   const open   = trades.filter(t=>t.status==='open');
-  const wins   = closed.filter(t=>t.pnlUsd>=0);
-  const totalPnl = closed.reduce((s,t)=>s+(t.pnlUsd||0),0);
+  const wins   = closed.filter(t=>(t.totalPnlUsd||0)>0);
+  const totalPnl = closed.reduce((s,t)=>s+(t.totalPnlUsd||0),0);
   const cfg    = ptConfig();
   const capital= cfg.posSize * Math.max(1, closed.length + open.length);
   const roi    = capital > 0 ? (totalPnl/capital*100) : 0;
-  const best   = closed.length ? closed.reduce((a,b)=>(b.pnlUsd||0)>(a.pnlUsd||0)?b:a) : null;
+  const best   = closed.length ? closed.reduce((a,b)=>((b.totalPnlUsd||0)>(a.totalPnlUsd||0)?b:a)) : null;
   return { closed:closed.length, open:open.length, wins:wins.length,
     wr: closed.length ? Math.round(wins.length/closed.length*100) : null,
     totalPnl, roi, best };
 }
 
-// ── Render equity SVG ──
+// ── Equity SVG ──
 function ptRenderEquity(){
   const svg = document.getElementById('ptEquitySvg');
   if(!svg) return;
   const eq = ptEquity();
-  if(eq.length < 2){ svg.innerHTML='<text x="50%" y="50%" text-anchor="middle" fill="rgba(255,255,255,.2)" font-size="10" font-family="Space Mono">Pas encore de données</text>'; return; }
+  if(eq.length < 2){ svg.innerHTML='<text x="50%" y="50%" text-anchor="middle" fill="rgba(255,255,255,.15)" font-size="9" font-family="Space Mono">Pas encore de données</text>'; return; }
   const vals = eq.map(e=>e.val);
-  const min = Math.min(...vals), max = Math.max(...vals);
-  const W=600, H=80, pad=4;
-  const scaleX = i => pad + (i/(vals.length-1))*(W-2*pad);
-  const scaleY = v => H-pad - ((v-min)/(max-min||1))*(H-2*pad);
-  const pts = vals.map((v,i)=>`${scaleX(i)},${scaleY(v)}`).join(' ');
-  const areaPts = `${scaleX(0)},${H} ${pts} ${scaleX(vals.length-1)},${H}`;
-  const color = vals[vals.length-1] >= vals[0] ? '#00ff88' : '#ff4466';
-  svg.innerHTML = `
-    <defs><linearGradient id="eqGrad" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="${color}" stop-opacity=".25"/>
-      <stop offset="100%" stop-color="${color}" stop-opacity="0"/>
-    </linearGradient></defs>
-    <polygon points="${areaPts}" fill="url(#eqGrad)"/>
-    <polyline points="${pts}" fill="none" stroke="${color}" stroke-width="1.5" stroke-linejoin="round"/>
-    <circle cx="${scaleX(vals.length-1)}" cy="${scaleY(vals[vals.length-1])}" r="3" fill="${color}"/>`;
+  const min=Math.min(...vals), max=Math.max(...vals);
+  const W=600,H=55,pad=4;
+  const sx=i=>pad+(i/(vals.length-1))*(W-2*pad);
+  const sy=v=>H-pad-((v-min)/(max-min||1))*(H-2*pad);
+  const pts=vals.map((v,i)=>`${sx(i)},${sy(v)}`).join(' ');
+  const area=`${sx(0)},${H} ${pts} ${sx(vals.length-1)},${H}`;
+  const col=vals[vals.length-1]>=vals[0]?'#00ff88':'#ff4466';
+  svg.innerHTML=`<defs><linearGradient id="eqG" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="${col}" stop-opacity=".2"/><stop offset="100%" stop-color="${col}" stop-opacity="0"/>
+  </linearGradient></defs>
+  <polygon points="${area}" fill="url(#eqG)"/>
+  <polyline points="${pts}" fill="none" stroke="${col}" stroke-width="1.5" stroke-linejoin="round"/>
+  <circle cx="${sx(vals.length-1)}" cy="${sy(vals[vals.length-1])}" r="2.5" fill="${col}"/>`;
 }
 
 // ── Render principal ──
 function ptRender(){
-  const cfg    = ptConfig();
-  const stats  = ptCalcStats();
-  const trades = ptTrades();
-
+  const cfg=ptConfig(), stats=ptCalcStats(), trades=ptTrades();
   ptUpdateToggleUI(cfg.enabled);
 
-  // Inputs config
-  ['ptCfgSize','ptCfgTp1','ptCfgTp2','ptCfgSl','ptCfgTime','ptCfgScore'].forEach(id=>{
-    const el=document.getElementById(id); if(!el)return;
-    const map={ptCfgSize:'posSize',ptCfgTp1:'tp1',ptCfgTp2:'tp2',ptCfgSl:'sl',ptCfgTime:'maxHoldH',ptCfgScore:'minScore'};
-    el.value=cfg[map[id]]??el.value;
-  });
+  // Config inputs
+  const cfgMap={ptCfgSize:'posSize',ptCfgTp1:'tp1',ptCfgTp2:'tp2',ptCfgTp3:'tp3',ptCfgTrail:'trailPct',ptCfgSl:'sl',ptCfgEarly:'earlyMin',ptCfgTime:'maxHoldH',ptCfgScore:'minScore'};
+  Object.entries(cfgMap).forEach(([id,key])=>{ const el=document.getElementById(id); if(el) el.value=cfg[key]??el.value; });
 
-  // Stats
-  const roiColor = stats.roi>=0?'#00ff88':'#ff4466';
-  const roiSign  = stats.roi>=0?'+':'';
-  document.getElementById('ptCapital').textContent  = `$${cfg.posSize * Math.max(1,stats.closed+stats.open)}`;
-  const roiEl = document.getElementById('ptRoi');
-  if(roiEl){ roiEl.textContent=`${roiSign}${stats.roi.toFixed(1)}%`; roiEl.style.color=roiColor; }
-  document.getElementById('ptWinrate').textContent  = stats.wr!=null?`${stats.wr}%`:'—';
-  document.getElementById('ptTrades').textContent   = stats.closed;
-  document.getElementById('ptBestTrade').textContent= stats.best ? `+$${stats.best.pnlUsd.toFixed(0)}` : '—';
-  document.getElementById('ptOpenTrades').textContent= stats.open;
-  const cnt = document.getElementById('ptOpenCount');
-  if(cnt) cnt.textContent = stats.open ? `(${stats.open})` : '';
+  // Stats header
+  const roiSign=stats.roi>=0?'+':'';
+  document.getElementById('ptCapital').textContent=`$${cfg.posSize*Math.max(1,stats.closed+stats.open)}`;
+  const roiEl=document.getElementById('ptRoi');
+  if(roiEl){roiEl.textContent=`${roiSign}${stats.roi.toFixed(1)}%`;roiEl.style.color=stats.roi>=0?'#00ff88':'#ff4466';}
+  document.getElementById('ptWinrate').textContent=stats.wr!=null?`${stats.wr}%`:'—';
+  document.getElementById('ptTrades').textContent=stats.closed;
+  document.getElementById('ptBestTrade').textContent=stats.best?`+$${stats.best.totalPnlUsd.toFixed(0)}`:'—';
+  document.getElementById('ptOpenTrades').textContent=stats.open;
+  const cnt=document.getElementById('ptOpenCount');
+  if(cnt) cnt.textContent=stats.open?`(${stats.open})`:'';
 
   ptRenderEquity();
 
-  // Positions ouvertes
-  const open = trades.filter(t=>t.status==='open');
-  const openBadge = document.getElementById('ptOpenBadge');
-  if(openBadge) openBadge.textContent = open.length || '';
-  const openEl = document.getElementById('ptOpenTable');
+  // ── POSITIONS OUVERTES ──
+  const open=trades.filter(t=>t.status==='open');
+  const openBadge=document.getElementById('ptOpenBadge');
+  if(openBadge) openBadge.textContent=open.length||'';
+  const openEl=document.getElementById('ptOpenTable');
   if(openEl){
     if(!open.length){ openEl.innerHTML='<div class="pt-empty">Aucune position ouverte</div>'; }
     else{
-      openEl.innerHTML=`<table class="pt-table">
-        <thead><tr><th>Token</th><th>Score</th><th>Entrée</th><th>Investi</th><th>Statut</th><th>Âge</th><th></th></tr></thead>
+      openEl.innerHTML=`<table class="pt-open-table">
+        <thead><tr><th>Token</th><th>Score</th><th>Achat</th><th>ATH</th><th>Vendu</th><th>Reste</th><th>Âge</th><th></th></tr></thead>
         <tbody>${open.map(t=>{
           const ageM=Math.round((Date.now()-t.entryTime)/60000);
-          const tp1txt=t.tp1Hit?'<span class="pt-reason tp">TP1 ✓</span>':'';
+          const sellBadges=(t.sells||[]).map(s=>`<span class="pt-sell-badge ${s.reason.toLowerCase()}">${s.reason} ${s.xAt.toFixed(1)}x</span>`).join('');
+          const rem=Math.round((t.remainFraction||1)*100);
+          const athPct=Math.min(100,((t.athX||1)-1)*25); // visual scale
           return `<tr>
-            <td><span style="font-weight:700;color:#fff;">${t.symbol}</span><br><span style="font-size:9px;color:var(--muted);">${t.addr.slice(0,6)}…</span></td>
-            <td style="color:var(--purple2);">${t.score}</td>
-            <td style="font-family:var(--font-mono);font-size:10px;">$${fmtNum(t.entryMcap)}</td>
-            <td style="color:#ffaa44;">$${t.posSize}</td>
-            <td><span class="pt-reason open">OPEN</span> ${tp1txt}</td>
-            <td style="color:var(--muted);font-size:10px;">${ageM}min</td>
+            <td><span style="font-family:'Space Mono',monospace;font-size:11px;font-weight:700;color:#fff">${t.symbol}</span></td>
+            <td style="font-size:10px;color:#ff9500">${t.score}</td>
+            <td style="font-family:'Space Mono',monospace;font-size:10px;color:rgba(255,255,255,.4)">$${fmtNum(t.entryMcap)}</td>
+            <td style="font-family:'Space Mono',monospace;font-size:10px;color:#ffd700">${(t.athX||1).toFixed(2)}x</td>
+            <td>${sellBadges||'<span style="color:rgba(255,255,255,.2);font-size:9px">—</span>'}</td>
+            <td style="font-family:'Space Mono',monospace;font-size:10px;color:${rem>50?'#00ff88':'#ffaa44'}">${rem}%</td>
+            <td style="font-size:9px;color:var(--muted)">${ageM}m</td>
             <td><button class="pt-close-btn" onclick="ptCloseManual('${t.id}')">✕</button></td>
           </tr>`;
         }).join('')}</tbody></table>`;
     }
   }
 
-  // Historique fermés
-  const closed = trades.filter(t=>t.status==='closed').slice(0,50);
-  const closedBadge = document.getElementById('ptClosedBadge');
-  if(closedBadge) closedBadge.textContent = closed.length || '';
-  const closedEl = document.getElementById('ptClosedTable');
+  // ── HISTORIQUE FERMÉS ──
+  const closed=trades.filter(t=>t.status==='closed').slice(0,60);
+  const closedBadge=document.getElementById('ptClosedBadge');
+  if(closedBadge) closedBadge.textContent=closed.length||'';
+  const closedEl=document.getElementById('ptClosedTable');
   if(closedEl){
     if(!closed.length){ closedEl.innerHTML='<div class="pt-empty">Aucun trade fermé pour l\'instant</div>'; }
     else{
-      closedEl.innerHTML=`<table class="pt-table">
-        <thead><tr><th>Token</th><th>Score</th><th>Entrée</th><th>Sortie</th><th>P&L $</th><th>P&L %</th><th>Raison</th></tr></thead>
-        <tbody>${closed.map(t=>{
-          const pnlCls = t.pnlUsd>0?'pos':t.pnlUsd<0?'neg':'neu';
-          const sign   = t.pnlUsd>=0?'+':'';
-          const xExit  = t.exitMcap&&t.entryMcap?(t.exitMcap/t.entryMcap).toFixed(2):'?';
-          const rCls   = t.exitReason==='TP1'||t.exitReason==='TP2'?'tp':t.exitReason==='SL'?'sl':t.exitReason==='TIME'?'time':'';
-          const date   = t.exitTime?new Date(t.exitTime).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}):'—';
-          return `<tr>
-            <td><span style="font-weight:700;color:#fff;">${t.symbol}</span></td>
-            <td style="color:var(--purple2);">${t.score}</td>
-            <td style="font-family:var(--font-mono);font-size:10px;">$${fmtNum(t.entryMcap)}</td>
-            <td style="font-size:10px;color:var(--muted);">${xExit}x · ${date}</td>
-            <td class="pt-pnl ${pnlCls}">${t.pnlUsd!=null?sign+'$'+t.pnlUsd.toFixed(1):'—'}</td>
-            <td class="pt-pnl ${pnlCls}">${t.pnlPct!=null?sign+t.pnlPct.toFixed(1)+'%':'—'}</td>
-            <td><span class="pt-reason ${rCls}">${t.exitReason||'—'}</span></td>
-          </tr>`;
-        }).join('')}</tbody></table>`;
+      closedEl.innerHTML=closed.map(t=>{
+        const pnl=t.totalPnlUsd||0;
+        const pnlCls=pnl>0?'pos':pnl<0?'neg':'neu';
+        const sign=pnl>=0?'+':'';
+        const pnlPct=t.entryMcap&&t.posSize?(pnl/t.posSize*100):0;
+        const winLoss=pnl>0?'win':pnl<0?'loss':'';
+        const entryFmt=`$${fmtNum(t.entryMcap)}`;
+        const exitFmt=t.exitMcap?`$${fmtNum(t.exitMcap)}`:'—';
+        const athFmt=t.athX?`${t.athX.toFixed(2)}x`:'—';
+        const date=t.exitTime?new Date(t.exitTime).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}):'—';
+        // Sells badges
+        const sells=(t.sells||[]);
+        const sellsHtml=sells.length
+          ? sells.map(s=>`<span class="pt-sell-badge ${s.reason.toLowerCase()}">${s.reason} <b>${s.xAt.toFixed(2)}x</b> ${s.pnlUsd>=0?'+':''}$${s.pnlUsd.toFixed(0)} (${Math.round(s.fraction*100)}%)</span>`).join('')
+          : `<span class="pt-sell-badge ${(t.exitReason||'').toLowerCase()}">${t.exitReason||'?'}</span>`;
+        return `<div class="pt-trade-row ${winLoss}">
+          <div class="pt-trade-top">
+            <span class="pt-trade-sym">${t.symbol}</span>
+            <span class="pt-trade-score">${t.score}pts</span>
+            <span class="pt-trade-entry">BUY ${entryFmt} → ATH ${athFmt} → EXIT ${exitFmt} · ${date}</span>
+            <span class="pt-trade-pnl ${pnlCls}">${sign}$${Math.abs(pnl).toFixed(1)} (${sign}${pnlPct.toFixed(0)}%)</span>
+          </div>
+          <div class="pt-sells">${sellsHtml}</div>
+        </div>`;
+      }).join('');
     }
   }
 }
