@@ -1065,6 +1065,66 @@ nav{background:rgba(0,0,0,.96)!important;border-bottom:1px solid rgba(255,109,0,
 /* Scanner section title */
 .scanner-title{font-family:'Space Mono',monospace!important;letter-spacing:.04em!important;}
 
+/* ===== FLOATING TRADE ALERTS (Axiom-style) ===== */
+#tradeAlerts{position:fixed;bottom:24px;right:20px;z-index:8000;display:flex;flex-direction:column-reverse;gap:7px;pointer-events:none;width:300px;}
+.ta-card{background:rgba(4,8,4,.97);border:1px solid rgba(0,255,136,.15);border-left:3px solid #00ff88;border-radius:10px;padding:10px 13px;width:300px;backdrop-filter:blur(20px);transform:translateX(340px);opacity:0;transition:transform .4s cubic-bezier(.2,1,.3,1),opacity .4s;pointer-events:all;box-shadow:0 8px 30px rgba(0,0,0,.6),0 0 20px rgba(0,255,136,.05);}
+.ta-card.show{transform:translateX(0);opacity:1;}
+.ta-card.hide{transform:translateX(340px);opacity:0;transition:transform .3s ease-in,opacity .3s;}
+.ta-card.whale{border-left-color:#ffd700;border-color:rgba(255,215,0,.2);box-shadow:0 8px 30px rgba(0,0,0,.6),0 0 20px rgba(255,215,0,.06);}
+.ta-card.neg{border-left-color:#ff4466;border-color:rgba(255,68,102,.15);}
+.ta-card.call{border-left-color:#ff6d00;border-color:rgba(255,109,0,.2);box-shadow:0 8px 30px rgba(0,0,0,.6),0 0 20px rgba(255,109,0,.08);}
+.ta-top{display:flex;align-items:center;gap:6px;margin-bottom:5px;}
+.ta-badge{font-family:'Space Mono',monospace;font-size:8px;font-weight:700;padding:2px 6px;border-radius:4px;text-transform:uppercase;letter-spacing:.06em;}
+.ta-badge.buy{background:rgba(0,255,136,.1);color:#00ff88;border:1px solid rgba(0,255,136,.15);}
+.ta-badge.whale{background:rgba(255,215,0,.12);color:#ffd700;border:1px solid rgba(255,215,0,.2);}
+.ta-badge.call{background:rgba(255,109,0,.12);color:#ff9500;border:1px solid rgba(255,109,0,.2);}
+.ta-badge.rug{background:rgba(255,68,102,.1);color:#ff4466;border:1px solid rgba(255,68,102,.15);}
+.ta-addr{font-family:'Space Mono',monospace;font-size:9px;color:rgba(255,255,255,.3);margin-left:auto;}
+.ta-main{display:flex;align-items:center;gap:8px;}
+.ta-sym{font-family:'Space Mono',monospace;font-size:13px;font-weight:700;color:#fff;}
+.ta-detail{font-family:'Space Mono',monospace;font-size:10px;color:rgba(255,255,255,.45);flex:1;}
+.ta-gain{font-family:'Space Mono',monospace;font-size:13px;font-weight:900;}
+.ta-gain.pos{color:#00ff88;text-shadow:0 0 12px rgba(0,255,136,.4);}
+.ta-gain.neg{color:#ff4466;}
+.ta-gain.gold{color:#ffd700;text-shadow:0 0 12px rgba(255,215,0,.4);}
+.ta-progress{height:1px;background:rgba(255,255,255,.06);margin-top:8px;border-radius:1px;overflow:hidden;}
+.ta-progress-fill{height:100%;border-radius:1px;animation:ta-drain linear forwards;}
+@keyframes ta-drain{from{width:100%}to{width:0%}}
+
+/* ===== HERO LIVE SCANNER (remplace demo statique) ===== */
+.hero-live{background:#020804;border:1px solid rgba(0,255,136,.1);border-radius:12px;overflow:hidden;box-shadow:0 0 60px rgba(0,255,136,.03),0 20px 60px rgba(0,0,0,.7);}
+.hlv-bar{background:#000;border-bottom:1px solid rgba(0,255,136,.07);padding:.45rem .9rem;display:flex;align-items:center;gap:.4rem;}
+.hlv-dot{width:8px;height:8px;border-radius:50%;}
+.hlv-title{font-family:'Space Mono',monospace;font-size:.6rem;color:rgba(255,255,255,.18);margin-left:.4rem;letter-spacing:.06em;}
+.hlv-live{margin-left:auto;font-family:'Space Mono',monospace;font-size:.58rem;color:#00ff88;display:flex;align-items:center;gap:.3rem;}
+.hlv-live::before{content:'';width:4px;height:4px;border-radius:50%;background:#00ff88;animation:pulse 1.2s infinite;display:block;}
+.hlv-inner{padding:.8rem .9rem;}
+.hlv-hdr{font-family:'Space Mono',monospace;font-size:.58rem;color:rgba(255,109,0,.45);letter-spacing:.1em;margin-bottom:.6rem;display:flex;align-items:center;gap:.5rem;}
+.hlv-scan-dot{width:5px;height:5px;border-radius:50%;background:#ff6d00;animation:pulse 1s infinite;flex-shrink:0;}
+.hlv-row{display:flex;align-items:center;gap:.5rem;padding:.45rem .5rem;border-radius:7px;margin-bottom:.3rem;border:1px solid transparent;transition:.3s;cursor:default;}
+.hlv-row.active{background:rgba(255,109,0,.05);border-color:rgba(255,109,0,.12);}
+.hlv-row.new{background:rgba(0,255,136,.04);border-color:rgba(0,255,136,.12);animation:hlv-new-flash .6s ease;}
+@keyframes hlv-new-flash{0%{background:rgba(0,255,136,.15);box-shadow:0 0 20px rgba(0,255,136,.1);}100%{background:rgba(0,255,136,.04);}}
+.hlv-row.rug{opacity:.35;}
+.hlv-sym{font-family:'Space Mono',monospace;font-size:.78rem;font-weight:700;color:#fff;min-width:70px;}
+.hlv-new-badge{font-size:.55rem;font-weight:700;padding:1px 5px;border-radius:3px;background:rgba(0,255,136,.15);color:#00ff88;border:1px solid rgba(0,255,136,.2);letter-spacing:.06em;animation:hlv-badge-pop .4s ease;}
+@keyframes hlv-badge-pop{0%{transform:scale(0);opacity:0}60%{transform:scale(1.2)}100%{transform:scale(1);opacity:1}}
+.hlv-mcap{font-family:'Space Mono',monospace;font-size:.72rem;color:rgba(255,255,255,.4);flex:1;}
+.hlv-mcap.up{color:rgba(0,255,136,.7);}
+.hlv-mcap.down{color:rgba(255,68,102,.7);}
+.hlv-score{font-family:'Space Mono',monospace;font-size:.72rem;font-weight:700;padding:2px 7px;border-radius:5px;}
+.hlv-score.god{background:rgba(255,215,0,.1);color:#ffd700;border:1px solid rgba(255,215,0,.15);}
+.hlv-score.high{background:rgba(0,255,136,.08);color:#00ff88;border:1px solid rgba(0,255,136,.12);}
+.hlv-score.med{background:rgba(255,109,0,.08);color:#ff9500;border:1px solid rgba(255,109,0,.12);}
+.hlv-score.rug{background:rgba(255,68,102,.08);color:#ff4466;border:1px solid rgba(255,68,102,.1);}
+.hlv-spark{display:flex;align-items:flex-end;gap:1px;height:16px;}
+.hlv-spark-bar{width:3px;border-radius:1px;transition:height .3s,background .3s;}
+.hlv-footer{font-family:'Space Mono',monospace;font-size:.55rem;color:rgba(255,255,255,.12);text-align:center;margin-top:.5rem;padding-top:.5rem;border-top:1px solid rgba(0,255,136,.04);letter-spacing:.04em;}
+.hlv-stat-row{display:flex;gap:.5rem;margin-bottom:.6rem;}
+.hlv-stat{flex:1;background:rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.04);border-radius:6px;padding:.35rem .5rem;text-align:center;}
+.hlv-stat-v{font-family:'Space Mono',monospace;font-size:.75rem;font-weight:700;color:#ff9500;}
+.hlv-stat-l{font-size:.55rem;color:rgba(255,255,255,.2);text-transform:uppercase;letter-spacing:.06em;margin-top:1px;}
+
 </style>
 </head>
 <body>
@@ -1083,6 +1143,9 @@ nav{background:rgba(0,0,0,.96)!important;border-bottom:1px solid rgba(255,109,0,
   <div class="boot-bar-wrap"><div class="boot-bar-fill" id="bootBar"></div></div>
   <div class="boot-pct" id="bootPct">0%</div>
 </div>
+
+<!-- TRADE ALERTS (Axiom-style popups) -->
+<div id="tradeAlerts"></div>
 
 <!-- TICKER STRIP -->
 <div id="tickerStrip" style="background:#000;border-bottom:1px solid rgba(255,109,0,.25);padding:0;height:28px;overflow:hidden;position:relative;z-index:200;">
@@ -1187,21 +1250,24 @@ nav{background:rgba(0,0,0,.96)!important;border-bottom:1px solid rgba(255,109,0,
       <button class="cta-big cta-ghost" onclick="document.getElementById('pricing').scrollIntoView()">DEVENIR ALPHA</button>
     </div>
   </div>
-  <div class="hero-demo">
-    <div class="demo-win-bar">
-      <div class="demo-win-dot" style="background:#ff5f57"></div>
-      <div class="demo-win-dot" style="background:#ffbd2e"></div>
-      <div class="demo-win-dot" style="background:#28c840"></div>
-      <span class="demo-win-title">memescanner — scan_engine.js</span>
-      <span class="demo-win-live">LIVE</span>
+  <div class="hero-live" id="heroLive">
+    <div class="hlv-bar">
+      <div class="hlv-dot" style="background:#ff5f57"></div>
+      <div class="hlv-dot" style="background:#ffbd2e"></div>
+      <div class="hlv-dot" style="background:#28c840"></div>
+      <span class="hlv-title">memescanner — live_feed.js</span>
+      <span class="hlv-live">SCANNING</span>
     </div>
-    <div class="demo-inner">
-      <div class="demo-header">&gt; PIPELINE v11 — cycle #<span id="demoCycle">847</span> — <span style="color:#ff9500" id="demoTime">12:34:07</span></div>
-      <div class="demo-token"><span class="demo-tok-name">PEPE2 &nbsp;<span style="color:#ffd700;font-size:.65rem">[3 axiom]</span></span><span class="demo-score score-god">DIAMOND 118</span></div>
-      <div class="demo-token"><span class="demo-tok-name">MOONDOG &nbsp;<span style="color:#00ff88;font-size:.65rem">[2 axiom]</span></span><span class="demo-score score-high">RUNNER 94</span></div>
-      <div class="demo-token rug"><span class="demo-tok-name">SCAMCOIN</span><span class="demo-reject" style="font-family:'Space Mono',monospace;font-size:.7rem">✗ top1=34% · no socials</span></div>
-      <div class="demo-token rug"><span class="demo-tok-name">FAKEMOON</span><span class="demo-reject" style="font-family:'Space Mono',monospace;font-size:.7rem">✗ buyRatio=0.31 · sell wall</span></div>
-      <div class="demo-footer">2 gems found &nbsp;·&nbsp; 847 scanned &nbsp;·&nbsp; 15 filters &nbsp;·&nbsp; 200+ calls history</div>
+    <div class="hlv-inner">
+      <div class="hlv-stat-row">
+        <div class="hlv-stat"><div class="hlv-stat-v" id="hlvCycle">847</div><div class="hlv-stat-l">CYCLES</div></div>
+        <div class="hlv-stat"><div class="hlv-stat-v" id="hlvCalls">34</div><div class="hlv-stat-l">CALLS 24H</div></div>
+        <div class="hlv-stat"><div class="hlv-stat-v" style="color:#00ff88" id="hlvWr">68%</div><div class="hlv-stat-l">WINRATE</div></div>
+        <div class="hlv-stat"><div class="hlv-stat-v" style="color:#ffd700" id="hlvBest">6.2x</div><div class="hlv-stat-l">BEST ATH</div></div>
+      </div>
+      <div class="hlv-hdr"><span class="hlv-scan-dot"></span>PIPELINE v11 — cycle #<span id="hlvCycleN">847</span> — <span id="hlvTime" style="color:#ff9500">--:--:--</span></div>
+      <div id="hlvTokens"></div>
+      <div class="hlv-footer" id="hlvFooter">scanning solana mempool — 15 hard filters active</div>
     </div>
   </div>
 </div>
@@ -1929,23 +1995,178 @@ nav{background:rgba(0,0,0,.96)!important;border-bottom:1px solid rgba(255,109,0,
 })();
 
 function animateHeroCounters(){
-  // Cycle counter on demo panel
-  const cyc = document.getElementById('demoCycle');
-  if(cyc){let n=0;const iv=setInterval(()=>{n+=Math.floor(Math.random()*30+10);if(n>=847){n=847;clearInterval(iv);}cyc.textContent=n;},40);}
-  // Live clock on demo panel
-  function updateDemoClock(){
-    const el=document.getElementById('demoTime');
+  // Cycle counter
+  const cyc=document.getElementById('hlvCycleN'),cyc2=document.getElementById('hlvCycle');
+  if(cyc){let n=0;const iv=setInterval(()=>{n+=Math.floor(Math.random()*30+10);if(n>=847){n=847;clearInterval(iv);}cyc.textContent=n;if(cyc2)cyc2.textContent=n;},40);}
+  // Live clock
+  function updateClock(){
+    const el=document.getElementById('hlvTime');
     if(el){const d=new Date();el.textContent=d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});}
   }
-  updateDemoClock();
-  setInterval(updateDemoClock,1000);
-  // Scan status pulse
+  updateClock(); setInterval(updateClock,1000);
+  // Scan status
   const ss=document.getElementById('heroScanStatus');
-  if(ss){
-    const states=['SCANNING...','ANALYSING...','FILTERING...','SCORING...'];
-    let idx=0;
-    setInterval(()=>{idx=(idx+1)%states.length;ss.textContent=states[idx];},2800);
+  if(ss){const states=['SCANNING...','ANALYSING...','FILTERING...','SCORING...'];let i=0;setInterval(()=>{i=(i+1)%states.length;ss.textContent=states[i];},2800);}
+  // Start live hero panel
+  initHeroLive();
+  // Start trade alerts after 3s
+  setTimeout(startTradeAlerts, 3000);
+}
+
+// ===== HERO LIVE SCANNER =====
+const HLV_POOL = [
+  {sym:'MOONDOG', score:118, mcap:5200,  axiom:3, trend:[2,3,4,5,6,7,8,10,9,11], cat:'god'},
+  {sym:'PEPE2',   score:94,  mcap:8900,  axiom:2, trend:[3,4,3,5,6,5,7,8,7,9],  cat:'high'},
+  {sym:'SOLCAT',  score:87,  mcap:3100,  axiom:1, trend:[1,2,2,3,2,3,4,3,4,5],  cat:'high'},
+  {sym:'WAGMI',   score:71,  mcap:15000, axiom:0, trend:[5,5,4,5,6,5,4,5,5,6],  cat:'med'},
+  {sym:'DEGEN',   score:112, mcap:4400,  axiom:2, trend:[2,4,6,8,10,9,11,13,12,14], cat:'god'},
+  {sym:'COPIUM',  score:null, mcap:2100, axiom:0, trend:[8,7,6,5,4,3,2,1,2,1],  cat:'rug', rug:'top1=41% · no socials'},
+  {sym:'FAKEPUMP',score:null, mcap:6700, axiom:0, trend:[9,8,7,6,5,4,3,3,2,1],  cat:'rug', rug:'buyRatio=0.28 · dump pattern'},
+  {sym:'FROGGO',  score:88,  mcap:7200,  axiom:1, trend:[2,2,3,4,4,5,5,6,7,7],  cat:'high'},
+  {sym:'CRANK',   score:103, mcap:9800,  axiom:3, trend:[3,5,7,9,11,10,12,14,13,15], cat:'god'},
+  {sym:'BONK2',   score:76,  mcap:12000, axiom:0, trend:[4,4,5,4,5,6,5,6,5,6],  cat:'med'},
+];
+
+let hlvState = [];
+let hlvScanned = 847;
+let hlvCallsToday = 34;
+
+function hlvFmtMcap(v){ if(v>=1e6)return'$'+(v/1e6).toFixed(1)+'M'; if(v>=1e3)return'$'+(v/1e3).toFixed(1)+'K'; return'$'+v; }
+
+function hlvRenderRow(t, isNew){
+  const sparkH = t.trend.map(v=>Math.max(2, Math.round(v/Math.max(...t.trend)*14)));
+  const sparkColor = t.cat==='rug'?'#ff4466':t.cat==='god'?'#ffd700':'#00ff88';
+  const spark = sparkH.map(h=>`<div class="hlv-spark-bar" style="height:${h}px;background:${sparkColor};opacity:.7"></div>`).join('');
+  const mcapDisp = hlvFmtMcap(t.mcap + Math.floor((Math.random()-.3)*t.mcap*.08));
+  const upDown = Math.random() > 0.35;
+  const mcapCls = t.cat==='rug'?'down':(upDown?'up':'');
+  const newBadge = isNew ? '<span class="hlv-new-badge">NEW</span>' : '';
+
+  if(t.cat==='rug'){
+    return `<div class="hlv-row rug" data-sym="${t.sym}">
+      <span class="hlv-sym" style="color:rgba(255,255,255,.35)">${t.sym}</span>
+      <span style="font-family:'Space Mono',monospace;font-size:.62rem;color:rgba(255,68,102,.6);flex:1">✗ ${t.rug}</span>
+      <span class="hlv-score rug">FILTERED</span>
+    </div>`;
   }
+  const scoreCls = t.score>=110?'god':t.score>=85?'high':'med';
+  return `<div class="hlv-row${isNew?' new':''}" data-sym="${t.sym}">
+    <span class="hlv-sym">${t.sym} ${newBadge}</span>
+    <span class="hlv-mcap ${mcapCls}">${mcapDisp}</span>
+    <div class="hlv-spark">${spark}</div>
+    <span class="hlv-score ${scoreCls}">${t.score}</span>
+  </div>`;
+}
+
+function initHeroLive(){
+  // Pick 5 tokens for initial display
+  hlvState = [HLV_POOL[0], HLV_POOL[1], HLV_POOL[5], HLV_POOL[6], HLV_POOL[2]];
+  hlvRefresh(false);
+
+  // Update every 3s — rotate tokens, flicker prices
+  setInterval(()=>{
+    hlvScanned += Math.floor(Math.random()*3+1);
+    // Occasionally swap in a new token
+    if(Math.random() < 0.45){
+      const pool = HLV_POOL.filter(t=>!hlvState.includes(t));
+      if(pool.length){
+        const newTok = pool[Math.floor(Math.random()*pool.length)];
+        const replaceIdx = Math.floor(Math.random()*hlvState.length);
+        hlvState[replaceIdx] = newTok;
+        hlvRefresh(true, replaceIdx);
+        return;
+      }
+    }
+    hlvRefresh(false);
+  }, 3200);
+}
+
+function hlvRefresh(hasNew, newIdx){
+  const el = document.getElementById('hlvTokens');
+  if(!el) return;
+  el.innerHTML = hlvState.map((t,i)=>hlvRenderRow(t, hasNew && i===newIdx)).join('');
+  const footer = document.getElementById('hlvFooter');
+  const gems = hlvState.filter(t=>t.score!=null).length;
+  const rugs = hlvState.filter(t=>t.cat==='rug').length;
+  if(footer) footer.textContent = `${gems} gems · ${rugs} filtered · ${hlvScanned} scanned · 15 filters`;
+}
+
+// ===== FLOATING TRADE ALERTS (Axiom-style) =====
+const TA_SYMS   = ['MOONDOG','PEPE2','SOLCAT','DEGEN','CRANK','FROGGO','WAGMI','BONK2','PUMPIT','WIFHAT','POPCAT','GIGA'];
+const TA_ADDRS  = ['0x1a2b','0x3c4d','0x5e6f','0x7a8b','0x9c0d','0xde1f','0xab23','0xcd45'];
+const TA_NAMES  = ['whale_alpha','degen_sniper','sol_god','pumper99','axiom_bot','smart_ape','0xtrader','sol_maxi'];
+let taActive = 0;
+
+function startTradeAlerts(){
+  spawnAlert();
+  // Random interval 5-12s
+  function scheduleNext(){ setTimeout(()=>{ spawnAlert(); scheduleNext(); }, 5000 + Math.random()*7000); }
+  scheduleNext();
+}
+
+function spawnAlert(){
+  if(taActive >= 4) return; // max 4 visible
+  const container = document.getElementById('tradeAlerts');
+  if(!container) return;
+
+  const isWhale  = Math.random() < 0.12;
+  const isCall   = Math.random() < 0.25;
+  const isLoss   = Math.random() < 0.18;
+  const sym      = TA_SYMS[Math.floor(Math.random()*TA_SYMS.length)];
+  const addr     = TA_ADDRS[Math.floor(Math.random()*TA_ADDRS.length)];
+  const name     = TA_NAMES[Math.floor(Math.random()*TA_NAMES.length)];
+  const sol      = isWhale ? (10 + Math.random()*40).toFixed(1) : (0.5 + Math.random()*4).toFixed(1);
+  const mult     = isLoss  ? (0.3 + Math.random()*0.5).toFixed(2) : (1.2 + Math.random()*8).toFixed(2);
+  const holdMin  = Math.floor(3 + Math.random()*90);
+  const lifeSec  = 5000 + Math.random()*3000;
+
+  let badgeCls, badgeTxt, cardCls, gainTxt, gainCls, detailTxt;
+  if(isCall){
+    badgeCls='call'; badgeTxt='🎯 CALL'; cardCls='call';
+    gainTxt=`${mult}x ATH`; gainCls='gold';
+    detailTxt=`score ${Math.floor(80+Math.random()*40)}pts · ${Math.floor(Math.random()*3)+1} axiom`;
+  } else if(isWhale){
+    badgeCls='whale'; badgeTxt='🐋 WHALE'; cardCls='whale';
+    gainTxt=`+${sol} SOL`; gainCls='gold';
+    detailTxt=`sniped $${sym} · mcap $${(2+Math.random()*20).toFixed(1)}K`;
+  } else if(isLoss){
+    badgeCls='rug'; badgeTxt='💀 RUGGED'; cardCls='neg';
+    gainTxt=`-${((1-parseFloat(mult))*100).toFixed(0)}%`; gainCls='neg';
+    detailTxt=`sold after ${holdMin}m · sold $${sym}`;
+  } else {
+    badgeCls='buy'; badgeTxt='↑ BUY'; cardCls='';
+    gainTxt=`+${((parseFloat(mult)-1)*100).toFixed(0)}%`; gainCls='pos';
+    detailTxt=`${sol} SOL · held ${holdMin}m · $${sym}`;
+  }
+
+  const card = document.createElement('div');
+  card.className = `ta-card ${cardCls}`;
+  card.innerHTML = `
+    <div class="ta-top">
+      <span class="ta-badge ${badgeCls}">${badgeTxt}</span>
+      <span class="ta-addr">${name} · ${addr}…</span>
+    </div>
+    <div class="ta-main">
+      <span class="ta-sym">$${sym}</span>
+      <span class="ta-detail">${detailTxt}</span>
+      <span class="ta-gain ${gainCls}">${gainTxt}</span>
+    </div>
+    <div class="ta-progress"><div class="ta-progress-fill" style="background:${gainCls==='pos'?'rgba(0,255,136,.3)':gainCls==='gold'?'rgba(255,215,0,.3)':'rgba(255,68,102,.3)'};animation-duration:${lifeSec}ms"></div></div>`;
+
+  container.appendChild(card);
+  taActive++;
+
+  // Slide in
+  requestAnimationFrame(()=>requestAnimationFrame(()=>card.classList.add('show')));
+
+  // Slide out
+  setTimeout(()=>{
+    card.classList.remove('show');
+    card.classList.add('hide');
+    setTimeout(()=>{ card.remove(); taActive=Math.max(0,taActive-1); }, 400);
+  }, lifeSec);
+
+  // Real call hook: also spawn alert on actual new calls
 }
 
 // ── Défense contre SES/Lockdown (extensions wallet Solana/MetaMask) ──
@@ -5194,6 +5415,30 @@ function onNewCall(token) {
   playSound('newcall');
   showToast(`🚀 NEW CALL: $${token.symbol} — Score ${token.score} — $${fmtNum(token.mcap)}`, 'call');
   ptOpenTrade(token);
+  // Spawn real call alert
+  spawnRealCallAlert(token);
+}
+
+function spawnRealCallAlert(token){
+  const container = document.getElementById('tradeAlerts');
+  if(!container) return;
+  const axiom = token.debug?.axiomCount || 0;
+  const card = document.createElement('div');
+  card.className = 'ta-card call';
+  card.innerHTML = `
+    <div class="ta-top">
+      <span class="ta-badge call">🎯 NEW CALL</span>
+      <span class="ta-addr">${axiom} axiom · score ${token.score}</span>
+    </div>
+    <div class="ta-main">
+      <span class="ta-sym">$${(token.symbol||'?').toUpperCase()}</span>
+      <span class="ta-detail">mcap $${fmtNum(token.mcap)} · entry now</span>
+      <span class="ta-gain gold">LIVE ↑</span>
+    </div>
+    <div class="ta-progress"><div class="ta-progress-fill" style="background:rgba(255,109,0,.35);animation-duration:6000ms"></div></div>`;
+  container.appendChild(card);
+  requestAnimationFrame(()=>requestAnimationFrame(()=>card.classList.add('show')));
+  setTimeout(()=>{ card.classList.add('hide'); setTimeout(()=>card.remove(), 400); }, 6000);
 }
 
 function onX2Call(token, xAth) {
