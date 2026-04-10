@@ -887,6 +887,55 @@ nav{border-bottom:1px solid rgba(255,109,0,.2)!important;box-shadow:0 4px 30px r
 .sc-pvp-badge.pvp-l{background:rgba(255,60,60,.1);color:#ff6655;border:1px solid rgba(255,60,60,.2);}
 @keyframes pvp-badge-pulse{from{box-shadow:0 0 4px rgba(255,140,0,.3)}to{box-shadow:0 0 12px rgba(255,140,0,.7)}}
 
+/* ── PAPER BOT ──────────────────────────────────────────────── */
+.pt-wrap{padding:.5rem 0;}
+.pt-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px;}
+.pt-title{font-family:var(--font-head);font-size:1.3rem;font-weight:900;color:#fff;}
+.pt-sub{font-size:11px;color:var(--muted);margin-top:2px;}
+.pt-toggle{width:44px;height:24px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:12px;cursor:pointer;position:relative;transition:.25s;}
+.pt-toggle.on{background:rgba(255,109,0,.3);border-color:rgba(255,109,0,.5);}
+.pt-toggle-knob{position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:#555;transition:.25s;}
+.pt-toggle.on .pt-toggle-knob{left:23px;background:#ff6d00;}
+.pt-stats{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-bottom:14px;}
+@media(max-width:700px){.pt-stats{grid-template-columns:repeat(3,1fr);}}
+.pt-stat{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:10px;padding:10px 8px;text-align:center;}
+.pt-stat.green{border-color:rgba(0,255,136,.2);background:rgba(0,255,136,.04);}
+.pt-stat.gold{border-color:rgba(255,215,0,.2);background:rgba(255,215,0,.04);}
+.pt-stat-val{font-size:17px;font-weight:900;font-family:var(--font-head);color:#fff;line-height:1.1;}
+.pt-stat.green .pt-stat-val{color:#00ff88;}
+.pt-stat.gold .pt-stat-val{color:#ffd700;}
+.pt-stat-lbl{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-top:3px;}
+.pt-equity-wrap{background:rgba(0,0,0,.3);border:1px solid rgba(255,109,0,.12);border-radius:10px;padding:10px 14px;margin-bottom:14px;}
+.pt-equity-label{font-size:9px;color:rgba(255,109,0,.5);text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px;font-family:var(--font-mono);}
+.pt-equity-svg{width:100%;height:60px;display:block;}
+.pt-config-details{background:rgba(0,0,0,.2);border:1px solid rgba(255,255,255,.07);border-radius:10px;margin-bottom:14px;overflow:hidden;}
+.pt-config-summary{padding:10px 14px;font-size:12px;font-weight:700;color:rgba(255,255,255,.5);cursor:pointer;list-style:none;transition:.2s;}
+.pt-config-summary:hover{color:#fff;}
+.pt-config-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:8px 14px 10px;}
+.pt-config-item label{font-size:10px;color:var(--muted);display:block;margin-bottom:3px;}
+.pt-inp{width:100%;background:rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.1);border-radius:7px;padding:6px 10px;color:#fff;font-size:12px;font-family:var(--font-mono);outline:none;transition:.2s;}
+.pt-inp:focus{border-color:rgba(255,109,0,.4);box-shadow:0 0 0 2px rgba(255,109,0,.08);}
+.pt-btn{background:linear-gradient(135deg,#ff6d00,#ff9500);color:#fff;border:none;padding:8px 18px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;transition:.2s;}
+.pt-btn:hover{transform:translateY(-1px);box-shadow:0 4px 16px rgba(255,109,0,.3);}
+.pt-btn.secondary{background:transparent;border:1px solid rgba(255,255,255,.15);color:rgba(255,255,255,.5);}
+.pt-section{margin-bottom:16px;}
+.pt-section-title{font-size:11px;font-weight:700;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;display:flex;align-items:center;gap:8px;}
+.pt-badge{background:rgba(255,109,0,.15);color:#ff9500;font-size:9px;padding:2px 7px;border-radius:10px;border:1px solid rgba(255,109,0,.25);}
+.pt-empty{text-align:center;padding:20px;color:var(--muted);font-size:12px;}
+.pt-table{width:100%;border-collapse:collapse;font-size:11px;}
+.pt-table th{font-size:9px;color:rgba(255,255,255,.3);text-transform:uppercase;letter-spacing:.06em;padding:5px 8px;text-align:left;border-bottom:1px solid rgba(255,255,255,.06);}
+.pt-table td{padding:7px 8px;border-bottom:1px solid rgba(255,255,255,.03);vertical-align:middle;}
+.pt-table tr:hover td{background:rgba(255,255,255,.02);}
+.pt-pnl.pos{color:#00ff88;font-weight:700;}
+.pt-pnl.neg{color:#ff4466;font-weight:700;}
+.pt-pnl.neu{color:#ffaa00;}
+.pt-reason{font-size:9px;padding:2px 6px;border-radius:4px;font-weight:700;letter-spacing:.04em;}
+.pt-reason.tp{background:rgba(0,255,136,.1);color:#00ff88;}
+.pt-reason.sl{background:rgba(255,68,102,.1);color:#ff4466;}
+.pt-reason.time{background:rgba(255,170,0,.1);color:#ffaa00;}
+.pt-reason.open{background:rgba(255,109,0,.1);color:#ff9500;}
+.pt-close-btn{font-size:10px;padding:2px 8px;background:rgba(255,68,102,.1);border:1px solid rgba(255,68,102,.2);color:#ff4466;border-radius:5px;cursor:pointer;transition:.15s;}
+.pt-close-btn:hover{background:rgba(255,68,102,.2);}
 /* ── DEBUG CA PANEL ─── */
 .dca-panel{background:linear-gradient(160deg,var(--bg2),var(--bg));border:1px solid rgba(97,86,217,.15);border-radius:16px;padding:1.6rem;margin-top:.5rem;box-shadow:0 4px 30px rgba(0,0,0,.3);}
 .dca-input-row{display:flex;gap:.6rem;margin-bottom:1.2rem;}
@@ -1075,6 +1124,7 @@ nav{border-bottom:1px solid rgba(255,109,0,.2)!important;box-shadow:0 4px 30px r
       <button class="s-tab active" id="tabLive" onclick="switchTab('live')">📡 Live <span id="liveCount" class="hist-count"></span></button>
       <button class="s-tab" id="tabHistory" onclick="switchTab('history')">📋 Historique <span id="histCount" class="hist-count"></span></button>
       <button class="s-tab" id="tabDebugCA" onclick="switchTab('debugca')" style="display:none">🔬 Debug CA</button>
+      <button class="s-tab" id="tabPaperBot" onclick="switchTab('paperbot')">🤖 Paper Bot <span id="ptOpenCount" class="hist-count"></span></button>
     </div>
     <div style="display:flex;gap:.4rem;padding:.3rem 0;">
       <button class="btn-reset" id="btnResetLive" onclick="resetLive()" style="display:none">🗑 Vider Live</button>
@@ -1155,6 +1205,109 @@ nav{border-bottom:1px solid rgba(255,109,0,.2)!important;box-shadow:0 4px 30px r
     <div id="dcaResult"></div>
   </div>
 </div>
+
+<!-- ── PAPER BOT ── -->
+<div id="panelPaperBot" style="display:none">
+  <div class="pt-wrap">
+
+    <!-- HEADER + TOGGLE -->
+    <div class="pt-header">
+      <div>
+        <div class="pt-title">🤖 Paper Trading Bot</div>
+        <div class="pt-sub">Simule des trades sur chaque call — 0 argent réel</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span style="font-size:11px;color:var(--muted);" id="ptStatusText">Désactivé</span>
+        <div class="pt-toggle" id="ptToggle" onclick="ptToggleBot()">
+          <div class="pt-toggle-knob" id="ptToggleKnob"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STATS GLOBALES -->
+    <div class="pt-stats" id="ptStats">
+      <div class="pt-stat">
+        <div class="pt-stat-val" id="ptCapital">$0</div>
+        <div class="pt-stat-lbl">Capital simulé</div>
+      </div>
+      <div class="pt-stat green">
+        <div class="pt-stat-val" id="ptRoi">+0%</div>
+        <div class="pt-stat-lbl">ROI total</div>
+      </div>
+      <div class="pt-stat">
+        <div class="pt-stat-val" id="ptWinrate">—</div>
+        <div class="pt-stat-lbl">Winrate</div>
+      </div>
+      <div class="pt-stat">
+        <div class="pt-stat-val" id="ptTrades">0</div>
+        <div class="pt-stat-lbl">Trades fermés</div>
+      </div>
+      <div class="pt-stat gold">
+        <div class="pt-stat-val" id="ptBestTrade">—</div>
+        <div class="pt-stat-lbl">Meilleur trade</div>
+      </div>
+      <div class="pt-stat">
+        <div class="pt-stat-val" id="ptOpenTrades">0</div>
+        <div class="pt-stat-lbl">Positions ouvertes</div>
+      </div>
+    </div>
+
+    <!-- EQUITY CURVE -->
+    <div class="pt-equity-wrap">
+      <div class="pt-equity-label">COURBE D'ÉQUITÉ</div>
+      <svg id="ptEquitySvg" class="pt-equity-svg" viewBox="0 0 600 80" preserveAspectRatio="none"></svg>
+    </div>
+
+    <!-- CONFIG -->
+    <details class="pt-config-details">
+      <summary class="pt-config-summary">⚙️ Configuration</summary>
+      <div class="pt-config-grid">
+        <div class="pt-config-item">
+          <label>Mise par trade ($)</label>
+          <input type="number" id="ptCfgSize" value="100" min="1" max="10000" class="pt-inp">
+        </div>
+        <div class="pt-config-item">
+          <label>TP1 (×)</label>
+          <input type="number" id="ptCfgTp1" value="2" min="1.1" step="0.1" class="pt-inp">
+        </div>
+        <div class="pt-config-item">
+          <label>TP2 (×)</label>
+          <input type="number" id="ptCfgTp2" value="4" min="1.5" step="0.5" class="pt-inp">
+        </div>
+        <div class="pt-config-item">
+          <label>Stop Loss (%)</label>
+          <input type="number" id="ptCfgSl" value="50" min="10" max="90" class="pt-inp">
+        </div>
+        <div class="pt-config-item">
+          <label>Max hold (h)</label>
+          <input type="number" id="ptCfgTime" value="4" min="1" max="24" class="pt-inp">
+        </div>
+        <div class="pt-config-item">
+          <label>Score min</label>
+          <input type="number" id="ptCfgScore" value="80" min="60" max="140" class="pt-inp">
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:10px;">
+        <button class="pt-btn" onclick="ptSaveConfig()">💾 Sauvegarder</button>
+        <button class="pt-btn secondary" onclick="ptResetAll()" style="color:#ff4466;border-color:rgba(255,68,102,.3);">🗑 Reset tout</button>
+      </div>
+    </details>
+
+    <!-- POSITIONS OUVERTES -->
+    <div class="pt-section">
+      <div class="pt-section-title">📂 Positions ouvertes <span id="ptOpenBadge" class="pt-badge"></span></div>
+      <div id="ptOpenTable"><div class="pt-empty">Aucune position ouverte</div></div>
+    </div>
+
+    <!-- HISTORIQUE FERMÉS -->
+    <div class="pt-section">
+      <div class="pt-section-title">📊 Historique des trades <span id="ptClosedBadge" class="pt-badge"></span></div>
+      <div id="ptClosedTable"><div class="pt-empty">Aucun trade fermé pour l'instant</div></div>
+    </div>
+
+  </div>
+</div>
+
 </div>
 </section>
 
@@ -3897,6 +4050,293 @@ async function runBacktest() {
   btn.textContent = '▶ RELANCER'; btn.disabled = false;
 }
 
+// ═══════════════════════════════════════════════════════════════
+// 🤖 PAPER TRADING BOT
+// ═══════════════════════════════════════════════════════════════
+const PT_LS       = 'paperTrades_v1';
+const PT_CFG_LS   = 'paperConfig_v1';
+const PT_EQUITY_LS= 'paperEquity_v1';
+
+const PT_CFG_DEFAULT = { enabled:false, posSize:100, tp1:2.0, tp2:4.0, sl:50, maxHoldH:4, minScore:80 };
+
+function ptConfig()  { try{ return {...PT_CFG_DEFAULT,...JSON.parse(localStorage.getItem(PT_CFG_LS)||'{}')}; }catch(e){ return {...PT_CFG_DEFAULT}; } }
+function ptTrades()  { try{ return JSON.parse(localStorage.getItem(PT_LS)||'[]'); }catch(e){ return []; } }
+function ptSaveTrades(arr){ try{ localStorage.setItem(PT_LS, JSON.stringify(arr)); }catch(e){} }
+function ptEquity()  { try{ return JSON.parse(localStorage.getItem(PT_EQUITY_LS)||'[]'); }catch(e){ return []; } }
+function ptSaveEquity(arr){ try{ localStorage.setItem(PT_EQUITY_LS, JSON.stringify(arr.slice(-200))); }catch(e){} }
+
+// ── Toggle bot on/off ──
+function ptToggleBot(){
+  const cfg = ptConfig();
+  cfg.enabled = !cfg.enabled;
+  localStorage.setItem(PT_CFG_LS, JSON.stringify(cfg));
+  ptUpdateToggleUI(cfg.enabled);
+  showToast(cfg.enabled ? '🤖 Paper Bot activé — trade sur chaque call' : '⏸ Paper Bot désactivé', 'call');
+}
+function ptUpdateToggleUI(on){
+  const tog = document.getElementById('ptToggle');
+  const st  = document.getElementById('ptStatusText');
+  if(tog){ tog.classList.toggle('on', on); }
+  if(st)  st.textContent = on ? '✅ Actif' : 'Désactivé';
+}
+
+// ── Sauvegarder config depuis les inputs ──
+function ptSaveConfig(){
+  const cfg = {
+    enabled:  ptConfig().enabled,
+    posSize:  parseFloat(document.getElementById('ptCfgSize')?.value  || 100),
+    tp1:      parseFloat(document.getElementById('ptCfgTp1')?.value   || 2),
+    tp2:      parseFloat(document.getElementById('ptCfgTp2')?.value   || 4),
+    sl:       parseFloat(document.getElementById('ptCfgSl')?.value    || 50),
+    maxHoldH: parseFloat(document.getElementById('ptCfgTime')?.value  || 4),
+    minScore: parseFloat(document.getElementById('ptCfgScore')?.value || 80),
+  };
+  localStorage.setItem(PT_CFG_LS, JSON.stringify(cfg));
+  showToast('💾 Config Paper Bot sauvegardée', 'call');
+  ptRender();
+}
+
+// ── Ouvrir un trade sur un nouveau call ──
+function ptOpenTrade(token){
+  const cfg = ptConfig();
+  if(!cfg.enabled) return;
+  if((token.score||0) < cfg.minScore) return;
+  const trades = ptTrades();
+  if(trades.some(t => t.addr === token.addr && t.status === 'open')) return; // déjà ouvert
+  const trade = {
+    id:         'pt_' + Date.now(),
+    addr:       token.addr,
+    symbol:     (token.symbol||'?').toUpperCase(),
+    score:      token.score || 0,
+    axiom:      token.debug?.axiomCount || token.walletData?.count || 0,
+    entryMcap:  token.mcap || 0,
+    entryTime:  Date.now(),
+    posSize:    cfg.posSize,
+    tp1Hit:     false,
+    tp2Hit:     false,
+    status:     'open',
+    exitMcap:   null,
+    exitTime:   null,
+    exitReason: null,
+    pnlUsd:     null,
+    pnlPct:     null,
+    pairUrl:    token.pairUrl || '',
+  };
+  trades.unshift(trade);
+  ptSaveTrades(trades);
+  const cnt = document.getElementById('ptOpenCount');
+  if(cnt) cnt.textContent = '(' + trades.filter(t=>t.status==='open').length + ')';
+}
+
+// ── Vérifier et fermer les positions ── (appelé chaque cycle scanner)
+async function ptCheckPositions(){
+  const cfg = ptConfig();
+  const trades = ptTrades();
+  const open = trades.filter(t => t.status === 'open');
+  if(!open.length) return;
+
+  // Fetch prix actuels via DexScreener batch
+  const addrs = [...new Set(open.map(t=>t.addr))].slice(0,20);
+  let priceMap = {};
+  try{
+    const res = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${addrs.join(',')}`,{signal:AbortSignal.timeout(6000)}).then(r=>r.json());
+    const best = {};
+    (res.pairs||[]).forEach(p=>{ const a=p.baseToken?.address; if(!a)return; if(!best[a]||(p.volume?.h24||0)>(best[a].volume?.h24||0))best[a]=p; });
+    Object.entries(best).forEach(([a,p])=>{ priceMap[a]=p.marketCap||p.fdv||0; });
+  }catch(e){}
+
+  let changed = false;
+  const now = Date.now();
+
+  for(const t of open){
+    const curMcap = priceMap[t.addr] || 0;
+    if(!curMcap || !t.entryMcap) continue;
+    const xNow = curMcap / t.entryMcap;
+    const holdH = (now - t.entryTime) / 3600000;
+    let reason = null;
+
+    if(xNow >= cfg.tp2 && !t.tp2Hit)       reason = 'TP2';
+    else if(xNow >= cfg.tp1 && !t.tp1Hit)  reason = 'TP1';
+    else if(xNow <= (1 - cfg.sl/100))      reason = 'SL';
+    else if(holdH >= cfg.maxHoldH)         reason = 'TIME';
+
+    if(reason){
+      t.status     = reason === 'TP1' ? 'open' : 'closed'; // TP1 = vente partielle, reste ouvert
+      t.exitMcap   = curMcap;
+      t.exitTime   = now;
+      t.exitReason = reason;
+      // P&L simplifié : sortie totale sur TP2/SL/TIME, 50% sur TP1
+      const fraction = reason === 'TP1' ? 0.5 : 1.0;
+      t.pnlPct = ((xNow - 1) * 100 * fraction);
+      t.pnlUsd = t.posSize * (xNow - 1) * fraction;
+      if(reason === 'TP1'){ t.tp1Hit = true; t.status = 'open'; } // reste ouvert pour TP2
+      else { t.status = 'closed'; }
+      changed = true;
+
+      // Mise à jour equity curve
+      if(reason !== 'TP1'){
+        const eq = ptEquity();
+        const last = eq.length ? eq[eq.length-1].val : cfg.posSize;
+        eq.push({ ts: now, val: Math.round((last + t.pnlUsd)*100)/100 });
+        ptSaveEquity(eq);
+      }
+      showToast(`🤖 ${t.symbol} ${reason} — ${t.pnlUsd>=0?'+':''}$${t.pnlUsd?.toFixed(1)} (${xNow.toFixed(2)}x)`, reason==='SL'?'':'call');
+    }
+  }
+  if(changed){
+    ptSaveTrades(trades);
+    if(currentTab==='paperbot') ptRender();
+    const cnt = document.getElementById('ptOpenCount');
+    if(cnt){ const n=trades.filter(t=>t.status==='open').length; cnt.textContent=n?`(${n})`:''; }
+  }
+}
+
+// ── Fermeture manuelle ──
+function ptCloseManual(id){
+  const trades = ptTrades();
+  const t = trades.find(x=>x.id===id);
+  if(!t||t.status!=='open') return;
+  t.status='closed'; t.exitTime=Date.now(); t.exitReason='MANUAL';
+  t.pnlPct=null; t.pnlUsd=null;
+  ptSaveTrades(trades);
+  ptRender();
+}
+
+// ── Reset tout ──
+function ptResetAll(){
+  if(!confirm('Supprimer tous les trades paper ?')) return;
+  localStorage.removeItem(PT_LS);
+  localStorage.removeItem(PT_EQUITY_LS);
+  ptRender();
+  showToast('🗑 Paper Bot réinitialisé','');
+}
+
+// ── Calcul stats ──
+function ptCalcStats(){
+  const trades = ptTrades();
+  const closed = trades.filter(t=>t.status==='closed'&&t.pnlUsd!=null);
+  const open   = trades.filter(t=>t.status==='open');
+  const wins   = closed.filter(t=>t.pnlUsd>=0);
+  const totalPnl = closed.reduce((s,t)=>s+(t.pnlUsd||0),0);
+  const cfg    = ptConfig();
+  const capital= cfg.posSize * Math.max(1, closed.length + open.length);
+  const roi    = capital > 0 ? (totalPnl/capital*100) : 0;
+  const best   = closed.length ? closed.reduce((a,b)=>(b.pnlUsd||0)>(a.pnlUsd||0)?b:a) : null;
+  return { closed:closed.length, open:open.length, wins:wins.length,
+    wr: closed.length ? Math.round(wins.length/closed.length*100) : null,
+    totalPnl, roi, best };
+}
+
+// ── Render equity SVG ──
+function ptRenderEquity(){
+  const svg = document.getElementById('ptEquitySvg');
+  if(!svg) return;
+  const eq = ptEquity();
+  if(eq.length < 2){ svg.innerHTML='<text x="50%" y="50%" text-anchor="middle" fill="rgba(255,255,255,.2)" font-size="10" font-family="Space Mono">Pas encore de données</text>'; return; }
+  const vals = eq.map(e=>e.val);
+  const min = Math.min(...vals), max = Math.max(...vals);
+  const W=600, H=80, pad=4;
+  const scaleX = i => pad + (i/(vals.length-1))*(W-2*pad);
+  const scaleY = v => H-pad - ((v-min)/(max-min||1))*(H-2*pad);
+  const pts = vals.map((v,i)=>`${scaleX(i)},${scaleY(v)}`).join(' ');
+  const areaPts = `${scaleX(0)},${H} ${pts} ${scaleX(vals.length-1)},${H}`;
+  const color = vals[vals.length-1] >= vals[0] ? '#00ff88' : '#ff4466';
+  svg.innerHTML = `
+    <defs><linearGradient id="eqGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="${color}" stop-opacity=".25"/>
+      <stop offset="100%" stop-color="${color}" stop-opacity="0"/>
+    </linearGradient></defs>
+    <polygon points="${areaPts}" fill="url(#eqGrad)"/>
+    <polyline points="${pts}" fill="none" stroke="${color}" stroke-width="1.5" stroke-linejoin="round"/>
+    <circle cx="${scaleX(vals.length-1)}" cy="${scaleY(vals[vals.length-1])}" r="3" fill="${color}"/>`;
+}
+
+// ── Render principal ──
+function ptRender(){
+  const cfg    = ptConfig();
+  const stats  = ptCalcStats();
+  const trades = ptTrades();
+
+  ptUpdateToggleUI(cfg.enabled);
+
+  // Inputs config
+  ['ptCfgSize','ptCfgTp1','ptCfgTp2','ptCfgSl','ptCfgTime','ptCfgScore'].forEach(id=>{
+    const el=document.getElementById(id); if(!el)return;
+    const map={ptCfgSize:'posSize',ptCfgTp1:'tp1',ptCfgTp2:'tp2',ptCfgSl:'sl',ptCfgTime:'maxHoldH',ptCfgScore:'minScore'};
+    el.value=cfg[map[id]]??el.value;
+  });
+
+  // Stats
+  const roiColor = stats.roi>=0?'#00ff88':'#ff4466';
+  const roiSign  = stats.roi>=0?'+':'';
+  document.getElementById('ptCapital').textContent  = `$${cfg.posSize * Math.max(1,stats.closed+stats.open)}`;
+  const roiEl = document.getElementById('ptRoi');
+  if(roiEl){ roiEl.textContent=`${roiSign}${stats.roi.toFixed(1)}%`; roiEl.style.color=roiColor; }
+  document.getElementById('ptWinrate').textContent  = stats.wr!=null?`${stats.wr}%`:'—';
+  document.getElementById('ptTrades').textContent   = stats.closed;
+  document.getElementById('ptBestTrade').textContent= stats.best ? `+$${stats.best.pnlUsd.toFixed(0)}` : '—';
+  document.getElementById('ptOpenTrades').textContent= stats.open;
+  const cnt = document.getElementById('ptOpenCount');
+  if(cnt) cnt.textContent = stats.open ? `(${stats.open})` : '';
+
+  ptRenderEquity();
+
+  // Positions ouvertes
+  const open = trades.filter(t=>t.status==='open');
+  const openBadge = document.getElementById('ptOpenBadge');
+  if(openBadge) openBadge.textContent = open.length || '';
+  const openEl = document.getElementById('ptOpenTable');
+  if(openEl){
+    if(!open.length){ openEl.innerHTML='<div class="pt-empty">Aucune position ouverte</div>'; }
+    else{
+      openEl.innerHTML=`<table class="pt-table">
+        <thead><tr><th>Token</th><th>Score</th><th>Entrée</th><th>Investi</th><th>Statut</th><th>Âge</th><th></th></tr></thead>
+        <tbody>${open.map(t=>{
+          const ageM=Math.round((Date.now()-t.entryTime)/60000);
+          const tp1txt=t.tp1Hit?'<span class="pt-reason tp">TP1 ✓</span>':'';
+          return `<tr>
+            <td><span style="font-weight:700;color:#fff;">${t.symbol}</span><br><span style="font-size:9px;color:var(--muted);">${t.addr.slice(0,6)}…</span></td>
+            <td style="color:var(--purple2);">${t.score}</td>
+            <td style="font-family:var(--font-mono);font-size:10px;">$${fmtNum(t.entryMcap)}</td>
+            <td style="color:#ffaa44;">$${t.posSize}</td>
+            <td><span class="pt-reason open">OPEN</span> ${tp1txt}</td>
+            <td style="color:var(--muted);font-size:10px;">${ageM}min</td>
+            <td><button class="pt-close-btn" onclick="ptCloseManual('${t.id}')">✕</button></td>
+          </tr>`;
+        }).join('')}</tbody></table>`;
+    }
+  }
+
+  // Historique fermés
+  const closed = trades.filter(t=>t.status==='closed').slice(0,50);
+  const closedBadge = document.getElementById('ptClosedBadge');
+  if(closedBadge) closedBadge.textContent = closed.length || '';
+  const closedEl = document.getElementById('ptClosedTable');
+  if(closedEl){
+    if(!closed.length){ closedEl.innerHTML='<div class="pt-empty">Aucun trade fermé pour l\'instant</div>'; }
+    else{
+      closedEl.innerHTML=`<table class="pt-table">
+        <thead><tr><th>Token</th><th>Score</th><th>Entrée</th><th>Sortie</th><th>P&L $</th><th>P&L %</th><th>Raison</th></tr></thead>
+        <tbody>${closed.map(t=>{
+          const pnlCls = t.pnlUsd>0?'pos':t.pnlUsd<0?'neg':'neu';
+          const sign   = t.pnlUsd>=0?'+':'';
+          const xExit  = t.exitMcap&&t.entryMcap?(t.exitMcap/t.entryMcap).toFixed(2):'?';
+          const rCls   = t.exitReason==='TP1'||t.exitReason==='TP2'?'tp':t.exitReason==='SL'?'sl':t.exitReason==='TIME'?'time':'';
+          const date   = t.exitTime?new Date(t.exitTime).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}):'—';
+          return `<tr>
+            <td><span style="font-weight:700;color:#fff;">${t.symbol}</span></td>
+            <td style="color:var(--purple2);">${t.score}</td>
+            <td style="font-family:var(--font-mono);font-size:10px;">$${fmtNum(t.entryMcap)}</td>
+            <td style="font-size:10px;color:var(--muted);">${xExit}x · ${date}</td>
+            <td class="pt-pnl ${pnlCls}">${t.pnlUsd!=null?sign+'$'+t.pnlUsd.toFixed(1):'—'}</td>
+            <td class="pt-pnl ${pnlCls}">${t.pnlPct!=null?sign+t.pnlPct.toFixed(1)+'%':'—'}</td>
+            <td><span class="pt-reason ${rCls}">${t.exitReason||'—'}</span></td>
+          </tr>`;
+        }).join('')}</tbody></table>`;
+    }
+  }
+}
+
 function initNightly() {
   nightlyKeyStatusUpdate();
   renderNightlyHistory();
@@ -4478,6 +4918,7 @@ function onNewCall(token) {
   _notifiedAddrs.add(token.addr);
   playSound('newcall');
   showToast(`🚀 NEW CALL: $${token.symbol} — Score ${token.score} — $${fmtNum(token.mcap)}`, 'call');
+  ptOpenTrade(token);
 }
 
 function onX2Call(token, xAth) {
@@ -4506,12 +4947,15 @@ function switchTab(tab){
   document.getElementById('panelLive').style.display=tab==='live'?'block':'none';
   document.getElementById('panelHistory').style.display=tab==='history'?'block':'none';
   document.getElementById('panelDebugCA').style.display=tab==='debugca'?'block':'none';
+  document.getElementById('panelPaperBot').style.display=tab==='paperbot'?'block':'none';
   document.getElementById('tabLive').classList.toggle('active',tab==='live');
   document.getElementById('tabHistory').classList.toggle('active',tab==='history');
   document.getElementById('tabDebugCA').classList.toggle('active',tab==='debugca');
+  document.getElementById('tabPaperBot').classList.toggle('active',tab==='paperbot');
   document.getElementById('btnResetLive').style.display=tab==='live'?'inline-block':'none';
   document.getElementById('btnResetHistory').style.display=tab==='history'?'inline-block':'none';
   if(tab==='history')renderHistory();
+  if(tab==='paperbot')ptRender();
 }
 
 // ============================================================
@@ -5021,6 +5465,7 @@ async function fetchTokens(){
     }));
     finalScored.sort((a,b)=>b.score-a.score);
     lastScored = finalScored;
+    await ptCheckPositions();
     if(loadEl)loadEl.style.display='none';
     document.getElementById('scanDot').style.background='var(--green)';
     document.getElementById('lastUpdate').textContent='Updated '+new Date().toLocaleTimeString();
