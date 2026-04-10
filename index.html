@@ -982,6 +982,122 @@ nav{border-bottom:1px solid rgba(255,109,0,.2)!important;box-shadow:0 4px 30px r
 .dca-loading{text-align:center;padding:2rem;color:var(--purple2);font-size:.9rem;}
 .dca-sec-row{display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:.8rem;}
 
+/* ===== GEM CARDS COLLECTION ===== */
+.gem-gallery-wrap{padding:.5rem 0;}
+.gem-gallery-filters{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;align-items:center;}
+.gem-filter-btn{font-family:'Space Mono',monospace;font-size:9px;padding:4px 10px;border-radius:6px;border:1px solid rgba(255,255,255,.08);background:rgba(0,0,0,.3);color:rgba(255,255,255,.35);cursor:pointer;transition:.2s;text-transform:uppercase;letter-spacing:.06em;}
+.gem-filter-btn.active,.gem-filter-btn:hover{border-color:rgba(255,109,0,.35);color:#ff9500;background:rgba(255,109,0,.06);}
+.gem-gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(175px,1fr));gap:12px;}
+.gem-empty{text-align:center;padding:3rem 1rem;font-family:'Space Mono',monospace;font-size:.75rem;color:rgba(255,255,255,.2);}
+/* Card wrapper */
+.gem-card-wrap{perspective:700px;cursor:pointer;}
+.gem-card{position:relative;border-radius:14px;overflow:hidden;height:240px;transition:transform .35s cubic-bezier(.2,1,.3,1),box-shadow .35s;}
+.gem-card:hover{transform:translateY(-4px) scale(1.02);}
+.gem-card-wrap:hover .gem-holo{opacity:1!important;}
+/* Rarity backgrounds — memecoin agressif */
+.gem-card.r-common{background:linear-gradient(150deg,#120808,#080303);border:2px solid rgba(255,40,60,.35);}
+.gem-card.r-rare{background:linear-gradient(150deg,#040c1a,#020810);border:2px solid rgba(50,130,255,.45);}
+.gem-card.r-epic{background:linear-gradient(150deg,#020e06,#010905);border:2px solid rgba(0,255,100,.45);box-shadow:0 0 18px rgba(0,255,100,.08);}
+.gem-card.r-legendary{background:linear-gradient(150deg,#140900,#0a0500);border:2px solid rgba(255,200,0,.55);box-shadow:0 0 28px rgba(255,180,0,.12);}
+.gem-card.r-mythic{background:linear-gradient(150deg,#0a0218,#050110);border:2px solid rgba(180,50,255,.6);box-shadow:0 0 35px rgba(180,50,255,.15);}
+.gem-card.r-ultra{background:linear-gradient(150deg,#0d0a02,#060501);border:2px solid rgba(255,215,0,.7);box-shadow:0 0 40px rgba(255,215,0,.2),0 0 80px rgba(255,100,0,.1);}
+/* Animated borders for rare+ */
+.gem-card.r-rare::after,.gem-card.r-epic::after,.gem-card.r-legendary::after,.gem-card.r-mythic::after,.gem-card.r-ultra::after{
+  content:'';position:absolute;inset:-2px;border-radius:16px;z-index:0;
+  background:conic-gradient(from var(--ba,0deg),transparent 50%,currentColor 100%);
+  animation:gem-spin 3s linear infinite;opacity:.5;pointer-events:none;}
+.gem-card.r-rare{--gc:#3282ff;color:#3282ff;}
+.gem-card.r-epic{--gc:#00ff64;color:#00ff64;} .gem-card.r-epic::after{animation-duration:2.5s;}
+.gem-card.r-legendary{--gc:#ffc800;color:#ffc800;} .gem-card.r-legendary::after{animation-duration:2s;}
+.gem-card.r-mythic{--gc:#b432ff;color:#b432ff;} .gem-card.r-mythic::after{animation-duration:1.5s;}
+.gem-card.r-ultra{--gc:#ffd700;color:#ffd700;} .gem-card.r-ultra::after{animation-duration:1s;opacity:.9;}
+@property --ba{syntax:'<angle>';inherits:false;initial-value:0deg;}
+@keyframes gem-spin{to{--ba:360deg;}}
+/* Big background symbol */
+.gem-bg-sym{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:'Space Mono',monospace;font-size:4.5rem;font-weight:900;opacity:.055;pointer-events:none;letter-spacing:-.05em;z-index:1;overflow:hidden;color:#fff;}
+/* BG pattern per rarity */
+.gem-card.r-epic .gem-bg-sym{color:#00ff88;}
+.gem-card.r-legendary .gem-bg-sym{color:#ffd700;}
+.gem-card.r-mythic .gem-bg-sym{color:#b432ff;}
+.gem-card.r-ultra .gem-bg-sym{color:#ffd700;opacity:.12;font-size:5.5rem;animation:gem-pulse-sym 2s ease infinite;}
+@keyframes gem-pulse-sym{0%,100%{opacity:.12}50%{opacity:.22}}
+/* Candle bars decoration (legendary+) */
+.gem-candles{position:absolute;bottom:0;left:0;right:0;height:42px;display:flex;align-items:flex-end;gap:2px;padding:0 8px;z-index:1;opacity:.18;}
+.gem-candle{flex:1;border-radius:2px 2px 0 0;min-height:4px;}
+/* Holographic sheen */
+.gem-holo{position:absolute;inset:0;z-index:4;border-radius:14px;background:linear-gradient(115deg,transparent 20%,rgba(255,255,255,.06) 40%,rgba(255,255,255,.12) 50%,rgba(255,255,255,.06) 60%,transparent 80%);opacity:0;transition:opacity .3s;pointer-events:none;}
+.gem-card.r-legendary .gem-holo,.gem-card.r-mythic .gem-holo,.gem-card.r-ultra .gem-holo{opacity:.25;animation:gem-holo-shift 3s ease infinite;}
+@keyframes gem-holo-shift{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+/* Inner content */
+.gem-inner{position:relative;z-index:5;height:100%;display:flex;flex-direction:column;padding:10px 12px 10px;}
+.gem-rarity-badge{font-family:'Space Mono',monospace;font-size:8px;font-weight:700;padding:2px 8px;border-radius:4px;text-transform:uppercase;letter-spacing:.1em;align-self:flex-start;}
+.gem-card.r-common .gem-rarity-badge{background:rgba(255,40,60,.2);color:#ff4466;border:1px solid rgba(255,40,60,.3);}
+.gem-card.r-rare .gem-rarity-badge{background:rgba(50,130,255,.2);color:#5599ff;border:1px solid rgba(50,130,255,.3);}
+.gem-card.r-epic .gem-rarity-badge{background:rgba(0,255,100,.15);color:#00ff88;border:1px solid rgba(0,255,100,.3);}
+.gem-card.r-legendary .gem-rarity-badge{background:rgba(255,200,0,.2);color:#ffc800;border:1px solid rgba(255,200,0,.4);}
+.gem-card.r-mythic .gem-rarity-badge{background:rgba(180,50,255,.2);color:#cc44ff;border:1px solid rgba(180,50,255,.4);}
+.gem-card.r-ultra .gem-rarity-badge{background:linear-gradient(135deg,rgba(255,215,0,.3),rgba(255,100,0,.3));color:#ffd700;border:1px solid rgba(255,215,0,.5);animation:gem-badge-glow 1.5s ease infinite;}
+@keyframes gem-badge-glow{0%,100%{box-shadow:none}50%{box-shadow:0 0 10px rgba(255,215,0,.4)}}
+.gem-sym{font-family:'Space Mono',monospace;font-size:1.25rem;font-weight:900;color:#fff;margin-top:auto;letter-spacing:-.02em;line-height:1;text-shadow:0 2px 12px rgba(0,0,0,.5);}
+.gem-card.r-legendary .gem-sym{text-shadow:0 0 20px rgba(255,200,0,.4);}
+.gem-card.r-mythic .gem-sym{text-shadow:0 0 20px rgba(180,50,255,.5);}
+.gem-card.r-ultra .gem-sym{text-shadow:0 0 25px rgba(255,215,0,.6);}
+.gem-mult{font-family:'Space Mono',monospace;font-size:2.4rem;font-weight:900;line-height:1;margin:2px 0;}
+.gem-card.r-common .gem-mult{color:#ff4466;}
+.gem-card.r-rare .gem-mult{color:#5599ff;}
+.gem-card.r-epic .gem-mult{color:#00ff88;}
+.gem-card.r-legendary .gem-mult{color:#ffc800;text-shadow:0 0 20px rgba(255,200,0,.5);}
+.gem-card.r-mythic .gem-mult{color:#cc44ff;text-shadow:0 0 20px rgba(180,50,255,.5);}
+.gem-card.r-ultra .gem-mult{background:linear-gradient(135deg,#ffd700,#ff6600,#ff0044,#ff6600,#ffd700);background-size:300%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;animation:gradient-shift 2s ease infinite;font-size:2.8rem;}
+.gem-stats-row{display:flex;gap:6px;align-items:center;margin-top:4px;}
+.gem-stat-chip{font-family:'Space Mono',monospace;font-size:8px;color:rgba(255,255,255,.35);background:rgba(255,255,255,.04);padding:2px 6px;border-radius:4px;border:1px solid rgba(255,255,255,.06);}
+.gem-watermark{font-family:'Space Mono',monospace;font-size:7px;color:rgba(255,255,255,.12);text-transform:uppercase;letter-spacing:.1em;margin-top:auto;}
+.gem-share-btn{position:absolute;top:8px;right:8px;z-index:10;background:rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.4);font-size:9px;padding:3px 7px;border-radius:5px;cursor:pointer;font-family:'Space Mono',monospace;transition:.2s;}
+.gem-share-btn:hover{border-color:rgba(255,109,0,.4);color:#ff9500;}
+/* New card animation */
+@keyframes gem-new-card{0%{transform:scale(0) rotate(-15deg);opacity:0;}60%{transform:scale(1.08) rotate(2deg);}80%{transform:scale(.97);}100%{transform:scale(1) rotate(0);opacity:1;}}
+.gem-card-wrap.new-card{animation:gem-new-card .7s cubic-bezier(.2,1,.3,1) forwards;}
+/* Rarity upgrade flash */
+@keyframes gem-upgrade-flash{0%{box-shadow:0 0 0 rgba(255,255,255,0)}30%{box-shadow:0 0 60px rgba(255,255,255,.6),0 0 120px rgba(255,255,255,.3)}100%{box-shadow:inherit}}
+.gem-card.upgrading{animation:gem-upgrade-flash .8s ease forwards;}
+/* Pending (pas encore d'ATH) */
+.gem-card.r-pending{background:linear-gradient(150deg,#0a0a0a,#050505);border:2px solid rgba(255,255,255,.08);filter:grayscale(.6);}
+.gem-card.r-pending .gem-mult{color:rgba(255,255,255,.3);}
+/* Tab counter */
+.gem-count{background:rgba(255,109,0,.15);color:#ff9500;font-size:8px;padding:1px 6px;border-radius:8px;border:1px solid rgba(255,109,0,.2);margin-left:4px;}
+
+/* ===== DAILY ALPHA BOX ===== */
+#dailyBoxOverlay{position:fixed;inset:0;z-index:9997;background:rgba(0,0,0,.94);backdrop-filter:blur(16px);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:0;}
+#dailyBoxOverlay.hidden{display:none;}
+.dbox-title{font-family:'Space Mono',monospace;font-size:.65rem;color:rgba(255,109,0,.6);letter-spacing:.2em;text-transform:uppercase;margin-bottom:.8rem;}
+.dbox-day{font-family:'Space Mono',monospace;font-size:.8rem;color:rgba(255,255,255,.25);margin-bottom:2rem;letter-spacing:.1em;}
+.dbox-box{width:110px;height:110px;position:relative;cursor:pointer;animation:dbox-float 2.2s ease-in-out infinite;}
+@keyframes dbox-float{0%,100%{transform:translateY(0) rotate(-1.5deg)}50%{transform:translateY(-14px) rotate(1.5deg)}}
+.dbox-box-inner{width:100%;height:100%;border-radius:16px;border:3px solid rgba(255,109,0,.5);background:linear-gradient(150deg,#1a0800,#0a0400);box-shadow:0 0 40px rgba(255,109,0,.2),inset 0 1px 0 rgba(255,255,255,.05);display:flex;align-items:center;justify-content:center;font-size:3rem;position:relative;overflow:hidden;}
+.dbox-box-inner::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 30% 25%,rgba(255,109,0,.15),transparent 60%);pointer-events:none;}
+.dbox-box-glow{position:absolute;inset:-20px;background:radial-gradient(circle,rgba(255,109,0,.15),transparent 70%);animation:dbox-glow-pulse 2s ease-in-out infinite;pointer-events:none;}
+@keyframes dbox-glow-pulse{0%,100%{opacity:.6;transform:scale(.95)}50%{opacity:1;transform:scale(1.05)}}
+.dbox-hint{font-family:'Space Mono',monospace;font-size:.6rem;color:rgba(255,255,255,.2);margin-top:1.5rem;letter-spacing:.08em;animation:pulse 2s infinite;}
+.dbox-skip{font-family:'Space Mono',monospace;font-size:.58rem;color:rgba(255,255,255,.15);cursor:pointer;margin-top:1.2rem;text-decoration:underline;transition:.2s;}
+.dbox-skip:hover{color:rgba(255,255,255,.35);}
+/* Opening animation */
+.dbox-box.opening .dbox-box-inner{animation:dbox-open .7s cubic-bezier(.2,1,.3,1) forwards;}
+@keyframes dbox-open{0%{transform:scale(1) rotate(0)}20%{transform:scale(1.15) rotate(-8deg)}40%{transform:scale(1.3) rotate(8deg)}60%{transform:scale(1.4) rotate(-4deg)}80%{transform:scale(1.2)}100%{transform:scale(0) rotate(180deg);opacity:0}}
+/* Reward reveal */
+.dbox-reward{display:none;flex-direction:column;align-items:center;gap:.6rem;animation:dbox-reward-in .6s cubic-bezier(.2,1,.3,1) forwards;}
+.dbox-reward.show{display:flex;}
+@keyframes dbox-reward-in{0%{transform:scale(0) translateY(20px);opacity:0}60%{transform:scale(1.08) translateY(-4px)}100%{transform:scale(1) translateY(0);opacity:1}}
+.dbox-reward-icon{font-size:3.5rem;filter:drop-shadow(0 0 20px rgba(255,200,0,.5));}
+.dbox-reward-title{font-family:'Space Mono',monospace;font-size:1rem;font-weight:700;color:#ffd700;text-shadow:0 0 20px rgba(255,215,0,.4);letter-spacing:.04em;}
+.dbox-reward-desc{font-family:'Space Mono',monospace;font-size:.68rem;color:rgba(255,255,255,.45);text-align:center;max-width:280px;line-height:1.6;}
+.dbox-reward-rarity{font-family:'Space Mono',monospace;font-size:.62rem;padding:2px 10px;border-radius:6px;border:1px solid;text-transform:uppercase;letter-spacing:.1em;}
+.dbox-reward-rarity.rare{color:#5599ff;border-color:rgba(50,130,255,.4);background:rgba(50,130,255,.1);}
+.dbox-reward-rarity.epic{color:#00ff88;border-color:rgba(0,255,100,.35);background:rgba(0,255,100,.08);}
+.dbox-reward-rarity.legendary{color:#ffc800;border-color:rgba(255,200,0,.4);background:rgba(255,200,0,.1);}
+.dbox-reward-rarity.common{color:rgba(255,255,255,.35);border-color:rgba(255,255,255,.1);background:rgba(255,255,255,.03);}
+.dbox-collect-btn{margin-top:.4rem;padding:9px 24px;background:linear-gradient(135deg,#ff6d00,#ff9500);color:#fff;border:none;border-radius:9px;font-family:'Space Mono',monospace;font-size:.75rem;font-weight:700;cursor:pointer;transition:.2s;box-shadow:0 4px 20px rgba(255,109,0,.3);}
+.dbox-collect-btn:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(255,109,0,.4);}
+
 /* ===== BOOT SCREEN ===== */
 #bootScreen{position:fixed;inset:0;z-index:99999;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity .8s ease,visibility .8s ease;overflow:hidden;}
 #bootScreen.done{opacity:0;visibility:hidden;pointer-events:none;}
@@ -1142,6 +1258,25 @@ nav{background:rgba(0,0,0,.96)!important;border-bottom:1px solid rgba(255,109,0,
   <div class="boot-terminal" id="bootTerminal"></div>
   <div class="boot-bar-wrap"><div class="boot-bar-fill" id="bootBar"></div></div>
   <div class="boot-pct" id="bootPct">0%</div>
+</div>
+
+<!-- DAILY ALPHA BOX -->
+<div id="dailyBoxOverlay" class="hidden">
+  <div class="dbox-title">◈ DAILY ALPHA BOX</div>
+  <div class="dbox-day" id="dboxDayLabel">Jour #1 · Streak 🔥1</div>
+  <div class="dbox-box" id="dboxBox" onclick="openDailyBox()">
+    <div class="dbox-box-glow"></div>
+    <div class="dbox-box-inner">📦</div>
+  </div>
+  <div class="dbox-reward" id="dboxReward">
+    <div class="dbox-reward-icon" id="dboxRewardIcon">🎁</div>
+    <div class="dbox-reward-rarity common" id="dboxRewardRarity">COMMON</div>
+    <div class="dbox-reward-title" id="dboxRewardTitle">Récompense</div>
+    <div class="dbox-reward-desc" id="dboxRewardDesc">Description de la récompense</div>
+    <button class="dbox-collect-btn" onclick="closeDailyBox()">COLLECTER →</button>
+  </div>
+  <div class="dbox-hint" id="dboxHint">Clique pour ouvrir ta boîte du jour</div>
+  <div class="dbox-skip" onclick="closeDailyBox()">passer</div>
 </div>
 
 <!-- TICKER STRIP -->
@@ -1323,6 +1458,7 @@ nav{background:rgba(0,0,0,.96)!important;border-bottom:1px solid rgba(255,109,0,
       <button class="s-tab" id="tabHistory" onclick="switchTab('history')">📋 Historique <span id="histCount" class="hist-count"></span></button>
       <button class="s-tab" id="tabDebugCA" onclick="switchTab('debugca')" style="display:none">🔬 Debug CA</button>
       <button class="s-tab" id="tabPaperBot" onclick="switchTab('paperbot')">🤖 Paper Bot <span id="ptOpenCount" class="hist-count"></span></button>
+      <button class="s-tab" id="tabGems" onclick="switchTab('gems')">💎 Gems <span id="gemCountBadge" class="gem-count"></span></button>
     </div>
     <div style="display:flex;gap:.4rem;padding:.3rem 0;">
       <button class="btn-reset" id="btnResetLive" onclick="resetLive()" style="display:none">🗑 Vider Live</button>
@@ -1515,6 +1651,27 @@ nav{background:rgba(0,0,0,.96)!important;border-bottom:1px solid rgba(255,109,0,
       <div id="ptClosedTable"><div class="pt-empty">Aucun trade fermé pour l'instant</div></div>
     </div>
 
+  </div>
+</div>
+
+<!-- PANEL GEMS -->
+<div id="panelGems" style="display:none">
+  <div class="gem-gallery-wrap">
+    <div class="gem-gallery-filters">
+      <span style="font-family:'Space Mono',monospace;font-size:9px;color:rgba(255,255,255,.25);margin-right:4px;">FILTRE:</span>
+      <button class="gem-filter-btn active" onclick="gemSetFilter('all',this)">Tous</button>
+      <button class="gem-filter-btn" onclick="gemSetFilter('r-ultra',this)" style="color:#ffd700;border-color:rgba(255,215,0,.3);">ULTRA</button>
+      <button class="gem-filter-btn" onclick="gemSetFilter('r-mythic',this)" style="color:#cc44ff;border-color:rgba(180,50,255,.3);">MYTHIC</button>
+      <button class="gem-filter-btn" onclick="gemSetFilter('r-legendary',this)" style="color:#ffc800;border-color:rgba(255,200,0,.3);">LEGENDARY</button>
+      <button class="gem-filter-btn" onclick="gemSetFilter('r-epic',this)" style="color:#00ff88;border-color:rgba(0,255,100,.3);">EPIC</button>
+      <button class="gem-filter-btn" onclick="gemSetFilter('r-rare',this)">RARE</button>
+      <button class="gem-filter-btn" onclick="gemSetFilter('r-common',this)">COMMON</button>
+      <button class="gem-filter-btn" onclick="gemSetFilter('r-pending',this)">EN COURS</button>
+      <span style="margin-left:auto;font-family:'Space Mono',monospace;font-size:8px;color:rgba(255,255,255,.2)" id="gemStatsLine"></span>
+    </div>
+    <div class="gem-gallery" id="gemGallery">
+      <div class="gem-empty">Aucune gem pour l'instant — les calls génèrent automatiquement des cartes</div>
+    </div>
   </div>
 </div>
 
@@ -4442,7 +4599,7 @@ const PT_CFG_LS   = 'paperConfig_v2';
 const PT_EQUITY_LS= 'paperEquity_v2';
 
 const PT_CFG_DEFAULT = {
-  enabled:false, posSize:100,
+  enabled:true, posSize:100,
   tp1:2.0, tp2:4.0, tp3:8.0,
   trailPct:28,   // trailing stop: sell rest at ATH * (1 - trailPct/100)
   sl:45,         // hard SL if never hit TP1
@@ -4790,6 +4947,252 @@ function ptRender(){
       }).join('');
     }
   }
+}
+
+// ============================================================
+// 💎 GEM CARDS COLLECTION
+// ============================================================
+const GEM_LS = 'gemCards_v1';
+let _gemFilter = 'all';
+
+function gemLoad(){ try{ return JSON.parse(localStorage.getItem(GEM_LS)||'[]'); }catch(e){ return []; } }
+function gemSave(arr){ try{ localStorage.setItem(GEM_LS, JSON.stringify(arr)); }catch(e){} }
+
+function gemRarityFromX(x){
+  if(!x || x < 1.5)  return 'r-pending';
+  if(x < 2)          return 'r-common';
+  if(x < 3.5)        return 'r-rare';
+  if(x < 6)          return 'r-epic';
+  if(x < 12)         return 'r-legendary';
+  if(x < 25)         return 'r-mythic';
+  return 'r-ultra';
+}
+function gemRarityLabel(r){
+  return {
+    'r-pending':'EN COURS','r-common':'COMMON','r-rare':'RARE',
+    'r-epic':'EPIC','r-legendary':'LEGENDARY','r-mythic':'MYTHIC','r-ultra':'ULTRA'
+  }[r] || r;
+}
+
+// Crée une gem à chaque nouveau call
+function gemOnCall(token){
+  const gems = gemLoad();
+  if(gems.find(g => g.addr === token.addr)) return; // déjà une carte
+  const gem = {
+    id:        'gem_' + Date.now(),
+    addr:      token.addr,
+    symbol:    (token.symbol||'?').toUpperCase(),
+    score:     token.score || 0,
+    axiom:     token.debug?.axiomCount || 0,
+    entryMcap: token.mcap || 0,
+    athMcap:   token.mcap || 0,
+    athX:      1.0,
+    rarity:    'r-pending',
+    callTime:  Date.now(),
+    pairUrl:   token.pairUrl || '',
+  };
+  gems.unshift(gem);
+  gemSave(gems);
+  gemUpdateCountBadge();
+}
+
+// Mise à jour ATH d'une gem — peut upgrader la rareté
+function gemOnAthUpdate(addr, newMcap){
+  const gems = gemLoad();
+  const g = gems.find(x => x.addr === addr);
+  if(!g || !newMcap || newMcap <= g.athMcap) return;
+  const oldRarity = g.rarity;
+  g.athMcap = newMcap;
+  g.athX    = g.entryMcap > 0 ? newMcap / g.entryMcap : 1;
+  g.rarity  = gemRarityFromX(g.athX);
+  gemSave(gems);
+  // Animation upgrade si nouvelle rareté
+  if(g.rarity !== oldRarity && g.rarity !== 'r-pending'){
+    gemShowUpgradeToast(g);
+    if(currentTab === 'gems') gemRender();
+  }
+  gemUpdateCountBadge();
+}
+
+function gemShowUpgradeToast(g){
+  const labels = {'r-rare':'RARE 🔵','r-epic':'EPIC 💚','r-legendary':'LEGENDARY ⭐','r-mythic':'MYTHIC 💜','r-ultra':'ULTRA 👑'};
+  const lbl = labels[g.rarity];
+  if(lbl) showToast(`💎 $${g.symbol} upgradé → ${lbl} (${g.athX.toFixed(1)}x)`, 'call');
+}
+
+function gemUpdateCountBadge(){
+  const gems = gemLoad();
+  const el = document.getElementById('gemCountBadge');
+  if(el) el.textContent = gems.length || '';
+}
+
+function gemSetFilter(f, btn){
+  _gemFilter = f;
+  document.querySelectorAll('.gem-filter-btn').forEach(b => b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  gemRender();
+}
+
+function gemRender(){
+  const gallery = document.getElementById('gemGallery');
+  if(!gallery) return;
+  let gems = gemLoad();
+  if(_gemFilter !== 'all') gems = gems.filter(g => g.rarity === _gemFilter);
+  const statsEl = document.getElementById('gemStatsLine');
+  if(statsEl){
+    const all = gemLoad();
+    const best = all.reduce((a,b)=>b.athX>a.athX?b:a, {athX:0});
+    statsEl.textContent = `${all.length} cartes · meilleur: ${best.athX>0?best.athX.toFixed(1)+'x':'—'}`;
+  }
+  if(!gems.length){
+    gallery.innerHTML = '<div class="gem-empty">Aucune gem dans cette catégorie</div>';
+    return;
+  }
+  gallery.innerHTML = gems.map(g => gemCardHTML(g)).join('');
+}
+
+function gemCardHTML(g){
+  const rarity  = g.rarity || 'r-pending';
+  const label   = gemRarityLabel(rarity);
+  const xDisp   = g.athX >= 1.5 ? g.athX.toFixed(1) + 'x' : (g.athX > 0 ? g.athX.toFixed(2)+'x' : '—');
+  const mcapIn  = '$' + fmtNum(g.entryMcap);
+  const mcapAth = g.athMcap > g.entryMcap ? '$' + fmtNum(g.athMcap) : '…';
+  const date    = new Date(g.callTime).toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+  const axiomTxt= g.axiom > 0 ? `${g.axiom} axiom` : '';
+  // Candle bars for rare+
+  let candleHTML = '';
+  if(['r-epic','r-legendary','r-mythic','r-ultra'].includes(rarity)){
+    const bars = Array.from({length:14},()=>Math.floor(6+Math.random()*34));
+    const col = rarity==='r-legendary'?'#ffc800':rarity==='r-mythic'?'#b432ff':rarity==='r-ultra'?'#ffd700':'#00ff88';
+    candleHTML = `<div class="gem-candles">${bars.map(h=>`<div class="gem-candle" style="height:${h}px;background:${col}"></div>`).join('')}</div>`;
+  }
+  return `<div class="gem-card-wrap" onclick="gemOpenDetail('${g.id}')">
+    <div class="gem-card ${rarity}">
+      <div class="gem-bg-sym">$${g.symbol}</div>
+      ${candleHTML}
+      <div class="gem-holo"></div>
+      <button class="gem-share-btn" onclick="event.stopPropagation();gemShare('${g.id}')">↗ SHARE</button>
+      <div class="gem-inner">
+        <span class="gem-rarity-badge">${label}</span>
+        <div style="margin-top:auto">
+          <div class="gem-sym">$${g.symbol}</div>
+          <div class="gem-mult">${xDisp}</div>
+          <div class="gem-stats-row">
+            <span class="gem-stat-chip">${mcapIn} → ${mcapAth}</span>
+            ${axiomTxt ? `<span class="gem-stat-chip">${axiomTxt}</span>` : ''}
+            <span class="gem-stat-chip">${g.score}pts</span>
+          </div>
+          <div class="gem-watermark">MEMESCANNER · ${date}</div>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function gemOpenDetail(id){
+  const gems = gemLoad();
+  const g = gems.find(x => x.id === id);
+  if(!g) return;
+  const xStr = g.athX >= 1.5 ? g.athX.toFixed(2)+'x ATH' : 'En cours...';
+  const info = `$${g.symbol} — ${xStr}\nScore: ${g.score}pts${g.axiom?' · '+g.axiom+' Axiom':''}\nEntrée: $${fmtNum(g.entryMcap)} → ATH: $${fmtNum(g.athMcap)}\nCallé le ${new Date(g.callTime).toLocaleString('fr-FR')}`;
+  if(g.pairUrl) window.open(g.pairUrl, '_blank');
+  else alert(info);
+}
+
+function gemShare(id){
+  const gems = gemLoad();
+  const g = gems.find(x => x.id === id);
+  if(!g) return;
+  const xStr = g.athX >= 1.5 ? g.athX.toFixed(1)+'x' : 'en cours';
+  const text = `💎 $${g.symbol} ${xStr} ATH sur @MemeScanner\nScore ${g.score}pts${g.axiom?' · '+g.axiom+' Axiom wallets':''}\nEntrée $${fmtNum(g.entryMcap)} → $${fmtNum(g.athMcap)}\n\n🔥 ${gemRarityLabel(g.rarity)} CARD`;
+  if(navigator.clipboard){ navigator.clipboard.writeText(text); showToast('📋 Texte copié — colle sur Twitter !', 'call'); }
+  else prompt('Copie ce texte :', text);
+}
+
+// ============================================================
+// 📦 DAILY ALPHA BOX
+// ============================================================
+const DBOX_LS = 'dailyBox_v1';
+
+const DBOX_REWARDS = [
+  // Common
+  { rarity:'common', icon:'🔍', title:'Signal Scan', desc:'Le scanner a analysé plus de 1000 tokens aujourd\'hui. Continue à surveiller les calls live.', weight:30 },
+  { rarity:'common', icon:'📊', title:'Stats Degen', desc:'Ton algo a filtré 95% de rugs aujourd\'hui. Les filtres tiennent bon.', weight:25 },
+  { rarity:'common', icon:'⚡', title:'Speed Boost', desc:'Scan cycle réduit à 30s pour les 24 prochaines heures. Alpha plus vite.', weight:20 },
+  // Rare
+  { rarity:'rare', icon:'🧠', title:'Pattern Intel', desc:'Top pattern du moment: tokens avec buyRatio > 0.72 et 2+ Axiom wallets pumpent 3x+ dans 80% des cas.', weight:15 },
+  { rarity:'rare', icon:'🐋', title:'Whale Alert', desc:'3 wallets Axiom trackés ont accumulé en silence sur les dernières 6h. Surveille les tokens avec 3+ axiom.', weight:12 },
+  { rarity:'rare', icon:'💡', title:'Alpha Tip', desc:'Les tokens callés entre 22h-2h ont un winrate 40% plus élevé — le marché dort, les gems bougent.', weight:10 },
+  // Epic
+  { rarity:'epic', icon:'🎯', title:'Score Secret', desc:'Révélation: les tokens avec score > 105 ET mcap < $8K ont un ATH moyen de 5.8x. C\'est ton sweet spot.', weight:8 },
+  { rarity:'epic', icon:'🔮', title:'Meta Shift', desc:'Nouveau meta détecté: les tokens avec "AI" dans le nom ont un pump initial de 2.3x en moyenne cette semaine.', weight:6 },
+  // Legendary
+  { rarity:'legendary', icon:'👑', title:'JACKPOT ALPHA', desc:'Top call secret du jour débloqué. Regarde les tokens avec 3+ Axiom wallets ET buyRatio > 0.8 — historique: 7.2x ATH moyen.', weight:3 },
+  { rarity:'legendary', icon:'🌙', title:'MOON INTEL', desc:'Pattern ultra-rare détecté: staircase sur 5m + 3 Axiom = 12x ATH dans 4 cas sur 5 ce mois-ci.', weight:2 },
+];
+
+function dboxPickReward(){
+  const total = DBOX_REWARDS.reduce((s,r)=>s+r.weight, 0);
+  let rand = Math.random() * total;
+  for(const r of DBOX_REWARDS){ rand -= r.weight; if(rand <= 0) return r; }
+  return DBOX_REWARDS[0];
+}
+
+function initDailyBox(){
+  const data = JSON.parse(localStorage.getItem(DBOX_LS) || '{}');
+  const today = new Date().toISOString().slice(0,10);
+  if(data.lastOpened === today) return; // déjà ouvert aujourd'hui
+  // Afficher la boîte après 3s (laisse le site charger)
+  setTimeout(()=>{
+    const streak = JSON.parse(localStorage.getItem('loginStreak')||'{}');
+    const dayNum = (data.totalBoxes || 0) + 1;
+    const streakN = streak.streak || 1;
+    const label = document.getElementById('dboxDayLabel');
+    if(label) label.textContent = `Boîte #${dayNum} · Streak 🔥${streakN}`;
+    document.getElementById('dailyBoxOverlay')?.classList.remove('hidden');
+  }, 3000);
+}
+
+function openDailyBox(){
+  const box = document.getElementById('dboxBox');
+  const hint = document.getElementById('dboxHint');
+  const reward = dboxPickReward();
+  if(box.classList.contains('opening')) return;
+  box.classList.add('opening');
+  if(hint) hint.style.display = 'none';
+  // Confettis si epic+
+  if(['epic','legendary'].includes(reward.rarity)) launchConfetti(reward.rarity==='legendary'?80:40);
+  setTimeout(()=>{
+    box.style.display = 'none';
+    // Afficher récompense
+    document.getElementById('dboxRewardIcon').textContent  = reward.icon;
+    document.getElementById('dboxRewardTitle').textContent = reward.title;
+    document.getElementById('dboxRewardDesc').textContent  = reward.desc;
+    const rarEl = document.getElementById('dboxRewardRarity');
+    rarEl.textContent = reward.rarity.toUpperCase();
+    rarEl.className = `dbox-reward-rarity ${reward.rarity}`;
+    const rev = document.getElementById('dboxReward');
+    rev.classList.add('show');
+    // Sauvegarder
+    const today = new Date().toISOString().slice(0,10);
+    const data = JSON.parse(localStorage.getItem(DBOX_LS)||'{}');
+    data.lastOpened = today;
+    data.totalBoxes = (data.totalBoxes||0) + 1;
+    if(!data.history) data.history = [];
+    data.history.unshift({date:today, reward:reward.title, rarity:reward.rarity});
+    localStorage.setItem(DBOX_LS, JSON.stringify(data));
+  }, 800);
+}
+
+function closeDailyBox(){
+  document.getElementById('dailyBoxOverlay')?.classList.add('hidden');
+  // Reset pour prochaine ouverture
+  const box = document.getElementById('dboxBox');
+  if(box){ box.classList.remove('opening'); box.style.display=''; }
+  const rev = document.getElementById('dboxReward');
+  if(rev) rev.classList.remove('show');
+  const hint = document.getElementById('dboxHint');
+  if(hint) hint.style.display = '';
 }
 
 function initNightly() {
@@ -5176,6 +5579,7 @@ async function saveCall(addr,callMcap,callTime,symbol='',score=0,pairAddress='')
 async function updateAth(addr,currentMcap){
   try{const all=JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}');if(all[addr]&&currentMcap>(all[addr].athMcap||0)){all[addr].athMcap=currentMcap;localStorage.setItem(STORAGE_KEY,JSON.stringify(all));}}catch(e){}
   try{const key=addr.replace(/[.#$\/\[\]]/g,'_');const ex=await fetch(`${FB_URL}/calls/${key}.json`).then(r=>r.json()).catch(()=>null);if(ex&&currentMcap>(ex.athMcap||0))await fetch(`${FB_URL}/calls/${key}.json`,{method:'PATCH',body:JSON.stringify({athMcap:currentMcap})});}catch(e){}
+  gemOnAthUpdate(addr, currentMcap);
 }
 async function getCallData(addr){
   try{
@@ -5375,6 +5779,7 @@ function onNewCall(token) {
   showToast(`🚀 NEW CALL: $${token.symbol} — Score ${token.score} — $${fmtNum(token.mcap)}`, 'call');
   ptOpenTrade(token);
   sendCallNotification(token);
+  gemOnCall(token);
 }
 
 function sendCallNotification(token){
@@ -5436,14 +5841,17 @@ function switchTab(tab){
   document.getElementById('panelHistory').style.display=tab==='history'?'block':'none';
   document.getElementById('panelDebugCA').style.display=tab==='debugca'?'block':'none';
   document.getElementById('panelPaperBot').style.display=tab==='paperbot'?'block':'none';
+  document.getElementById('panelGems').style.display=tab==='gems'?'block':'none';
   document.getElementById('tabLive').classList.toggle('active',tab==='live');
   document.getElementById('tabHistory').classList.toggle('active',tab==='history');
   document.getElementById('tabDebugCA').classList.toggle('active',tab==='debugca');
   document.getElementById('tabPaperBot').classList.toggle('active',tab==='paperbot');
+  document.getElementById('tabGems').classList.toggle('active',tab==='gems');
   document.getElementById('btnResetLive').style.display=tab==='live'?'inline-block':'none';
   document.getElementById('btnResetHistory').style.display=tab==='history'?'inline-block':'none';
   if(tab==='history')renderHistory();
   if(tab==='paperbot')ptRender();
+  if(tab==='gems')gemRender();
 }
 
 // ============================================================
@@ -7666,6 +8074,8 @@ document.addEventListener('visibilitychange',()=>{
 window.addEventListener('DOMContentLoaded',()=>{
   try{
     checkSession();loadReviews();
+    initDailyBox();
+    gemUpdateCountBadge();
 
     // FIX RETOUR APRÈS ABSENCE : relancer le scan si tab inactif
     let lastActiveTime = Date.now();
