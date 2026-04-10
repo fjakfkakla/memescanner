@@ -886,6 +886,19 @@ nav{border-bottom:1px solid rgba(255,109,0,.2)!important;box-shadow:0 4px 30px r
 .sc-pvp-badge.pvp-w{background:rgba(255,140,0,.18);color:#ffaa22;border:1px solid rgba(255,140,0,.35);animation:pvp-badge-pulse 1.2s ease-in-out infinite alternate;}
 .sc-pvp-badge.pvp-l{background:rgba(255,60,60,.1);color:#ff6655;border:1px solid rgba(255,60,60,.2);}
 @keyframes pvp-badge-pulse{from{box-shadow:0 0 4px rgba(255,140,0,.3)}to{box-shadow:0 0 12px rgba(255,140,0,.7)}}
+/* Metrics row (1h%, 5m%, buy ratio) */
+.sc-metrics{display:flex;gap:.45rem;flex-wrap:wrap;align-items:center;padding:.35rem 1rem;
+  border-bottom:1px solid rgba(97,86,217,.06);background:rgba(0,0,0,.1);
+  font-size:.72rem;font-family:var(--font-mono);}
+/* Score breakdown chips */
+.sc-scores{display:flex;gap:.28rem;flex-wrap:wrap;padding:.32rem 1rem;
+  border-bottom:1px solid rgba(97,86,217,.06);background:rgba(0,0,0,.08);}
+.sc-score-chip{font-size:.62rem;padding:.11rem .36rem;border-radius:4px;font-family:var(--font-mono);
+  background:rgba(97,86,217,.05);border:1px solid rgba(97,86,217,.1);color:rgba(255,255,255,.45);}
+/* Wallet addresses row */
+.sc-wallets{padding:.32rem 1rem;border-bottom:1px solid rgba(97,86,217,.06);
+  font-size:.62rem;font-family:var(--font-mono);color:rgba(255,215,0,.55);
+  background:rgba(255,215,0,.02);line-height:1.6;}
 
 /* ── PAPER BOT ──────────────────────────────────────────────── */
 /* ===== PAPER TRADING BOT UI ===== */
@@ -6360,13 +6373,52 @@ async function fetchTokens(){
       security: c.raw?.security || null,
     }));
     finalScored.sort((a,b)=>b.score-a.score);
-    lastScored = finalScored;
+    // ── FIX : détecter les nouveaux calls → paper bot + notifications ──
+    const _prevAddrs=new Set(lastScored.map(t=>t.addr));
+    lastScored=finalScored;
     await ptCheckPositions();
+    const _nowTs=Date.now();
+    for(const token of finalScored){
+      if(!_prevAddrs.has(token.addr)){
+        // Seulement les calls frais (<2min) pour ne pas entrer sur des positions vieilles
+        const age=_nowTs-(token._callTime||0);
+        if(age<120000) onNewCall(token);
+      }
+    }
     if(loadEl)loadEl.style.display='none';
     document.getElementById('scanDot').style.background='var(--green)';
     document.getElementById('lastUpdate').textContent='Updated '+new Date().toLocaleTimeString();
     document.getElementById('debugToggleBtn').style.display=isAdminMode?'inline-block':'none';
     if(finalScored.length===0){
+      // ── FIX : fallback historique quand /live est vide (redémarrage serveur) ──
+      try{
+        const hResp=await fetch(`${BACKEND_URL}/history`,{signal:AbortSignal.timeout(6000)});
+        const hJson=await hResp.json();
+        const recentH=(hJson.data||[])
+          .filter(c=>c.addr&&(Date.now()-(c.calledAt||c.callTime||c.savedAt||0))<7200000)
+          .slice(0,15)
+          .map(c=>({
+            addr:c.addr,symbol:c.symbol||'?',score:c.score||80,
+            mcap:c.mcap||0,liq:c.liq||0,rugRisk:c.rugRisk||'LOW',
+            socials:c.socials||false,
+            pairUrl:c.pairUrl||`https://dexscreener.com/solana/${c.addr}`,
+            emoji:c.emoji||'📋',
+            walletData:c.walletData||{count:c.debug?.axiomCount||0,wallets:[],clustered:false},
+            _callTime:c.calledAt||c.callTime||c.savedAt||Date.now(),
+            _callMcap:c.callMcap||c.mcap||0,
+            debug:c.debug||{traderScore:0,socialScore:0,holderScore:0,platformScore:0,mcapScore:0,ageScore:0,patternScore:0,axiomCount:0,ageH:0,c1h:0,m5:0,c6h:0,buyRatio:0.5},
+            raw:c.raw||{},security:c.security||null,_fromHistory:true,
+          }));
+        if(recentH.length>0){
+          lastScored=recentH;
+          if(loadEl)loadEl.style.display='none';
+          await renderTokenTable(recentH);
+          if(currentTab==='history')renderHistory();
+          if(refreshTimer)clearTimeout(refreshTimer);
+          refreshTimer=setTimeout(fetchTokens,45000);
+          return;
+        }
+      }catch(e){}
       content.innerHTML=`<div class="empty-state"><div class="empty-icon">🔍</div><div class="empty-title">0 signal pour l'instant</div><div class="empty-sub">Le backend scan toutes les 45s — refresh auto</div></div>`;
     } else {
       await renderTokenTable(finalScored);
@@ -6749,6 +6801,12 @@ async function renderTokenTable(tokens){
     const mult=callMcap>0?t.mcap/callMcap:1;
     const athMult=callMcap>0?athMcap/callMcap:1;
     const d=t.debug;
+    // ── Données supplémentaires pour l'affichage enrichi ──
+    const c1h=+(d.c1h||0); const m5v=+(d.m5||0);
+    const buyRatio=+(d.buyRatio||0.5);
+    const wallets=t.walletData?.wallets||[];
+    const nowMult=callMcap>0?(nowMcap||t.mcap)/callMcap:1;
+    const nowMultColor=nowMult>=2?'#00ff88':nowMult>=1.3?'#88ff44':nowMult>=0.8?'#ffcc44':'#ff5577';
     const callHeure=fmtTimeSeconds(callTime);
     const scoreEmoji=getScoreEmoji(t.score);
     const badgeCls=t.score>=130?'nuclear':t.score>=110?'diamond':t.score>=95?'runner':t.score>=80?'watchlist':'radar';
@@ -6779,6 +6837,33 @@ async function renderTokenTable(tokens){
         ${s.hasWebsite?'<span class="sc-sec-chip" style="background:rgba(255,255,255,.05);color:rgba(255,255,255,.5)">WEB</span>':''}
       </div>`;
     }
+    // ── Métriques marché ──
+    const c1hColor=c1h>=0?'#44ff88':'#ff5577';
+    const m5Color=m5v>=0?'#44ff88':'#ff5577';
+    const buyColor=buyRatio>=0.55?'#44ff88':buyRatio>=0.45?'#ffcc44':'#ff5577';
+    const metricsHtml=`<div class="sc-metrics">
+      <span style="color:${c1hColor}">${c1h>=0?'+':''}${c1h.toFixed(1)}% 1h</span>
+      <span style="color:${m5Color}">${m5v>=0?'+':''}${m5v.toFixed(1)}% 5m</span>
+      <span style="color:${buyColor}">Buy ${(buyRatio*100).toFixed(0)}%</span>
+      ${t._fromHistory?'<span style="opacity:.35;font-size:.6rem">📋 hist</span>':''}
+    </div>`;
+    // ── Score breakdown chips ──
+    const scoreChips=[
+      {lbl:'T',val:d.traderScore||0,max:30},
+      {lbl:'S',val:d.socialScore||0,max:26},
+      {lbl:'H',val:d.holderScore||0,max:25},
+      {lbl:'P',val:d.platformScore||0,max:15},
+      {lbl:'A',val:d.ageScore||0,max:20},
+      {lbl:'PAT',val:d.patternScore||0,max:45},
+    ].map(({lbl,val,max})=>{
+      const pct=max>0?val/max:0;
+      const col=pct>=0.7?'#00ff88':pct>=0.35?'#ffcc44':'rgba(255,255,255,.35)';
+      const brd=pct>=0.7?'rgba(0,255,136,.2)':pct>=0.35?'rgba(255,215,0,.18)':'rgba(97,86,217,.1)';
+      return `<span class="sc-score-chip" style="color:${col};border-color:${brd}">${lbl}:${val}</span>`;
+    }).join('');
+    const scoresHtml=`<div class="sc-scores">${scoreChips}</div>`;
+    // ── Wallet addresses ──
+    const walletsHtml=wallets.length>0?`<div class="sc-wallets">🎯 ${wallets.slice(0,4).join(' · ')}</div>`:'';
     // PVP badge + card class
     const pvpCls = t.pvp==='winner'?'pvp-winner':t.pvp==='loser'?'pvp-loser':'';
     const pvpBadge = t.pvp==='winner'
@@ -6801,6 +6886,9 @@ async function renderTokenTable(tokens){
         <span style="margin-left:auto;opacity:.5;font-size:.56rem">${timeAgo(callTime)} ago</span>
       </div>
       ${secHtml}
+      ${metricsHtml}
+      ${scoresHtml}
+      ${walletsHtml}
       <div class="sc-stats">
         <div class="sc-stat">
           <div class="sc-stat-lbl">📍 CALL</div>
@@ -6809,6 +6897,7 @@ async function renderTokenTable(tokens){
         <div class="sc-stat" data-live-addr="${t.addr}" data-call-mcap="${callMcap}">
           <div class="sc-stat-lbl">⏰ NOW</div>
           <div class="sc-stat-val live-mcap-val" style="color:${nowColor}">$${fmtNum(nowMcap||t.mcap)}</div>
+          <div class="live-mult-val" style="font-size:.65rem;color:${nowMultColor};font-weight:700">×${nowMult.toFixed(2)}</div>
         </div>
         <div class="sc-stat" data-live-ath="${t.addr}" data-call-mcap2="${callMcap}">
           <div class="sc-stat-lbl">🏆 ATH</div>
@@ -6822,7 +6911,7 @@ async function renderTokenTable(tokens){
       <div class="sc-footer">
         <div style="display:flex;gap:.35rem;align-items:center;flex-wrap:wrap;flex:1;min-width:0">
           <span class="sc-addr" data-addr="${t.addr}" onclick="copyHistCA(this)" title="Copier CA">${t.addr.slice(0,6)}...${t.addr.slice(-4)} 📋</span>
-          <span style="font-family:var(--font-mono);font-size:.56rem;color:rgba(0,255,136,.35)">${(d.ageH*60).toFixed(0)}min · $${fmtNum(t.liq)} liq</span>
+          <span style="font-family:var(--font-mono);font-size:.56rem;color:rgba(0,255,136,.35)">${d.ageH?Math.round(d.ageH*60):0}min · $${fmtNum(t.liq)} liq</span>
         </div>
         <div style="display:flex;gap:.32rem;align-items:center;flex-shrink:0">
           <button class="sc-btn-pnl" onclick="openScannerPnl('${t.addr}','${t.symbol}',${callMcap},${athMcap},${t.score})">📤 PnL</button>

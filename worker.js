@@ -566,16 +566,18 @@ export async function runScanCycle() {
         calledTokens.set(token.addr, now);
         try {
           await saveCall({
-            addr:     token.addr,
-            symbol:   token.symbol,
-            score:    token.score,
-            mcap:     token.mcap,
-            liq:      token.liq,
-            rugRisk:  token.rugRisk,
-            socials:  token.socials,
-            pairUrl:  token.pairUrl,
-            debug:    token.debug,
-            calledAt: now,
+            addr:       token.addr,
+            symbol:     token.symbol,
+            score:      token.score,
+            mcap:       token.mcap,
+            liq:        token.liq,
+            rugRisk:    token.rugRisk,
+            socials:    token.socials,
+            pairUrl:    token.pairUrl,
+            debug:      token.debug,
+            walletData: token.walletData,
+            security:   token.raw?.security || null,
+            calledAt:   now,
           });
           console.log(`[Worker] CALL: ${token.symbol} score=${token.score} mcap=$${token.mcap}`);
         } catch (e) {
