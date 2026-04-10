@@ -956,9 +956,107 @@ nav{border-bottom:1px solid rgba(255,109,0,.2)!important;box-shadow:0 4px 30px r
 .dca-loading{text-align:center;padding:2rem;color:var(--purple2);font-size:.9rem;}
 .dca-sec-row{display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:.8rem;}
 
+/* ===== BOOT SCREEN ===== */
+#bootScreen{position:fixed;inset:0;z-index:99999;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity .8s ease,visibility .8s ease;overflow:hidden;}
+#bootScreen.done{opacity:0;visibility:hidden;pointer-events:none;}
+.boot-scanlines{position:absolute;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,255,80,.018) 2px,rgba(0,255,80,.018) 4px);pointer-events:none;z-index:0;}
+.boot-grid-bg{position:absolute;inset:0;background-image:linear-gradient(rgba(255,109,0,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(255,109,0,.04) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0;animation:boot-grid-fade 2s ease-out forwards;}
+@keyframes boot-grid-fade{0%{opacity:0}30%{opacity:1}100%{opacity:.4}}
+.boot-corner{position:absolute;width:60px;height:60px;border-color:rgba(255,109,0,.4);border-style:solid;pointer-events:none;}
+.boot-corner.tl{top:20px;left:20px;border-width:2px 0 0 2px;}
+.boot-corner.tr{top:20px;right:20px;border-width:2px 2px 0 0;}
+.boot-corner.bl{bottom:20px;left:20px;border-width:0 0 2px 2px;}
+.boot-corner.br{bottom:20px;right:20px;border-width:0 2px 2px 0;}
+.boot-logo{font-family:'Space Mono',monospace;font-size:1.9rem;font-weight:700;color:#ff6d00;letter-spacing:.3em;text-shadow:0 0 40px rgba(255,109,0,.6),0 0 80px rgba(255,109,0,.2);margin-bottom:.3rem;position:relative;z-index:1;text-transform:uppercase;}
+.boot-logo span{color:#00ff88;text-shadow:0 0 30px rgba(0,255,136,.5);}
+.boot-version{font-family:'Space Mono',monospace;font-size:.65rem;color:rgba(255,255,255,.2);letter-spacing:.3em;margin-bottom:2rem;position:relative;z-index:1;}
+.boot-terminal{font-family:'Space Mono',monospace;font-size:.78rem;color:rgba(0,255,136,.75);line-height:2;width:400px;position:relative;z-index:1;min-height:140px;}
+.boot-line{display:block;overflow:hidden;white-space:nowrap;opacity:0;transform:translateX(-6px);transition:opacity .2s,transform .2s;}
+.boot-line.show{opacity:1;transform:none;}
+.boot-line.ok em{color:#00ff88;font-style:normal;font-weight:700;}
+.boot-line.err em{color:#ff3355;font-style:normal;}
+.boot-line.dim{color:rgba(255,255,255,.25);}
+.boot-line.hi{color:#ff9500;}
+.boot-cursor{display:inline-block;width:7px;height:13px;background:#ff6d00;animation:blink-curs .65s step-end infinite;vertical-align:middle;margin-left:3px;border-radius:1px;}
+@keyframes blink-curs{0%,100%{opacity:1}50%{opacity:0}}
+.boot-bar-wrap{width:400px;height:2px;background:rgba(255,255,255,.06);border-radius:2px;margin-top:1.8rem;overflow:hidden;position:relative;z-index:1;}
+.boot-bar-fill{height:100%;background:linear-gradient(90deg,#ff6d00,#ff9500 50%,#00ff88);border-radius:2px;width:0%;transition:width .12s linear;box-shadow:0 0 12px rgba(255,109,0,.7);}
+.boot-pct{font-family:'Space Mono',monospace;font-size:.65rem;color:rgba(255,109,0,.5);margin-top:.6rem;position:relative;z-index:1;letter-spacing:.1em;}
+
+/* Scanlines overlay on body */
+body::before{background:
+  repeating-linear-gradient(0deg,transparent,transparent 1px,rgba(0,0,0,.025) 1px,rgba(0,0,0,.025) 2px),
+  radial-gradient(ellipse at 5% 10%,rgba(255,109,0,.09) 0%,transparent 45%),
+  radial-gradient(ellipse at 95% 5%,rgba(0,255,136,.07) 0%,transparent 40%),
+  radial-gradient(ellipse at 50% 90%,rgba(255,109,0,.05) 0%,transparent 45%),
+  radial-gradient(ellipse at 80% 60%,rgba(0,229,255,.03) 0%,transparent 40%)!important;}
+
+/* Hide floaters */
+.floater{display:none!important;}
+
+/* Nav — terminal style */
+.logo-tagline{display:none!important;}
+nav{background:rgba(0,0,0,.96)!important;border-bottom:1px solid rgba(255,109,0,.18)!important;box-shadow:0 1px 0 rgba(255,109,0,.06),0 4px 30px rgba(0,0,0,.8)!important;}
+.nav-logo svg{filter:drop-shadow(0 0 8px rgba(255,109,0,.35))!important;}
+.logo-text{font-family:'Space Mono',monospace!important;font-size:1rem!important;letter-spacing:.04em;}
+.logo-text span{color:#ff6d00!important;}
+
+/* Hero — terminal style */
+.hero{gap:2.5rem!important;padding:3.5rem 4rem 3rem!important;}
+.hero-term-prompt{font-family:'Space Mono',monospace;font-size:.7rem;color:rgba(255,109,0,.6);letter-spacing:.12em;margin-bottom:.9rem;display:flex;align-items:center;gap:.5rem;}
+.hero-term-prompt .tp-dot{width:7px;height:7px;border-radius:50%;background:#00ff88;box-shadow:0 0 8px #00ff88;animation:pulse 2s infinite;flex-shrink:0;}
+.hero-title{font-size:2.6rem!important;letter-spacing:-.02em;}
+.hero-subtitle{font-size:.95rem!important;color:rgba(255,255,255,.35)!important;font-family:'Space Mono',monospace!important;line-height:1.8!important;border-left:2px solid rgba(255,109,0,.3);padding-left:.9rem!important;margin-bottom:1.6rem!important;}
+.hero-stats .stat-item{background:rgba(0,0,0,.6)!important;border:1px solid rgba(255,109,0,.12)!important;font-family:'Space Mono',monospace;transition:.3s;}
+.hero-stats .stat-item:hover{border-color:rgba(255,109,0,.35)!important;background:rgba(255,109,0,.05)!important;transform:translateY(-2px);}
+.hero-stats .stat-num{font-family:'Space Mono',monospace!important;font-size:1.1rem!important;color:#ff9500!important;text-shadow:0 0 14px rgba(255,109,0,.4)!important;}
+.hero-stats .stat-label{font-family:'Space Mono',monospace!important;font-size:.65rem!important;letter-spacing:.08em!important;}
+.hero-cta{gap:.8rem!important;}
+
+/* Demo panel — terminal window */
+.hero-demo{background:#050a05!important;border:1px solid rgba(0,255,136,.12)!important;border-radius:12px!important;overflow:hidden!important;padding:0!important;box-shadow:0 0 40px rgba(0,255,136,.04),0 16px 60px rgba(0,0,0,.6)!important;}
+.hero-demo::before{display:none!important;}
+.hero-demo::after{display:none!important;}
+.demo-win-bar{background:rgba(0,0,0,.8);border-bottom:1px solid rgba(0,255,136,.08);padding:.5rem .9rem;display:flex;align-items:center;gap:.45rem;}
+.demo-win-dot{width:9px;height:9px;border-radius:50%;}
+.demo-win-title{font-family:'Space Mono',monospace;font-size:.65rem;color:rgba(255,255,255,.2);margin-left:.4rem;letter-spacing:.06em;}
+.demo-win-live{margin-left:auto;font-family:'Space Mono',monospace;font-size:.6rem;color:#00ff88;display:flex;align-items:center;gap:.35rem;}
+.demo-win-live::before{content:'';width:5px;height:5px;border-radius:50%;background:#00ff88;box-shadow:0 0 6px #00ff88;animation:pulse 1.5s infinite;display:block;}
+.demo-inner{padding:1rem 1.1rem 1rem;}
+.demo-header{font-family:'Space Mono',monospace!important;font-size:.65rem!important;color:rgba(255,109,0,.5)!important;letter-spacing:.1em!important;margin-bottom:.7rem!important;}
+.demo-token{background:rgba(0,0,0,.5)!important;border:1px solid rgba(0,255,136,.05)!important;border-radius:8px!important;font-family:'Space Mono',monospace;padding:.55rem .8rem!important;}
+.demo-token:not(.rug):hover{border-color:rgba(255,109,0,.2)!important;background:rgba(255,109,0,.03)!important;}
+.demo-tok-name{font-size:.78rem!important;color:rgba(255,255,255,.75)!important;}
+.demo-score{font-size:.72rem!important;}
+.score-god{background:rgba(255,215,0,.1)!important;color:#ffd700!important;border:1px solid rgba(255,215,0,.15)!important;}
+.score-high{background:rgba(0,255,136,.08)!important;color:#00ff88!important;border:1px solid rgba(0,255,136,.12)!important;}
+.demo-footer{font-family:'Space Mono',monospace;font-size:.58rem;color:rgba(255,255,255,.15);text-align:center;margin-top:.6rem;letter-spacing:.04em;border-top:1px solid rgba(0,255,136,.05);padding-top:.6rem;}
+
+/* Section titles terminal prompt style */
+.section-title{font-family:'Space Mono',monospace!important;font-size:1.2rem!important;letter-spacing:.03em!important;}
+.section-title::before{content:'$ ';color:#ff6d00;font-family:'Space Mono',monospace;}
+
+/* Scanner section title */
+.scanner-title{font-family:'Space Mono',monospace!important;letter-spacing:.04em!important;}
+
 </style>
 </head>
 <body>
+
+<!-- ===== BOOT SCREEN ===== -->
+<div id="bootScreen">
+  <div class="boot-scanlines"></div>
+  <div class="boot-grid-bg"></div>
+  <div class="boot-corner tl"></div>
+  <div class="boot-corner tr"></div>
+  <div class="boot-corner bl"></div>
+  <div class="boot-corner br"></div>
+  <div class="boot-logo">MEME<span>SCANNER</span></div>
+  <div class="boot-version">SOLANA ALPHA &nbsp;·&nbsp; v11.0</div>
+  <div class="boot-terminal" id="bootTerminal"></div>
+  <div class="boot-bar-wrap"><div class="boot-bar-fill" id="bootBar"></div></div>
+  <div class="boot-pct" id="bootPct">0%</div>
+</div>
 
 <!-- TICKER STRIP -->
 <div id="tickerStrip" style="background:#000;border-bottom:1px solid rgba(255,109,0,.25);padding:0;height:28px;overflow:hidden;position:relative;z-index:200;">
@@ -1049,26 +1147,36 @@ nav{border-bottom:1px solid rgba(255,109,0,.2)!important;box-shadow:0 4px 30px r
 <section id="hero">
 <div class="hero">
   <div>
-    <div class="hero-title" id="h-title">Snipe les <span>gems Solana</span> avant le pump 🐸</div>
-    <div class="hero-subtitle" id="h-sub">IA + Axiom wallets + 15 hard filters. On track les smart money, on score chaque token, on call que les vrais. Anti-rug. Anti-dump. 100% degen.</div>
+    <div class="hero-term-prompt"><span class="tp-dot"></span>MEMESCANNER &nbsp;·&nbsp; SOLANA ALPHA &nbsp;·&nbsp; <span id="heroScanStatus" style="color:#ff9500">SCANNING...</span></div>
+    <div class="hero-title" id="h-title">Snipe les <span>gems Solana</span><br>avant le pump.</div>
+    <div class="hero-subtitle" id="h-sub">Axiom wallets + 15 hard filters.<br>Smart money tracking. Anti-rug. Anti-dump.<br>Scan toutes les 45s.</div>
     <div class="hero-stats">
-      <div class="stat-item"><div class="stat-num">🛡️ 95%</div><div class="stat-label">Rugs filtrés</div></div>
-      <div class="stat-item"><div class="stat-num">🧠 AI</div><div class="stat-label">Auto-learning</div></div>
-      <div class="stat-item"><div class="stat-num">⚡ 45s</div><div class="stat-label">Scan cycle</div></div>
-      <div class="stat-item"><div class="stat-num">🐋 Axiom</div><div class="stat-label">Wallet tracking</div></div>
+      <div class="stat-item"><div class="stat-num" id="heroStatRug">95%</div><div class="stat-label">RUGS FILTRÉS</div></div>
+      <div class="stat-item"><div class="stat-num" id="heroStatScore">150</div><div class="stat-label">SCORE MAX</div></div>
+      <div class="stat-item"><div class="stat-num" id="heroStatScan">45s</div><div class="stat-label">CYCLE SCAN</div></div>
+      <div class="stat-item"><div class="stat-num" id="heroStatAxiom">AXIOM</div><div class="stat-label">SMART MONEY</div></div>
     </div>
     <div class="hero-cta">
-      <button class="cta-big cta-green" onclick="document.getElementById('scanner').scrollIntoView()">🔥 Voir les calls live</button>
-      <button class="cta-big cta-ghost" onclick="document.getElementById('pricing').scrollIntoView()">💎 Devenir alpha</button>
+      <button class="cta-big cta-green" onclick="document.getElementById('scanner').scrollIntoView()">VOIR LES CALLS LIVE</button>
+      <button class="cta-big cta-ghost" onclick="document.getElementById('pricing').scrollIntoView()">DEVENIR ALPHA</button>
     </div>
   </div>
   <div class="hero-demo">
-    <div class="demo-header">🧠 AI Pipeline v11 — real-time</div>
-    <div class="demo-token"><span style="font-family:var(--font-mono);font-size:.8rem">🐸 PEPE2 <span style="color:var(--gold);font-size:.65rem">3 axiom</span></span><span class="demo-score score-god">💎 DIAMOND 118</span></div>
-    <div class="demo-token"><span style="font-family:var(--font-mono);font-size:.8rem">🚀 MOONDOG <span style="color:var(--green);font-size:.65rem">2 axiom</span></span><span class="demo-score score-high">🔥 RUNNER 94</span></div>
-    <div class="demo-token rug"><span style="font-family:var(--font-mono);font-size:.8rem">💀 SCAMCOIN</span><span class="demo-reject">✗ top1 holder 34% · no socials</span></div>
-    <div class="demo-token rug"><span style="font-family:var(--font-mono);font-size:.8rem">🎰 FAKEMOON</span><span class="demo-reject">✗ buyRatio 0.31 · sell wall detected</span></div>
-    <div style="text-align:center;margin-top:.9rem;font-size:.62rem;color:var(--muted);font-family:var(--font-mono);letter-spacing:.03em">2 gems found · 847 scanned · 15 hard filters · AI learning from 200+ calls</div>
+    <div class="demo-win-bar">
+      <div class="demo-win-dot" style="background:#ff5f57"></div>
+      <div class="demo-win-dot" style="background:#ffbd2e"></div>
+      <div class="demo-win-dot" style="background:#28c840"></div>
+      <span class="demo-win-title">memescanner — scan_engine.js</span>
+      <span class="demo-win-live">LIVE</span>
+    </div>
+    <div class="demo-inner">
+      <div class="demo-header">&gt; PIPELINE v11 — cycle #<span id="demoCycle">847</span> — <span style="color:#ff9500" id="demoTime">12:34:07</span></div>
+      <div class="demo-token"><span class="demo-tok-name">PEPE2 &nbsp;<span style="color:#ffd700;font-size:.65rem">[3 axiom]</span></span><span class="demo-score score-god">DIAMOND 118</span></div>
+      <div class="demo-token"><span class="demo-tok-name">MOONDOG &nbsp;<span style="color:#00ff88;font-size:.65rem">[2 axiom]</span></span><span class="demo-score score-high">RUNNER 94</span></div>
+      <div class="demo-token rug"><span class="demo-tok-name">SCAMCOIN</span><span class="demo-reject" style="font-family:'Space Mono',monospace;font-size:.7rem">✗ top1=34% · no socials</span></div>
+      <div class="demo-token rug"><span class="demo-tok-name">FAKEMOON</span><span class="demo-reject" style="font-family:'Space Mono',monospace;font-size:.7rem">✗ buyRatio=0.31 · sell wall</span></div>
+      <div class="demo-footer">2 gems found &nbsp;·&nbsp; 847 scanned &nbsp;·&nbsp; 15 filters &nbsp;·&nbsp; 200+ calls history</div>
+    </div>
   </div>
 </div>
 </section>
@@ -1744,6 +1852,64 @@ nav{border-bottom:1px solid rgba(255,109,0,.2)!important;box-shadow:0 4px 30px r
 </div>
 
 <script>
+// ===== BOOT SCREEN =====
+(function(){
+  // Une seule fois par session
+  if(sessionStorage.getItem('booted')){
+    document.getElementById('bootScreen').classList.add('done');
+    return;
+  }
+  const lines = [
+    {text:'> Initializing MemeScanner v11...', cls:'dim', delay:0},
+    {text:'> Connecting to Solana RPC... <em>[OK]</em>', cls:'ok', delay:350},
+    {text:'> Loading Axiom wallet feeds... <em>[OK]</em>', cls:'ok', delay:700},
+    {text:'> Calibrating scoring engine... <em>[OK]</em>', cls:'ok', delay:1050},
+    {text:'> Hard filters x15 loaded... <em>[OK]</em>', cls:'ok', delay:1350},
+    {text:'◈ ALL SYSTEMS NOMINAL', cls:'hi', delay:1650},
+  ];
+  const terminal = document.getElementById('bootTerminal');
+  const bar = document.getElementById('bootBar');
+  const pct = document.getElementById('bootPct');
+  lines.forEach((l,i)=>{
+    setTimeout(()=>{
+      const span = document.createElement('span');
+      span.className = 'boot-line ' + l.cls;
+      span.innerHTML = l.text + (i===lines.length-1 ? ' <span class="boot-cursor"></span>' : '');
+      terminal.appendChild(span);
+      requestAnimationFrame(()=>requestAnimationFrame(()=>span.classList.add('show')));
+      const p = Math.round((i+1)/lines.length*100);
+      bar.style.width = p + '%';
+      pct.textContent = p + '%';
+    }, l.delay);
+  });
+  setTimeout(()=>{
+    sessionStorage.setItem('booted','1');
+    document.getElementById('bootScreen').classList.add('done');
+    // Animate hero stats counters
+    animateHeroCounters();
+  }, 2200);
+})();
+
+function animateHeroCounters(){
+  // Cycle counter on demo panel
+  const cyc = document.getElementById('demoCycle');
+  if(cyc){let n=0;const iv=setInterval(()=>{n+=Math.floor(Math.random()*30+10);if(n>=847){n=847;clearInterval(iv);}cyc.textContent=n;},40);}
+  // Live clock on demo panel
+  function updateDemoClock(){
+    const el=document.getElementById('demoTime');
+    if(el){const d=new Date();el.textContent=d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});}
+  }
+  updateDemoClock();
+  setInterval(updateDemoClock,1000);
+  // Scan status pulse
+  const ss=document.getElementById('heroScanStatus');
+  if(ss){
+    const states=['SCANNING...','ANALYSING...','FILTERING...','SCORING...'];
+    let idx=0;
+    setInterval(()=>{idx=(idx+1)%states.length;ss.textContent=states[idx];},2800);
+  }
+}
+
 // ── Défense contre SES/Lockdown (extensions wallet Solana/MetaMask) ──
 // Certaines extensions comme Phantom injectent SES qui retire des globaux
 // On les capture AVANT que SES puisse les modifier
