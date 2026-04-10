@@ -1144,9 +1144,6 @@ nav{background:rgba(0,0,0,.96)!important;border-bottom:1px solid rgba(255,109,0,
   <div class="boot-pct" id="bootPct">0%</div>
 </div>
 
-<!-- TRADE ALERTS (Axiom-style popups) -->
-<div id="tradeAlerts"></div>
-
 <!-- TICKER STRIP -->
 <div id="tickerStrip" style="background:#000;border-bottom:1px solid rgba(255,109,0,.25);padding:0;height:28px;overflow:hidden;position:relative;z-index:200;">
   <div id="tickerTrack" style="display:flex;align-items:center;height:28px;white-space:nowrap;animation:ticker-scroll 35s linear infinite;width:max-content;">
@@ -1227,6 +1224,7 @@ nav{background:rgba(0,0,0,.96)!important;border-bottom:1px solid rgba(255,109,0,
   <button class="nav-btn btn-outline" onclick="openCode()">Se connecter</button>
   <button class="nav-btn btn-primary" onclick="document.getElementById('pricing').scrollIntoView()">S'inscrire</button>
   <button class="nav-btn btn-outline" onclick="openAdmin()" id="adminBtn">⚙ Admin</button>
+  <button id="notifBtn" onclick="handleNotifBtn()" title="Activer les alertes calls" style="background:transparent;border:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.35);padding:.4rem .75rem;border-radius:8px;cursor:pointer;font-size:.85rem;transition:.2s;font-family:'Space Mono',monospace;">🔔</button>
   <div id="streakBadge" style="display:flex;align-items:center;gap:4px;background:linear-gradient(135deg,rgba(255,170,0,.15),rgba(255,107,53,.1));border:1px solid rgba(255,170,0,.25);border-radius:10px;padding:5px 12px;cursor:default;" title="Jours de connexion consécutifs">
     <span style="font-size:1.1rem;">🔥</span>
     <span id="streakNum" style="font-size:1rem;font-weight:800;color:#ffaa00;">0</span>
@@ -2009,8 +2007,8 @@ function animateHeroCounters(){
   if(ss){const states=['SCANNING...','ANALYSING...','FILTERING...','SCORING...'];let i=0;setInterval(()=>{i=(i+1)%states.length;ss.textContent=states[i];},2800);}
   // Start live hero panel
   initHeroLive();
-  // Start trade alerts after 3s
-  setTimeout(startTradeAlerts, 3000);
+  // Notifs browser: demande permission dès que l'utilisateur interagit
+  document.addEventListener('click', ()=>askNotifPermission(), {once:true});
 }
 
 // ===== HERO LIVE SCANNER =====
@@ -2091,83 +2089,44 @@ function hlvRefresh(hasNew, newIdx){
   if(footer) footer.textContent = `${gems} gems · ${rugs} filtered · ${hlvScanned} scanned · 15 filters`;
 }
 
-// ===== FLOATING TRADE ALERTS (Axiom-style) =====
-const TA_SYMS   = ['MOONDOG','PEPE2','SOLCAT','DEGEN','CRANK','FROGGO','WAGMI','BONK2','PUMPIT','WIFHAT','POPCAT','GIGA'];
-const TA_ADDRS  = ['0x1a2b','0x3c4d','0x5e6f','0x7a8b','0x9c0d','0xde1f','0xab23','0xcd45'];
-const TA_NAMES  = ['whale_alpha','degen_sniper','sol_god','pumper99','axiom_bot','smart_ape','0xtrader','sol_maxi'];
-let taActive = 0;
-
-function startTradeAlerts(){
-  spawnAlert();
-  // Random interval 5-12s
-  function scheduleNext(){ setTimeout(()=>{ spawnAlert(); scheduleNext(); }, 5000 + Math.random()*7000); }
-  scheduleNext();
-}
-
-function spawnAlert(){
-  if(taActive >= 4) return; // max 4 visible
-  const container = document.getElementById('tradeAlerts');
-  if(!container) return;
-
-  const isWhale  = Math.random() < 0.12;
-  const isCall   = Math.random() < 0.25;
-  const isLoss   = Math.random() < 0.18;
-  const sym      = TA_SYMS[Math.floor(Math.random()*TA_SYMS.length)];
-  const addr     = TA_ADDRS[Math.floor(Math.random()*TA_ADDRS.length)];
-  const name     = TA_NAMES[Math.floor(Math.random()*TA_NAMES.length)];
-  const sol      = isWhale ? (10 + Math.random()*40).toFixed(1) : (0.5 + Math.random()*4).toFixed(1);
-  const mult     = isLoss  ? (0.3 + Math.random()*0.5).toFixed(2) : (1.2 + Math.random()*8).toFixed(2);
-  const holdMin  = Math.floor(3 + Math.random()*90);
-  const lifeSec  = 5000 + Math.random()*3000;
-
-  let badgeCls, badgeTxt, cardCls, gainTxt, gainCls, detailTxt;
-  if(isCall){
-    badgeCls='call'; badgeTxt='🎯 CALL'; cardCls='call';
-    gainTxt=`${mult}x ATH`; gainCls='gold';
-    detailTxt=`score ${Math.floor(80+Math.random()*40)}pts · ${Math.floor(Math.random()*3)+1} axiom`;
-  } else if(isWhale){
-    badgeCls='whale'; badgeTxt='🐋 WHALE'; cardCls='whale';
-    gainTxt=`+${sol} SOL`; gainCls='gold';
-    detailTxt=`sniped $${sym} · mcap $${(2+Math.random()*20).toFixed(1)}K`;
-  } else if(isLoss){
-    badgeCls='rug'; badgeTxt='💀 RUGGED'; cardCls='neg';
-    gainTxt=`-${((1-parseFloat(mult))*100).toFixed(0)}%`; gainCls='neg';
-    detailTxt=`sold after ${holdMin}m · sold $${sym}`;
+// ===== NOTIFICATIONS CALLS =====
+function updateNotifBtn(){
+  const btn = document.getElementById('notifBtn');
+  if(!btn || !('Notification' in window)) return;
+  if(Notification.permission === 'granted'){
+    btn.textContent = '🔔';
+    btn.style.color = '#00ff88';
+    btn.style.borderColor = 'rgba(0,255,136,.3)';
+    btn.title = 'Alertes calls activées';
+  } else if(Notification.permission === 'denied'){
+    btn.textContent = '🔕';
+    btn.style.color = 'rgba(255,68,102,.5)';
+    btn.title = 'Notifs bloquées — autorise dans les réglages du navigateur';
   } else {
-    badgeCls='buy'; badgeTxt='↑ BUY'; cardCls='';
-    gainTxt=`+${((parseFloat(mult)-1)*100).toFixed(0)}%`; gainCls='pos';
-    detailTxt=`${sol} SOL · held ${holdMin}m · $${sym}`;
+    btn.textContent = '🔔';
+    btn.style.color = 'rgba(255,255,255,.35)';
+    btn.title = 'Cliquer pour activer les alertes calls';
   }
-
-  const card = document.createElement('div');
-  card.className = `ta-card ${cardCls}`;
-  card.innerHTML = `
-    <div class="ta-top">
-      <span class="ta-badge ${badgeCls}">${badgeTxt}</span>
-      <span class="ta-addr">${name} · ${addr}…</span>
-    </div>
-    <div class="ta-main">
-      <span class="ta-sym">$${sym}</span>
-      <span class="ta-detail">${detailTxt}</span>
-      <span class="ta-gain ${gainCls}">${gainTxt}</span>
-    </div>
-    <div class="ta-progress"><div class="ta-progress-fill" style="background:${gainCls==='pos'?'rgba(0,255,136,.3)':gainCls==='gold'?'rgba(255,215,0,.3)':'rgba(255,68,102,.3)'};animation-duration:${lifeSec}ms"></div></div>`;
-
-  container.appendChild(card);
-  taActive++;
-
-  // Slide in
-  requestAnimationFrame(()=>requestAnimationFrame(()=>card.classList.add('show')));
-
-  // Slide out
-  setTimeout(()=>{
-    card.classList.remove('show');
-    card.classList.add('hide');
-    setTimeout(()=>{ card.remove(); taActive=Math.max(0,taActive-1); }, 400);
-  }, lifeSec);
-
-  // Real call hook: also spawn alert on actual new calls
 }
+
+function handleNotifBtn(){
+  if(!('Notification' in window)){ showToast('Notifs non supportées sur ce navigateur',''); return; }
+  if(Notification.permission === 'denied'){ showToast('🔕 Notifs bloquées — autorise dans les réglages du navigateur',''); return; }
+  if(Notification.permission === 'granted'){ showToast('🔔 Notifs déjà activées — tu recevras une alerte à chaque call','call'); return; }
+  Notification.requestPermission().then(p=>{
+    updateNotifBtn();
+    if(p === 'granted'){
+      showToast('🔔 Notifs activées — alerte + son à chaque call, même hors du site','call');
+      // Notif de test
+      new Notification('🔔 MemeScanner — Notifs activées', { body: 'Tu recevras une alerte à chaque nouveau call, même si tu regardes ailleurs.', tag:'test' });
+    } else {
+      showToast('🔕 Permission refusée — active depuis les réglages du navigateur','');
+    }
+  });
+}
+
+// Sync état bouton au chargement
+document.addEventListener('DOMContentLoaded', updateNotifBtn);
 
 // ── Défense contre SES/Lockdown (extensions wallet Solana/MetaMask) ──
 // Certaines extensions comme Phantom injectent SES qui retire des globaux
@@ -5415,30 +5374,39 @@ function onNewCall(token) {
   playSound('newcall');
   showToast(`🚀 NEW CALL: $${token.symbol} — Score ${token.score} — $${fmtNum(token.mcap)}`, 'call');
   ptOpenTrade(token);
-  // Spawn real call alert
-  spawnRealCallAlert(token);
+  sendCallNotification(token);
 }
 
-function spawnRealCallAlert(token){
-  const container = document.getElementById('tradeAlerts');
-  if(!container) return;
+function sendCallNotification(token){
+  const sym   = (token.symbol||'?').toUpperCase();
+  const score = token.score || 0;
+  const mcap  = fmtNum(token.mcap);
   const axiom = token.debug?.axiomCount || 0;
-  const card = document.createElement('div');
-  card.className = 'ta-card call';
-  card.innerHTML = `
-    <div class="ta-top">
-      <span class="ta-badge call">🎯 NEW CALL</span>
-      <span class="ta-addr">${axiom} axiom · score ${token.score}</span>
-    </div>
-    <div class="ta-main">
-      <span class="ta-sym">$${(token.symbol||'?').toUpperCase()}</span>
-      <span class="ta-detail">mcap $${fmtNum(token.mcap)} · entry now</span>
-      <span class="ta-gain gold">LIVE ↑</span>
-    </div>
-    <div class="ta-progress"><div class="ta-progress-fill" style="background:rgba(255,109,0,.35);animation-duration:6000ms"></div></div>`;
-  container.appendChild(card);
-  requestAnimationFrame(()=>requestAnimationFrame(()=>card.classList.add('show')));
-  setTimeout(()=>{ card.classList.add('hide'); setTimeout(()=>card.remove(), 400); }, 6000);
+
+  // ── Browser notification (fonctionne même onglet en arrière-plan) ──
+  if('Notification' in window && Notification.permission === 'granted'){
+    const n = new Notification(`🚀 NEW CALL — $${sym}`, {
+      body: `Score ${score}pts · MCap $${mcap}${axiom ? ` · ${axiom} Axiom wallets` : ''}`,
+      icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><circle cx="32" cy="32" r="32" fill="%23ff6d00"/><text x="32" y="44" text-anchor="middle" font-size="36" fill="white">🚀</text></svg>',
+      tag:  token.addr,   // évite les doublons pour le même token
+      requireInteraction: false,
+    });
+    n.onclick = ()=>{ window.focus(); n.close(); };
+    // Son via AudioContext si onglet en arrière-plan (playSound() bloqué par navigateur sinon)
+    try{
+      const ctx = new (window.AudioContext||window.webkitAudioContext)();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.frequency.setValueAtTime(880, ctx.currentTime);
+      osc.frequency.setValueAtTime(1100, ctx.currentTime + 0.1);
+      osc.frequency.setValueAtTime(1320, ctx.currentTime + 0.18);
+      gain.gain.setValueAtTime(0.3, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + 0.5);
+    }catch(e){}
+  }
 }
 
 function onX2Call(token, xAth) {
