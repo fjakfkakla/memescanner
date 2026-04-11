@@ -4724,8 +4724,9 @@ async function ptCheckPositions(){
     // Migrate old trades that don't have new fields
     if(t.sells===undefined){ t.sells=[]; t.athX=1; t.remainFraction=1; t.totalPnlUsd=0; }
 
-    // Update ATH
+    // Update ATH + store current X for display
     if(xNow > t.athX) t.athX = xNow;
+    t.currentX = xNow;
 
     const hasSoldAny = t.sells.length > 0;
     const hasTp1 = t.sells.some(s=>s.reason==='TP1');
@@ -4889,7 +4890,12 @@ function ptRender(){
   if(roiEl){roiEl.textContent=`${roiSign}${stats.roi.toFixed(1)}%`;roiEl.style.color=stats.roi>=0?'#00ff88':'#ff4466';}
   document.getElementById('ptWinrate').textContent=stats.wr!=null?`${stats.wr}%`:'—';
   document.getElementById('ptTrades').textContent=stats.closed;
-  document.getElementById('ptBestTrade').textContent=stats.best?`+$${stats.best.totalPnlUsd.toFixed(0)}`:'—';
+  const bestVal=stats.best?.totalPnlUsd||0;
+  const bestEl=document.getElementById('ptBestTrade');
+  if(bestEl){
+    if(!stats.best||bestVal<=0){bestEl.textContent='—';bestEl.style.color='rgba(255,255,255,.4)';}
+    else{bestEl.textContent=`+$${bestVal.toFixed(0)}`;bestEl.style.color='#00ff88';}
+  }
   document.getElementById('ptOpenTrades').textContent=stats.open;
   const cnt=document.getElementById('ptOpenCount');
   if(cnt) cnt.textContent=stats.open?`(${stats.open})`:'';
@@ -4905,17 +4911,25 @@ function ptRender(){
     if(!open.length){ openEl.innerHTML='<div class="pt-empty">Aucune position ouverte</div>'; }
     else{
       openEl.innerHTML=`<table class="pt-open-table">
-        <thead><tr><th>Token</th><th>Score</th><th>Achat</th><th>ATH</th><th>Vendu</th><th>Reste</th><th>Âge</th><th></th></tr></thead>
+        <thead><tr><th>Token</th><th>Score</th><th>Entrée</th><th>Actuel</th><th>ATH</th><th>PnL</th><th>Partiel vendu</th><th>Reste</th><th>Âge</th><th></th></tr></thead>
         <tbody>${open.map(t=>{
           const ageM=Math.round((Date.now()-t.entryTime)/60000);
           const sellBadges=(t.sells||[]).map(s=>`<span class="pt-sell-badge ${s.reason.toLowerCase()}">${s.reason} ${s.xAt.toFixed(1)}x</span>`).join('');
           const rem=Math.round((t.remainFraction||1)*100);
-          const athPct=Math.min(100,((t.athX||1)-1)*25); // visual scale
+          const curX=t.currentX||1;
+          const unrealPnl=t.posSize*(t.remainFraction||1)*(curX-1);
+          const realizedPnl=t.totalPnlUsd||0;
+          const totalPnl=unrealPnl+realizedPnl;
+          const pnlColor=totalPnl>0?'#00ff88':totalPnl<0?'#ff4466':'rgba(255,255,255,.4)';
+          const pnlSign=totalPnl>=0?'+':'';
+          const curXColor=curX>=2?'#00ff88':curX>=1.2?'#aaffcc':curX>=0.8?'rgba(255,255,255,.5)':'#ff4466';
           return `<tr>
             <td><span style="font-family:'Space Mono',monospace;font-size:11px;font-weight:700;color:#fff">${t.symbol}</span></td>
             <td style="font-size:10px;color:#ff9500">${t.score}</td>
             <td style="font-family:'Space Mono',monospace;font-size:10px;color:rgba(255,255,255,.4)">$${fmtNum(t.entryMcap)}</td>
+            <td style="font-family:'Space Mono',monospace;font-size:10px;font-weight:700;color:${curXColor}">${curX.toFixed(2)}x</td>
             <td style="font-family:'Space Mono',monospace;font-size:10px;color:#ffd700">${(t.athX||1).toFixed(2)}x</td>
+            <td style="font-family:'Space Mono',monospace;font-size:11px;font-weight:700;color:${pnlColor}">${pnlSign}$${totalPnl.toFixed(1)}</td>
             <td>${sellBadges||'<span style="color:rgba(255,255,255,.2);font-size:9px">—</span>'}</td>
             <td style="font-family:'Space Mono',monospace;font-size:10px;color:${rem>50?'#00ff88':'#ffaa44'}">${rem}%</td>
             <td style="font-size:9px;color:var(--muted)">${ageM}m</td>
