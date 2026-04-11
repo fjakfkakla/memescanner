@@ -2351,6 +2351,20 @@ const DEPLOYER_BLACKLIST = new Set([
   // 'ADRESSE_SOLANA_BASE58_ICI',
 ]);
 
+// ── KOL Twitter Tracking ──────────────────────────────────────────────────
+const KOL_HANDLES = [
+  'blknoiz06','AltcoinGordon','inversebrah','Pentosh1','GiganticRebirth',
+  'CryptoTea_','HsakaTrades','loomdart','NotoriousXBT','traderpow',
+  'Melt_Dem','RunnerXBT','solanalegend','route2fi','DefiIgnas',
+  'ansemist','MustStopMurad','cryptocobain','SolanaFloor','rajgokal',
+  'solfees','0xMert_','toly','weremeow','frankdegods',
+];
+const KOL_CACHE_KEY  = 'kolMentions_v1';
+const KOL_CACHE_TTL  = 25 * 60 * 1000; // 25 min
+const SOL_CA_RE      = /\b[1-9A-HJ-NP-Za-km-z]{43,44}\b/g;
+const NITTER_HOSTS   = ['https://nitter.poast.org','https://nitter.privacydev.net','https://nitter.cz'];
+const CORS_PROXY     = 'https://corsproxy.io/?';
+
 let isUnlocked = false;
 let isAdminMode = false;
 let debugModeOn = false;
@@ -4116,6 +4130,15 @@ function scoreTokenV2(p,walletData={count:0,wallets:[],clustered:false}){
   const patternScore = calculatePatternScore(p);
   score += patternScore;
 
+  // ── 🐦 KOL TWITTER MENTION ───────────────────────────────────────────────
+  const tokenAddr = p.baseToken?.address || '';
+  const kolMentioned = tokenAddr ? getKolMentions(tokenAddr) : [];
+  let kolScore = 0;
+  if      (kolMentioned.length >= 3) kolScore = 20;
+  else if (kolMentioned.length === 2) kolScore = 12;
+  else if (kolMentioned.length === 1) kolScore = 7;
+  score += kolScore;
+
   // ── 🚫 WASH TRADING DETECTION ────────────────────────────────────────────
   // Peu de txs mais volume élevé = wallets coordonnés qui se s'échangent entre eux
   let washPenalty = 0;
@@ -4174,7 +4197,9 @@ function scoreTokenV2(p,walletData={count:0,wallets:[],clustered:false}){
       buyRatio: buyR, volAccel, c1h, m5, ageH, c6h, m1,
       top10pct, axiomCount,
       volMcapH1: vol1/mcap,
-      sellBuyRatio: sells1/(buys1||1)
+      sellBuyRatio: sells1/(buys1||1),
+      kolScore, kolMentioned,
+      washPenalty, liqQualScore,
     }
   };
 }
@@ -5176,6 +5201,56 @@ function dboxPickReward(){
   let rand = Math.random() * total;
   for(const r of DBOX_REWARDS){ rand -= r.weight; if(rand <= 0) return r; }
   return DBOX_REWARDS[0];
+}
+
+// ============================================================
+// KOL TWITTER TRACKER
+// ============================================================
+function kolCacheLoad(){ try{ return JSON.parse(localStorage.getItem(KOL_CACHE_KEY)||'{}'); }catch(e){ return {}; } }
+function kolCacheSave(d){ try{ localStorage.setItem(KOL_CACHE_KEY, JSON.stringify(d)); }catch(e){} }
+
+function getKolMentions(addr){
+  const c = kolCacheLoad();
+  return c.mentions?.[addr] || [];
+}
+
+async function kolFetchOne(handle){
+  for(const host of NITTER_HOSTS){
+    const url = `${host}/${handle}/rss`;
+    // 1) direct (fonctionne si Nitter envoie Access-Control-Allow-Origin)
+    // 2) via CORS proxy
+    for(const prefix of ['', CORS_PROXY]){
+      try{
+        const r = await fetch(prefix ? prefix + encodeURIComponent(url) : url, { signal: AbortSignal.timeout(6000) });
+        if(!r.ok) continue;
+        return await r.text();
+      }catch(e){ /* essayer suivant */ }
+    }
+  }
+  return null;
+}
+
+async function fetchKolMentions(){
+  const cache = kolCacheLoad();
+  if(cache.ts && Date.now() - cache.ts < KOL_CACHE_TTL) return; // encore frais
+  console.log('[KOL] fetch mentions...');
+  const mentions = cache.mentions || {};
+  // Limiter à 10 handles par cycle pour ne pas saturer
+  const batch = KOL_HANDLES.slice(0, 10);
+  let fetched = 0;
+  for(const handle of batch){
+    const xml = await kolFetchOne(handle);
+    if(!xml) continue;
+    const addrs = xml.match(SOL_CA_RE) || [];
+    for(const addr of addrs){
+      if(!mentions[addr]) mentions[addr] = [];
+      if(!mentions[addr].includes(handle)) mentions[addr].push(handle);
+    }
+    fetched++;
+    await new Promise(r => setTimeout(r, 300)); // petit délai entre requêtes
+  }
+  kolCacheSave({ ts: Date.now(), mentions, fetchedHandles: fetched });
+  console.log(`[KOL] done — ${fetched} handles, ${Object.keys(mentions).length} CAs trouvés`);
 }
 
 function initDailyBox(){
@@ -6864,6 +6939,11 @@ async function renderTokenTable(tokens){
     const xColor=xAth>=3?'#00ff88':xAth>=2?'#88ff44':xAth>=1.5?'#ffcc44':'#ff8866';
     // Axiom wallets badge
     const axiomBadge=t.walletData?.count>0?`<span class="sc-axiom">🎯 ${t.walletData.count} Tracker</span>`:'';
+    // KOL badge
+    const kolList = d?.kolMentioned||[];
+    const kolBadge = kolList.length>0
+      ? `<span class="sc-axiom" style="background:rgba(29,161,242,.12);color:#1da1f2;border-color:rgba(29,161,242,.25)" title="KOL: ${kolList.slice(0,3).map(h=>'@'+h).join(', ')}">🐦 ${kolList.length} KOL</span>`
+      : '';
     // Debug btn
     const debugBtn=debugModeOn?`<button onclick="showDebug(${i})" style="padding:.15rem .4rem;background:rgba(255,170,0,.15);border:1px solid rgba(255,170,0,.3);color:#ffaa00;border-radius:4px;font-size:.6rem;cursor:pointer;font-family:var(--font-mono)">DBG</button>`:'';
     // Security chips
@@ -6896,7 +6976,7 @@ async function renderTokenTable(tokens){
         <span style="font-size:1.2rem;flex-shrink:0">${scoreEmoji}</span>
         <span class="sc-sym">${t.symbol}</span>
         <div style="display:flex;gap:.3rem;align-items:center;flex-shrink:0">
-          ${pvpBadge}${axiomBadge}${debugBtn}
+          ${pvpBadge}${kolBadge}${axiomBadge}${debugBtn}
           <span class="sc-badge ${badgeCls}">${label.text} ${t.score}</span>
         </div>
       </div>
@@ -8181,6 +8261,8 @@ window.addEventListener('DOMContentLoaded',()=>{
     checkSession();loadReviews();
     initDailyBox();
     gemUpdateCountBadge();
+    fetchKolMentions();
+    setInterval(fetchKolMentions, KOL_CACHE_TTL);
 
     // FIX RETOUR APRÈS ABSENCE : relancer le scan si tab inactif
     let lastActiveTime = Date.now();
