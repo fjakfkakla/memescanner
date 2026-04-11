@@ -1523,9 +1523,18 @@ nav{background:rgba(0,0,0,.96)!important;border-bottom:1px solid rgba(255,109,0,
             <div onclick="setHistSort('xbest')" class="rug-sort-opt" id="hsort-xbest" style="color:var(--muted);">🏆 Meilleur × ATH d'abord</div>
           </div>
         </div>
+        <button class="scan-btn scan-btn-outline" onclick="toggleBacktest()" style="font-size:.72rem">📊 Backtest</button>
         <button class="btn-reset" onclick="resetHistory()">🗑 Tout supprimer</button>
         <button class="scan-btn scan-btn-outline" onclick="renderHistory()" style="font-size:.72rem">↻ Refresh</button>
       </div>
+    </div>
+    <!-- BACKTEST PANEL -->
+    <div id="backtestPanel" style="display:none;margin-bottom:1rem;background:rgba(97,86,217,.04);border:1px solid rgba(97,86,217,.18);border-radius:12px;overflow:hidden;">
+      <div style="padding:.6rem 1rem;border-bottom:1px solid rgba(97,86,217,.12);display:flex;align-items:center;justify-content:space-between;">
+        <span style="font-size:.72rem;font-weight:700;color:var(--purple2);letter-spacing:.04em;">📊 BACKTESTING — Winrate par tranche de score</span>
+        <span style="font-size:.65rem;color:var(--muted)">Basé sur l'historique local</span>
+      </div>
+      <div id="backtestContent" style="padding:.75rem 1rem;"></div>
     </div>
     <div id="historyContent"><div class="hist-empty"><div class="hist-empty-icon">📭</div><div>Chargement...</div></div></div>
   </div>
@@ -2334,6 +2343,13 @@ const SESSION_KEY = 'ms_session_v1';
 const REVIEWS_KEY = 'ms_reviews_v1';
 const RUGS_KEY    = 'ms_rugs_v1';
 const RUGGERS_KEY = 'ms_ruggers_v1';
+
+// ── Deployers blacklistés (ruggers connus sur Solana) ──────────────────────
+// Ajouter les adresses wallet des déployeurs qui ruggent systématiquement
+const DEPLOYER_BLACKLIST = new Set([
+  // Exemples de slots à remplir au fil des détections :
+  // 'ADRESSE_SOLANA_BASE58_ICI',
+]);
 
 let isUnlocked = false;
 let isAdminMode = false;
@@ -3580,6 +3596,11 @@ async function checkTokenSecurity(mintAddr, pairAddress = null) {
       }
     }
 
+    // Déployer / créateur du token (premier créateur listé dans DAS)
+    const creator = dasResp?.result?.creators?.[0]?.address
+                 || dasResp?.result?.authorities?.[0]?.address
+                 || null;
+
     const result = {
       mintAuthority, freezeAuthority,
       top1Pct:  top1Pct.toFixed(1),
@@ -3592,7 +3613,8 @@ async function checkTokenSecurity(mintAddr, pairAddress = null) {
       hasTwitter:  !!twitter,
       hasTelegram: !!telegram,
       hasWebsite:  !!website,
-      socialCount: (twitter?1:0) + (telegram?1:0) + (website?1:0)
+      socialCount: (twitter?1:0) + (telegram?1:0) + (website?1:0),
+      creator,
     };
     heliusCache[mintAddr] = { ts: now, data: result };
     return result;
@@ -4094,8 +4116,26 @@ function scoreTokenV2(p,walletData={count:0,wallets:[],clustered:false}){
   const patternScore = calculatePatternScore(p);
   score += patternScore;
 
+  // ── 🚫 WASH TRADING DETECTION ────────────────────────────────────────────
+  // Peu de txs mais volume élevé = wallets coordonnés qui se s'échangent entre eux
+  let washPenalty = 0;
+  const avgTxVal = total1 > 0 ? vol1 / total1 : 0;
+  if (total1 > 0 && total1 < 12 && vol1 > mcap * 0.5)        washPenalty = -15; // quasi 0 txs mais énorme volume
+  else if (avgTxVal > 2500 && mcap < 40000 && total1 < 25)   washPenalty = -10; // avg tx > $2500 = baleine/bot
+  else if (total1 >= 4 && total1 < 20 && Math.abs(buys1 - sells1) <= 1) washPenalty = -8; // buys == sells = coordinated
+  score += washPenalty;
+
+  // ── 💧 LIQUIDITÉ QUALITÉ (ratio liq/mcap) ────────────────────────────────
+  // Ratio élevé = profondeur saine, difficile à dump; ratio faible = rugable en 1 tx
+  const liqRatio = mcap > 0 ? liq / mcap : 0;
+  let liqQualScore = 0;
+  if      (liqRatio >= 0.12)                  liqQualScore =  6; // excellente profondeur
+  else if (liqRatio >= 0.06)                  liqQualScore =  3; // bonne
+  else if (liqRatio > 0 && liqRatio < 0.025)  liqQualScore = -8; // dangereux (rugable)
+  score += liqQualScore;
+
   // ── MINIMUMS OBLIGATOIRES ─────────────────────────────────────────────────
-  const _mkFail = (reason) => ({ score: 0, _minFail: reason, symbol: (p.baseToken?.symbol||'UNKNOWN').toUpperCase().slice(0,12), addr: p.baseToken?.address||'', mcap, liq, socials: hasSocials, rugRisk: 'HIGH', walletData, pairUrl: p.url||'', raw: p, debug: { traderScore, socialScore, holderScore, platformScore, mcapScore, ageScore, patternScore, axiomCount, buyRatio: buyR, volAccel, c1h, m5, c6h, m1, ageH, top10pct, volMcapH1: vol1/mcap, sellBuyRatio: sells1/(buys1||1) } });
+  const _mkFail = (reason) => ({ score: 0, _minFail: reason, symbol: (p.baseToken?.symbol||'UNKNOWN').toUpperCase().slice(0,12), addr: p.baseToken?.address||'', mcap, liq, socials: hasSocials, rugRisk: 'HIGH', walletData, pairUrl: p.url||'', raw: p, debug: { traderScore, socialScore, holderScore, platformScore, mcapScore, ageScore, patternScore, washPenalty, liqQualScore, axiomCount, buyRatio: buyR, volAccel, c1h, m5, c6h, m1, ageH, top10pct, volMcapH1: vol1/mcap, sellBuyRatio: sells1/(buys1||1) } });
   if (traderScore < 5)  return _mkFail('axiom');
   if (patternScore < 3) return _mkFail('chart');
   if (holderScore < 3)  return _mkFail('distrib');
@@ -6015,6 +6055,70 @@ function setHistSort(mode){
   renderHistory();
 }
 
+function toggleBacktest(){
+  const panel = document.getElementById('backtestPanel');
+  if(!panel) return;
+  const isOpen = panel.style.display !== 'none';
+  panel.style.display = isOpen ? 'none' : 'block';
+  if(!isOpen) renderBacktest();
+}
+
+function renderBacktest(){
+  const el = document.getElementById('backtestContent');
+  if(!el) return;
+  let calls = [];
+  try { calls = Object.values(JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}')).filter(c=>c.score>0&&c.callMcap>0); } catch(e){}
+  if(!calls.length){
+    el.innerHTML='<div style="text-align:center;padding:1rem;font-size:.75rem;color:var(--muted)">Aucun call enregistré localement — lance le scanner pour accumuler des données.</div>';
+    return;
+  }
+  const brackets=[
+    {min:80,max:85,label:'80–85'},
+    {min:85,max:90,label:'85–90'},
+    {min:90,max:95,label:'90–95'},
+    {min:95,max:100,label:'95–100'},
+    {min:100,max:110,label:'100–110'},
+    {min:110,max:200,label:'110+'},
+  ];
+  const stats = brackets.map(b=>{
+    const g = calls.filter(c=>c.score>=b.min&&c.score<b.max);
+    if(!g.length) return {...b,total:0,win2:0,win5:0,avgX:0};
+    const xArr = g.map(c=>(c.athMcap||c.callMcap)/c.callMcap);
+    const win2 = xArr.filter(x=>x>=2).length/g.length;
+    const win5 = xArr.filter(x=>x>=5).length/g.length;
+    const avgX = xArr.reduce((s,x)=>s+x,0)/g.length;
+    return {...b,total:g.length,win2,win5,avgX};
+  });
+  const valid = stats.filter(s=>s.total>=3);
+  const best = valid.length ? valid.reduce((b,s)=>s.win2>b.win2?s:b, valid[0]) : null;
+  const rows = stats.map(s=>{
+    const isBest = best && s.label===best.label;
+    const w2col = s.win2>=0.6?'#00ff88':s.win2>=0.4?'#ffaa00':'#ff4466';
+    const bar = s.total ? `<div style="height:3px;background:rgba(255,255,255,.06);border-radius:2px;margin-top:3px"><div style="height:3px;border-radius:2px;width:${Math.round(s.win2*100)}%;background:${w2col}"></div></div>` : '';
+    return `<tr style="${isBest?'background:rgba(97,86,217,.1);':''}">`
+      +`<td style="padding:.4rem .6rem;font-family:var(--font);font-size:.72rem;font-weight:700;color:${isBest?'var(--purple2)':'rgba(255,255,255,.5)'}">${s.label}${isBest?' ★':''}</td>`
+      +`<td style="padding:.4rem .6rem;text-align:center;font-size:.72rem;color:rgba(255,255,255,.4)">${s.total||'—'}</td>`
+      +`<td style="padding:.4rem .6rem;text-align:center">${s.total?`<div style="font-size:.72rem;font-weight:700;color:${w2col}">${Math.round(s.win2*100)}%</div>${bar}`:'<span style="font-size:.72rem;color:rgba(255,255,255,.2)">—</span>'}</td>`
+      +`<td style="padding:.4rem .6rem;text-align:center;font-size:.72rem;color:${s.win5>=0.3?'#ff9500':'rgba(255,255,255,.3)'}">${s.total?Math.round(s.win5*100)+'%':'—'}</td>`
+      +`<td style="padding:.4rem .6rem;text-align:center;font-size:.72rem;font-weight:600;color:rgba(255,255,255,.6)">${s.total?s.avgX.toFixed(1)+'x':'—'}</td>`
+      +`</tr>`;
+  }).join('');
+  el.innerHTML=`<table style="width:100%;border-collapse:collapse;margin-bottom:.6rem">
+    <thead><tr style="border-bottom:1px solid rgba(255,255,255,.06)">
+      <th style="padding:.3rem .6rem;text-align:left;font-size:.6rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">Score</th>
+      <th style="padding:.3rem .6rem;text-align:center;font-size:.6rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">Calls</th>
+      <th style="padding:.3rem .6rem;text-align:center;font-size:.6rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">×2+</th>
+      <th style="padding:.3rem .6rem;text-align:center;font-size:.6rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">×5+</th>
+      <th style="padding:.3rem .6rem;text-align:center;font-size:.6rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">Avg×</th>
+    </tr></thead>
+    <tbody>${rows}</tbody>
+  </table>
+  ${best?`<div style="font-size:.7rem;color:var(--muted);border-top:1px solid rgba(255,255,255,.05);padding-top:.5rem;display:flex;justify-content:space-between;align-items:center">
+    <span>Seuil optimal suggéré → <strong style="color:var(--purple2)">${best.min} pts</strong> &nbsp;·&nbsp; ${Math.round(best.win2*100)}% winrate ×2 sur ${best.total} calls</span>
+    <span style="font-size:.6rem;color:rgba(255,255,255,.2)">${calls.length} calls total</span>
+  </div>`:''}`;
+}
+
 async function renderHistory(){
   const container=document.getElementById('historyContent');
   container.innerHTML='<div class="hist-empty"><div class="hist-empty-icon">⏳</div><div style="color:var(--muted)">Chargement...</div></div>';
@@ -6569,6 +6673,7 @@ async function fetchTokens(){
         if(sec.freezeAuthority!==null){rejected['freeze authority active']=(rejected['freeze authority active']||0)+1;continue;}
         if(parseFloat(sec.top1Pct)>25){rejected[`top1 ${sec.top1Pct}%`]=(rejected[`top1 ${sec.top1Pct}%`]||0)+1;continue;}
         if(parseFloat(sec.top5Pct)>55){rejected[`top5 ${sec.top5Pct}%`]=(rejected[`top5 ${sec.top5Pct}%`]||0)+1;continue;}
+        if(sec.creator && DEPLOYER_BLACKLIST.has(sec.creator)){rejected['deployer blacklisté']=(rejected['deployer blacklisté']||0)+1;continue;}
         t.security=sec;
         if(t.raw)t.raw.security=sec;
       }
