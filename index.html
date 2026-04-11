@@ -4159,9 +4159,10 @@ function scoreTokenV2(p,walletData={count:0,wallets:[],clustered:false}){
 
   // ── MINIMUMS OBLIGATOIRES ─────────────────────────────────────────────────
   const _mkFail = (reason) => ({ score: 0, _minFail: reason, symbol: (p.baseToken?.symbol||'UNKNOWN').toUpperCase().slice(0,12), addr: p.baseToken?.address||'', mcap, liq, socials: hasSocials, rugRisk: 'HIGH', walletData, pairUrl: p.url||'', raw: p, debug: { traderScore, socialScore, holderScore, platformScore, mcapScore, ageScore, patternScore, washPenalty, liqQualScore, axiomCount, buyRatio: buyR, volAccel, c1h, m5, c6h, m1, ageH, top10pct, volMcapH1: vol1/mcap, sellBuyRatio: sells1/(buys1||1) } });
-  if (traderScore < 5)  return _mkFail('axiom');
-  if (patternScore < 3) return _mkFail('chart');
-  if (holderScore < 3)  return _mkFail('distrib');
+  if (traderScore < 10)  return _mkFail('axiom');       // ≥ 2 Axiom wallets requis
+  if (patternScore < 12) return _mkFail('chart');       // chart signal réel requis
+  if (holderScore < 3)   return _mkFail('distrib');
+  if (buyR < 0.40)       return _mkFail('sell_pressure'); // +60% sells en h1 = dump actif
 
   // ── CALCUL FINAL ──────────────────────────────────────────────────────────
   const finalScore = Math.min(150, Math.max(0, Math.round(score)));
@@ -4669,7 +4670,7 @@ const PT_CFG_DEFAULT = {
   trailPct:28,   // trailing stop: sell rest at ATH * (1 - trailPct/100)
   sl:45,         // hard SL if never hit TP1
   earlyMin:20,   // early exit: if no pump after X minutes AND down -35%
-  maxHoldH:4, minScore:80
+  maxHoldH:4, minScore:85
 };
 
 function ptConfig()  { try{ return {...PT_CFG_DEFAULT,...JSON.parse(localStorage.getItem(PT_CFG_LS)||'{}')}; }catch(e){ return {...PT_CFG_DEFAULT}; } }
@@ -6786,12 +6787,12 @@ async function fetchTokens(){
 
       // HARD FILTER 3 — Âge < 1h
       const rage=(Date.now()-(rp?.pairCreatedAt||0))/3600000;
-      if(rage>1){rejected[`age>1h`]=(rejected['age>1h']||0)+1;continue;}
+      if(rage>0.75){rejected[`age>45min`]=(rejected['age>45min']||0)+1;continue;}
 
       // Seuil score : 80+
-      if(rescored.score>=80){rescored.security=sec;finalScored.push(rescored);}
-      else{rejected[`score<80`]=(rejected['score<80']||0)+1;}
-    }catch(e){if(t.score>=80)finalScored.push(t);}
+      if(rescored.score>=85){rescored.security=sec;finalScored.push(rescored);}
+      else{rejected[`score<85`]=(rejected['score<85']||0)+1;}
+    }catch(e){if(t.score>=85)finalScored.push(t);}
   }
   finalScored.sort((a,b)=>b.score-a.score);
 
