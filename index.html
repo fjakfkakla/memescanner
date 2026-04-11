@@ -4292,17 +4292,19 @@ function nightlyLogsSave(logs) {
 // ── Calculer winrate du jour depuis Firebase ──
 async function getTodayWinrate() {
   try {
-    const resp = await fetch(`${FB_URL}/calls.json?orderBy="callTime"&limitToLast=200`, { signal: AbortSignal.timeout(8000) });
+    // Fetch sans orderBy pour éviter l'erreur "Index not defined" Firebase
+    const resp = await fetch(`${FB_URL}/calls.json`, { signal: AbortSignal.timeout(10000) });
     const raw  = await resp.json();
-    if (!raw) return null;
+    if (!raw || typeof raw !== 'object' || raw.error) return null;
     const today = new Date(); today.setHours(0,0,0,0);
-    const calls = Object.values(raw).filter(c => c?.callTime && c.callTime >= today.getTime());
-    if (calls.length < 3) return null;
+    const allCalls = Object.values(raw).filter(c => c && typeof c === 'object');
+    const calls = allCalls.filter(c => c.callTime && c.callTime >= today.getTime());
+    if (calls.length < 2) return null;
     const finished = calls.filter(c => c.athMcap && c.callMcap && (Date.now() - c.callTime) > 3600000);
-    if (finished.length < 2) return null;
+    if (finished.length < 1) return null;
     const wins = finished.filter(c => (c.athMcap / c.callMcap) >= 1.2).length;
     return { winrate: Math.round((wins / finished.length) * 100), total: finished.length, wins, bad: finished.length - wins, calls: finished };
-  } catch(e) { return null; }
+  } catch(e) { console.warn('[Nightly] getTodayWinrate error:', e); return null; }
 }
 
 // ── Appel Claude API — analyse des mauvais calls ──
