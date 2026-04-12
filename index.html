@@ -2588,6 +2588,13 @@ let currentRugSort = 'recent';
 
 const EMOJIS = ['🐸','🚀','💎','🌙','🔥','⚡','🦊','🐶','🐱','🎰','🍌','🧸','🦍','🐻','🎯'];
 
+// Wallets à pénaliser : -5 si 1+ présent, -10 si les 3 présents
+const BAD_WALLETS = new Set([
+  "7NAd2EpYGGeFofpyvgehSXhH5vg6Ry6VRMW2Y6jiqCu1",
+  "FxN3VZ4BosL5urG2yoeQ156JSdmavm9K5fdLxjkPmaMR",
+  "2fg5QD1eD7rzNNCsvnhmXFm5hqNgwTTG8p7kQ6f3rx6f",
+]);
+
 const AXIOM_WALLETS = new Set([
   "niggerd597QYedtvjQDVHZTCCGyJrwHNm2i49dkm5zS",
   "CWvdyvKHEu8Z6QqGraJT3sLPyp9bJfFhoXcxUYRKC8ou",
@@ -3877,7 +3884,7 @@ async function fetchRetry(url, options, retries = 2, delayMs = 800) {
 
 // -- AXIOM wallet tracker -- verifie si des wallets AXIOM sont top holders --
 async function checkAxiomWallets(tokenAddr, pairAddr = null, deep = false) {
-  if (!tokenAddr) return { count: 0, wallets: [], clustered: false };
+  if (!tokenAddr) return { count: 0, wallets: [], clustered: false, badWalletCount: 0 };
   const now = Date.now();
   const cached = swCache[tokenAddr];
   // Cache adaptatif : 5min si count=0 (permet re-check si wallets achetent plus tard),
@@ -4047,7 +4054,11 @@ async function checkAxiomWallets(tokenAddr, pairAddr = null, deep = false) {
     const wallets = count > newCount && prevResult?.wallets?.length
       ? prevResult.wallets  // conserver les wallets de la meilleure détection
       : newWallets;
-    const result = { count, wallets, clustered: count >= 2 };
+    // Bad wallets détectés
+    const badMatches = allOwnersList.filter(o => BAD_WALLETS.has(o));
+    const badWalletCount = Math.max(badMatches.length, prevResult?.badWalletCount || 0);
+    if (badWalletCount > 0) console.log('[AXIOM] Bad wallets détectés:', badWalletCount, badMatches);
+    const result = { count, wallets, clustered: count >= 2, badWalletCount };
     const cacheEntry = { ts: now, result, maxEver: count };
     swCache[tokenAddr] = cacheEntry;
     // Persister en localStorage → survit aux rechargements de page (jamais diminuer)
@@ -4056,7 +4067,7 @@ async function checkAxiomWallets(tokenAddr, pairAddr = null, deep = false) {
 
   } catch(e) {
     console.warn('checkAxiomWallets error:', e.message);
-    return { count: 0, wallets: [], clustered: false };
+    return { count: 0, wallets: [], clustered: false, badWalletCount: 0 };
   }
 }
 
@@ -4227,6 +4238,12 @@ function scoreTokenV2(p,walletData={count:0,wallets:[],clustered:false}){
   else if (axiomCount === 2) traderScore = 10;
   else if (axiomCount === 1) traderScore =  5;
   score += traderScore;
+
+  // ── ⚠️ BAD WALLETS ────────────────────────────────────────────────────────
+  // -5 si ≥1 bad wallet présent, -10 si les 3 sont présents
+  const badWalletCount = walletData.badWalletCount || 0;
+  const badWalletPenalty = badWalletCount >= 3 ? -10 : badWalletCount >= 1 ? -5 : 0;
+  score += badWalletPenalty;
 
   // ── 🌐 SOCIAL (max +26) ───────────────────────────────────────────────────
   // Socials lus depuis métadonnées Metaplex on-chain (Helius getAsset)
