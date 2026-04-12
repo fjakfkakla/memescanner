@@ -408,6 +408,15 @@ nav.scrolled .lang-switch{border-color:rgba(255,255,255,.08);color:var(--muted);
 .bt-range-badge{font-size:10px;font-weight:700;padding:2px 8px;border-radius:5px;font-family:var(--font-mono);white-space:nowrap;}
 .bt-recommend{background:linear-gradient(135deg,rgba(0,255,136,.06),rgba(97,86,217,.06));border:1px solid rgba(0,255,136,.2);border-radius:10px;padding:12px 14px;margin-top:14px;font-size:12px;line-height:1.6;}
 .bt-recommend strong{color:#00ff88;}
+.hm-cell{display:flex;flex-direction:column;align-items:center;flex:1;gap:2px;cursor:default;opacity:.9;transition:opacity .15s;}
+.hm-cell:hover{opacity:1;}
+.hm-cell.empty{opacity:.3;}
+.hm-cell.hm-now{outline:1px solid rgba(167,139,250,.5);border-radius:3px;}
+.hm-bar-wrap{width:100%;background:rgba(255,255,255,.06);border-radius:3px 3px 0 0;height:56px;display:flex;align-items:flex-end;overflow:hidden;}
+.hm-bar{width:100%;border-radius:3px 3px 0 0;transition:height .4s ease;min-height:2px;}
+.hm-hour{font-size:8px;color:rgba(255,255,255,.35);font-family:var(--font-mono);}
+.hm-stat{font-size:9px;font-weight:700;}
+.hm-calls{font-size:8px;}
 .nightly-card{background:linear-gradient(140deg,rgba(10,6,25,.95),rgba(20,10,40,.9));border:1.5px solid rgba(150,100,255,.3);border-radius:18px;padding:24px;margin-bottom:20px;position:relative;overflow:hidden;}
 .nightly-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,#6156d9,#a855f7,#00e5ff,#a855f7,#6156d9);background-size:300%;animation:nightly-shimmer 3s linear infinite;}
 @keyframes nightly-shimmer{0%{background-position:200%}100%{background-position:-100%}}
@@ -2246,6 +2255,29 @@ nav{background:rgba(0,0,0,.96)!important;border-bottom:1px solid rgba(255,109,0,
         </div>
         <!-- Tableau par tranches -->
         <div id="btResults"></div>
+      </div>
+
+      <div class="ai-divider"></div>
+
+      <!-- ── HEATMAP HORAIRE ── -->
+      <div class="bt-card">
+        <div class="bt-title">🕐 Performance par heure de call</div>
+        <div class="bt-sub">Identifie les heures où le scanner performe le mieux — et les heures à éviter</div>
+        <div class="bt-controls">
+          <select class="bt-select" id="hmWinDef">
+            <option value="1.2" selected>Win = ATH ≥ ×1.2</option>
+            <option value="1.5">Win = ATH ≥ ×1.5</option>
+            <option value="2.0">Win = ATH ≥ ×2.0</option>
+          </select>
+          <select class="bt-select" id="hmPeriod">
+            <option value="0">Tout l'historique</option>
+            <option value="7" selected>7 derniers jours</option>
+            <option value="14">14 derniers jours</option>
+            <option value="30">30 derniers jours</option>
+          </select>
+          <button class="btn-admin" onclick="runHourlyHeatmap()" style="padding:8px 20px;font-size:12px;">▶ LANCER</button>
+        </div>
+        <div id="hmResults"></div>
       </div>
 
       <div class="ai-divider"></div>
@@ -4845,6 +4877,110 @@ async function runBacktest() {
     document.getElementById('btResults').innerHTML = `<div class="ai-empty">Erreur : ${e.message}</div>`;
   }
   btn.textContent = '▶ RELANCER'; btn.disabled = false;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// 🕐 HEATMAP HORAIRE
+// ═══════════════════════════════════════════════════════════════
+async function runHourlyHeatmap() {
+  const container = document.getElementById('hmResults');
+  container.innerHTML = '<div class="ai-empty">⏳ Chargement…</div>';
+
+  const winDef = parseFloat(document.getElementById('hmWinDef').value || '1.2');
+  const days   = parseInt(document.getElementById('hmPeriod').value   || '7');
+
+  try {
+    const resp = await fetch(`${FB_URL}/calls.json`, { signal: AbortSignal.timeout(10000) });
+    const raw  = await resp.json();
+    if (!raw) { container.innerHTML = '<div class="ai-empty">Aucune donnée</div>'; return; }
+
+    const cutoff = days > 0 ? Date.now() - days * 86400000 : 0;
+    const calls  = Object.values(raw).filter(c =>
+      c?.callMcap && c?.athMcap && c?.callTime &&
+      (Date.now() - c.callTime) > 3600000 &&   // call terminé (>1h)
+      (cutoff === 0 || c.callTime >= cutoff)
+    );
+
+    if (calls.length < 3) {
+      container.innerHTML = '<div class="ai-empty">Pas assez de calls finalisés dans cette période</div>';
+      return;
+    }
+
+    // Grouper par heure locale (0-23)
+    const byHour = Array.from({length: 24}, () => ({ total: 0, wins: 0, athXs: [] }));
+    calls.forEach(c => {
+      const h = new Date(c.callTime).getHours();
+      byHour[h].total++;
+      const x = c.athMcap / c.callMcap;
+      byHour[h].athXs.push(x);
+      if (x >= winDef) byHour[h].wins++;
+    });
+
+    // Trouver max calls pour normaliser la hauteur des barres
+    const maxCalls = Math.max(...byHour.map(h => h.total), 1);
+
+    // Heure locale actuelle
+    const currentHour = new Date().getHours();
+
+    // Générer les cellules
+    const cells = byHour.map((h, i) => {
+      if (h.total === 0) {
+        return `<div class="hm-cell empty" title="${i}h — aucun call">
+          <div class="hm-bar-wrap"><div class="hm-bar" style="height:0%"></div></div>
+          <div class="hm-hour">${String(i).padStart(2,'0')}</div>
+          <div class="hm-stat" style="color:rgba(255,255,255,.2)">—</div>
+        </div>`;
+      }
+      const wr = Math.round(h.wins / h.total * 100);
+      const avgX = (h.athXs.reduce((a,b)=>a+b,0)/h.athXs.length).toFixed(1);
+      const barH = Math.round((h.total / maxCalls) * 100);
+      const color = wr >= 70 ? '#00ff88' : wr >= 50 ? '#ffaa00' : '#ff4466';
+      const isNow = i === currentHour;
+      return `<div class="hm-cell${isNow ? ' hm-now' : ''}" title="${i}h — ${h.total} calls · winrate ${wr}% · ATH moy. ${avgX}x">
+        <div class="hm-bar-wrap"><div class="hm-bar" style="height:${barH}%;background:${color};"></div></div>
+        <div class="hm-hour" style="${isNow?'color:#a78bfa;font-weight:700;':''}">${String(i).padStart(2,'0')}</div>
+        <div class="hm-stat" style="color:${color};font-size:9px;font-weight:700;">${wr}%</div>
+        <div class="hm-calls" style="color:rgba(255,255,255,.35);font-size:8px;">${h.total}</div>
+      </div>`;
+    }).join('');
+
+    // Top 3 meilleures heures (min 2 calls)
+    const ranked = byHour
+      .map((h, i) => ({ h: i, ...h, wr: h.total >= 2 ? Math.round(h.wins/h.total*100) : -1 }))
+      .filter(x => x.wr >= 0)
+      .sort((a, b) => b.wr - a.wr || b.total - a.total);
+
+    const topHours = ranked.slice(0, 3).map(x =>
+      `<span style="background:rgba(0,255,136,.1);border:1px solid rgba(0,255,136,.3);color:#00ff88;border-radius:6px;padding:2px 8px;font-size:11px;font-weight:700;">${String(x.h).padStart(2,'0')}h — ${x.wr}% (${x.total} calls)</span>`
+    ).join(' ');
+    const botHours = ranked.slice(-3).reverse().map(x =>
+      `<span style="background:rgba(255,68,102,.1);border:1px solid rgba(255,68,102,.3);color:#ff4466;border-radius:6px;padding:2px 8px;font-size:11px;font-weight:700;">${String(x.h).padStart(2,'0')}h — ${x.wr}% (${x.total} calls)</span>`
+    ).join(' ');
+
+    container.innerHTML = `
+      <div style="display:flex;align-items:flex-end;gap:3px;height:90px;margin:16px 0 4px;padding:0 4px;">
+        ${cells}
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:9px;color:rgba(255,255,255,.25);padding:0 4px;margin-bottom:16px;">
+        <span>00h</span><span>06h</span><span>12h</span><span>18h</span><span>23h</span>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-top:4px;">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+          <span style="font-size:10px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.08em;min-width:90px;">🟢 Meilleures</span>
+          ${topHours || '<span style="color:rgba(255,255,255,.3);font-size:11px;">—</span>'}
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+          <span style="font-size:10px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.08em;min-width:90px;">🔴 Pires</span>
+          ${botHours || '<span style="color:rgba(255,255,255,.3);font-size:11px;">—</span>'}
+        </div>
+      </div>
+      <div style="font-size:10px;color:rgba(255,255,255,.25);margin-top:12px;">
+        ${calls.length} calls analysés · heure locale · barre = volume de calls · couleur = winrate
+      </div>`;
+
+  } catch(e) {
+    container.innerHTML = `<div class="ai-empty">Erreur : ${e.message}</div>`;
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════
