@@ -7,85 +7,260 @@
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <style>
 :root {
-  /* App dark theme */
-  --bg: #080808;
-  --bg2: #0e0e0e;
-  --bg3: #141414;
-  --card: #111111;
-  --border: #1e1e1e;
-  --green: #00ff88;
-  --green2: #00cc6a;
-  --gold: #ffd700;
-  --red: #ff3355;
-  --blue: #4488ff;
+  /* Thème clair principal */
+  --bg: #FFFFFF;
+  --bg2: #F7F8FA;
+  --bg3: #EFF1F5;
+  --card: #FFFFFF;
+  --border: #E2E6ED;
+  --text: #0F1117;
+  --muted: #6B7280;
+  --subtle: #9CA3AF;
+
+  /* Accents */
+  --primary: #4F46E5;
+  --primary-light: #EEF2FF;
+  --primary-border: #C7D2FE;
+  --accent: #7C3AED;
+  --green: #059669;
+  --green-light: #ECFDF5;
+  --green-border: #A7F3D0;
+  --amber: #D97706;
+  --red: #DC2626;
+
+  /* App dark (garder pour les sections app) */
+  --app-bg: #080808;
+  --app-bg2: #0e0e0e;
+  --app-card: #111111;
+  --app-border: #1e1e1e;
+  --app-text: #f2f2f2;
+  --app-muted: #555555;
   --orange: #ff6b35;
   --orange2: #ff9a00;
+
+  /* Legacy compat (app sections) */
+  --bg3: #141414;
+  --gold: #ffd700;
+  --blue: #4488ff;
   --lime: #c8ff00;
   --purple: #ff6b35;
   --purple2: #ff9a00;
   --cyan: #00e5ff;
-  --text: #f2f2f2;
-  --muted: #555555;
+  --green2: #00cc6a;
+
+  /* Typographie */
   --font-head: 'Space Grotesk', sans-serif;
-  --font-mono: 'Space Mono', monospace;
   --font: 'Inter', sans-serif;
-  /* Landing light theme */
-  --land-bg: #FAFAF8;
-  --land-bg2: #F2F2EF;
-  --land-text: #0A0A0A;
-  --land-muted: #6B6B6B;
-  --land-border: #E5E5E2;
+  --font-mono: 'Space Mono', monospace;
+
+  /* Landing compat aliases */
+  --land-bg: #FFFFFF;
+  --land-bg2: #F7F8FA;
+  --land-text: #0F1117;
+  --land-muted: #6B7280;
+  --land-border: #E2E6ED;
   --land-card: #FFFFFF;
 }
-*{margin:0;padding:0;box-sizing:border-box;}
-body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:15px;min-height:100vh;overflow-x:hidden;line-height:1.6;}
+/* ═══ RESET & BASE ══════════════════════════════════════════════ */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: #fff; color: #0F1117; font-family: 'Inter', sans-serif; font-size: 15px; line-height: 1.6; overflow-x: hidden; }
 
-/* ══════════════════════════════════════════════════════════════
-   NAV — blanc en haut, sombre au scroll
-══════════════════════════════════════════════════════════════ */
-nav{position:sticky;top:0;z-index:1000;background:var(--land-bg);border-bottom:1px solid var(--land-border);padding:0 2.5rem;display:flex;align-items:center;gap:1rem;height:64px;transition:background .3s,border-color .3s,box-shadow .3s;}
-nav.scrolled{background:rgba(8,8,8,.95);backdrop-filter:blur(24px);border-bottom-color:rgba(255,107,53,.12);box-shadow:0 8px 40px rgba(0,0,0,.6);}
+/* ═══ NAV ═══════════════════════════════════════════════════════ */
+nav {
+  position: sticky; top: 0; z-index: 1000;
+  background: rgba(255,255,255,0.95); backdrop-filter: blur(20px);
+  border-bottom: 1px solid #E2E6ED;
+  padding: 0 2.5rem; display: flex; align-items: center; gap: 1rem; height: 64px;
+  transition: box-shadow 0.3s;
+}
+nav.scrolled { box-shadow: 0 2px 20px rgba(0,0,0,0.08); }
 .nav-logo{display:flex;align-items:center;gap:.7rem;cursor:pointer;text-decoration:none;flex-shrink:0;}
 .nav-logo svg{width:34px;height:34px;flex-shrink:0;}
-.logo-text{font-family:var(--font-head);font-size:1.05rem;font-weight:800;color:var(--land-text);line-height:1.1;letter-spacing:-.01em;transition:color .3s;}
-nav.scrolled .logo-text{color:var(--text);}
-.logo-text span{color:var(--orange);}
+.logo-text { font-family: 'Space Grotesk', sans-serif; font-size: 1.05rem; font-weight: 800; color: #0F1117; }
+.logo-text span { color: #4F46E5; }
 .logo-tagline{display:none;}
-.nav-links{display:flex;gap:1.8rem;margin-left:2.5rem;margin-right:auto;}
-.nav-links a{color:var(--land-muted);font-size:.87rem;text-decoration:none;transition:.2s;font-weight:500;}
-nav.scrolled .nav-links a{color:var(--muted);}
-.nav-links a:hover{color:var(--land-text);}
-nav.scrolled .nav-links a:hover{color:var(--text);}
-.nav-btn{padding:.48rem 1.1rem;border-radius:8px;font-size:.87rem;font-weight:600;cursor:pointer;border:none;transition:.25s;font-family:var(--font);}
-.btn-outline{background:transparent;border:1px solid var(--land-border);color:var(--land-text);}
-nav.scrolled .btn-outline{border-color:rgba(255,255,255,.1);color:rgba(255,255,255,.7);}
-.btn-outline:hover{border-color:var(--orange);color:var(--orange);}
-.btn-primary{background:var(--orange);color:#fff;box-shadow:0 2px 16px rgba(255,107,53,.3);}
-.btn-primary:hover{box-shadow:0 4px 28px rgba(255,107,53,.5);transform:translateY(-1px);}
-.lang-switch{background:transparent;border:1px solid var(--land-border);color:var(--land-muted);padding:.38rem .8rem;border-radius:8px;cursor:pointer;font-size:.82rem;font-family:var(--font);transition:.2s;}
-nav.scrolled .lang-switch{border-color:rgba(255,255,255,.08);color:var(--muted);}
-.lang-switch:hover{color:var(--orange);border-color:var(--orange);}
+.nav-links { display: flex; gap: 1.8rem; margin-left: 2.5rem; margin-right: auto; }
+.nav-links a { color: #6B7280; font-size: 0.87rem; text-decoration: none; font-weight: 500; transition: color 0.2s; }
+.nav-links a:hover { color: #0F1117; }
+.nav-btn { padding: 0.48rem 1.1rem; border-radius: 8px; font-size: 0.87rem; font-weight: 600; cursor: pointer; border: none; font-family: 'Inter', sans-serif; transition: all 0.2s; }
+.btn-outline { background: transparent; border: 1px solid #E2E6ED; color: #0F1117; }
+.btn-outline:hover { border-color: #4F46E5; color: #4F46E5; }
+.btn-primary { background: #4F46E5; color: #fff; box-shadow: 0 2px 12px rgba(79,70,229,0.3); }
+.btn-primary:hover { background: #4338CA; transform: translateY(-1px); }
+.lang-switch { background: transparent; border: 1px solid #E2E6ED; color: #6B7280; padding: .38rem .8rem; border-radius: 8px; cursor: pointer; font-size: .82rem; font-family: 'Inter', sans-serif; transition: .2s; }
+.lang-switch:hover { color: #4F46E5; border-color: #4F46E5; }
 
-/* ══════════════════════════════════════════════════════════════
-   LANDING WRAPPER — fond blanc
-══════════════════════════════════════════════════════════════ */
-#landing-wrap{background:var(--land-bg);position:relative;overflow:hidden;}
-#landing-wrap::before{content:'';position:absolute;top:-200px;right:-200px;width:700px;height:700px;border-radius:50%;background:radial-gradient(circle,rgba(255,107,53,.07) 0%,transparent 70%);pointer-events:none;}
-#landing-wrap::after{content:'';position:absolute;bottom:-100px;left:-100px;width:500px;height:500px;border-radius:50%;background:radial-gradient(circle,rgba(0,255,136,.04) 0%,transparent 70%);pointer-events:none;}
+/* ═══ LANDING WRAPPER ════════════════════════════════════════════ */
+#landing-wrap{background:#fff;position:relative;overflow:hidden;}
 
-/* ── HERO ─────────────────────────────────────────────────────── */
-.hero{display:grid;grid-template-columns:1fr 1fr;gap:4rem;align-items:center;padding:5rem 4rem 4rem;max-width:1300px;margin:0 auto;position:relative;z-index:1;}
-.hero-eyebrow{display:inline-flex;align-items:center;gap:.5rem;font-size:.72rem;font-weight:700;color:var(--orange);background:rgba(255,107,53,.08);border:1px solid rgba(255,107,53,.2);padding:.36rem .9rem;border-radius:30px;letter-spacing:.1em;text-transform:uppercase;margin-bottom:1.4rem;}
-.hero-eyebrow::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--orange);flex-shrink:0;animation:pulse-o 1.5s ease infinite;}
-@keyframes pulse-o{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(255,107,53,.4)}50%{opacity:.7;box-shadow:0 0 0 6px rgba(255,107,53,0)}}
-.hero-title{font-family:var(--font-head);font-size:3.8rem;line-height:1.05;margin-bottom:1.3rem;font-weight:800;letter-spacing:-.03em;color:var(--land-text);}
-.hero-title .hl{color:var(--orange);position:relative;display:inline-block;}
-.hero-title .hl::after{content:'';position:absolute;bottom:-3px;left:0;right:0;height:3px;background:var(--orange);border-radius:2px;transform:scaleX(0);transform-origin:left;animation:underline-in 1s .5s cubic-bezier(.16,1,.3,1) forwards;}
-@keyframes underline-in{to{transform:scaleX(1)}}
-.hero-subtitle{color:var(--land-muted);font-size:1rem;line-height:1.78;margin-bottom:2.2rem;max-width:440px;font-weight:400;}
+/* ═══ HERO ═══════════════════════════════════════════════════════ */
+.hero-section { background: linear-gradient(135deg, #FAFBFF 0%, #F0F4FF 100%); padding: 5rem 2rem 4rem; }
+.hero-container { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 5rem; align-items: center; }
+.hero-badge { display: inline-flex; align-items: center; gap: 0.5rem; background: #EEF2FF; border: 1px solid #C7D2FE; color: #4F46E5; font-size: 0.75rem; font-weight: 600; padding: 0.4rem 1rem; border-radius: 30px; margin-bottom: 1.5rem; letter-spacing: 0.02em; }
+.badge-dot { width: 6px; height: 6px; border-radius: 50%; background: #4F46E5; animation: pulse-blue 1.5s ease infinite; }
+@keyframes pulse-blue { 0%,100%{ box-shadow: 0 0 0 0 rgba(79,70,229,0.4); } 50%{ box-shadow: 0 0 0 6px rgba(79,70,229,0); } }
+.hero-title { font-family: 'Space Grotesk', sans-serif; font-size: 3.5rem; line-height: 1.1; font-weight: 800; letter-spacing: -0.03em; color: #0F1117; margin-bottom: 1.2rem; }
+.hero-highlight { color: #4F46E5; }
+.hero-subtitle { color: #6B7280; font-size: 1rem; line-height: 1.75; margin-bottom: 2rem; max-width: 440px; }
+.hero-search { display: flex; gap: 0; margin-bottom: 1.2rem; box-shadow: 0 4px 24px rgba(79,70,229,0.12); border-radius: 12px; overflow: hidden; border: 1.5px solid #C7D2FE; }
+.hero-input { flex: 1; padding: 0.9rem 1.2rem; border: none; outline: none; font-size: 0.9rem; font-family: 'Inter', sans-serif; color: #0F1117; background: #fff; }
+.hero-input::placeholder { color: #9CA3AF; }
+.hero-cta-btn { padding: 0 1.5rem; background: #4F46E5; color: #fff; border: none; font-weight: 700; font-size: 0.9rem; cursor: pointer; font-family: 'Inter', sans-serif; transition: background 0.2s; white-space: nowrap; }
+.hero-cta-btn:hover { background: #4338CA; }
+.hero-links { display: flex; gap: 1.5rem; }
+.hero-link-secondary { color: #6B7280; font-size: 0.85rem; text-decoration: none; font-weight: 500; transition: color 0.2s; }
+.hero-link-secondary:hover { color: #4F46E5; }
 
-/* ── SCANNER DEMO SECTION ─────────────────────────────────────── */
-.demo-section{padding:5rem 4rem;background:var(--land-bg);position:relative;z-index:1;}
+/* Hero visual mock */
+.hero-visual { display: flex; justify-content: center; }
+.hero-card-mock { background: #fff; border-radius: 20px; padding: 1.5rem; box-shadow: 0 20px 60px rgba(79,70,229,0.12), 0 0 0 1px rgba(79,70,229,0.08); width: 100%; max-width: 360px; }
+.mock-header { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid #F0F4FF; }
+.mock-dots { display: flex; gap: 4px; }
+.mock-dots span { width: 10px; height: 10px; border-radius: 50%; background: #E2E6ED; }
+.mock-dots span:nth-child(1) { background: #FCA5A5; }
+.mock-dots span:nth-child(2) { background: #FCD34D; }
+.mock-dots span:nth-child(3) { background: #86EFAC; }
+.mock-title { font-size: 0.75rem; color: #6B7280; flex: 1; font-family: 'Space Mono', monospace; }
+.mock-live { font-size: 0.7rem; font-weight: 700; color: #059669; font-family: 'Space Mono', monospace; }
+.mock-body { display: flex; gap: 1.2rem; align-items: center; margin-bottom: 1.2rem; }
+.mock-score-ring { position: relative; width: 90px; height: 90px; flex-shrink: 0; }
+.score-svg { width: 90px; height: 90px; }
+.mock-score-val { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-family: 'Space Grotesk', sans-serif; font-size: 1.1rem; font-weight: 800; color: #4F46E5; flex-direction: column; line-height: 1; }
+.mock-score-val span { font-size: 0.6rem; color: #9CA3AF; font-weight: 400; }
+.mock-indicators { display: flex; flex-direction: column; gap: 0.45rem; flex: 1; }
+.mock-ind { font-size: 0.75rem; color: #374151; display: flex; align-items: center; gap: 0.4rem; font-weight: 500; }
+.ind-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.ind-dot.green { background: #059669; }
+.ind-dot.amber { background: #D97706; }
+.ind-dot.red { background: #DC2626; }
+.mock-footer { display: flex; align-items: center; justify-content: space-between; padding-top: 1rem; border-top: 1px solid #F0F4FF; }
+.mock-badge { font-size: 0.72rem; font-weight: 700; padding: 0.25rem 0.6rem; border-radius: 6px; }
+.mock-badge.safe { background: #ECFDF5; color: #059669; border: 1px solid #A7F3D0; }
+.mock-badge.risk { background: #FEF2F2; color: #DC2626; border: 1px solid #FCA5A5; }
+.mock-mcap { font-size: 0.75rem; color: #6B7280; font-family: 'Space Mono', monospace; }
+
+/* ═══ STATS STRIP ════════════════════════════════════════════════ */
+.stats-strip { background: #fff; border-top: 1px solid #E2E6ED; border-bottom: 1px solid #E2E6ED; padding: 1.8rem 2rem; }
+.stats-strip-inner { max-width: 1200px; margin: 0 auto; display: flex; align-items: center; justify-content: center; gap: 0; flex-wrap: wrap; }
+.stat-block { text-align: center; padding: 0 3rem; }
+.stat-val { font-family: 'Space Grotesk', sans-serif; font-size: 1.8rem; font-weight: 800; color: #0F1117; letter-spacing: -0.04em; line-height: 1; }
+.stat-lbl { font-size: 0.75rem; color: #6B7280; margin-top: 0.3rem; font-weight: 500; }
+.stat-divider { width: 1px; height: 36px; background: #E2E6ED; flex-shrink: 0; }
+
+/* ═══ SECTIONS COMMUNES ══════════════════════════════════════════ */
+.section-container { max-width: 1200px; margin: 0 auto; padding: 0 2rem; }
+.section-header { text-align: center; margin-bottom: 3.5rem; }
+.section-tag { display: inline-block; background: #EEF2FF; color: #4F46E5; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; padding: 0.35rem 0.9rem; border-radius: 20px; margin-bottom: 0.9rem; }
+.section-title { font-family: 'Space Grotesk', sans-serif; font-size: 2.2rem; font-weight: 800; letter-spacing: -0.03em; color: #0F1117; margin-bottom: 0.7rem; line-height: 1.15; }
+.section-sub { color: #6B7280; font-size: 1rem; line-height: 1.7; max-width: 520px; margin: 0 auto; }
+
+/* ═══ COMMENT CA MARCHE ══════════════════════════════════════════ */
+.how-section { padding: 6rem 2rem; background: #fff; }
+.steps-grid { display: flex; align-items: center; gap: 1rem; }
+.step-card { flex: 1; background: #FAFBFF; border: 1px solid #E2E6ED; border-radius: 16px; padding: 2rem; text-align: center; transition: all 0.3s; }
+.step-card:hover { border-color: #C7D2FE; box-shadow: 0 8px 30px rgba(79,70,229,0.08); transform: translateY(-3px); }
+.step-num { font-family: 'Space Grotesk', sans-serif; font-size: 0.72rem; font-weight: 800; color: #C7D2FE; letter-spacing: 0.1em; margin-bottom: 1rem; }
+.step-icon { font-size: 2rem; margin-bottom: 1rem; }
+.step-title { font-family: 'Space Grotesk', sans-serif; font-size: 1.05rem; font-weight: 700; color: #0F1117; margin-bottom: 0.6rem; }
+.step-desc { font-size: 0.88rem; color: #6B7280; line-height: 1.65; }
+.step-connector { font-size: 1.5rem; color: #C7D2FE; flex-shrink: 0; font-weight: 300; }
+
+/* ═══ EDUCATION ══════════════════════════════════════════════════ */
+.education-section { padding: 6rem 2rem; background: #F7F8FA; }
+.edu-tabs { display: flex; gap: 0.5rem; justify-content: center; margin-bottom: 2.5rem; }
+.edu-tab { padding: 0.5rem 1.2rem; border-radius: 20px; border: 1.5px solid #E2E6ED; background: #fff; color: #6B7280; font-size: 0.83rem; font-weight: 600; cursor: pointer; font-family: 'Inter', sans-serif; transition: all 0.2s; }
+.edu-tab.active, .edu-tab:hover { background: #4F46E5; border-color: #4F46E5; color: #fff; }
+.edu-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.2rem; }
+.edu-card { background: #fff; border: 1px solid #E2E6ED; border-radius: 16px; padding: 1.6rem; cursor: pointer; transition: all 0.25s; }
+.edu-card:hover { transform: translateY(-4px); box-shadow: 0 12px 36px rgba(0,0,0,0.08); border-color: #C7D2FE; }
+.edu-card-tag { display: inline-block; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; padding: 0.2rem 0.6rem; border-radius: 6px; margin-bottom: 0.9rem; }
+.edu-card-tag.beginner { background: #ECFDF5; color: #059669; }
+.edu-card-tag.analysis { background: #EEF2FF; color: #4F46E5; }
+.edu-card-tag.security { background: #FEF2F2; color: #DC2626; }
+.edu-card-title { font-family: 'Space Grotesk', sans-serif; font-size: 1rem; font-weight: 700; color: #0F1117; margin-bottom: 0.6rem; line-height: 1.3; }
+.edu-card-desc { font-size: 0.85rem; color: #6B7280; line-height: 1.6; margin-bottom: 1.2rem; }
+.edu-card-footer { display: flex; justify-content: space-between; align-items: center; }
+.edu-read-time { font-size: 0.75rem; color: #9CA3AF; }
+.edu-arrow { color: #C7D2FE; font-weight: 700; transition: all 0.2s; }
+.edu-card:hover .edu-arrow { color: #4F46E5; transform: translateX(3px); }
+
+/* ═══ ANTI-SCAM ══════════════════════════════════════════════════ */
+.antiscam-section { padding: 6rem 2rem; background: #fff; }
+.antiscam-inner { display: grid; grid-template-columns: 1fr 1fr; gap: 5rem; align-items: start; }
+.antiscam-left .section-title { text-align: left; }
+.antiscam-left .section-sub { text-align: left; margin: 0 0 1.5rem; }
+.antiscam-right { display: flex; flex-direction: column; gap: 1rem; }
+.check-item { display: flex; gap: 1rem; align-items: flex-start; padding: 1rem; border-radius: 12px; border: 1px solid #E2E6ED; background: #FAFBFF; transition: all 0.2s; }
+.check-item:hover { border-color: #C7D2FE; background: #F0F4FF; }
+.check-icon { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 800; flex-shrink: 0; margin-top: 0.1rem; }
+.check-icon.safe { background: #ECFDF5; color: #059669; border: 1.5px solid #A7F3D0; }
+.check-icon.warn { background: #FFFBEB; color: #D97706; border: 1.5px solid #FDE68A; }
+.check-icon.risk { background: #FEF2F2; color: #DC2626; border: 1.5px solid #FCA5A5; }
+.check-title { font-family: 'Space Grotesk', sans-serif; font-size: 0.9rem; font-weight: 700; color: #0F1117; margin-bottom: 0.25rem; }
+.check-desc { font-size: 0.82rem; color: #6B7280; line-height: 1.55; }
+
+/* ═══ MISSION ════════════════════════════════════════════════════ */
+.mission-section { padding: 6rem 2rem; background: #F7F8FA; }
+.mission-inner { display: grid; grid-template-columns: 1fr 1fr; gap: 5rem; align-items: center; }
+.mission-content .section-title { text-align: left; }
+.mission-text { color: #6B7280; font-size: 0.97rem; line-height: 1.8; margin-bottom: 1rem; }
+.mission-text strong { color: #0F1117; }
+.mission-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.mission-stat-card { background: #fff; border: 1px solid #E2E6ED; border-radius: 16px; padding: 1.5rem; text-align: center; }
+.mission-stat-val { font-family: 'Space Grotesk', sans-serif; font-size: 2rem; font-weight: 800; color: #4F46E5; letter-spacing: -0.04em; line-height: 1; margin-bottom: 0.4rem; }
+.mission-stat-lbl { font-size: 0.78rem; color: #6B7280; font-weight: 500; }
+
+/* ═══ CTA SECTION ════════════════════════════════════════════════ */
+.cta-section { padding: 6rem 2rem; background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%); }
+.cta-inner { max-width: 700px; margin: 0 auto; text-align: center; }
+.cta-title { font-family: 'Space Grotesk', sans-serif; font-size: 2.4rem; font-weight: 800; color: #fff; letter-spacing: -0.03em; margin-bottom: 1rem; line-height: 1.2; }
+.cta-sub { color: rgba(255,255,255,0.75); font-size: 1rem; line-height: 1.7; margin-bottom: 2.2rem; }
+.cta-buttons { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+
+/* Buttons */
+.primary-btn { display: inline-block; padding: 0.85rem 2rem; background: #4F46E5; color: #fff; border: none; border-radius: 10px; font-size: 0.95rem; font-weight: 700; cursor: pointer; font-family: 'Inter', sans-serif; transition: all 0.25s; text-decoration: none; }
+.primary-btn:hover { background: #4338CA; transform: translateY(-2px); box-shadow: 0 8px 24px rgba(79,70,229,0.35); }
+.primary-btn.large { padding: 1rem 2.4rem; font-size: 1rem; }
+.cta-section .primary-btn { background: #fff; color: #4F46E5; }
+.cta-section .primary-btn:hover { background: #F0F4FF; box-shadow: 0 8px 24px rgba(255,255,255,0.2); }
+.secondary-btn { display: inline-block; padding: 0.85rem 2rem; background: transparent; color: rgba(255,255,255,0.85); border: 1.5px solid rgba(255,255,255,0.35); border-radius: 10px; font-size: 0.95rem; font-weight: 600; cursor: pointer; font-family: 'Inter', sans-serif; transition: all 0.25s; text-decoration: none; }
+.secondary-btn:hover { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.6); }
+.secondary-btn.large { padding: 1rem 2.4rem; font-size: 1rem; }
+
+/* ═══ FOOTER ══════════════════════════════════════════════════════ */
+.site-footer { background: #0F1117; color: #9CA3AF; padding: 4rem 2rem 2rem; }
+.footer-inner { max-width: 1200px; margin: 0 auto 3rem; display: grid; grid-template-columns: 1fr 2fr; gap: 4rem; }
+.footer-logo { font-family: 'Space Grotesk', sans-serif; font-size: 1.2rem; font-weight: 800; color: #fff; margin-bottom: 0.5rem; }
+.footer-logo span { color: #6366F1; }
+.footer-tagline { font-size: 0.85rem; color: #4B5563; }
+.footer-links { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem; }
+.footer-col { display: flex; flex-direction: column; gap: 0.6rem; }
+.footer-col-title { font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: #6B7280; margin-bottom: 0.4rem; }
+.footer-col a { font-size: 0.85rem; color: #4B5563; text-decoration: none; transition: color 0.2s; }
+.footer-col a:hover { color: #9CA3AF; }
+.footer-bottom { max-width: 1200px; margin: 0 auto; padding-top: 2rem; border-top: 1px solid #1F2937; display: flex; flex-direction: column; gap: 0.5rem; }
+.footer-disclaimer { font-size: 0.75rem; color: #374151; line-height: 1.6; }
+.footer-copy { font-size: 0.78rem; color: #374151; }
+
+/* ═══ SCROLL REVEAL ══════════════════════════════════════════════ */
+.reveal { opacity: 0; transform: translateY(30px); transition: opacity 0.7s cubic-bezier(0.16,1,0.3,1), transform 0.7s cubic-bezier(0.16,1,0.3,1); }
+.reveal.visible { opacity: 1; transform: translateY(0); }
+.reveal-left{opacity:0;transform:translateX(-40px);transition:opacity .7s cubic-bezier(.16,1,.3,1),transform .7s cubic-bezier(.16,1,.3,1);}
+.reveal-left.visible{opacity:1;transform:translateX(0);}
+.reveal-right{opacity:0;transform:translateX(40px);transition:opacity .7s cubic-bezier(.16,1,.3,1),transform .7s cubic-bezier(.16,1,.3,1);}
+.reveal-right.visible{opacity:1;transform:translateX(0);}
+.reveal-delay-1{transition-delay:.1s;}
+.reveal-delay-2{transition-delay:.2s;}
+.reveal-delay-3{transition-delay:.3s;}
+.reveal-delay-4{transition-delay:.4s;}
+
+/* ═══ TRANSITION VERS L'APP ══════════════════════════════════════ */
+.app-divider { background: linear-gradient(180deg, #fff 0%, #080808 100%); padding: 4rem 2rem; text-align: center; }
+.app-divider-title { font-family: 'Space Grotesk', sans-serif; font-size: 2rem; font-weight: 800; background: linear-gradient(135deg, #fff 30%, rgba(255,255,255,0.4)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: 0.7rem; }
+.app-divider-sub { color: rgba(255,255,255,0.35); font-size: 0.95rem; }
+
+/* ═══ DEMO / HERO LIVE (compat) ══════════════════════════════════ */
+.demo-section{padding:5rem 4rem;background:#fff;position:relative;z-index:1;}
 .demo-inner{max-width:1300px;margin:0 auto;}
 .demo-window{background:#0c0c0c;border-radius:16px;overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,.2),0 0 0 1px rgba(255,255,255,.06);max-width:900px;margin:2.5rem auto 0;}
 .demo-topbar{background:#1a1a1a;padding:.6rem 1rem;display:flex;align-items:center;gap:.5rem;border-bottom:1px solid #222;}
@@ -120,90 +295,54 @@ nav.scrolled .lang-switch{border-color:rgba(255,255,255,.08);color:var(--muted);
 .demo-footer-bar{border-top:1px solid #1a1a1a;padding:.6rem 1.4rem;display:flex;align-items:center;gap:1rem;margin-top:.4rem;}
 .demo-footer-stat{font-family:var(--font-mono);font-size:.6rem;color:#555;display:flex;align-items:center;gap:.3rem;}
 .demo-footer-stat span{color:#888;}
-.hero-stats{display:flex;gap:2rem;margin-bottom:2.6rem;flex-wrap:wrap;}
-.stat-item{cursor:default;transition:.3s;}
-.stat-item:hover{transform:translateY(-3px);}
-.stat-num{font-family:var(--font-head);font-size:2rem;color:var(--land-text);font-weight:800;letter-spacing:-.03em;line-height:1;}
-.stat-num.orange{color:var(--orange);}
-.stat-label{font-size:.72rem;color:var(--land-muted);text-transform:uppercase;letter-spacing:.08em;margin-top:.3rem;font-weight:500;}
-.hero-cta{display:flex;gap:.9rem;flex-wrap:wrap;}
-.cta-big{padding:1rem 2.4rem;border-radius:10px;font-size:.97rem;font-weight:700;cursor:pointer;border:none;font-family:var(--font);transition:.3s;letter-spacing:.01em;}
-.cta-green{background:var(--orange);color:#fff;box-shadow:0 4px 20px rgba(255,107,53,.3);}
-.cta-green:hover{transform:translateY(-2px);box-shadow:0 8px 36px rgba(255,107,53,.5);}
-.cta-ghost{background:transparent;border:2px solid var(--land-border);color:var(--land-text);font-weight:600;}
-.cta-ghost:hover{border-color:var(--land-text);transform:translateY(-2px);}
-
-/* ── HERO RIGHT — panel scanner live ─────────────────────────── */
 .hero-live{border-radius:20px;overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,.18),0 0 0 1px rgba(0,0,0,.06);position:relative;}
 
-/* ── SOCIAL PROOF STRIP ───────────────────────────────────────── */
-.proof-strip{background:var(--land-bg2);border-top:1px solid var(--land-border);border-bottom:1px solid var(--land-border);padding:2rem 5rem;display:flex;align-items:center;justify-content:space-between;gap:2rem;flex-wrap:wrap;position:relative;z-index:1;}
-.proof-item{text-align:center;flex:1;min-width:140px;}
-.proof-num{font-family:var(--font-head);font-size:2.2rem;font-weight:800;color:var(--land-text);letter-spacing:-.04em;line-height:1;}
-.proof-num.g{color:#16a34a;}
-.proof-num.o{color:var(--orange);}
-.proof-label{font-size:.78rem;color:var(--land-muted);margin-top:.3rem;font-weight:500;}
-.proof-sep{width:1px;height:40px;background:var(--land-border);flex-shrink:0;}
-
-/* ── GAINS CARDS SECTION ──────────────────────────────────────── */
-.gains-section{padding:6rem 5rem;max-width:1380px;margin:0 auto;position:relative;z-index:1;}
-.gains-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-top:3rem;}
-.gain-card{background:var(--land-card);border:1px solid var(--land-border);border-radius:16px;padding:1.4rem;transition:.3s;cursor:default;position:relative;overflow:hidden;}
-.gain-card:hover{transform:translateY(-5px);box-shadow:0 16px 40px rgba(0,0,0,.1);}
-.gain-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:3px 3px 0 0;}
-.gain-card.g::before{background:linear-gradient(90deg,#16a34a,#4ade80);}
-.gain-card.o::before{background:linear-gradient(90deg,var(--orange),var(--orange2));}
-.gain-card.gold::before{background:linear-gradient(90deg,var(--gold),#ffec6e);}
-.gain-tok{font-family:var(--font-head);font-size:1rem;font-weight:800;color:var(--land-text);letter-spacing:-.01em;margin-bottom:.2rem;}
-.gain-time{font-size:.72rem;color:var(--land-muted);margin-bottom:.8rem;}
-.gain-x{font-family:var(--font-head);font-size:2.4rem;font-weight:800;letter-spacing:-.04em;line-height:1;}
-.gain-x.g{color:#16a34a;}
-.gain-x.o{color:var(--orange);}
-.gain-x.gold{color:#b45309;}
-.gain-mcap{font-size:.75rem;color:var(--land-muted);margin-top:.4rem;}
-.gain-score-badge{position:absolute;top:.9rem;right:.9rem;font-size:.65rem;font-weight:700;padding:.2rem .55rem;border-radius:6px;background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0;font-family:var(--font-mono);}
-
-/* ── TOOLS SECTION ────────────────────────────────────────────── */
-.tools-section{padding:6rem 5rem;background:var(--land-bg2);position:relative;z-index:1;}
-.tools-inner{max-width:1300px;margin:0 auto;}
-.section-label{font-size:.7rem;font-weight:600;color:var(--orange);text-transform:uppercase;letter-spacing:.14em;margin-bottom:.7rem;}
-.section-title{font-family:var(--font-head);font-size:2.1rem;margin-bottom:.7rem;font-weight:700;letter-spacing:-.02em;line-height:1.15;color:var(--land-text);}
-.section-sub{color:var(--land-muted);font-size:.97rem;margin-bottom:2.5rem;line-height:1.72;max-width:520px;}
-.tools-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1rem;}
-.tool-card{background:var(--land-card);border:1px solid var(--land-border);border-radius:18px;padding:2rem;cursor:pointer;transition:transform .28s,box-shadow .28s,border-color .28s;position:relative;overflow:hidden;}
-.tool-card::after{content:'→';position:absolute;bottom:1.6rem;right:1.6rem;font-size:1rem;color:var(--land-border);transition:.3s;opacity:1;font-weight:700;}
-.tool-card:hover{transform:translateY(-5px);box-shadow:0 20px 50px rgba(0,0,0,.1);}
-.tool-card:hover::after{color:var(--orange);transform:translateX(4px);}
-.tool-card.accent-green:hover::after{color:#16a34a;}
-.tool-card.accent-gold:hover::after{color:#b45309;}
-.tool-icon-wrap{width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.4rem;margin-bottom:1.2rem;background:#fff5f0;border:1px solid #fed7c3;}
-.tool-card.accent-green .tool-icon-wrap{background:#f0fdf4;border-color:#bbf7d0;}
-.tool-card.accent-gold .tool-icon-wrap{background:#fefce8;border-color:#fde68a;}
-.tool-card.accent-red .tool-icon-wrap{background:#fff1f2;border-color:#fecdd3;}
-.tool-name{font-family:var(--font-head);font-size:1.1rem;margin-bottom:.45rem;font-weight:700;letter-spacing:-.01em;color:var(--land-text);}
-.tool-desc{color:var(--land-muted);font-size:.9rem;line-height:1.65;padding-right:2.5rem;}
-.tool-badge{position:absolute;top:1.2rem;right:1.2rem;font-size:.65rem;padding:.25rem .6rem;border-radius:20px;font-weight:700;background:#fff5f0;color:var(--orange);letter-spacing:.04em;border:1px solid #fed7c3;}
-.tool-badge.green{background:#f0fdf4;color:#16a34a;border-color:#bbf7d0;}
-.tool-badge.gold{background:#fefce8;color:#b45309;border-color:#fde68a;}
-
-/* ── TRANSITION LANDING → APP ─────────────────────────────────── */
-.app-transition{background:linear-gradient(180deg,var(--land-bg2) 0%,#0a0a0a 100%);padding:5rem 5rem 4rem;text-align:center;position:relative;overflow:hidden;}
-.app-transition-title{font-family:var(--font-head);font-size:3.2rem;font-weight:800;letter-spacing:-.04em;margin-bottom:1rem;background:linear-gradient(135deg,#ffffff 30%,rgba(255,255,255,.5));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
-.app-transition-sub{color:rgba(255,255,255,.4);font-size:1rem;margin-bottom:2.5rem;line-height:1.7;}
-.app-transition-arrow{display:block;margin:0 auto;font-size:2rem;color:var(--orange);animation:bounce-down 1.5s ease infinite;}
-@keyframes bounce-down{0%,100%{transform:translateY(0)}50%{transform:translateY(8px)}}
-
-/* ── SCROLL REVEAL ────────────────────────────────────────────── */
-.reveal{opacity:0;transform:translateY(36px);transition:opacity .7s cubic-bezier(.16,1,.3,1),transform .7s cubic-bezier(.16,1,.3,1);}
-.reveal.visible{opacity:1;transform:translateY(0);}
-.reveal-left{opacity:0;transform:translateX(-40px);transition:opacity .7s cubic-bezier(.16,1,.3,1),transform .7s cubic-bezier(.16,1,.3,1);}
-.reveal-left.visible{opacity:1;transform:translateX(0);}
-.reveal-right{opacity:0;transform:translateX(40px);transition:opacity .7s cubic-bezier(.16,1,.3,1),transform .7s cubic-bezier(.16,1,.3,1);}
-.reveal-right.visible{opacity:1;transform:translateX(0);}
-.reveal-delay-1{transition-delay:.1s;}
-.reveal-delay-2{transition-delay:.2s;}
-.reveal-delay-3{transition-delay:.3s;}
-.reveal-delay-4{transition-delay:.4s;}
+/* ═══ RESPONSIVE ══════════════════════════════════════════════════ */
+@media (max-width: 900px) {
+  .hero-container { grid-template-columns: 1fr; gap: 3rem; }
+  .hero-title { font-size: 2.5rem; }
+  .hero-visual { display: none; }
+  .steps-grid { flex-direction: column; }
+  .step-connector { transform: rotate(90deg); }
+  .edu-grid { grid-template-columns: 1fr 1fr; }
+  .antiscam-inner { grid-template-columns: 1fr; gap: 3rem; }
+  .mission-inner { grid-template-columns: 1fr; gap: 3rem; }
+  .footer-inner { grid-template-columns: 1fr; gap: 2rem; }
+  .footer-links { grid-template-columns: repeat(2, 1fr); }
+  .stats-strip-inner { gap: 0; }
+  .stat-block { padding: 0 1.5rem; }
+}
+@media (max-width: 600px) {
+  .hero-title { font-size: 2rem; }
+  .edu-grid { grid-template-columns: 1fr; }
+  .nav-links { display: none; }
+  .section-title { font-size: 1.8rem; }
+  .cta-title { font-size: 1.8rem; }
+  .mission-stats { grid-template-columns: 1fr 1fr; }
+}
+/* ═══ APP DARK SECTION OVERRIDES ═════════════════════════════════
+   Les sections app (#scanner, #panelPaperBot, etc.) utilisent le dark theme.
+   On redéfinit les variables dans le contexte de section#scanner pour
+   restaurer les couleurs neon du dark theme.
+══════════════════════════════════════════════════════════════════ */
+section#scanner, #panelPaperBot, #panelGems, section#rugsnip, .admin-panel {
+  --bg: #080808;
+  --bg2: #0e0e0e;
+  --bg3: #141414;
+  --card: #111111;
+  --border: #1e1e1e;
+  --green: #00ff88;
+  --green2: #00cc6a;
+  --gold: #ffd700;
+  --red: #ff3355;
+  --blue: #4488ff;
+  --orange: #ff6b35;
+  --orange2: #ff9a00;
+  --text: #f2f2f2;
+  --muted: #555555;
+}
+body { background: #080808; }
+#landing-wrap { background: #fff; }
 .scanner-section{padding:4rem;max-width:1400px;margin:0 auto;position:relative;z-index:1;}
 .scanner-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;flex-wrap:wrap;gap:1rem;}
 .scanner-title{font-family:var(--font-head);font-size:1.7rem;font-weight:700;}
@@ -213,7 +352,7 @@ nav.scrolled .lang-switch{border-color:rgba(255,255,255,.08);color:var(--muted);
 .scan-btn-green:hover{box-shadow:0 4px 22px rgba(97,86,217,.35);transform:translateY(-1px);}
 .scan-btn-outline{background:transparent;border:1px solid var(--border);color:var(--muted);font-size:.88rem;}
 .scan-btn-outline:hover{border-color:var(--purple);color:var(--purple2);}
-.status-dot{width:10px;height:10px;border-radius:50%;background:var(--green);animation:pulse 2s infinite;box-shadow:0 0 12px rgba(0,255,136,.5),0 0 4px rgba(0,255,136,.8);}
+.status-dot{width:10px;height:10px;border-radius:50%;background:#00ff88;animation:pulse 2s infinite;box-shadow:0 0 12px rgba(0,255,136,.5),0 0 4px rgba(0,255,136,.8);}
 @keyframes pulse{0%,100%{opacity:1;box-shadow:0 0 12px rgba(0,255,136,.5)}50%{opacity:.5;box-shadow:0 0 6px rgba(0,255,136,.2)}}
 .token-table{width:100%;border-collapse:collapse;}
 .token-table th{font-size:.8rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;padding:.8rem 1rem;text-align:left;border-bottom:1px solid var(--border);font-weight:600;}
@@ -846,7 +985,7 @@ section{scroll-margin-top:64px;}
 .cursor-glow.active{opacity:1;}
 /* ── SCANNER SECTION ────────────────────────────────────────── */
 .scanner-title{font-family:var(--font-head);font-size:1.6rem;font-weight:800;letter-spacing:-.02em;}
-.status-dot{width:9px;height:9px;border-radius:50%;background:var(--green);animation:pulse 2s infinite;box-shadow:0 0 10px rgba(0,255,136,.5);}
+.status-dot{width:9px;height:9px;border-radius:50%;background:#00ff88;animation:pulse 2s infinite;box-shadow:0 0 10px rgba(0,255,136,.5);}
 .scan-btn-green{background:var(--orange);color:#fff;box-shadow:0 2px 16px rgba(255,107,53,.25);}
 .scan-btn-green:hover{box-shadow:0 4px 22px rgba(255,107,53,.4);transform:translateY(-1px);}
 .s-tab.active{color:var(--orange);border-bottom-color:var(--orange);}
@@ -1407,8 +1546,8 @@ nav{background:rgba(0,0,0,.96)!important;border-bottom:1px solid rgba(255,109,0,
   <div class="dbox-skip" onclick="closeDailyBox()">passer</div>
 </div>
 
-<!-- TICKER STRIP -->
-<div id="tickerStrip" style="background:#000;border-bottom:1px solid rgba(255,109,0,.25);padding:0;height:28px;overflow:hidden;position:relative;z-index:200;">
+<!-- TICKER STRIP (hidden in light theme) -->
+<div id="tickerStrip" style="display:none;background:#000;border-bottom:1px solid rgba(255,109,0,.25);padding:0;height:28px;overflow:hidden;position:relative;z-index:200;">
   <div id="tickerTrack" style="display:flex;align-items:center;height:28px;white-space:nowrap;animation:ticker-scroll 35s linear infinite;width:max-content;">
     <span style="color:rgba(255,255,255,.25);font-size:10px;font-family:'Space Mono',monospace;padding:0 18px;">◈ LIVE FEED</span>
     <span class="tk-item up">SOL <span style="color:#00ff88">+2.4%</span></span>
@@ -1461,21 +1600,20 @@ nav{background:rgba(0,0,0,.96)!important;border-bottom:1px solid rgba(255,109,0,
       <circle cx="30" cy="30" r="28" stroke="#7c6aff" stroke-width=".5" opacity=".3"/>
     </svg>
     <div>
-      <div class="logo-text">Memecoin<span>Pump</span></div>
-      <div class="logo-tagline">AI-Powered Solana Scanner</div>
+      <div class="logo-text">Memecoin<span>Scanner</span></div>
+      <div class="logo-tagline">Analyse. Comprends. Décide.</div>
     </div>
   </a>
   <div class="nav-links">
     <a href="#hero">Accueil</a>
-    <a href="#tools">Outils</a>
+    <a href="#how">Comment ça marche</a>
+    <a href="#education">Guides</a>
+    <a href="#antiscam">Anti-Scam</a>
     <a href="#scanner">Scanner</a>
-    <a href="#pricing">Plans</a>
-    <a href="#reviews">Avis</a>
-    <a href="#rugsnip" style="color:#ff4466;">🔪 Rug Snip</a>
   </div>
   <button class="lang-switch" onclick="toggleLang()">🇫🇷 FR</button>
   <button class="nav-btn btn-outline" onclick="openCode()">Se connecter</button>
-  <button class="nav-btn btn-primary" onclick="document.getElementById('pricing').scrollIntoView()">S'inscrire</button>
+  <button class="nav-btn btn-primary" onclick="document.getElementById('scanner').scrollIntoView({behavior:'smooth'})">Scanner →</button>
   <button class="nav-btn btn-outline" onclick="openAdmin()" id="adminBtn">⚙ Admin</button>
   <button id="notifBtn" onclick="handleNotifBtn()" title="Activer les alertes calls" style="background:transparent;border:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.35);padding:.4rem .75rem;border-radius:8px;cursor:pointer;font-size:.85rem;transition:.2s;font-family:'Space Mono',monospace;">🔔</button>
   <div id="streakBadge" style="display:flex;align-items:center;gap:4px;background:linear-gradient(135deg,rgba(255,170,0,.15),rgba(255,107,53,.1));border:1px solid rgba(255,170,0,.25);border-radius:10px;padding:5px 12px;cursor:default;" title="Jours de connexion consécutifs">
@@ -1487,198 +1625,359 @@ nav{background:rgba(0,0,0,.96)!important;border-bottom:1px solid rgba(255,109,0,
 <div id="landing-wrap">
 
 <!-- ═══ HERO ═══════════════════════════════════════════════════ -->
-<section id="hero">
-<div class="hero">
-  <div class="reveal">
-    <div class="hero-eyebrow">⚡ Solana Alpha · Scan toutes les 45s</div>
-    <div class="hero-title" id="h-title">Trouve les<br><span class="hl">gems Solana</span><br>avant tout le monde.</div>
-    <div class="hero-subtitle" id="h-sub">Smart money Axiom, 15 hard filters, scoring 150pts. L'algo tourne en continu — tu vois les tokens avant la masse.</div>
-    <div class="hero-stats">
-      <div class="stat-item">
-        <div class="stat-num" id="heroStatRug">95%</div>
-        <div class="stat-label">Rugs filtrés</div>
+<section id="hero" class="hero-section">
+  <div class="hero-container">
+    <div class="hero-content">
+      <div class="hero-badge">
+        <span class="badge-dot"></span>
+        Scanner actif · Analyse en continu
       </div>
-      <div class="stat-item">
-        <div class="stat-num orange" id="heroStatScan">45s</div>
-        <div class="stat-label">Cycle scan</div>
+      <h1 class="hero-title">Analyse les memecoins<br><span class="hero-highlight">avant d'investir</span></h1>
+      <p class="hero-subtitle">Un outil sérieux pour naviguer dans l'univers des memecoins Solana. Score de risque, filtres avancés et éducation — tout en un.</p>
+      <div class="hero-search">
+        <input type="text" class="hero-input" placeholder="Colle une adresse de token Solana..." id="heroSearchInput">
+        <button class="hero-cta-btn" onclick="document.getElementById('scanner').scrollIntoView({behavior:'smooth'})">Analyser →</button>
       </div>
-      <div class="stat-item">
-        <div class="stat-num" id="heroStatWr">68%</div>
-        <div class="stat-label">Winrate</div>
+      <div class="hero-links">
+        <a href="#education" class="hero-link-secondary">Voir les guides ↓</a>
+        <a href="#scanner" class="hero-link-secondary">Scanner live ↓</a>
       </div>
     </div>
-    <div class="hero-cta">
-      <button class="cta-big cta-green" onclick="document.getElementById('scanner').scrollIntoView({behavior:'smooth'})">Voir les calls live →</button>
-      <button class="cta-big cta-ghost" onclick="document.getElementById('pricing').scrollIntoView({behavior:'smooth'})">Voir les plans</button>
-    </div>
-  </div>
-  <div class="hero-live reveal-right" id="heroLive">
-    <div class="hlv-bar">
-      <div class="hlv-dot" style="background:#ff5f57"></div>
-      <div class="hlv-dot" style="background:#ffbd2e"></div>
-      <div class="hlv-dot" style="background:#28c840"></div>
-      <span class="hlv-title">memescanner — live_feed.js</span>
-      <span class="hlv-live">SCANNING</span>
-    </div>
-    <div class="hlv-inner">
-      <div class="hlv-stat-row">
-        <div class="hlv-stat"><div class="hlv-stat-v" id="hlvCycle">847</div><div class="hlv-stat-l">CYCLES</div></div>
-        <div class="hlv-stat"><div class="hlv-stat-v" id="hlvCalls">34</div><div class="hlv-stat-l">CALLS 24H</div></div>
-        <div class="hlv-stat"><div class="hlv-stat-v" style="color:#00ff88" id="hlvWr">68%</div><div class="hlv-stat-l">WINRATE</div></div>
-        <div class="hlv-stat"><div class="hlv-stat-v" style="color:#ffd700" id="hlvBest">6.2x</div><div class="hlv-stat-l">BEST ATH</div></div>
-      </div>
-      <div class="hlv-hdr"><span class="hlv-scan-dot"></span>PIPELINE v11 — cycle #<span id="hlvCycleN">847</span> — <span id="hlvTime" style="color:#ff9500">--:--:--</span></div>
-      <div id="hlvTokens"></div>
-      <div class="hlv-footer" id="hlvFooter">scanning solana mempool — 15 hard filters active</div>
-    </div>
-  </div>
-</div>
-</section>
-
-<!-- ═══ PROOF STRIP ════════════════════════════════════════════ -->
-<div class="proof-strip reveal">
-  <div class="proof-item">
-    <div class="proof-num g">+6.2x</div>
-    <div class="proof-label">Meilleur call ATH</div>
-  </div>
-  <div class="proof-sep"></div>
-  <div class="proof-item">
-    <div class="proof-num">68%</div>
-    <div class="proof-label">Winrate global</div>
-  </div>
-  <div class="proof-sep"></div>
-  <div class="proof-item">
-    <div class="proof-num o">45s</div>
-    <div class="proof-label">Cycle de scan</div>
-  </div>
-  <div class="proof-sep"></div>
-  <div class="proof-item">
-    <div class="proof-num">15</div>
-    <div class="proof-label">Hard filters actifs</div>
-  </div>
-  <div class="proof-sep"></div>
-  <div class="proof-item">
-    <div class="proof-num g">95%</div>
-    <div class="proof-label">Rugs bloqués</div>
-  </div>
-</div>
-
-<!-- ═══ DEMO SCANNER ═══════════════════════════════════════════ -->
-<div class="demo-section">
-  <div class="demo-inner">
-    <div class="reveal" style="text-align:center;margin-bottom:.5rem;">
-      <div class="section-label" style="justify-content:center;display:flex;">Démo live</div>
-      <div class="section-title" style="max-width:100%">Le scanner en action.</div>
-      <div class="section-sub" style="margin:0 auto 0;text-align:center;max-width:500px;">Regarde comment l'algo analyse chaque token en temps réel — score, filtres, décision.</div>
-    </div>
-    <div class="demo-window reveal">
-      <div class="demo-topbar">
-        <div class="demo-dot" style="background:#ff5f57"></div>
-        <div class="demo-dot" style="background:#ffbd2e"></div>
-        <div class="demo-dot" style="background:#28c840"></div>
-        <span class="demo-wintitle">memescanner v11 — solana pipeline</span>
-        <span class="demo-live-badge">LIVE SCAN</span>
-      </div>
-      <div class="demo-body">
-        <div class="demo-pipeline-info" id="demoPipelineInfo">PIPELINE v11 — cycle #<span id="demoCycleNum">1</span> — scanning 15 hard filters...</div>
-        <div class="demo-token-list" id="demoTokenList"></div>
-        <div class="demo-footer-bar">
-          <div class="demo-footer-stat">CYCLE <span id="demoFooterCycle">1</span></div>
-          <div class="demo-footer-stat">CALLS 24H <span id="demoFooterCalls" style="color:#00ff88">0</span></div>
-          <div class="demo-footer-stat">REJECTÉS <span id="demoFooterRej">0</span></div>
-          <div class="demo-footer-stat">WINRATE <span style="color:#00ff88">68%</span></div>
+    <div class="hero-visual">
+      <div class="hero-card-mock">
+        <div class="mock-header">
+          <div class="mock-dots">
+            <span></span><span></span><span></span>
+          </div>
+          <span class="mock-title">Analyse en cours...</span>
+          <span class="mock-live">● LIVE</span>
+        </div>
+        <div class="mock-body">
+          <div class="mock-score-ring">
+            <svg viewBox="0 0 100 100" class="score-svg">
+              <circle cx="50" cy="50" r="40" fill="none" stroke="#EEF2FF" stroke-width="8"/>
+              <circle cx="50" cy="50" r="40" fill="none" stroke="#4F46E5" stroke-width="8" stroke-dasharray="188 251" stroke-linecap="round" transform="rotate(-90 50 50)"/>
+            </svg>
+            <div class="mock-score-val">75<span>/150</span></div>
+          </div>
+          <div class="mock-indicators">
+            <div class="mock-ind safe"><span class="ind-dot green"></span> Liquidité OK</div>
+            <div class="mock-ind safe"><span class="ind-dot green"></span> Holders sains</div>
+            <div class="mock-ind warn"><span class="ind-dot amber"></span> Âge &lt; 24h</div>
+            <div class="mock-ind safe"><span class="ind-dot green"></span> Pas de bundle</div>
+          </div>
+        </div>
+        <div class="mock-footer">
+          <span class="mock-badge safe">✓ Passe les filtres</span>
+          <span class="mock-mcap">Mcap $420K</span>
         </div>
       </div>
     </div>
   </div>
-</div>
-
-<!-- ═══ GAINS CARDS ════════════════════════════════════════════ -->
-<div class="gains-section">
-  <div class="reveal">
-    <div class="section-label">Résultats réels</div>
-    <div class="section-title">Les derniers calls.</div>
-  </div>
-  <div class="gains-grid">
-    <div class="gain-card g reveal reveal-delay-1">
-      <div class="gain-score-badge">score 134</div>
-      <div class="gain-tok">BONK2.0</div>
-      <div class="gain-time">il y a 2h · pump.fun</div>
-      <div class="gain-x g">+6.2x</div>
-      <div class="gain-mcap">$18K → $112K mcap ATH</div>
-    </div>
-    <div class="gain-card o reveal reveal-delay-2">
-      <div class="gain-score-badge">score 128</div>
-      <div class="gain-tok">PEPE3</div>
-      <div class="gain-time">il y a 5h · raydium</div>
-      <div class="gain-x o">+3.8x</div>
-      <div class="gain-mcap">$45K → $171K mcap ATH</div>
-    </div>
-    <div class="gain-card gold reveal reveal-delay-3">
-      <div class="gain-score-badge">score 141</div>
-      <div class="gain-tok">WOJAK</div>
-      <div class="gain-time">il y a 8h · pump.fun</div>
-      <div class="gain-x gold">+4.5x</div>
-      <div class="gain-mcap">$30K → $135K mcap ATH</div>
-    </div>
-    <div class="gain-card g reveal reveal-delay-4">
-      <div class="gain-score-badge">score 119</div>
-      <div class="gain-tok">FROG</div>
-      <div class="gain-time">il y a 12h · raydium</div>
-      <div class="gain-x g">+2.9x</div>
-      <div class="gain-mcap">$62K → $180K mcap ATH</div>
-    </div>
-  </div>
-</div>
-
-<!-- ═══ TOOLS ══════════════════════════════════════════════════ -->
-<section id="tools">
-<div class="tools-section">
-  <div class="tools-inner">
-    <div class="reveal">
-      <div class="section-label">Arsenal</div>
-      <div class="section-title">Tout ce qu'il faut<br>pour print.</div>
-      <div class="section-sub">Chaque outil est calibré pour les degens sérieux. Pas de bullshit, que de l'alpha actionnable.</div>
-    </div>
-    <div class="tools-grid">
-      <div class="tool-card reveal reveal-delay-1" onclick="document.getElementById('scanner').scrollIntoView({behavior:'smooth'})">
-        <div class="tool-badge">LIVE</div>
-        <div class="tool-icon-wrap">🧠</div>
-        <div class="tool-name">Scanner Live</div>
-        <div class="tool-desc">15 hard filters + scoring 150pts. L'algo tourne en continu et apprend de chaque call. Tu vois les gems en premier.</div>
-      </div>
-      <div class="tool-card accent-green reveal reveal-delay-2">
-        <div class="tool-badge green">ALPHA</div>
-        <div class="tool-icon-wrap">🎯</div>
-        <div class="tool-name">Smart Money</div>
-        <div class="tool-desc">Copie les wallets Axiom les plus profitables. Quand le smart money entre sur un token, t'es notifié en 45 secondes.</div>
-      </div>
-      <div class="tool-card accent-green reveal reveal-delay-3" onclick="document.getElementById('scanner').scrollIntoView({behavior:'smooth'})">
-        <div class="tool-badge green">ALPHA</div>
-        <div class="tool-icon-wrap">🔬</div>
-        <div class="tool-name">Debug CA</div>
-        <div class="tool-desc">Analyse n'importe quel contrat en profondeur. Score détaillé, holders, socials, pattern — tout ce que l'algo voit.</div>
-      </div>
-      <div class="tool-card accent-gold reveal reveal-delay-4">
-        <div class="tool-badge gold">DUBAI</div>
-        <div class="tool-icon-wrap">🐋</div>
-        <div class="tool-name">Whale Alerts</div>
-        <div class="tool-desc">Surveillance des gros mouvements de liquidité. Détecte les accumulations silencieuses avant que ça pump.</div>
-      </div>
-    </div>
-  </div>
-</div>
 </section>
 
-<!-- ═══ TRANSITION → APP ═══════════════════════════════════════ -->
-<div class="app-transition reveal">
-  <div class="section-label" style="color:rgba(255,255,255,.4);">Le scanner en action</div>
-  <div class="app-transition-title">Accède au scanner live.</div>
-  <div class="app-transition-sub">Connecte-toi avec ton code d'accès pour voir les tokens en temps réel.</div>
-  <span class="app-transition-arrow">↓</span>
+<!-- ═══ STATS STRIP ════════════════════════════════════════════ -->
+<div class="stats-strip">
+  <div class="stats-strip-inner">
+    <div class="stat-block">
+      <div class="stat-val">95%</div>
+      <div class="stat-lbl">Rugs filtrés</div>
+    </div>
+    <div class="stat-divider"></div>
+    <div class="stat-block">
+      <div class="stat-val">15</div>
+      <div class="stat-lbl">Hard filters</div>
+    </div>
+    <div class="stat-divider"></div>
+    <div class="stat-block">
+      <div class="stat-val" id="heroStatWr">68%</div>
+      <div class="stat-lbl">Winrate</div>
+    </div>
+    <div class="stat-divider"></div>
+    <div class="stat-block">
+      <div class="stat-val">45s</div>
+      <div class="stat-lbl">Cycle de scan</div>
+    </div>
+    <div class="stat-divider"></div>
+    <div class="stat-block">
+      <div class="stat-val">150pts</div>
+      <div class="stat-lbl">Score max</div>
+    </div>
+  </div>
 </div>
 
+<!-- ═══ COMMENT CA MARCHE ══════════════════════════════════════ -->
+<section class="how-section" id="how">
+  <div class="section-container">
+    <div class="section-header">
+      <div class="section-tag">Comment ça marche</div>
+      <h2 class="section-title">Simple, rapide, fiable.</h2>
+      <p class="section-sub">Trois étapes pour analyser un token et prendre une décision informée.</p>
+    </div>
+    <div class="steps-grid">
+      <div class="step-card">
+        <div class="step-num">01</div>
+        <div class="step-icon">🔍</div>
+        <h3 class="step-title">Entre un token</h3>
+        <p class="step-desc">Colle l'adresse du contrat ou le nom du token. Le scanner récupère automatiquement toutes les données on-chain.</p>
+      </div>
+      <div class="step-connector">→</div>
+      <div class="step-card">
+        <div class="step-num">02</div>
+        <div class="step-icon">⚙️</div>
+        <h3 class="step-title">Analyse automatique</h3>
+        <p class="step-desc">15 filtres s'exécutent en parallèle : liquidité, holders, smart money, contrat, âge, distribution...</p>
+      </div>
+      <div class="step-connector">→</div>
+      <div class="step-card">
+        <div class="step-num">03</div>
+        <div class="step-icon">📊</div>
+        <h3 class="step-title">Score de risque</h3>
+        <p class="step-desc">Tu reçois un score sur 150 points avec le détail de chaque critère. Vert = safe, Rouge = risqué.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ EDUCATION ══════════════════════════════════════════════ -->
+<section class="education-section" id="education">
+  <div class="section-container">
+    <div class="section-header">
+      <div class="section-tag">Guides &amp; Formation</div>
+      <h2 class="section-title">Comprendre avant d'investir.</h2>
+      <p class="section-sub">Des ressources claires pour éviter les pièges et développer une vraie méthode d'analyse.</p>
+    </div>
+    <div class="edu-tabs">
+      <button class="edu-tab active">Tous</button>
+      <button class="edu-tab">Débutant</button>
+      <button class="edu-tab">Analyse</button>
+      <button class="edu-tab">Sécurité</button>
+    </div>
+    <div class="edu-grid">
+      <div class="edu-card">
+        <div class="edu-card-tag beginner">Débutant</div>
+        <h3 class="edu-card-title">C'est quoi un memecoin ?</h3>
+        <p class="edu-card-desc">Comprendre la nature spéculative des memecoins, leur cycle de vie et pourquoi la majorité échouent.</p>
+        <div class="edu-card-footer">
+          <span class="edu-read-time">⏱ 5 min</span>
+          <span class="edu-arrow">→</span>
+        </div>
+      </div>
+      <div class="edu-card">
+        <div class="edu-card-tag analysis">Analyse</div>
+        <h3 class="edu-card-title">Lire la liquidité d'un token</h3>
+        <p class="edu-card-desc">Pourquoi la liquidité est le premier indicateur à vérifier et comment éviter les pièges classiques.</p>
+        <div class="edu-card-footer">
+          <span class="edu-read-time">⏱ 7 min</span>
+          <span class="edu-arrow">→</span>
+        </div>
+      </div>
+      <div class="edu-card">
+        <div class="edu-card-tag security">Sécurité</div>
+        <h3 class="edu-card-title">Reconnaître un rug pull</h3>
+        <p class="edu-card-desc">Les 8 signaux d'alarme qui précèdent un rug et comment les détecter avant qu'il soit trop tard.</p>
+        <div class="edu-card-footer">
+          <span class="edu-read-time">⏱ 8 min</span>
+          <span class="edu-arrow">→</span>
+        </div>
+      </div>
+      <div class="edu-card">
+        <div class="edu-card-tag analysis">Analyse</div>
+        <h3 class="edu-card-title">Analyser les holders</h3>
+        <p class="edu-card-desc">Distribution saine vs concentration dangereuse : comment lire le wallet chart pour évaluer le risque.</p>
+        <div class="edu-card-footer">
+          <span class="edu-read-time">⏱ 6 min</span>
+          <span class="edu-arrow">→</span>
+        </div>
+      </div>
+      <div class="edu-card">
+        <div class="edu-card-tag beginner">Débutant</div>
+        <h3 class="edu-card-title">Le timing d'entrée</h3>
+        <p class="edu-card-desc">Early vs late : comprendre les phases d'un memecoin et identifier la fenêtre d'opportunité optimale.</p>
+        <div class="edu-card-footer">
+          <span class="edu-read-time">⏱ 5 min</span>
+          <span class="edu-arrow">→</span>
+        </div>
+      </div>
+      <div class="edu-card">
+        <div class="edu-card-tag security">Sécurité</div>
+        <h3 class="edu-card-title">Smart money : qui suivre ?</h3>
+        <p class="edu-card-desc">Comment identifier les wallets profitables sur Solana et ce que leurs positions révèlent sur un token.</p>
+        <div class="edu-card-footer">
+          <span class="edu-read-time">⏱ 9 min</span>
+          <span class="edu-arrow">→</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ ANTI-SCAM ══════════════════════════════════════════════ -->
+<section class="antiscam-section" id="antiscam">
+  <div class="section-container">
+    <div class="antiscam-inner">
+      <div class="antiscam-left">
+        <div class="section-tag">Checklist Anti-Scam</div>
+        <h2 class="section-title">Les 6 vérifications<br>indispensables.</h2>
+        <p class="section-sub">Avant d'investir dans n'importe quel memecoin, passe ces 6 points en revue. Le scanner les vérifie automatiquement.</p>
+        <button class="primary-btn" onclick="document.getElementById('scanner').scrollIntoView({behavior:'smooth'})">Lancer le scanner →</button>
+      </div>
+      <div class="antiscam-right">
+        <div class="check-item">
+          <div class="check-icon safe">✓</div>
+          <div class="check-content">
+            <div class="check-title">Liquidité verrouillée</div>
+            <div class="check-desc">La liquidité doit être locked ou burned. Si elle est retirable, le rug est possible à tout moment.</div>
+          </div>
+        </div>
+        <div class="check-item">
+          <div class="check-icon safe">✓</div>
+          <div class="check-content">
+            <div class="check-title">Contrat vérifié</div>
+            <div class="check-desc">Le mint authority doit être revoked. Sans ça, le créateur peut émettre des tokens à l'infini.</div>
+          </div>
+        </div>
+        <div class="check-item">
+          <div class="check-icon safe">✓</div>
+          <div class="check-content">
+            <div class="check-title">Distribution saine</div>
+            <div class="check-desc">Aucun wallet ne doit détenir plus de 10% du supply. La concentration = manipulation = dump.</div>
+          </div>
+        </div>
+        <div class="check-item">
+          <div class="check-icon warn">!</div>
+          <div class="check-content">
+            <div class="check-title">Volume organique</div>
+            <div class="check-desc">Un volume artificiel créé par quelques wallets est un signe de wash trading. Regarde la source des trades.</div>
+          </div>
+        </div>
+        <div class="check-item">
+          <div class="check-icon safe">✓</div>
+          <div class="check-content">
+            <div class="check-title">Pas de bundle au launch</div>
+            <div class="check-desc">Un bundle = des wallets coordonnés qui snipe au lancement pour dumper ensuite. Red flag absolu.</div>
+          </div>
+        </div>
+        <div class="check-item">
+          <div class="check-icon safe">✓</div>
+          <div class="check-content">
+            <div class="check-title">Présence sociale réelle</div>
+            <div class="check-desc">Twitter, Telegram actifs avec une vraie communauté — pas des bots. Vérifie l'engagement réel.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ MISSION ════════════════════════════════════════════════ -->
+<section class="mission-section">
+  <div class="section-container">
+    <div class="mission-inner">
+      <div class="mission-content">
+        <div class="section-tag">Notre mission</div>
+        <h2 class="section-title">Un outil, pas une promesse.</h2>
+        <p class="mission-text">MemeScanner est né d'un constat simple : trop d'investisseurs particuliers perdent de l'argent sur des tokens qu'une analyse basique aurait éliminés.</p>
+        <p class="mission-text">Notre algorithme analyse chaque token sur 150 points — liquidité, smart money, holders, contrat, pattern de prix — pour te donner une image claire du risque <strong>avant</strong> d'investir.</p>
+        <p class="mission-text">Nous ne promettons pas de gains. Nous promettons de la clarté.</p>
+      </div>
+      <div class="mission-stats">
+        <div class="mission-stat-card">
+          <div class="mission-stat-val">150</div>
+          <div class="mission-stat-lbl">Points d'analyse par token</div>
+        </div>
+        <div class="mission-stat-card">
+          <div class="mission-stat-val">15</div>
+          <div class="mission-stat-lbl">Filtres de sécurité actifs</div>
+        </div>
+        <div class="mission-stat-card">
+          <div class="mission-stat-val">45s</div>
+          <div class="mission-stat-lbl">Temps de scan complet</div>
+        </div>
+        <div class="mission-stat-card">
+          <div class="mission-stat-val">24/7</div>
+          <div class="mission-stat-lbl">Surveillance continue</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ CTA FINAL ══════════════════════════════════════════════ -->
+<section class="cta-section">
+  <div class="section-container">
+    <div class="cta-inner">
+      <h2 class="cta-title">Prêt à analyser ton prochain token ?</h2>
+      <p class="cta-sub">Accède au scanner, consulte les guides et prends des décisions basées sur des données — pas sur de la hype.</p>
+      <div class="cta-buttons">
+        <button class="primary-btn large" onclick="document.getElementById('scanner').scrollIntoView({behavior:'smooth'})">Lancer le scanner →</button>
+        <a href="#education" class="secondary-btn large">Voir les guides</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ FOOTER ══════════════════════════════════════════════════ -->
+<footer class="site-footer">
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <div class="footer-logo">Memecoin<span>Scanner</span></div>
+      <p class="footer-tagline">Analyse. Comprends. Décide.</p>
+    </div>
+    <div class="footer-links">
+      <div class="footer-col">
+        <div class="footer-col-title">Outil</div>
+        <a href="#scanner">Scanner live</a>
+        <a href="#how">Comment ça marche</a>
+        <a href="#antiscam">Checklist anti-scam</a>
+      </div>
+      <div class="footer-col">
+        <div class="footer-col-title">Formation</div>
+        <a href="#education">Guides débutant</a>
+        <a href="#education">Analyse de tokens</a>
+        <a href="#education">Sécurité</a>
+      </div>
+      <div class="footer-col">
+        <div class="footer-col-title">Légal</div>
+        <a href="#">Mentions légales</a>
+        <a href="#">Pas de conseil financier</a>
+      </div>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <p class="footer-disclaimer">⚠️ MemeScanner est un outil d'analyse informatif. Il ne constitue pas un conseil financier. Investir dans les cryptomonnaies comporte des risques importants de perte en capital.</p>
+    <p class="footer-copy">© 2025 MemeScanner · Tous droits réservés</p>
+  </div>
+</footer>
+
+<!-- Hidden stub elements for JS compatibility -->
+<span id="h-title" style="display:none"></span>
+<span id="h-sub" style="display:none"></span>
+<span id="heroStatRug" style="display:none">95%</span>
+<span id="heroStatScan" style="display:none">45s</span>
+<span id="hlvCycleN" style="display:none">0</span>
+<span id="hlvCycle" style="display:none">0</span>
+<span id="hlvTime" style="display:none"></span>
+<span id="hlvTokens" style="display:none"></span>
+<span id="hlvFooter" style="display:none"></span>
+<span id="hlvCalls" style="display:none">0</span>
+<span id="hlvWr" style="display:none">0%</span>
+<span id="hlvBest" style="display:none">0x</span>
+<div id="heroScanStatus" style="display:none"></div>
+<div id="demoTokenList" style="display:none"></div>
+<span id="demoCycleNum" style="display:none">1</span>
+<span id="demoFooterCycle" style="display:none">1</span>
+<span id="demoFooterCalls" style="display:none">0</span>
+<span id="demoFooterRej" style="display:none">0</span>
+<div id="demoPipelineInfo" style="display:none"></div>
+<div id="heroLive" style="display:none"></div>
+
 </div><!-- end #landing-wrap -->
+
+<div class="app-divider" id="app-top">
+  <div class="app-divider-title">Scanner Live</div>
+  <div class="app-divider-sub">L'algorithme tourne en continu — voici les résultats en temps réel.</div>
+</div>
 
 <section id="scanner">
 <div class="scanner-section">
