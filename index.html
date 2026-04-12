@@ -7033,8 +7033,8 @@ async function fetchTokens(){
       const rurl=(rp?.url||'').toLowerCase();
       const raddr=(rp?.baseToken?.address||'');
 
-      // HARD FILTER 0 — Axiom wallet obligatoire
-      if((rescored.debug?.axiomCount||0)<1){rejected['no_axiom']=(rejected['no_axiom']||0)+1;continue;}
+      // HARD FILTER 0 — Minimum 3 Axiom wallets obligatoires
+      if((rescored.debug?.axiomCount||0)<3){rejected['no_axiom']=(rejected['no_axiom']||0)+1;continue;}
 
       // HARD FILTER 1 — Platform
       const isPump=rdex.includes('pump')||rurl.includes('pump')||raddr.endsWith('pump');
