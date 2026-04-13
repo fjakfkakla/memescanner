@@ -10,6 +10,52 @@ const HELIUS_API  = `https://api.helius.xyz`;
 
 const AXIOM_SET   = new Set(AXIOM_WALLETS);
 
+// ── Discord Webhook ──
+const DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1493295269423354057/jXnzyFDjDDD1ZdlZ0bbRwgFDSDOr1pQyU9kryqAIOefvJQBacg1SkA_d_toKVuFRcPNn";
+
+async function sendDiscordCall(token) {
+  const mcapStr = token.mcap >= 1000
+    ? `$${(token.mcap / 1000).toFixed(1)}K`
+    : `$${token.mcap}`;
+
+  const axiomCount = token.walletData?.count || token.debug?.axiomCount || 0;
+  const rugEmoji   = token.rugRisk === 'LOW' ? '🟢' : token.rugRisk === 'MEDIUM' ? '🟡' : '🔴';
+
+  const message = {
+    username: "MemeScanner 🔬",
+    embeds: [{
+      title: `${token.emoji || '🚨'} NEW CALL — ${token.symbol}`,
+      color: 0x00ff99,
+      fields: [
+        { name: "📊 Score",       value: `**${token.score}/170**`,         inline: true },
+        { name: "💰 Mcap",        value: mcapStr,                           inline: true },
+        { name: `${rugEmoji} Rug Risk`, value: token.rugRisk,              inline: true },
+        { name: "👛 Axiom Wallets", value: `${axiomCount} wallet${axiomCount > 1 ? 's' : ''}`, inline: true },
+        { name: "📋 CA",          value: `\`${token.addr}\``,              inline: false },
+        { name: "🔗 DexScreener", value: `[Voir le chart](${token.pairUrl})`, inline: true },
+        { name: "💊 Pump.fun",    value: `[Voir sur Pump](https://pump.fun/${token.addr})`, inline: true },
+      ],
+      footer: { text: "MemeScanner • Solana" },
+      timestamp: new Date().toISOString()
+    }]
+  };
+
+  try {
+    const res = await fetch(DISCORD_WEBHOOK_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(message)
+    });
+    if (res.ok) {
+      console.log(`[Discord] ✅ Call envoyé: ${token.symbol}`);
+    } else {
+      console.warn(`[Discord] ⚠️ Erreur ${res.status} pour ${token.symbol}`);
+    }
+  } catch (e) {
+    console.error(`[Discord] ❌ Webhook error: ${e.message}`);
+  }
+}
+
 // Cache mémoire : tokens déjà callés (évite les doublons)
 const calledTokens  = new Map(); // addr → timestamp
 const swCache       = new Map(); // addr → { ts, result }
@@ -580,6 +626,8 @@ export async function runScanCycle() {
             calledAt:   now,
           });
           console.log(`[Worker] CALL: ${token.symbol} score=${token.score} mcap=$${token.mcap}`);
+          // ── Notification Discord ──
+          await sendDiscordCall(token);
         } catch (e) {
           console.warn('[Worker] saveCall error:', e.message);
         }
