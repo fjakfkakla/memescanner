@@ -2927,1078 +2927,401 @@ let currentRugSort = 'recent';
 
 const EMOJIS = ['🐸','🚀','💎','🌙','🔥','⚡','🦊','🐶','🐱','🎰','🍌','🧸','🦍','🐻','🎯'];
 
-// Wallets à pénaliser : -5 si 1+ présent, -10 si les 3 présents
-const BAD_WALLETS = new Set([
-  "7NAd2EpYGGeFofpyvgehSXhH5vg6Ry6VRMW2Y6jiqCu1",
-  "FxN3VZ4BosL5urG2yoeQ156JSdmavm9K5fdLxjkPmaMR",
-  "2fg5QD1eD7rzNNCsvnhmXFm5hqNgwTTG8p7kQ6f3rx6f",
-]);
-
-const AXIOM_WALLETS = new Set([
-  "niggerd597QYedtvjQDVHZTCCGyJrwHNm2i49dkm5zS",
-  "CWvdyvKHEu8Z6QqGraJT3sLPyp9bJfFhoXcxUYRKC8ou",
-  "nDpEvmCjGXixCXs191Fb1WEmHZSavWQe4gc2AEHx4VZ",
-  "CCUcjek5p6DLoH2YNtjizxYhAnStXAQAGVxhp1cYJF7w",
-  "HUpPyLU8KWisCAr3mzWy2FKT6uuxQ2qGgJQxyTpDoes5",
-  "vQ33AcEii7mciXznW7TAqzpv18Z77PQHxSfJ7xNBHwU",
-  "4YzpSZpxDdjNf3unjkCtdWEsz2FL5mok7e5XQaDNqry8",
-  "HXkaN7TAQYXsybY1UHLrn18cVa9jgM3mbReasbAoSjTv",
-  "98T65wcMEjoNLDTJszBHGZEX75QRe8QaANXokv4yw3Mp",
-  "9fR8gerfvGSycFGbK2VY1PFrPuU9jS6QM47S974yTUHC",
-  "qNGhUruCGJpXJdsnV74USHErcbm3CrXRsnP8D6Z34Hh",
-  "2JarGaaVhqcV2FbsxQPLagFpPi4qh3SuKt7adYk299hr",
-  "GVw1z8y8MooqD1uVRTx9dQyZQuXrV6wqant74rwMPWfZ",
-  "FXkGydbnG4jHVYqbBWWG4kkkwCpz6YEeVtM1vA6kZLaS",
-  "9ecRdqNCBxwReiY2pxtnLeayeBzE1CrSSmKKJJGdmsaJ",
-  "5Q544fKrFoe6tsEbD7S8EmxGTJYAKtTVhAW5Q5pge4j1",
-  "HiMomFaRLrcRuasmmpE9ixUrQKa4EgoP5r2HaHo73Qt1",
-  "BHREKFkPQgAtDs8Vb1UfLkUpjG6ScidTjHaCWFuG2AtX",
-  "rgPyefcNqJCsJj1wrWhdQqHVphVWFXLqU5wtiFStBEN",
-  "5FFP2fbd8RmhuqfkgwqFs2Q42NRCo4jj77yAkha8bex9",
-  "9nJ72hhtwyGHoUbEN3xfGuiLnrX3SnLYX52hkoahn2YH",
-  "5ZBHTpUYi4DhijgtCFCixsXx52ThPuxSfEJcmbL5Nkak",
-  "2jyzufCHXmQbhcfAsow84qPEhNRPfbFcfKfg6r6x9c1F",
-  "4S9U8HckRngscHWrW418cG6Suw62dhEZzmyrT2hxSye5",
-  "CwodPaTCAow3H5LygvkAXTuUKyNHavRLyiTCfWnXn2Zx",
-  "ADRSHrTbiwESzPpXEjFXHmNFDSZwhFPC1W2bDrgSQwPh",
-  "EApeEnqTpVboFZB2gqPwyzoqw8KxCT6Aud2p8R9n1wxY",
-  "BtMBMPkoNbnLF9Xn552guQq528KKXcsNBNNBre3oaQtr",
-  "Fpu64qHkvPDYUEsstSqXHAY3zUpCaVPZ8bntJ88YFtk4",
-  "8uDfUvwik5PxdUPsQ6J7anyhChXLx8hQYNoRsusox9XB",
-  "Hnnw2hAgPgGiFKouRWvM3fSk3HnYgRv4Xq1PjUEBEuWM",
-  "3NzhtFBULFCyvXTboAcFg6G5b9oS92cSfGtMSbhcWNCu",
-  "DZAa55HwXgv5hStwaTEJGXZz1DhHejvpb7Yr762urXam",
-  "C9fgBZaBoNmcZMknBnUdbQW8bUkkF6tdBKH74Ui7166r",
-  "ApRnQN2HkbCn7W2WWiT2FEKvuKJp9LugRyAE1a9Hdz1",
-  "86aD8K2bszxPemgHifvsC4vYkjfvawkSejdExx7KZUA7",
-  "FRDcU32jfiuo7bTM7e2SHtZnx6fSrLTS19iGScfCamPU",
-  "99i9uVA7Q56bY22ajKKUfTZTgTeP5yCtVGsrG9J4pDYQ",
-  "5R4RJojpoKNwBcJNgVYGtwXdmhyEHWXGDBQqUnSpLfcW",
-  "4BdKaxN8G6ka4GYtQQWk4G4dZRUTX2vQH9GcXdBREFUk",
-  "AonDkSa2EZ19U365YrY3bKLDbLf7cU1herGFTGxXYrcm",
-  "525LueqAyZJueCoiisfWy6nyh4MTvmF4X9jSqi6efXJT",
-  "52kPsnhTpjHZucGUQy4YDm8g9ykXPMC47iNVSVRscikb",
-  "A4DCAjDwkq5jYhNoZ5Xn2NbkTLimARkerVv81w2dhXgL",
-  "5V9zsFPtN2nxoA53Xm6FKbx797NBnBZFxMdr84H1QXNL",
-  "8yJFWmVTQq69p6VJxGwpzW7ii7c5J9GRAtHCNMMQPydj",
-  "9uyDy9VDBw4K7xoSkhmCAm8NAFCwu4pkF6JeHUCtVKcX",
-  "8RfH3LUSed9xM5bh7txdWKZFNbYGB8AeLCaeZjC9kN1o",
-  "HWTVoxH2HaknzqanZXRxPa2L5tUkVixiLn5ZxTMtWU9N",
-  "7SDs3PjT2mswKQ7Zo4FTucn9gJdtuW4jaacPA65BseHS",
-  "J23qr98GjGJJqKq9CBEnyRhHbmkaVxtTJNNxKu597wsA",
-  "4xxBGBnXqfCyUpsKRix1VaWm15uND2P83ForEzYDngbD",
-  "3jEWWG1patKqcwdD5qYJTtJPmBbsq6HLg4e2QA6TW8kE",
-  "2vkYVxq7HqrB2dzUH4VQ28wGAzv5c6ySt5uqPss5rGTJ",
-  "12qkHaZGnvc6tFA2AYs5ki5V2hNkWBxXJAPTbrF2AFwY",
-  "EDdEH4cESddXRGXycTHr2Cddr1SBVVZYpRTWSRcK5NPf",
-  "ETcmHKVYg2TrU83cZbP6BNoitfztUdGVagWNSmGyzycG",
-  "2m5498hY3hpSvm1pVyZwwyU6bpQGFGu3PADSoEoZFXQB",
-  "Avc4fcAvrXRNnoEjwRVgM61EjwKX6smdPspGQjeRWLV1",
-  "J3AoRAx4tHqx6V7mZFMAhKCft2iMzNVJUXNmtRRuWcyM",
-  "9ru9BSVFSUqSRQFwdjjnkzQGf9yUdpRTjpjXPKc4BvxX",
-  "ECCKBDWX3MkEcf3bULbLBb9FvrEQLsmPMFTKFpvjzqgP",
-  "Cbd7Y83SCHYxb7EV7Q3sgknaW9hNDJJJ2LJ1JHU4bt35",
-  "6RoLbZJWJHpTk4sdPsWzocEHiRtzPS36WcBjnMXuQrfU",
-  "EHg5YkU2SZBTvuT87rUsvxArGp3HLeye1fXaSDfuMyaf",
-  "FRbLA1pb1B3bbknPwDGiZgZ2aUM1GREVj3ivRHrk6iCB",
-  "9HhafAZc6jo6rXxeJ7F4RN1BQfsTm6xLRs6YYAq6nhAn",
-  "HbwmhJZh9c1PhAYUvtn3E86fpw2m7yxvoypTKm6Wfqnx",
-  "CGpDXPkpvPUxoijts2GPvwemLHvAVnF3NK7jA6JcUYYU",
-  "2itf6FWdZUqUb3fKUFPGnaTgqjjvWZwzrz129LCaqFa2",
-  "9vNcYofhYr48XEd5Wodc9De2e6Ngc7pN1giXKc6sNmmG",
-  "49cMoFp65xZ18A7zCXBs4kG6uCdLdEj5PnbhMVtYMdoZ",
-  "53BnNc49Ajgstciq3CRoyxuBpkkW1r8pgPyvr7JGYnsh",
-  "CgmwCcCoF5YNhWrVBz2R2iH4MopfvYLfxLgSZsrnemi6",
-  "2HWT2KLLdN2wxYTqdSuko5SBzg2SEJASgV4GE2tD7TML",
-  "HdxkiXqeN6qpK2YbG51W23QSWj3Yygc1eEk2zwmKJExp",
-  "73GkXB7DoTYAuepxQTGJG7Kn5Gy4jg3HjmpF3Uq6Yzam",
-  "FWznbcNXWQuHTawe9RxvQ2LdCENssh12dsznf4RiouN5",
-  "71CPXu3TvH3iUKaY1bNkAAow24k6tjH473SsKprQBABC",
-  "2AtFkEamLgK9ByuFX5XmG7WHZ9CVLFC6pxhWpfYkL1KZ",
-  "JDd3hy3gQn2V982mi1zqhNqUw1GfV2UL6g76STojCJPN",
-  "2ezv4U5HmPpkt2xLsKnw1FyyGmjFBeW7c166p99Hw2xB",
-  "A1m7rq5UgnSKEtwrhkt1FjJMgei94C5sugeD8W7a5yza",
-  "AAhnidQyZbh2ej1Ubqc3DAP7oKM72akPzxtYpaZpUe8r",
-  "Fxj1j5ohVoRos1yQnvx6bsvYCt493VGpyLbMiq4eLff3",
-  "G1pRtSyKuWSjTqRDcazzKBDzqEF96i1xSURpiXj3yFcc",
-  "6S8GezkxYUfZy9JPtYnanbcZTMB87Wjt1qx3c6ELajKC",
-  "As7HjL7dzzvbRbaD3WCun47robib2kmAKRXMvjHkSMB5",
-  "Gv7CnRo2L2SJ583XEfoKHKbmWK3wNoBDxVoJqMKJR4Nu",
-  "GVc8ZLvzn8WEFZSzLgyRkzpZSLZWxSFVfMtmUd1noAt7",
-  "c3XGUoDSBaJDA8qaJ5pUkCnamMERwZLJBVjxdkNepGo",
-  "58fnGhQQSLQebaXysboqY8Ske487j2KminKtyoyAkFRf",
-  "4Uq8kK9rzb1BhLKez5LgfzQLHUn2TTX1LRnyfkxFBrDo",
-  "2zvSYhoejqAdAsH52gmWHM1dm179yDmBGcFbFxatHf6x",
-  "F8kzAjgpnpaCWYfMF2neALx9TtYdCJ34ub312mBAAMUy",
-  "BrNoqdHUCcv9yTncnZeSjSov8kqhpmzv1nAiPbq1M95H",
-  "5M8ACGKEXG1ojKDTMH3sMqhTihTgHYMSsZc6W8i7QW3Y",
-  "DYAn4XpAkN5mhiXkRB7dGq4Jadnx6XYgu8L5b3WGhbrt",
-  "CfyPKSXiFRLnq8cKrefgHKEFjFunwFMDZootqdbeZdfE",
-  "HLZ2Qv4woaCTk2GYiNwinia4nomJDH5RXBK2UhkHSp9N",
-  "3ubt1SkopkPkL8raULj9sXMgnhh52LQZQRX7AzuFd8ux",
-  "Hf3wTio1tGCTMuCiemrS3opgNFkJaAT9YSSQgrHWJSiZ",
-  "2MPVeNeM6FTUwAGEyfNPJSDXhLx5FsPoyJ3XVm44ZXbG",
-  "831yhv67QpKqLBJjbmw2xoDUeeFHGUx8RnuRj9imeoEs",
-  "3w8N7ay9pvNaXxYUu7gFeZQ2zHg6FECSgwGWxcWwb8C8",
-  "7aQ2v6Eh5ocjcJzjTBHaVUgi6UuSRDFKnaVQzco2ygvg",
-  "984RPu3oz42QdRzsFomW1maNZQ3hWJod1dNwMABEZJ1C",
-  "5qvLmTd6yKMn7T7DP6RPPcASBH231Rtvjta1Pzao48PR",
-  "5CGEXBgHHhqJ7GHYooedLV4nSpAjphnhePyMccvjYgT1",
-  "5qBNzFpGNN1DYaDsVqCPYfBh5zmQsxbswSo93GPismm8",
-  "71o4R3L3AzAN5KA4PSUhoc2aH6buZ4dWJye4eYe1y76R",
-  "8Zrr2Zwi2qvqLdU4ZE7dSYLsVA1z3qQwHDeN1EjrzeiC",
-  "9jyqFiLnruggwNn4EQwBNFXwpbLM9hrA4hV59ytyAVVz",
-  "5rkPDK4JnVAumgzeV2Zu8vjggMTtHdDtrsd5o9dhGZHD",
-  "kwhcooMFSt8k8S1RbdygHiYkAtyVVwcPMhyqBecTzBU",
-  "4cXnf2z85UiZ5cyKsPMEULq1yufAtpkatmX4j4DBZqj2",
-  "EhQ7iJNjXFiajR5zwJmXoKo5faQc2X2JHtFx7zWJKTaV",
-  "wcVCiQSVStLBL67DQX59TooYfoVFotffiAuwSYR6jmQ",
-  "BLAPqE4CeHKNHCuutMjZY43d9okymafZHqbx9hdq4cX",
-  "7QZGS7MQ4S6hRmE8iXoFTXgQ2hXVUCho2ZhgeWvLNPZT",
-  "5PAhQiYdLBd6SVdjzBQDxUAEFyDdF5ExNPQfcscnPRj5",
-  "AMaokHvLumVnwgYTPGEut9VPwRWXZy2jJQQzCkvrPafT",
-  "BYjkvg63myNnKFG61MLUf5kA1FndU8rHXjadPPoMpi1S",
-  "EuWShE1btCSuj3qHC9E5WqgBFECFXovFsYc3perGxAeY",
-  "BaAx46GgHYM4RYVwDBwEf8zSriAZRNXz6hXheRJ3d7LP",
-  "Hzgn7Bjy4GG4aAoX2DYtPujSyximosPetwk2gebqtbTe",
-  "Gmminb9hQJN4TSzxTD5hc4d2r63SiERTc4DU8QVYVUR9",
-  "3jN1M8gWLk2ryTGnscrcwRK1Gy4Ttzq5QizWT8uizZsT",
-  "BD7oWkEQsUwE8sj4UT7jtrGjHC8Gq1iRqXY7U6DTbJpf",
-  "2esDRU8hgHZTu25tw4emYHhDGPrqnRMwFNQCsJNzSivz",
-  "BT2sdwJeDWqXNUNBJwtKWBD7RjquACfjo1rT9vpZLUSA",
-  "HCQb4Qrtk4qCfChDH8XvM5onymmCSmRj9bddV6QCPdRe",
-  "DHECPstf8wVjeR7NXkcvrnJHvHCRfNo7FmRP3QeGf6XL",
-  "8Hw9X9UwBso7Sp2CFnEEeUGW8pGDj9wghc78ccWFZWpU",
-  "1TXsKzewQzFb8MYidNCmvmPWTma1DWyC6fpvd5gQa7W",
-  "E69FvNvAc1d484uZMWyKR4LDSCmsTxsxaoGnhG5QyfRc",
-  "GfqQkmJZ8h8Th7epmpyJgBXBtm7JA11L8KbnPxisDeHc",
-  "3dNTS4e2pwtQsTLgdKNm3p6vVijAfM6c57EajDY4zrpt",
-  "GC1L8kEd3d7enstyMi6B1LKcRgtWKYrhb6jsGC4tHRUW",
-  "AbcX4XBm7DJ3i9p29i6sU8WLmiW4FWY5tiwB9D6UBbcE",
-  "m7Kaas3Kd8FHLnCioSjCoSuVDReZ6FDNBVM6HTNYuF7",
-  "8P3wdYH5o5sHywZSo7BYzvTHAaKg7kCGnM1mC4yPvWWL",
-  "8QVfDrEPy3NqgecFea7N9nhiv1ZtYur8TSx53TzNvNpb",
-  "3nqtkTh2HErytGoNt6arqwzPGZnh1qFgC19TBN1rjyi1",
-  "2huXTbjeBhtMZ1ugNwUGucYBRasRaaiypymUX6P1Kwjx",
-  "6XeLr9quvWaQ2RW742cAQJx6JqY8xVuPWjrLQkT2bmwA",
-  "XDgpjPubjN5soLAFmAMjD2uVR1XZxUKgNpMU6Eo97H7",
-  "9ha3rJRznYVzNkoJ5xyov3ZBjthrC8e8WNdjn48FQyDd",
-  "65jT5wk8FQyUWcSjgBsBRLU5NiSYGVYwRSKRiopPNAQ3",
-  "AVQ657tcxrjdysS4fenJC3SjcsJf7stXbjikXd9LbJ1n",
-  "DR7ghPiRVBJ3YeP3FUJRuSa4XaWq4Pkw8ZM4JYs1PyJ9",
-  "8xgu8h7zn6u6B1hGgygaAurYQfPsdB3JNF23Xbrb5jP5",
-  "HZkE8AKUVxK3tW7Bu5gSBz9udfHmHkEjMdEWUgbq1G6i",
-  "3uswT1DpBfrpkyJzwZndLV5ZuytAsUvr8dXjYx3pWccq",
-  "7ABz8qEFZTHPkovMDsmQkm64DZWN5wRtU7LEtD2ShkQ6",
-  "tYGCfzdZTXEkG9rvbxUH8f8AgGmPRNDdMPkR1ERcCu8",
-  "6Qs6joB349h7zu1z9xRgPgMSmpBYLDQb2wtAecY4LysH",
-  "45Y2i9ujmHYxrX6GvNC6EjUX57kd9zPw8GFsTLVrTJH5",
-  "86AArCufuDZ1bUYjjdfAbDLM7HFdkeeMhTbsEeEHXQAR",
-  "AoHnv7RA9oB7atFkNcqnCZAai9j6ff6HMZrUPiWzrpKJ",
-  "9jCSe7uPUJPGJgQfb98uj6EGXExhZht4NrSbY25oSkhc",
-  "VyGNiGZ3PS3kHmnk5h3fkrcMBjLKFgX5acsnS4qaYKy",
-  "HKxFFimmvHT7sdw29jqEsTcVVoRTAxTea5g4kgJbMTxB",
-  "3S7B49r7ToXNd8evFaPER1q23JtKg43TUD4Z2ncmvAGh",
-  "Dn18pmqqvtovxjiVwkfaGgfpiJ29G1PmUGjjuLKSXmbe",
-  "3ZtwP8peTwTfLUF1rgUQgUxwyeHCxfmoELXghQzKqnAJ",
-  "33ejysPvHzoXPirP6dGRnA6FbK8QknRYPL8yJ7uzECgY",
-  "FiwjgGxrWeq4Bjnf9nNFA1wdWZCCZyLqgureN7qpEowi",
-  "32sj5CARjaEVXJvQ6knfp8SusYaYhujbQTMCmvjzfxBi",
-  "EcJWNtETrzdbj8s2dXpaE4Tu4r7fxALD6TNw9H8S6ksz",
-  "6quKVtdvEjtxwRN7DnACboG1iiGyh17QB34ZfkdxJLH1",
-  "8DbXMETXyxuVkkkLGvQU5nw86UvoMFYBjsdhv7Ky1sSA",
-  "A532YfWRYyFoqVCuWTFwmyS6RPZ7BE1LzcGgr3wRspQX",
-  "FRbUNvGxYNC1eFngpn7AD3f14aKKTJVC6zSMtvj2dyCS",
-  "5Etkx7VQFFVMSTtTLWWZoYGn8iPWYLr1TrC3xyrY2fyf",
-  "GJA1HEbxGnqBhBifH9uQauzXSB53to5rhDrzmKxhSU65",
-  "6BqTPZzgNZx7XYK2u1fdFSqGfAj6sFk9rMhznYY171qP",
-  "71PCu3E4JP5RDBoY6wJteqzxkKNXLyE1byg5BTAL9UtQ",
-  "831qmkeGhfL8YpcXuhrug6nHj1YdK3aXMDQUCo85Auh1",
-  "9hD5wsPWy7xzU8aVxToZsgiAVvjhHgf4A6AmA1Cjn49o",
-  "BXNiM7pqt9Ld3b2Hc8iT3mA5bSwoe9CRrtkSUs15SLWN",
-  "GY1CSVXTwJ985czPq9WEvFsjmprLgoGyxgSPv5g1dtw2",
-  "bozo8DPprqrU6N3y5cUDMDBCA61wGrk7qfy24Wm5rLB",
-  "BLhQ4fWgkNAJ4MWXSdXaTnxwZxwHh7QTnMQb6i3Z2QYy",
-  "GQqUtzZ3izQcRUxb1VFmzGnR1ySkP25Wa78tiakNsY6E",
-  "FAicXNV5FVqtfbpn4Zccs71XcfGeyxBSGbqLDyDJZjke",
-  "CkKEPH2xc122HS3458tA3sB6rgPwTjtUveiBFDaSFWHR",
-  "E6CxuQh9YgBU2it6KcEqY7amoio3PjZmVRatzGNT25L3",
-  "HmBmSYwYEgEZuBUYuDs9xofyqBAkw4ywugB1d7R7sTGh",
-  "6m5sW6EAPAHncxnzapi1ZVJNRb9RZHQ3Bj7FD84X9rAF",
-  "oYYe854PaZtEgEoGb2QZN3MTfrGU1GQQHqqQZFQuV3K",
-  "48kx1v5iNdpwmWKAcfwNKL8brRCZqATJrmrCAw8wnN29",
-  "5qWya6UjwWnGVhdSBL3hyZ7B45jbk6Byt1hwd7ohEGXE",
-  "3EAAftccoF4zEeYviKXkNvRqqvzaCNtqQKvRxAkRvuXZ",
-  "7Bffdhza5V7zBK7EyEQ5eFQ4fkxvutjMsiJjJUs9ZfkC",
-  "orcACRJYTFjTeo2pV8TfYRTpmqfoYgbVi9GeANXTCc8",
-  "Fyv2htM47t4BRiRLUXNf1QYvUirREy7WDRn73E41J2h5",
-  "7CmXBbwsE5gcuDisSVC1syRgrVC5kYb9Lwb54M8ZadW1",
-  "Ay9wnuZCRTceZJuRpGZnuwYZuWdsviM4cMiCwFoSQiPH",
-  "3wDz7sGSimRFjLMjsCnxstk7gi7d7XpFfZaqUTn7mUwy",
-  "GzNus5Ka6kjJrqKCJRHmEVLiAS3HJ9RrBp1mdnxqGXTb",
-  "HJXRy9JA6xXhFPZCNfJhenAq6MpfTpV83X4p5nhzQiaz",
-  "5B79fMkcFeRTiwm7ehsZsFiKsC7m7n1Bgv9yLxPp9q2X",
-  "83gSufBz4koBLWdncdZaNdV2zXDbWzM3vxWynhXAFDJi",
-  "sAdNbe1cKNMDqDsa4npB3TfL62T14uAo2MsUQfLvzLT",
-  "DfMxre4cKmvogbLrPigxmibVTTQDuzjdXojWzjCXXhzj",
-  "242p259rfsb9J3X3mhnWw35UM2hfMDg14G47CQ66s9ZW",
-  "42cfcPtPRHN6YQkWMzFhD9N67XWNZnAARYdMoR7RjsLX",
-  "E4rEyEhJhtP2ceFUCemDN81Sx2t2Wf2p8jaqmGdVStPF",
-  "CvNiezB8hofusHCKqu8irJ6t2FKY7VjzpSckofMzk5mB",
-  "3h65MmPZksoKKyEpEjnWU2Yk2iYT5oZDNitGy5cTaxoE",
-  "7BbYhLfW74zRHuxBKW2thtFspuWHYfXBuCqjHvGqpwp2",
-  "5i4oaY3j8soBAW2JP293JPtbRZqjpPUAiTbE8dmYHDiZ",
-  "HgwaH89nW5sSyx2USkeKHN4PxkThnfTQ7GLfbVUZMMGD",
-  "Dz9MhrJmg7ENWjVc4YFGC6hps22iJg8KxmoWAnjQDfPr",
-  "7s5n36J9R5KCWufr18qD5R61kxVt6D3VhM42b2CmBX91",
-  "ikXys2iF822fsp4M2SwVs9AfRfedyJeCn72QE7BrxFo",
-  "G5nxEXuFMfV74DSnsrSatqCW32F34XUnBeq3PfDS7w5E",
-  "EtMfnrcmaV1zxK9HeFj2pNukj7ejwjxeCkibnZLCXeYi",
-  "J359swDwM6DMrpTveYZt6Z9AVhZHJ3mVs1y8Gn4wKYGF",
-  "EwTNPYTuwxMzrvL19nzBsSLXdAoEmVBKkisN87csKgtt",
-  "2F19ZXrvQDCoYXdBoFBiBcEmgrAKYAheZHnQxZksHQhN",
-  "HbkAXdVHv1QqcW22BMupnZn1Jg5K4Gnc2HED42Lpo5H1",
-  "HQxNmu4JNJQ6WmPPZFuFn6hePfDy8wWMjwRNn68aQNhK",
-  "F5jWYuiDLTiaLYa54D88YbpXgEsA6NKHzWy4SN4bMYjt",
-  "HneDDt1gZq3tUia2R7KkBiwK6Y6nVf6qQDSUUK2X9jRR",
-  "9qwaSWoucPKHpuMohsPLiV1zXu4LDjVnL6922EcQ7HDU",
-  "AP1o6r9mbp4cezW6RZnbc9YvyzbtoEkXjb5afrYXU32B",
-  "12zQYCKJbCkJtVQcNJd9hPtkC1YzUvU3EqLZAQ1JDN6m",
-  "2aDBRNNdGEnCq2Av6Wz447CqgdEbmEaDudfGW1M85MAC",
-  "ATmKENkRrL1JQQnoUNAQvkiwgjiHKUkzyncxTGxyzQL1",
-  "AtqScWPNA72St8uANmneoX7hhgXvMqthMzBckUwwqsX1",
-  "6Nh9gVwZ3wRazUq1ipZodAugaZhz5Yz8f5afPjC6qtDy",
-  "CDjiKpqT7XYRSSncmnK8Q5Fea1MrdszJXTmGf3B7HriZ",
-  "BpeXxwzT8fWn4xQP7Q8M7foadTBDqiougD2JTCbWJ8zR",
-  "2mGNGKYNGCNNz4EXrxz4TPckwGkiyGRNe447HncebYRg",
-  "3URnnJKdG8eTjrKo7G8rN5GjzweYwSZSxwyJm5Ut5UmL",
-  "2K9KyJ2SSMgornoAK7X3sDGPT2kCoWci1zmxEtrnnTvo",
-  "H2F75G1DMTLSpoqFjSU8NYydATBxpv4HzrZGJTRM1ZNj",
-  "H66T73iEqzZBrL4jP3sM7AmL1Be816nXysoS4KVxfP4t",
-  "H6RErn6vTw3ZSLBN9iNpP3cAq8CETh6dy6HVkEwPonjE",
-  "HABhDh9zrzf8mA4SBo1yro8M6AirH2hZdLNPpuvMH6iA",
-  "Haee7H5bKDCnm6dXLkeR9DcWw9Puhnkwk71QBUSHcpUt",
-  "v2yNhm4KkC87MdBkvvYiMVP7UdSyNYLrfXrFte8A5a7",
-  "ATaHBG9gPwWPm6q1DA6PLGLhxp28mux39CcdWtN7v9tc",
-  "ATKi3ZvMbo31pbgBgGSGQPDPKEbQ4oGzoDrwG2sms56k",
-  "2BU3NAzgRA2gg2MpzwwXpA8X4CCRaLgrf6TY1FKfJPX2",
-  "9peW76TTRt5dp4wiQid8dw2pmxpwpN5eXZ15bmLBNCsx",
-  "9UUEJrGeNbmRYF16iYdMgZqAk59XEKHyH6cgnb3bMy8P",
-  "9X5n5i1mugTjgGPhqf1KJDt8r4kD8TF3s62ttbxKzFHa",
-  "ASSw3FMwV99rh4CvxLAucTVHX8f4LQ2pmi2JjDA337sN",
-  "ATFRUwvyMh61w2Ab6AZxUyxsAfiiuG1RqL6iv3Vi9q2B",
-  "AJ6MGExeK7FXmeKkKPmALjcdXVStXYokYNv9uVfDRtvo",
-  "CKEzb9jRMNo5rYwJPfgKCg3vhx5RMLhSaZGHMzcmqzmZ",
-  "FxN3VZ4BosL5urG2yoeQ156JSdmavm9K5fdLxjkPmaMR",
-  "xXpRSpAe1ajq4tJP78tS3X1AqNwJVQ4Vvb1Swg4hHQh",
-  "DuQabFqdC9eeBULVa7TTdZYxe8vK8ct5DZr4Xcf7docy",
-  "5GCuB6Wq1Lrdkbp8qWKqpWmCyzVtcQMVdxvihyjhEheH",
-  "EZAGG2BHjPGgm8gCsApKK2kAfqRmH6gVSQYKb3jpowT1",
-  "CjqBxqmjMJMpYawAh5zVctjcWMEqG6XDhUfvx4D9NXN8",
-  "BTf4A2exGK9BCVDNzy65b9dUzXgMqB4weVkvTMFQsadd",
-  "HJqqAsg2MDwTpbB7rUEjNVbNvAGoXr6Ym2qENfc5RGtv",
-  "EY5udSh8BjxKq3zqKJVtNgRWr1jWkcJtCrHCvAoBLmRW",
-  "EXPw1tMuJFsx8vfpeHwuwxLXjMKcXj9vMEHAZNPrVbfU",
-  "6ZddMpdAgo1BNncaQkZcLCCj6ZGwMpLSpiwfMHg9cVxc",
-  "G4fiaoKwBPTXH2JMekciosBUqjAQY3rQpWyGwZzPpb98",
-  "CX6Gr1uZ3Daj2piEgnKZykHGoW3GpKABF9rBj8PDxgN5",
-  "75y2d7ij2vKE7qRJLA8Ts9rNg8NMg9PW7vwp62nagKXY",
-  "DeTdTFc3nfmhNTjDWMbUtbackYA5peLLkzRbaukv2hmE",
-  "CPydqKcEEeKTR6wt3L15G8S5Ea4bxjS2vvjiW9vw1UwK",
-  "13E1Ut5Tu4AzLeazjgEWyfU44QXP7jkfya5qRfxdUx48",
-  "AE3tJDEyUdwBM8ZoUb3iCo563gMbq26JtckfvjcVZbSa",
-  "GmSirgSRyrV2PmaHtiYbS7NFcqk7sZGSwv6FihbmH8Qr",
-  "4u3Baa6znzQ6pjQRLii8KV9tRhtNuXCqwVcY3b6nNpaZ",
-  "3Q86B4J5GQh9HU8UMz9YhGhpEavwemos9YzHLirRnYPv",
-  "ARN1garjVGC4Ru2JnGsHdLaUQBbQhSXGAi5To3mdeJDz",
-  "UxuuMeyX2pZPHmGZ2w3Q8MysvExCAquMtvEfqp2etvm",
-  "HetnuaUUbBjFCx5wFYoiQuTRmDFKbEwqj1z4MsEJ1jYf",
-  "FJtvN2AHd1EWWtZNerrthUSY2vVMJpdAdk5cKj21eJRg",
-  "5B52w1ZW9tuwUduueP5J7HXz5AcGfruGoX6YoAudvyxG",
-  "HTM87R4mgjDdiF6Yfn8duK9vbDmZxiPCTRbGvm7eCAJY",
-  "CEoJPnnCfYisckyJnqZLeefc559KeheVsFLbpfDuTPWo",
-  "2bu3tNi1NfDvyG6RMGPUWYiUvgsFKdKvAiN1tXtyCUxX",
-  "4DdrfiDHpmx55i4SPssxVzS9ZaKLb8qr45NKY9Er9nNh",
-  "9cD5EmRTp4vV9BhiyCVyuo3mZq49ofHeeauiRYvfaSpn",
-  "Gf9XgdmvNHt8fUTFsWAccNbKeyDXsgJyZN8iFJKg5Pbd",
-  "Hq7pctkq5xVRfX3APzMT4Yo8pYdGAHufPZt2j2mQEAsw",
-  "AQTXbUNNvGiekPD4NLQ8Tr2PUY2G4UsCqLm4YFAkv5mo",
-  "8fSnLTnRViK83dDesivTsPx2wiRhwti9xoafeMGjEyLJ",
-  "D2wBctC1K2mEtA17i8ZfdEubkiksiAH2j8F7ri3ec71V",
-  "77Zw9Y9uPqzLExaFXUxoBpdXVc9qSTexqZQFqNbNiYvE",
-  "DnjhUSUo9vaywQ1DMxx9KWo5xZ4pPHoAn5aVnG5VwAso",
-  "KYSGYZp17p7hGsoTJRB4ffy3dpu5M6Xi77YKvB9Z4hs",
-  "aSRkSqXSrfj6LsufqyoDSZXm51PiDGGhZgxowqtjfnY",
-  "GLkEcKTJG2EVAkbSpesQWBpAGv1jGJDpLPxTa4Fo1KKX",
-  "HGcXS42jHV5HLSaNi9njkVAXpGUnyrQc2kQUGn6zMoDK",
-  "EnQLCLB7NWojruXXNopgH7jhkwoHihTpuzsrtsM2UCSe",
-  "ACkvMCryf6XyAyZjUZomUHGGuL2eCTJLfCXgyJoCEVPR",
-  "E52UHci4hoT6rca5hfRvVp5BT2c5YpxjT1uzu6wS855U",
-  "DUQYDumJCrByjbSNtAzQsyG7iipmFQCXmF2EUeugRYMR",
-  "ACzzqa4zbRwgyYBd7dwrgZMFf4Fn7Wir1qA4zpeue3uU",
-  "J6TDXvarvpBdPXTaTU8eJbtso1PUCYKGkVtMKUUY8iEa",
-  "DMZcsXkw98dyc1RhLBtR9WkBySi93TAQ2ptq529v8o4C",
-  "BYhH8QatT4Aue5TxLCiYeHBcZ2ufr6KCwdQPQnedVewy",
-  "4Fz34tZXEHhQMu8spdyewW6hqno23CzoG14eVx1k12q4",
-  "2egyyfk5Zbit7vnJC28MqKaGSBWLxxdcZj9Wxmi8fuvj",
-  "4jRX4iW2F5wBnfYMyB7RjS2PU5MjXrST3fB9DoV4BjHa",
-  "BwJcdvMJAbnib1wV9KrzEa4hRzEERvHwoPWsy5fuwJHJ",
-  "DGcy9EJjLhyB7RELYjameYT2AyUyHSWEDetnMcnrkUyk",
-  "DKgvpfttzmJqZXdavDwTxwSVkajibjzJnN2FA99dyciK",
-  "2HpvvY7TcbSdr8uNrDBUyEvbD9mcjg4ssmWQFcQcwJap",
-  "A77HErqtfN1hLLpvZ9pCtu66FEtM8BveoaKbbMoZ4RiR",
-  "Act3pTw5yB8Xxk3mcTWqMQ3x9ctNCegnVAViMMnxMrkG",
-  "9AhEq8F28ZxcGzNa9LbFNrruxtzJFzuH2KTUZ74qNCeW",
-  "7N4bAyZX6z39RozQh7GC8VQmgjvjkkWmSyAt1wdMjEmq",
-  "3cFNBgLekrEYvpxHN828ZgP6ZeFSYoCxiFNSifssEuGH",
-  "26MqFM23yC6v9zv2MnDEW3o7YvkZUtGWSa2QZNv8WY4w",
-  "FZVdsFTRTWwZEy6XC5GCtHNWdcAwiQtAeJ2NSpH6cQNz",
-  "2M4mxdyofbN4PKoLKfqajip3wqFG4Cdd2rY9A5QosSWr",
-  "3QEvxoxv68zcCQV26CengvzC56qXf4PVHsFAMBhxtVfZ",
-  "5PA7XYpE4p78fWvH1HiSD1SQiRKGUWgbWc6jxzWiDpYT",
-  "578ZFJoH75jkPCVupRvwZAzbVHVMbKL4P7MKuG9iWEtH",
-  "8taFLhEeNQvgQFqAzfgFvE6rBdhjTfFL1FPbSVZz5YLP",
-  "Ab2baaggUWJMsVUtCvpRjq6iBRDk2Lxr5qzicHueHxM1",
-  "DYmsQudNqJyyDvq86XmzAvrU9T7xwfQEwh6gPQw9TPNF",
-  "7tQfpMCM8bPWgfLGaQ2G3RQ5gAgQneqHbtgAn4FdN2m1",
-  "FkzekjMLgbXC8NuSQQ2u53rmdh3jhfAZr2psDouDYvfR",
-  "3BLjRcxWGtR7WRshJ3hL25U3RjWr5Ud98wMcczQqk4Ei",
-  "8xi5GhYGFX8ZcWcFJxR2kbWdaLHjf1qBn5c5gqVSs6Pi",
-  "5atTxK74PA4X5onfMsnz3PnM6TjC1uZeHjRr3SAKo4ey",
-  "LJ2X58hCR38qtvLBTEhwVAMALz7bbqR1YVvq2mnVnqq",
-  "9eK3sPqr1mifF7ben69WvbbKH2YG9NFYRpv3UcJxZ9oQ",
-  "7ViAq5Vxy1R5NXxc3mMSrfEKEnXCYcJg6ajWBxALVR2f",
-  "CoDdw3cAX13dxwahw2C16ohsVhrDdrN3UVb4mvNLo9wD",
-  "72LTZ5geqmVbyxAtGqu4SLDKq5YmzKNLfHhEVRGqeE2d",
-  "3EcnKWyP7AMQreHWswPcht1V2YTWmps43CWo5JKygx8N",
-  "C5RS7Afq6qqvnYTCe2HZVQXLCvTPN3XRNbThPm7pdALi",
-  "G9fmyVHqWS94YRfyQjYVUdf8oPufkoxbUWCLiHJyR8Br",
-  "2EeRRdhxzmMMCSvvSHu2WXtkcoJhoi5dXXacK5mmHpXa",
-  "2epb7KomGyLRUCjuYwvC2F8DqZiiCKT9EavdsRUBubge",
-  "6HJetMbdHBuk3mLUainxAPpBpWzDgYbHGTS2TqDAUSX2",
-  "2Js8oghZWb5bHccCyEhKbSar7Ss2NEp4Bi5SL9WR535V",
-  "2JUsjGsrU9aKKWRFGxSKNV61HXbPZakM5JJYufwFaWhm",
-  "BuhkHhM3j4viF71pMTd23ywxPhF35LUnc2QCLAvUxCdW",
-  "CYc745Cyu7Y32dB2AExJRsLAMD9A7PmvzRiKKPaQVzQo",
-  "5vR5f7BtxvHCGw1EciwKuEv5EDyvnD3aavrHqRjXyevg",
-  "6fJD9T9WmU39f8P6xukg1ehT3ZJgS7n3YX14TmApNVHe",
-  "99UtKhdi1RfmMGRpi7kbWz6AQ2y4JkFmxC3swMVMDioZ",
-  "5W5vnVSX7NjaghpfMf1jyvtcQNyRffk7hDZS67rKXQpW",
-  "CJmZe1nbzex27sQ7qQ11qktExwBGMUQLc6BokrCwvHgM",
-  "B715k9UcvLbyf7qaFErzuLdh1NskmC143LYfsKyCsrkC",
-  "3rSZJHysEk2ueFVovRLtZ8LGnQBMZGg96H2Q4jErspAF",
-  "9MxN9TQo6XzBVWhcMo5PqvhV9ycGte6mFGWC7BsSC9cM",
-  "CA4keXLtGJWBcsWivjtMFBghQ8pFsGRWFxLrRCtirzu5",
-  "3UNPM7X6LbmxUms5ij6zm9P7J1Ev2Wd7TwwXmYrPX3n3",
-  "CAPn1yH4oSywsxGU456jfgTrSSUidf9jgeAnHceNUJdw",
-  "suqh5sHtr8HyJ7q8scBimULPkPpA557prMG47xCHQfK",
-  "ByfmBcWQjtNmodr1pL9wKpixi6ostRagE8Ws379SKNVY",
-  "GUtFKC1eztLxVCw5RNCRj7GSvE7MLvZGq4FoKVcxs5ZP",
-  "CmpNSvChsxKHGAL5M56aVsg1uNAQcGdUQFVEG3TBJGvK",
-  "AGvZF6SzYCJTJCgB33S2L5up1pBNdmTmkYo1976J9SCQ",
-  "AmnG2KXDqUuf6EskVddvuokYw2Hv2pCY5Yv4X6QpKe2R",
-  "G9VPG4XvHheUUbzPexNzx9Yyx97ii53WYb89PvdM2qQk",
-  "FFK3tP9EG1ZuFhhb5rVHMHMjrBddjQcGDhTxrkncNy2k",
-  "9gWSwyQagyxbsKUKc51GPD3VQCXsUakzxcUtY9k4ix2x",
-  "5mtbmPwj2SMkxPP9c93s9oD9bmMdByTqepNarM9Y7u7e",
-  "pmmgQLHq6ZZrcDez6V2pfRwAwctRBvgEGzJLDbPYqBQ",
-  "QsMmRq2sFT1kgFcMMNEwpczzydutjT1cAvGr4YBHz7w",
-  "vCNstpeZcuoRPcBrfj6h7KmTwLc6bQzU23rrZ19ND6y",
-  "9wpuL27tRTSzK8pZL8euLs1rTnTgx3ixKzSv9XjdZwux",
-  "DjpzbYPXReZzSPPgT4DntqdD9qxcrf4euMeb1dY7nqm6",
-  "32hH9cT3kerUBbt7oo6m9Q49pZLpD5Lgn4MaxAFR5Mgn",
-  "na9E1w4pXVEcVMtqxkQHDs93TayXggt1yrxZbE2epfZ",
-  "9cqgXsqhksd16hLnupey9jt86jKDfbD6ZWVANccW1233",
-  "2dmpNQDmhYDzUb66nhE13YbK7Vyb24XsxjdbAFcDiHjd",
-  "1zfW7KChXYaiXa6BDMKbCZeBaDfZuKxFhDUFn9HX9pg",
-  "96A2MQYickSrtMxRkhwFPG7opLNTeRKRAJbKwuG3PCnZ",
-  "HmZmsckwDJR7ujf3nhdJPoZHvSkGp4UBdmiDoYpPCJTi",
-  "AnsazR3Rf7LK2P6dKmwdyr6bzknaw8WyaVKzh5s8LXqM",
-  "7CeeipDnoTVE343cfmNuaEPL1BWLBzFKL2jzHcqBXN9c",
-  "FdvYZ99wuATUdd6fuSqyAMJRoGLrcHivnuWHxgst475p",
-  "DHEKS3dMShJfdqoUQ5EgGZA5DdKZopMwqD2hWqK2i6gW",
-  "EoBMm14Cke1rcQnVQL4uxWuLir7cdn6q49crF3ZFJ2rv",
-  "9hcQaDijYcqy6o8onsFLKzPy1DoKCorbb7LYocWU9PcM",
-  "E7bKJrv5mVRsbkwejKUZipTEasFb6wjP3mFJ5w3EcvDf",
-  "4Cb7A9Xuhv2Nnuk5vZ1xhnKkhDLnYjeZekzHv2zT5jjh",
-  "FVxeFYgyT4GC6D7gaLkMSu2qtSJfw2N4RVPZowi2A64Y",
-  "3JEhTroLiXdQC2CHtnv6KA7Jt8oqWn3xGUoQnmDpAQUJ",
-  "9VKYME2xdBfK9GVpR4zDjCrAFbDKVgrbJTh1Kjthch33",
-  "HAN61KQbgzjDBC4RpZJ1ET8v32S4zdKAjoD7EApJ96q6",
-  "5hfENg64jezkx1DKJZFR24s6nCq9wVTsShcd5GgMfMNb",
-  "GYQvX3sMGcKKVVMm1pg5TG6XHgdDwhJkc4q8n1JXjMXg",
-  "D9VNWx8oZX788VRQ9H4qyvHASiQLfWbd2MP3DHKSFvK5",
-  "B5ScJw8Dw7e1zXoh2ut2F81WVXmGaPWqZZ6JEYBZfAJK",
-  "6nnBeK1mLgdrBZFfXYKmGkuDHYTrBZZ18YEQfNUih9nm",
-  "FDV7kPFhYUsJwXhrNsMDd35EdBAfR72rf1fkBqgaNEEj",
-  "BDC19MFbzDpoF37QCxe4JR6i7UmXNMSiEqrxuQgJoWte",
-  "FPPAaipQw2hhJdNUzsfK2k1PBCcr9t11XFuEczMwsiNV",
-  "rp8ntGS7P2k3faTvsRSWxQLa3B68DetNbwe1GHLiTUK",
-  "4yc51C6KGirDBLjpymMr7rzYuM2wNd2TxXC2rArSPBES",
-  "4SbDMrX8Zfj7qZtRKTBSQEavPkc7BP1kiJfT2f3dn8RL",
-  "5t9xBNuDdGTGpjaPTx6hKd7sdRJbvtKS8Mhq6qVbo8Qz",
-  "FrNpLY7k6ktsp9em8c2fThYJe5yncE9iC4ArFXWLBs4g",
-  "2p2mgFLmzN82sShZeAaBGmj9zFpam4xu8g4g3wqx2ks6",
-  "7tiRXPM4wwBMRMYzmywRAE6jveS3gDbNyxgRrEoU6RLA",
-  "F56b6vrd4XhwHcRFRBSrUFb82TLwrNrhtNXJMKkbUm4N",
-  "8mh32sVjg2Ht8pz3TNYjRi5tBTtcDHMy2NL4W6jQUfzA",
-  "4EDTLThQyjGfu8PXKsQiAYCdpTcg6NnFVBHJDrvD9QVr",
-  "8mEWo5njoMR1CDemTQ739jDDkjvgHCcuQLL4cWojxKoT",
-  "3E1snK2HuGeYusCxGv4JCVrswir2Yde2qBMe8Sceec9E",
-  "BieeZkdnBAgNYknzo3RH2vku7FcPkFZMZmRJANh2TpW",
-  "FyVTsdN1C5qiKouL8735PA8zmB8EqhAb75aV82zcGuFm",
-  "ByunCz4G2eN5bpmWBRKpuoa6uxGKAg9CX1Tef5iHdjaD",
-  "2BSwyjCDsxVEXf7DNaqt8ySoaodfuufEpFTxifFHSrsV",
-  "2YJbcB9G8wePrpVBcT31o8JEed6L3abgyCjt5qkJMymV",
-  "562Ma8fb9ZZLj5swuy8TRHEMLzmLRS7VdvgKb52U9RVH",
-  "Ar8JscDM75cVTpFJVUwZ5HkgT4zGxxsMEk9tJqcB9NFC",
-  "GxceSANEY9hnqK3NWA992wk2i4Qj42MoubribSZrLGcG",
-  "8deJ9xeUvXSJwicYptA9mHsU2rN2pDx37KWzkDkEXhU6",
-  "Af8Zu4DMx4KTtpwwKTE4yoYo4B5zoRhcBsxGYp5RN4bE",
-  "FUCtc9NkQXWKFDJyA4Xjkvm1CdYNEnvTZkXpThNexnij",
-  "F1iTFVHNhjt6dsLik1gwyNjU3fNSnQL886WYSG6Jxg8K",
-  "5YkZmuaLhrPjFv4vtYE2mcR6J4JEXG1EARGh8YYFo8s4",
-  "719sfKUjiMThumTt2u39VMGn612BZyCcwbM5Pe8SqFYz",
-  "BKJ5zrmxPmEp27Qk7qowxsghsfCQsUc57yds7iEygYLo",
-  "2ntectnzhhShGguJQniVTj5gwsGdoAgxCH6E4Eqee9j6",
-  "9K18MstUaXmSFSBoa9qDTqWTnYhTZqdgEhuKRTVRgh6g",
-  "BCnqsPEtA1TkgednYEebRpkmwFRJDCjMQcKZMMtEdArc",
-  "2831MC5uak33SnwxE3DZ7gcZ8dYbjRCnVMqEuhqCve9a",
-  "4WPTQA7BB4iRdrPhgNpJihGcxKh8T43gLjMn5PbEVfQw",
-  "72RaebquajdLkrWffL4NR3PFuM7H2cQTn1BTnkkhwwUy",
-  "GasYZQh8LA6PvSs1sn74LYrffhgdvc3KTD1q9pKBfAcs",
-  "3GcR2XbNanPyeLZM4D2S9tD6i6evMAygEFyvqYmmQqJG",
-  "EpQAJcNcEaDAwFX5gXjtuMtGmRW6sUMFAEQnSEXoMwP1",
-  "GcvrwbW4Enidz4yoCDJF8Fy8JEyWuj3pw6L7TT4mDQ3d",
-  "CBY58P75FCVxr9bgdJ3FS4PCZVfRM9sKXuAM9uGnd9RX",
-  "BAtmPByLUJvcbfHfu4Ah4c35t1vmXJMZynQKXinrVDwo",
-  "FtGWiQYZR8h1yVoSApwY2JPVrWXc7BJyvyiS3Xr1yZ7C",
-  "BMBGVGR7CFanh3vw5K84y86NwaaPpbKmMdFeMSkAKqP9",
-  "EXEeLF1YiZxC1tFneoQPv6rcdq5VMUbKNGy3DLPEo2oH",
-  "6pkYrAM2hWWjQHPq5GYkRxzM8e4m7MKxa2iANNjTNj1p",
-  "28ipXVfkdmu1PDowCHbcSfzkpH9edZmSiVoDhY5xGVfR",
-  "HXkP2HJ3436u1urLnLsupqjtX1647bA2TtcHNWiDt49U",
-  "7tdWxh3FFta9y7MFKYpUd7mM8ov51KEnzVB6MFm7xyxM",
-  "GwiBqHCiQBK7kHgHXU3z75WGvC1tevLtpbzbUQgjqfB2",
-  "4tqHQiX1Y4qpqieaNZRn4XoAN5zmCPzvpG9NXHf2n85P",
-  "9MZ8EntFTY1g9QPBWwAq9NfQiyWcG2wL6oq4hgM1aJEa",
-  "Fn5MZYKw3FdnNwJzsmsFfngyJNJ6vZmFSnzQaAqxwd2N",
-  "F9TWs2Jmwpcvt8Zzr1wLnA9f4UQKj1huX74eM8vDoXTm",
-  "CjY7xaTLcw9G2WZbrNrv1bBcVAz2kRa5ghJ1KQ99NPzm",
-  "CzhpWb4CqhTA4MuATiCqeHZUWKPLY2HZkmerGj48WpEM",
-  "D99PkD3SaysoVW5rUuMjpRRRyxq2eXP8XiP6ceYYZeLD",
-  "GiVbC8SWEGTuUiF2vMsTQk8tuzdjq7q9VJVcaFuiq1fC",
-  "ANDhJc37Khjf7PKGofuXp2CD6aF3mXuhC31hkJsHVMtB",
-  "2QMXjBufQprAfEutzh4gMWRuMp1impcjk5BLpfYEHAsb",
-  "2PBRmZuPxeLAAmyHLCLQgikB5HGP1Y7mLzg6KpNNVJ16",
-  "HvNqQBTfoiksyvzGR5rrNAv46DjeNgGNMTB5YZpYh16W",
-  "5Z1nk3F8fWBYtFFSLPyxtE9qExaDnhLijurHFHjSNvWj",
-  "7VBTpiiEjkwRbRGHJFUz6o5fWuhPFtAmy8JGhNqwHNnn",
-  "3kMGZB5cUevjbeZ9qSFVmUtTmcHPVjodoHyD1o6XndjW",
-  "CQebvvvtypuCPELNxYEb6v57rJo65ZfKBY7utxqQ5E6R",
-  "HqFSouJjebYk1o25HvesioZczUj6pcFVZLkkWDYxwhaT",
-  "FzVQSzj8JJr6WMGqbUHzx2XH1KkrfxRrRPv6WcbbZmND",
-  "G3g1CKqKWSVEVURZDNMazDBv7YAhMNTjhJBVRTiKZygk",
-  "Fn5XEhYTD6EUV9HNXA2Y9mGVA71k94dWKTAaGFsyZQKz",
-  "HLv6yCEpgjQV9PcKsvJpem8ESyULTyh9HjHn9CtqSek1",
-  "F2SuErm4MviWJ2HzKXk2nuzBC6xe883CFWUDCPz6cyWm",
-  "CydL8ihQfhVk2tsXVBxKjMkmYkanqfaFg68rj3i95YXg",
-  "8xMFLDoN53fDP3HaNKqyBCme1Webt2pFq3ngcRrw8yT",
-  "BC8yiFFQWFEKrEEj75zYsuK3ZDCfv6QEeMRif9oZZ9TW",
-  "BmH7ocpV5DJVvv4qgsUUckpciEGbEYMLXRfb53HwzUyA",
-  "EuC9bwq7AhtvgqhzFG5TtB2q8PYmgWbQ7Eei7FaC4oG3",
-  "CtPxvpWo1pk7HtL6KwpCLMMdsXHC6fdqAN1bPiracaQq",
-  "48tnDo3bgKJW1iDhdMGSJq54N9Uv5pNixqGcF1yVC9JJ",
-  "BTCFpZvtExAMndZvxLxLaKfxT8GVGQyANq4pU4qL4CZr",
-  "Gfono81ApMYiEWiUAzyEiV7RZ1WmYzYfWqrrQz3rXchP",
-  "J6hnud6dtr84fV7yyoUeicyYDuFMomxT4i5X6e525PTu",
-  "GeXAHmmETnizW6af4E2e64ju8mTkLdEQzxUiAjJVo6NZ",
-  "XHjnThNqHtpkPbKzyG2iDwhPDsFiEoftSCVXwu26uGe",
-  "EdDCRfDDeiiDXdntrP59abH4DXHFNU48zpMPYisDMjA7",
-  "2Bhvy2CstmanoU1YmDQYsxCFnp2QUPfp5r8RAeg1NetU",
-  "DGviuAtXwkNhoZJp2zVewVfh5DpMjucQVKm1dL5csisv",
-  "Hbod3y29PUnpUxGT8zfWAB994JESwhSc5wasFqUgg2tD",
-  "DiTQyLH8aT9D7aPMNTxwcTbRddMuY8X9qm4gmVvTBPM3",
-  "3UtkmxsAGD3kYgLBXQZadXctb2gQMZCWQ4JDfg2j9awP",
-  "iWinRYGEWcaFFqWfgjh28jnqWL72XUMmUfhADpTQaRL",
-  "8RTDA7rQadKhCGyWdzxqhD5pm3mXg9MjmAGxn8BZ1S6C",
-  "97UKrjY8bt1A9XAMJfxqd2TCZw18eB9xezaYM7jvVzn2",
-  "BkpbQwJDwpUmCCbY81R2uFejdso6L2Qm1nwkd4DDki64",
-  "EDM6SGUziMUHsQKRUF68iRpXMCoqbFbC2nAuzdbFS6Sf",
-  "DKCDzhHof5Wv7TzArkmu4yBnp2eGYULmj3zsLgr9ykck",
-  "Es1hok7yv7bfDXSUSGmbJ6pXRq8dUJUY3ZWAVi3z6yfs",
-  "6kF1mbPwttxKTwZKeejQY9x3DdNo8eAodhjRubVzDdNt",
-  "nicom4SDQP5PpqdMzJHGA5ZtLi3A8hCZxNjC4vQTBF5",
-  "9jnafS92Q4uCFivMVc2C4hwowPg9TNYvdXeVqouqgbFX",
-  "4MsBT5DtyfcbmoFTnYrLRUs4eGt1TBs4ip97Lbf4YL54",
-  "8iRuMD31AxPHHVGhDNbKHdRnuYriBMHCQbNHVfGy4PTz",
-  "yYJdcAH3ik4jzHRjuSNjsyt8B4Wb2sgrZWHGBrpEEqt",
-  "2AicNQ2LSEkSsFPxq4JnGrZLbbHyT2dqkhDaWX2SJ84U",
-  "4evxU9DyfvooVm8wPmbqS8cqeRP7EBCddYa5WV3QsF4Y",
-  "5x8tfrJSn4Pt5gjQEMWDnoLvAzZ8rgJVTXiTpcwhbxmN",
-  "CNYdrnBpRb1qgdDkEtjAH3Rv2wGjx2DJkwR29mfj16WD",
-  "EgzjRCbcdRiPc1bW52tcvGDnKDbQWCzQbUhDBszD2BZm",
-  "BtM3og6qCSNLdAPf2rpsgbDM2DJ9Yk4uR7ri9vLjwyxv",
-  "HazeJRCXfkgUEWJbgJreWL7o88bSfTwYbTFrbYvrVnvC",
-  "8t3cbZoKvqMLbVKPWRaQ8ufgwygGvFDLSiv4unAv6kez",
-  "HD5fsofvcEaSimExUkPQxYPec3nT8g2tP2tw8oGPrpBT",
-  "GPowjEv4Hm84z2nbE7xsFwwBFDNouvqo8SbhzvKXg5xo",
-  "CaiYsjL9sesLPLxj6HMQtRUHNhKDpsufmZTwW3sciJfc",
-  "45yBcpnzFTqLYQJtjxsa1DdZkgrTYponCg6yLQ6LQPu6",
-  "YvEsBWpHK5PJ6Q8m4YrocwKeWys1NG67pbgi73UPnuX",
-  "4qftk4e9zZU6oxfD1B2BNicS3iNdis2JkPcrxVWA5q7v",
-  "2Wgscvn8z4NRjR9NchmRqm5iz8Ssr7bzp4GN4V2Sa8Du",
-  "BkWpyDT1BGN3AxVsnmpg2TF1LCTeXhHWNhwht2pwjkki",
-  "B55PH2b2mJjQpQShcwuaNFSp4LcARJqwx14tqtyhVRc3",
-  "2byqB8Pypvq6s8W126yJc9SxToTiWTfNFuDU3ZTq9CLT",
-  "E3oAi9yFZbHrJkws3fhR4PcVfbNjuyWPUd1wduHPnDSo",
-  "Aw1ici3XZ2AfBUfy6apUHRQiTEJGm2Hybhqj2Jfxf2mS",
-  "95PVJQnyC8ta8evd4tjPxKCNN1AnyTWyP3GDcDuJ57hk",
-  "3pkY4S76Jw1UDS8Qgz4wD3DxrTxz7QfyC8yTbXJoZcMT",
-  "5UG53RdfrC1YW8mWp9fipoh2FeQJLCeoiBWx2uiokupS",
-  "2m8Mc2ngJCmpbEEoYhwT9U929z6C4CPKLatWnR775u9a",
-  "GmM5UFm8xu6TnZD7avwYcQ1zq25hD5yvHfYyAksHu9vB",
-  "81xBSDNoCJQU6E1EzBWYHTBYEsgeJoWVcLrsLCEjQhNx",
-  "5TuiERc4X7EgZTxNmj8PHgzUAfNHZRLYHKp4DuiWevXv",
-  "FbvUU5qvD9JsU9jp3KDweCpZiVZHLoQBQ1PPCAAbd6FB",
-  "9BB6NFEcjBCtnNLFko2FqVQBq8HHM13kCyYcdQbgpump",
-  "7DCYBoCuLWwYaQHhXxv6F6SV5ZAmnuhR1oucNYgVZWLa",
-  "2pZsbRPLrKMNRaxXrKfgUnRhkvdpB1PhCgewxzWyJZKx",
-  "4qwHu62ukEZB2DPoMDdDsC5pY3NukxtchyFDVF91NqNw",
-  "FQh5cst4aKhCZbNxqunns4wZViD52Z2PVTNR3eSYQBhw",
-  "FEDt3TPMu2KTJpzPBMmxHN3zebs1oYGJrbxuE1ycKG9s",
-  "8kNdFZTnUyg5B9AaMVbUUTC98XEkipWdrirGmigadFXw",
-  "GrDM58GtyM1DzFagRsxMHVrrUsBc4u98n6E7DNykCAM9",
-  "AVAZvHLR2PcWpDf8BXY4rVxNHYRBytycHkcB5z5QNXYm",
-  "Cbj482ar1f5b7RvoEFJZEPCeZQ3SYEA5oxFYXmX4Wrio",
-  "CweihpVSti1gN8A4V86B1F2DcZjkgdwChaQnVuYKN7UF",
-  "CyaE1VxvBrahnPWkqm5VsdCvyS2QmNht2UFrKJHga54o",
-  "2V54c75rjibgh6NsDWP88tbpu8KjQ3APRrK5zNQVqx1T",
-  "32QqMDpda2bV91cJrkaG2ZYXSWG7XCFFrvL6JTmH3YPt",
-  "4kuweVrNm9sAeCRxCn1q91YFiYX1bFFrHtJEpkbEXe7B",
-  "4LFQ8MSN2h9y3omR2d9W2avrdXWkT9k9rit2XgpVt68P",
-  "5o5P6jK1suNxykvh8Rj8JLYCPTi5HRNrpTvRmHw9iZsC",
-  "7swY6WZyXXgagE3L1ca3RNmtikwJUjvFpzNxeM4qaQmH",
-  "8e1MDn3mx1p2ekKjbyALxZNtGD8pqapb1g6EjK4wf4AG",
-  "8EtTuouEFrqQfwjtQ6oPA2ZS6fQcew83kFH9zEYB9PJV",
-  "8W6mYze9UQHqmS1VkX35C6RWfZBuyh4gyvq9KEeeTT8b",
-  "8YDcHz6KbqEvjr1SQfo5k4enicHH3Ho2dTpqcudq9KwC",
-  "8zFZHuSRuDpuAR7J6FzwyF3vKNx4CVW3DFHJerQhc7Zd",
-  "924zuRoroyHF7GhSJBPGBhVtebd1FBd1Gp1csuuAHZa1",
-  "92iYee4tHCanKiiCpFk3rvA89k466NjgVKojZkpJdcvj",
-  "96LnVrNbNGaJZ3yXTC9wmFp7D3Ks1UoBgToVi8ybMrXW",
-  "9FNz4MjPUmnJqTf6yEDbL1D4SsHVh7uA8zRHhR5K138r",
-  "9hKZp6ub9SqCfPALuzWx8QmmKcqd2KkL8BVjHAc6wTnr",
-  "9QtfjkutLg1WH9iXQdoR9aXMCzruf4aVcHRWsYCvmYK5",
-  "GueGgggeNaCvkR4eg2PUifNwVi1wNsh9gse5bgTCok76",
-  "Gw5WHSB5FbXdXGVZK5RCdm4bzc2M64rX1GcftibKM4RX",
-  "GX9dnG2NET941qhCmbJmkJCzRbki2AzZ4CHK7YJME93Y",
-  "GZVSEAajExLJEvACHHQcujBw7nJq98GWUEZtood9LM9b",
-  "CjsbcKND5Dsb3QjwiLVMN7ggbvdNjY2h43Tk7nng7mAf",
-  "CLpDttr14kM4svu7jypK4rzsMKdJYAR8emGNPaWs7omB",
-  "CMxgFDUbfRbhhCL27VqDs8jtPR1ateVH1Apbodg6phfu",
-  "CRVidEDtEUTYZisCxBZkpELzhQc9eauMLR3FWg74tReL",
-  "CVK53d63891qJHWMcnpGzs4zyVGaW77vsLUZLbyQssYN",
-  "D1DhSivDh6nuS3ecXN3ddx38vBxxBbj35Ak98gwHoGnR",
-  "2eHQuhpB5yprGZ1CSFrEUS6oSzHGX1y8vkrpPXGhzA1g",
-  "2etgHx7nEvQWvdj5xMKrvcmJEvQaHbPM9whBx4hHGxtV",
-  "B8CdgWxMFm8vARVjXaR2cngTgAxYz9LJYBdikXHxi4dd",
-  "B9ChV8cBwMBDTjBzHeTHGLnuLu7f22GZjAZgDtxuxcKv",
-  "39qpCe9zdyC2g53UJeyGh5jwGBKjFwidCbnD5W53aVBW",
-  "3bKXGquu6NVjsxSGDSXdSiSUZfRmpNGt6zH1ivRCpVhv",
-  "3F4vYJB4ek26WGViLSZ8sW5Ab65wQh3jCm4Rt44iULT6",
-  "4NX2vftqtHTCSmC7PVDquH5Np8NWgRRhoSKSzbBnu1cX",
-  "4qWKgdUQTfV771dxKp2HeBqEzTXEKW7agijrfDfpsXPC",
-  "5EzUr1Z8nahDXXK7oki6pPeJ3aWoM8cxHJShFumJtsT9",
-  "7sA5em1nTKmLvGm8H85cpgA9hM9YvCoPp729mwe6akhh",
-  "G2mgnzpr59vYjKpwU9q5zVfS9yQ9HezMwjuqF7LACvR4",
-  "BiqkWhrJ4dfpE6TeNY34tA4GssG23SBH8CU8mqB7xZ6t",
-  "BkyCUgwb99KiA7aUgmCaTVc4CTEQ81ZuukdBBv1KFkU5",
-  "BU3Eto9HzT4GZHJ7GcJweHqTgydekXBZKZtLQFK7ujG1",
-  "BUsHXQcabNEMogJiagWFkGLjNxVGjhRsq7A8RWdeLPNp",
-  "CeKK8aDLxyTT98ZV8yKYRYjjQhtF3hPBJuu5Hzqn1bgq",
-  "CFNjTNoqr8Wpq7DVe5ymK9CKXNzoW5X6rMQQAPZh4kHg",
-  "ChjGfE1aKvtjhhqAQGQySmRT9Ju2KntG6UsEuYGJ4y4X",
-  "D3Z7weHeLGWA7eg1qwVB66NCs8YLxiDTBVE6Eb1tTmwg",
-  "D8gxyXxvmT9yFdVPD5o9rhjPTNww2xRbN5z9UZQU82NH",
-  "DatN81qe1wd2cGtLJfJ34i7P9o4HAtmQAGdpEzeKK6gL",
-  "DBmettWCbsQML9bwzZ2pAAiFukxCg4QkJrbg1bMDJfft",
-  "DecXrBS8ADaac7yqLcC6WxNNAfMhVsF1SHmvSNv66yDe",
-  "DFoR6f9aMWxjMC3jacMLQRfXDfWFt2LZjhjH5Jry3BJ6",
-  "DGPYpCdiVg2shab2TnNiZ2RnsjBQSmhgN71hJyWC5cYn",
-  "DH5picTwbyk6CrRxVBn4tYwRY2axzEkma1ywtZiuBkrF",
-  "DiddyP7tSoS5e26zzy43QVfgTQ3dJ8ZyLibC3uPAAwQk",
-  "DiMSeocybuZWi88Y65sWM4YMTTuuTMWYfMtGFtEJCAF3",
-  "DJobMrbVvwRsbTEM9UBNiT6KHQmiu1j3VEnugJaDTM4z",
-  "DKwybycDSWidrHfpMjaahUsT1Yid3kig86ncXPAGe7AU",
-  "DNfuF1L62WWyW3pNakVkyGGFzVVhj4Yr52jSmdTyeBHm",
-  "DNnebS2GXArnErtgmnvSeX9G44S66zd4MAXBf5qSDUGk",
-  "DScqtGwFoDTme2Rzdjpdb2w7CtuKc6Z8KF7hMhbx8ugQ",
-  "DSVc1Rd69sLcXBoZAsvkzK4jGFyJKP77K3J2CaFVNAFP",
-  "dVs7zZksjFuq73xbtUC62brFXYYuxCuPSG4wZeGiHck",
-  "2WfNxFN74pzJWKnXQ7NpkbnbEEhSLVJZGiB9NvxQ4Vpb",
-  "3hLHcRZdv5yRBP592Cy9BBedNwCszjC8HpLEdRfzfrM4",
-  "3HvQN8uxfRXaxzAPiaYquLZ5j1RTkeFvFHYyJKgiDFoY",
-  "3jgub3P9KP3XA9Dwh7XpKu35BiQNTZZXbPmfBAJMsroL",
-  "3tc4BVAdzjr1JpeZu6NAjLHyp4kK3iic7TexMBYGJ4Xk",
-  "3wynYQc7daEoNKvPXRTy4CFFm8j8S9gWuX79nFozyxcM",
-  "3YRMrgGgFS8YQ7E3gcSCbMRa5spMqZt2Q19CTyKoXJeM",
-  "4aDVcdMbRhmL2XtFVdBLE4mq8bvze8EN2RAnRxH6Z6hz",
-  "4Be9CvxqHW6BYiRAxW9Q3xu1ycTMWaL5z8NX4HR3ha7t",
-  "4Bq5yvgoiZDsukGERb7aM52jDmbVPCpoihbztscZ5PeM",
-  "4btaRjaRpakx3Rjtp3AdWnH8eC7mvH3nVMVruyFiYDYk",
-  "4CqecFud362LKgALvChyhj6276he3Sy8yKim1uvFNV1m",
-  "4D6kMkudsfBK56qujVmPyUAXCoAfBbAThdapvqWDuqBC",
-  "4dE3d4e2oob6otG1R624X59jCVBjj2faz45B3aL7sNhS",
-  "4M8QVddY7Ld8eAaHoYcWKPxQcwxVuZsXMFKsm8921Uzd",
-  "4nmSyCYLBmZUcw8z2bYQmYMDzbkbA7S1yAmr2cHAA2KJ",
-  "4sZm6CRqUTUz9EE3nE8wPfdTHBHzQHWj1Tcx4m1htfWX",
-  "4U3wrwgkxXodrVGQsxPimiLhtNCJNfFCDgGLe1pp2Gur",
-  "4UtsTXeM6DpYXJJbZRCrD1Zhsaby7mfFMmi9ZhqWeeus",
-  "4vQ4uSE5NbLJTn74mQczYm1y9jezRFAr36cYsWGnm2fm",
-  "4zq1iLpmepj2Rj7W6A3XQMRQA1HyjYqVpZiBzM6aPyH7",
-  "53L8zz6Z44Kaq7TwP2tuSWD7FXoBtDyrNwisWRVVKK2d",
-  "55yPXFXuJpWbh7dJsre5vNtPjdovu2EFE9nPa3jyn6Q4",
-  "57JMxCescrFBvb8bqjNwHPM9J7wPF12SV5KJa82HCd9B",
-  "5ARTXxRUjCLodrGQvGbPrcbD1b25iq81Nv6SfPGAFMDq",
-  "5C5NHuTyJ3t8iXuRQArXhZFkwmmxfcmRHBTA6fM8Qkwe",
-  "5CLVBtQ3CPsZfHxtDof1Uk7Bmzr1LYbBiFZDv35uU8tP",
-  "5LwtbNjQeDvRYB3dz8eVFrapGreCgz999LdR41ArFmNm",
-  "5TMR5GFPTzkNhprnty2ocXEFLoLur1uchg4NkEr5WEf4",
-  "5U1HMpLWyd8Qpq8YNBUSsRE8JmgFsJVwkuDP4kY3FD8u",
-  "5ua8SrN7XJYxGbmvxmyqUCetXXsU51HY7vv16NL88UJm",
-  "5UBWGr8tA4qxyz6cNx7homdWXPU44uZRLsnW94ques1v",
-  "5V7z2FLGprtHqUSqe7vMk2gknsb4AAbYvwx5BFyHCdof",
-  "5VD46CMUb98ryVF5K5KSUraaVeZ1REmUPWLyaeknvXrC",
-  "5WBE6v8rCbaNLV83fHQQZwZcpaMFojYSn5NvQwrv1k5m",
-  "5WYXL4gKimy8hhBaxXzBw9UxDzkesa2aANwXd59sexVU",
-  "62FZUSWPMX9pofoV1uWHMdzFJRjwMa1LHgh2zhdEB7Zj",
-  "636N7frU8bUwYfyUAtvMQQsXhTFRuSWjxnEZihr5axGV",
-  "666WTwF6YsiEVffGJKSAUWYCgcMCuN9cX459kG2wqrX9",
-  "66W4ypeod8MegVzMot5ZJPEh6QBUG4FriDxC72bEJxvT",
-  "68r74QNDsgV4dzuDZ2vrGofBKRMEASVscGemDDLKyjws",
-  "694X5Cuvx6xs4y2aDBu5U1RkZS4RTbcUCZ8qLbH7bVPc",
-  "6cpADLEZ9kgVD4yDFMxCsSV7eNnkagkF2dfVL9LXtNzG",
-  "6DmAGqHB5P19MJQqLg4M9Nh2saCu8UipdecfYmXkTkpH",
-  "6DtEedWf9Wk5hA7Xth82Eq441yf5DA4aGLqaQAVfDokm",
-  "6DWVQJr4Ep78Kz4Qj7shEx7Abx594MDo4AmeLXn7YV95",
-  "6eqPKHBtEEktxS89v1fmeFMkCaNAW6p98HBNE42ChHTD",
-  "6LChaYRYtEYjLEHhzo4HdEmgNwu2aia8CM8VhR9wn6n7",
-  "6nhskL8RVpXzWXC7mcC1UXpe3ze2p6P6og1jXVGUW88s",
-  "6nRzbpSDdrPTf9m98Xh94c8brSwfj9LZagutH9dezHB4",
-  "6oTuUiLduWkbD1WdF62YZgMtzUQa8YMLC4DUT17hdpqq",
-  "6ryvxoTHMYkVUgTTexpqntYLfY4La582UGX7TSX4KRh7",
-  "6vktKctTpVWMbSz7NNXQVAWqtp1MyibVG6FnnLKoCBTh",
-  "6y7Bc52kor6sn3QhbmpvxeBwZWLud4fFP1viz9RLSVQh",
-  "73KcgcTVyLYhnVX3PJbit8e4mC7jU8QotNGBFGix14jn",
-  "7cm7BtqSJHqy7QYJFh4cr7SybGR6q1zA7oXk6gdvWgTk",
-  "7e2sow2fQNLA1RcWhCbLmyyzpfQ5kY52t8SwduvcLFwp",
-  "7JmBfR2vRj8Hw4RBZfD2eh26EQ6dgb1UwMJdFnahrjWd",
-  "8GBWFfkUJw78tbdxD9W9yjSDGWt5LHxf3Vy6Mihiuk3Q",
-  "8MF6FoaC684sK1h2PhTtuJccbytQXa89XyBmoKtVQyQQ",
-  "8nwPeguVWHiZYLsg1pgUWHfAavqxfBBi7nU9RyQZcgoV",
-  "8vgu2Lb311V4qsyDQrYYXdRksJvynvtV264YL63ep8CP",
-  "91HANKimRsWTXMkfcDipLaDVmeTkj6m2eNSVobpkdUNz",
-  "9R2UJG1Wyoo5V376TKkHcp98hrKEQhmGMmx8jVtRLJoz",
-  "9Wagwcs6HVtMHaaxBjUbE7AKmxeg9nzEDcvXhN8bydUG",
-  "9wD97Gp2zFECtrRaSXVLEsXhNe1tyzMevn8EkB9REvy",
-  "9Z2JS8quQd25SkotoBQ9wN9WdKPnWwTFt7aenHiXm1Fq",
-  "A3d4nghJDz5BmBcQ2YKFMQfX1HhgYPSnJmrAfTCwWNHG",
-  "A4nTzSw1oZKK846zGv8diWw6dGXqnGPJwbxyJ85WM4Sg",
-  "DwHcRYVqV4onyrza3okN8YxyRFykmcMR2JAjqGfjX13Q",
-  "DwtF6KdjB9xgzKhCvcxKQLGU1NezdFFdVo8tLzSb7C8W",
-  "Dy4FYHkwPXnp1MRt83FodbktAa8coEtNCJiNJaN9dRKx",
-  "DyvfC79QMJHXPTCoVMP3fcWvBnsenbDeD19WWacDgvXb",
-  "E6gTYLyK5KJ3g3keUe7nNRiZVtzMAVop8GVDjaE6KQe4",
-  "E7p75ggvpWVfUt6XqL8T9yneNLPjK1k4uvwZBxk18CRM",
-  "E9mEz2zVQfjKYj43HXihgzCZ2Je8pDv8v7cH2rot5uno",
-  "EDmbDc7sY87dKszqyZ3rHczWbKcCyUvJQSJpE3Cg4RcZ",
-  "EgKVzMi4vydExJ3MN23DdGvLixiULM6UmenA95cCzJaq",
-  "Eh9gqdQGux4dKqsx7hSF1mfLQuffVSyfhQtq3wNJ5pgK",
-  "EjBiEMGNWpgK8jq3DGtPQBrNDaYd6wjbR8kLyNafJbw6",
-  "emmemiip3UroEr81wLeNm8vveLARzR2zV5t3T4YTU13",
-  "EsCk2ewGL1tEnL3zzai7ZUbBjDyYDxYoumVcCYKf6no3",
-  "EWH2o5SKFnLc8HQKdPBi5BvynzsV6SwkV6jHUMXaQdE6",
-  "Fa3Sd2ttv1W1mga8Vs6VTtqPyJTsHYk7meZHqSsZR4u3",
-  "FAwHi11KyJVh2pR2b2vNFEbbunTVkMFpdNBuD2dh9NRf",
-  "FbeT4rHCJNmqe5Rzs2Caw29cUrWJ13ZRzVD7v448ytUc",
-  "Fbf3gUZ8d5EENvR5Z8LCqyNZXrDfQVJjviNADPWRSXTL",
-  "FfjphfYFcZkWueoFJMfEV44wsV1QayRVs1JyBtb22BuG",
-  "Fi2hrxExy6TJnKcbPtQpo6iZzX9SUVbB9mDw6d29NgCn",
-  "Fkm7CbuXsHuq9BGcT2EUzbK1PWDDgYR9Az2rrRi4iuYF",
-  "FKy2QyHNz2H7K8c4pZnifdP3ogrG4JujwNEB5bTzFEL3",
-  "fLTnN43bDb5h8Shf5TjSD51FUL5XXvrZ8kFqLzAqJ32",
-  "Fo62XDVE3fg47xjeU5odUgQeMaX3s28NsMo3ib5mQEMj",
-  "Fs2f5rNW7MsyfBcdU6NfYsMkrnNSuACuRsNJvrLEDezC",
-  "FsMaCLmxF2zEKAQ5CGJMLi49LLjy4vjhjcozmKsLNLK2",
-  "FWbg3842q7cmow1fuH8MAQGrRvJoG8kQG9yWzB2mmHoi",
-  "fwHknyxZTgFGytVz9VPrvWqipW2V4L4D99gEb831t81",
-  "FyNrn5ELHtimjCscVqRK11Q59VaH3knzahtcaPpcmSro",
-  "G2VzymsKt3zNAn4CKBndYcS67w6Kny5sDEp7Y2W1aTf6",
-  "G32SLVumUnMfw5dpwht73gShY94wNVCSQ7b69Stuq7nT",
-  "GDR6Svdvfd2y8K8dsWFHosNWkxSqsv15nrSNCnLyikUn",
-  "GFJhtZuENEB9StZiacHUd1aoBoCtY2wWLskhgwcyfaYN",
-  "GfXQesPe3Zuwg8JhAt6Cg8euJDTVx751enp9EQQmhzPH",
-  "GG2TmwJf8zkfwSFgZxbXuaAhTHbk5U6UwXv4xEEJwzsD",
-  "GNqTGGVz3NpCeoUVKQpa9y365cxLLa9k1Zi2o57WHisY",
-  "GPpEjfHJZ4Ey9bSBLzd9sggsHFJKuQ5SxsjRYsRDWkH2",
-  "Gr34KrdUAQvH5Hz3VYpa2BiZLx9N4MDLccE4ksaHPubp",
-  "GTvBQnRvAPweU2qmYg8MDLND2PAAyYFKe35aKQGMRDaL",
-  "HaZtFxgw99iM97LxmwFuDW6k4MP1XwsWTGoy7GUoSELj",
-  "HDRfsGqhJFhhm3MKwNSFNurT71PzbbCrdy2UYL2WH9sL",
-  "HEibUTHW7JHt7VgKYtWpQCSX7a6YHBmRQrixZs9i4wGY",
-  "HJXP9JqEx396xNdg6vNKnrqWvyqXB2f7RDHjTWqbanYc",
-  "HmhrKQSVunAmkVoANZAp3AV3gSuh9wTWSk1et3rr6uYy",
-  "HmzcsdvZAqbQCSvinutMJzYTEgR9HaEPUVWFpUkv22KL",
-  "HooderpigTVYapoXi6PQzxwtWhq3U1cuGvyu89fGjruY",
-  "Hp2JBrAhny1TDaC4YhHJLB5jBmcfVXB3A2GTUZzPkQaD",
-  "Hqkk2zNPZYiQL7c9JhVed1EyQppoZToBKMCzaCX1m21y",
-  "HQnpJtH4t2TPwJZHAp17HFRPmz4dyYJ7H2rbCT77cjYz",
-  "HrTZPWV4ZPebBiwyzoTBajCD49kQqVwf4dwsLuYG8CXX",
-  "HsfSzb7BBv4oKNFamgoyBEQ4v6BHUhEREEmBnWzZJXLj",
-  "HtucFepgUkMpHdrYsxMqjBNN6qVBdjmFaLZneNXopuJm",
-  "Hus4uoc8UZNE2BKb2uHEfihLSRvvEGpx9KbPcU9T9fQx",
-  "HVajxfNTWqLGxsfJA9DFThnvddveKfJLK8re1kNpeCVv",
-  "j1opmdubY84LUeidrPCsSGskTCYmeJVzds1UWm6nngb",
-  "J3H2hLKTnxaGiDzG6XfVUgKQdAbzivo98ewXU6zVRyRs",
-  "J6f3FSHEP37ZoKgrXdqVgu7fpfQYy5Rudi4FFfZTNP9M",
-  "K4cT8gJgkfzShDjBoD41hfGKWaVqFkpwivcswdfnZhS",
-  "LeckTHCG66D9CcZoecas8P8AGkNmqbXfAt6LXCKDWhq",
-  "NFJKkZ7yeoAvfHLWNiqAw6CYKWnVAVAQu5PE3AC3qYt",
-  "ouKvBJLk8RejHwMCjMqtAfEbKQvjbj4oXbpwNWGMVdr",
-  "pndujwi7BeaRRenYHSShyNQXAdBNEzKDR5jgzbheJFT",
-  "RFSqPtn1JfavGiUD4HJsZyYXvZsycxf31hnYfbyG6iB",
-  "ve94tFcRnLnwMGf7e5mUXMyAkzzcS4qkzSKZGsQV4kk",
-  "zLJpQSjVD2b1CeLpexgaWaYRopVgnjQeuzetHNNhXh1",
-  "MiLSTQNcHDmZ1cHTo7fC5kvUYMFDBuEDk2HQ2hAGs3Y",
-  "BaLCEtq6qgPFruxfnjWBJBkWwCXdwmuodn4NUicQqMSw",
-  "HDWn4og2pEBuAwNoEp1Q1ee7YreL3ssxh4YjUbk9vnDo",
-  "A1QRKMAVzgnkqJyukUhjTkzhiV1kFC8crKwb95mB5qB",
-  "HyYNVYmnFmi87NsQqWzLJhUTPBKQUfgfhdbBa554nMFF",
-  "Bq5N5kQYFDT9ZNE3CaZL519oyYbS3TokSspouzqJvKjR",
-  "3xzTSh7KSFsnhzVvuGWXMmA3xaA89gCCM1MSS1Ga6ka6",
-  "41CMkTohu1nXSKNexVxWYK3Xwe8Zgox9ag4CBruFBBv7",
-  "9f2ornZ1JAe3T1gGx7ZdfwrfRioJdAf1W1JPSCDEU6Lz",
-  "UvsXNihusMGgQKUYKwYXUwXxd77xM3wXVybRmchgMcC",
-  "4Hq9UkSXjEwDZDBMAo9Lnri7VnbQCoomRAdrT6NGMh1c",
-  "BTWDNC2jHxQT8AfphvEJ5Dqr2Xd7wcBFhFPnAUPukueq",
-  "8HeDT75s5g4CtCimH5B5nySqCiQhtWii8UnZhxBtFo38",
-  "5pxkp8Rpg7xHekFf7URJ25i4P5ZXVk8hRQUaDKytU5K7",
-  "CuHEkY5sgJfQ3dT5ub1YFPGeifB482cCH3WUTsvfZ9iR",
-  "D6B4C5KopAs3TPibLGN2qKDEPjiLmpWdZuZies81cfyC",
-  "GGKs8NKMigXoZffMDB5bDJzBGbqKBgwuNcwWKygE7KwC",
-  "FY3cZS5qwxbZdCGwnHaTR5J4Ff7AuvJkgTpkqzQPXrbo",
-  "5skKDVJ77jhEa1YELXuARCdMLTupVSt83c6VxAYbYqpg",
-  "4xRGFR3k18DYba9BQDH6FNue2MVJJemA5vUjFefNs31c",
-  "433upk9SyfRhanvZkYzYKuiCQk4dBU7xGHMekhfQA6dF",
-  "G6fUXjMKPJzCY1rveAE6Qm7wy5U3vZgKDJmN1VPAdiZC",
-  "HYWo71Wk9PNDe5sBaRKazPnVyGnQDiwgXCFKvgAQ1ENp",
-  "ArfVe1K5gt5zsxzRCWSQeWc1rJSJjZzuuYxmvRh71mMQ",
-  "3vkpy5YHqnqJTnA5doWTpcgKyZiYsaXYzYM9wm8s3WTi",
-  "DjAfkjAV7qD6U2qjjU5RdcuzXwdk1gF3CtiWwGZc8pxJ",
-  "FpSJaWysgd1vRS8bPEp2D6JC89RrT4owCmoBx781vvJp",
-  "Gp33W3sRrzdva7byyrd6Kme5RnA25jeAdXJr32uepV9k",
-  "2WN4rnEmB9c9ouC7VTb4CBXbyiY7qTMcvWUxKKQ2D47T",
-  "Ctxhk46mXh2MUHKTGVgXLZjTHD4kpRoawcyhsgkQDnzE",
-  "CU35ZDB4JptaBVQWiq1gZsR8kso6dz1bQj8uR3xGn2kK",
-  "CVpxvMJiUJCiyg79SmaaCzVGhiXWC6jFHu6DUtHAVxo2",
-  "FXzJ6xwH2HfdKshERVAYiLh79PAUw9zC7ucngupt91ap",
-  "HMMCa4urRGSub1Emotaz5dJbG2YdAD5eEYSAocnpmVmf",
-  "FgfzLpCJhHYZVji6Sw7omJDEdTq5C12FrV72HzDtwvb5",
-  "rapistGfyUzNGKrcDvmcjMQ8t6tds5kNrLYV2gG1ytU",
-  "Bu8iZsGvS5dwuY3GiEDjUSDayEME7LthH4x7TRGTnMXA",
-  "9F1X92uBq9WSdUkj1KhfuQiNhMWtTd4NKBBk8oPnGfSJ",
-  "GiTjPLMYngDKZYxyc2MBFBwsS1Zt3NBCjJtAgsGb3AJv",
-  "HL3FZ8XWnLnn1HuktmgpNRyFRjuAxWbXNQVj5fPPzZwt",
-  "93aHwK6Dqvnc7M6drhZusYwEKEx5j4yAFYfef5NicUPU",
-  "7vHmzkGUBUGHyr2M5frNrLihrHyE8QNTFGZtDhKQvTfH",
-  "7Z4Qtu2Feih9Rma2YR5gac5z8g4KgLExF8u1WfHyq8H3",
-  "87MZqjjJgpuFvaU8GyQJKbZGnCFFhX82qAjBGLRXPfcn",
-  "8MCKzkyRsgB4VdQEpALnzjAnQq1DMZfQ7xttKy1g3AVQ",
-  "8rvAsDKeAcEjEkiZMug9k8v1y8mW6gQQiMobd89Uy7qR",
-  "9amWeN7XKy9HoLWjga1ADYwyFd8BhiUb5iQUU3tFc2F4",
-  "8kbkapCokSiMCgnoqJg36dgg8fXDcwFFJRfZrPWJpgrq",
-  "9KB7hpK4Lwi7pqP267YzUQNMi6XeoHc8SGSzVuLLCRRD",
-  "AE4ZYrdY3HVAvbuNHG5CU6Bo95jdNnxyAuKR8qCCqbpw",
-  "AE9iNfW4sis6XDcEQkm4w6aRgUFFxLePddb97nu176ki",
-  "AM84n1iLdxgVTAyENBcLdjXoyvjentTbu5Q6EpKV1PeG",
-  "AVvbhqsUUVyuMFxNbVSWida9gQmBsLLWj3bd1gwzJqQ9",
-  "AXyJF621sQqBv5c2TJ2RTjTb915JtiZvnvR4c5rxe8c2",
-  "B3wagQZiZU2hKa5pUCj6rrdhWsX3Q6WfTTnki9PjwzMh",
-  "BBKC8NkcfL4ZCfZwjke2A2JAPyLeNWtNW3k7VXPm92zU",
-  "G3K9kWBDUmtnxypFZSzZDdMS9d8GWnZUrbsvobSJkwVG",
-  "G8n4gBsc9Z4P1q5JFJQUfxZs58zD7kF1CqowcTft18RL",
-  "GmMkFTKsAofDMViWKKi3MZRgcsTRKqwRHJcRQ3bQeMdu",
-  "GrXjXop95XkVPYJafDJNCLFzK9K8LkpopxYcgUUn2H87",
-  "GtpUHgnumZKEuL2okMPEQHpaC95fyUBBWvBdFLGghCFj",
-  "mercyFDsQrEJk6FMXo6h9mwecQHt1TyYW7QKDpbM7e6",
-  "mp1V2SpFvcfJoyLPDNHLece3pYWBrmA97qco5GMMNP4",
-  "mpa4abUkjQoAvPzREkh5Mo75hZhPFQ2FSH6w7dWKuQ5",
-  "MVPoC32ZweNts37WJ3pn4vUtTkVM1Phrfa7RX8omkmb",
-  "mW4PZB45isHmnjGkLpJvjKBzVS5NXzTJ8UDyug4gTsM",
-  "7w7f4P284zJhv3zotjCUmaNsZSsrHQKtpXGBJFq8gdzq",
-  "2JKaXsACKyTKK7b5WPascrQpE2SwigoS2d4GVEB1VorQ",
-  "6B9YXryYGvAsHTj5RVn6JbMXgm5eXTViF1ytKenUtkQ1",
-  "EiGjwgAWG89bDMEWGVMAQJ7jKv7tV8hrxp4waCoiB1De",
-  "EJM2zrEd4uc6662LVVdDN5bH9iDFy2A4mDuhLttMkhby",
-  "EP5mvfhGv6x1XR33Fd8eioiYjtRXAawafPmkz9xBpDvG",
-  "ACFUm3nxWyydwazkVJYEMfGoDuLoPvMhKrQokbRetE4n",
-  "C9wE2tKWQvDRaEnC4jTLzgMawwwYJCzKvewSaJVLQFMG",
-  "5fm5pHB2GR8Py4YARY7fDire8E4oFBHCHCYRHPD4x48f",
-  "7vZBfAKXx1medCXn5jo9bjhUi17rh6XhSJgHmCXuMvNU",
-  "7w7BRXN3ge84KxzeDLLbwBcMWpLwagrZTZ7pWSg31dw7",
-  "7YndBV5gp3VvAiBbSfv8M7CoyMhFsiKeGYWkwee49fTg",
-  "9UWZFoiCHeYRLmzmDJhdMrP7wgrTw7DMSpPiT2eHgJHe",
-  "9Wf2Gbo6ZnbJpXrwm1TTPpULHZz59uPZaszTsECE9PRb",
-  "FxmuMAWVXRLkXpaYtQ8o41Tr7meVKMMmKtvMpasF645V",
-  "FXobn8QbTmzHeHu5GPWjDR31jh8HCW7TsqrczF8v7cKA",
-  "AWxr21P2srfkPLiPpqDYyWsKWR1bpJWtw5beVMiRxwZm",
-  "EDajBBK71iW7jeVjfsmiGeneraPEsq2YrPgeAQkiLd6R",
-  "BoBo3rgrjVwkNCjTd7EqB6sn3kzDbnew4KSKPFVByKjK",
-  "2FMGLCbrCbsuNBViefqNnwWq1pkej3544JZLictaGW1F",
-  "2h7s3FpSvc6v2oHke6Uqg191B5fPCeFTmMGnh5oPWhX7",
-  "2LEZBEKxx8hpGEVUVCqKr72zUbvk6iiKTdKwjWhpor3q",
-  "2YyBULF7gFU42TaVhbCawoAfEWL325cf9qV8X3MgVABM",
-  "36MZYxD491sezrMkPALuC3yV1Cc4FmBXnQdNnPjAGcvW",
-  "37yTBV9MbWEgS2gDhCBNV1qM4z6JtKNZawpa6V5BynY8",
-  "3cprtviUwxcTxjXnhFD64zF2ydYdW6vgGszh8c31HzSG",
-  "3diLgHoGz4Lxfyd3pRAx9s5UUixBjwT77mqYkJHyHAis",
-  "3DrfCcNC6Q5PFBgrgAcBAgvykcVBcBWcr8nnRmNyWXdA",
-  "3eiDfhs5daac6UgPmzchZL49RttEL7d99kq7oaP57gFW",
-  "3JoVBiQEA2QKsq7TzW5ez5jVRtbbYgTNijoZzp5qgkr2",
-  "3MBE2jqkBUDHcDpMcQw8jtSTZyJ4G9WgXANwdyPDvYaq",
-  "3PFXaTQ7QBquUgGCBd8HbkRGpLsCd47HqhwEc3nNhyNw",
-  "3pZ59YENxDAcjaKa3sahZJBcgER4rGYi4v6BpPurmsGj",
-  "49FvbfcoqwKPefpmj95BaWAFHUoPUFa4ZfQZJCpnmaFG",
-  "4Bdn33fA7LLZQuuXuFLSxtPWGAUnMBcreQHfh9MXuixe",
-  "4Bxf1mCFoaQmCxxB7obV4hjfYJqkCXVQVCTRkjT1YQuL",
-  "4GaqQnEeuP6XFcXVDZAvgEPQr14XKn7bomUhiygreiVm",
-  "4hSXPtxZgXFpo6Vxq9yqxNjcBoqWN3VoaPJWonUtupzD",
-  "4kvN7diP6HYKuzMbDduh8a7m4P2Yyj92wsYYs6V8yhJZ",
-  "4nwfXw7n98jEQn93VWY7Cuf1jnn1scHXuXCPGVYS9k6T",
-  "4sKEmneKj4tRyjBj7nLLtEMzPBoSVcBeQeLD5hH2wakN",
-  "4TS24wgLBMucbZt7zqhM3KakXwdNTT2ECxDXEpsn5AhZ",
-  "4U7WKe5o8ScS8n6Gy5tEmTdfsKHYeRNiKbqZ38Kp99Ps",
-  "4uojqvrE6jirqfqvmy5PngFJmgBy2tqXioHx4dv5zsCU",
-  "55ZBpYaDnpd9QyENdyVrkYWkm76ee15WRnLaKEDwS7Xq",
-  "5D1RFRESCwbFswtwMX6F9MdHZK2nJ7tJjxXwxB9az47h",
-  "5dzoivi2oG7Brpak98U2tZJZCwAhfLkiKdhQadW3Ef9P",
-  "5Ge6SzFcJnpyh3VbikYeS3bkHiEz3cR5pCf9R1r13t42",
-  "5owZXjEe27wZTRevqRUETwia3EctJiaYtKhpqmPzWHuj",
-  "5q7Xwc2T57sK1DKU6zuwVXvMPsxqB2xrJ3T5AonFYtcY",
-  "5sTQ5ih7xtctBhMXHr3f1aWdaXazWrWfoehqWdqWnTFP",
-  "5YkKg3dov1YG59PhbD5nCSTaA82YXpYEjby1RNrd3KfY",
-  "6EaWAqk7BAaZTYce1tMpUkSPiW1pxs21bJvi9JY4fLtF",
-  "6iLZbYvc7MrBRQvzAX8yJj85cb9cQF3Prvrn1D9vvLA2",
-  "6n87cC3KG3rzMYMc1RFp24woriFMQ8zqb61qzYkkXjvD",
-  "6qBMtRQpQotxEgDRsUZ9DDnZoFxBf9MxxLPs4CG6yKrv",
-  "75ZgszfwDM89rhJ4gxWoapa6gv4a4dYxGkgFWMdmB6fh",
-  "77kq9xNZg4Vb94UJMpeHsx7pKXUBU3Wpqsm5UXhjA9dd",
-  "7dEez77RSJxKCi37rsECMQi88Gswfu3ETNTCKeaWxCtF",
-  "7DkYsg1uyNCp7HeSy6wdN8wcGoV5x7VAGMur2Aa7wtVY",
-  "7F7hvmbT9hVBb3c3SKDsNhQBjtg9JyjrBWucZYorgYwD",
-  "7pEXhVH9pCEBeLMhbnybcowXgH54rRbb2P9TkANvRZhU",
-  "7sUFQdV7gK3hBXQHsoGocacbXvnSWqWDinHtQHSJnG7d",
-  "7SvvTJSwcpNQCDGEt14zuoPFoSsaveGd7UWgiJGQLAHN",
-  "7uTZLDL3mY6kDnwxuqqu3WGgtMiPsYMmCvX3NQt4W8VS",
-  "7V7jPL2b5QV2HmQg8neREtQyXY83PYjxhZqLuKWPu2FK",
-  "8fzuwRkhP45usiwbVia7MCQNmDRF97Rzs9oLiFqb4ZN2",
-  "8SQFRz77ZDWy3z6dmcfb7817qPzYMc78K6GBkWxvckJg",
-  "9cStCUnJnrH3dSQHGCmScuwRNH4nQ8xT2BZeVPsnGPuB",
-  "9EFpeiHD3Xnrah4aAGjNh7ThWsEsERxxQAkVyauUAq7H",
-  "9EyPAMyQvXaUWFxd2uQHvG8vpkKs33YdXvDvwmRXrUiH",
-  "9FE8V34esAoosqYqyV3fRGoPrfuR6WtH9TAhk31HJ7G8",
-  "8CZjFG1EV3FduGV918QWUh7fevUoZSTffVY8bK6M3wbu",
-  "CPcDUe51Xh8Jq7NdBsr8qd2wXN7tYov5iLGtNYskkXLb",
-  "Ez2jp3rwXUbaTx7XwiHGaWVgTPFdzJoSg8TopqbxfaJN",
-  "F72vY99ihQsYwqEDCfz7igKXA5me6vN2zqVsVUTpw6qL",
-  "FakHVp9d6JJDa5j4w4d1NetFjZafLkHx1LETWhDCyVxK",
-  "Fffc5CxTqeKwrg3xTMnNwfnmVn32m6Cuq3PB72gFNpip",
-  "FneFUpqkjBx5KNGVWtsBY7TuUnS3962BQEgctWNje7mL",
-  "Gmh3Wt423pU6GsS3FQyZjknifnAFW7g3J8HhbF2TrbZL",
-  "GYMhYoRn1kwK5rrtoQ2xppYmRCJDALuNEBpLDqAnFuXW",
-  "i8D8Qm9C1mjzr8xzQuoEVKmvQwJioETHNods4wEzbZa",
-  "JBKRd7yDg3npf5PDTrC4wGzLjS8tGPRMQ39k1AufvPkJ",
-  "9HCTuTPEiQvkUtLmTZvK6uch4E3pDynwJTbNw6jLhp9z",
-  "H812jAz5Z5t8cvfXoxbE27Q2F89eovpib5kpXawLAFdS",
-  "BYZxm7zMf2wkMMnh8KmZmEFoxL319w4QGkB4zQgEThkS",
-  "ErushyoogjNsr3WdvdxS8XKLYsJ6ZL5vAZvUUfCvF7Yo",
-  "EsDB2BmVKKUM64hKnaKT6ZLAcGrzdp72oBupmhBkUAue",
-  "Hbi1ubruHkQdX52uDewnCjeHtxsLoCXTnsBMPJZyxn28",
-  "AszsUFwSNY8tVZ5N8ukjutgmEbikPZYRzk5744U9JFNk",
-  "4H5cREJ2KvHFh8UvcKLek8DJgRte6kiaR2FSBTBVGUd3",
-  "ACHhRQMbTxuWqU3bmbBbgUNGsPsYnvB8KLcPkkXCY1C7",
-  "65paNEG8m7mCVoASVF2KbRdU21aKXdASSB9G3NjCSQuE",
-  "FateMietcaAAUvfQDHnnPDGmeYme7mvLqFYvLomWEmNw",
-  "2fg5QD1eD7rzNNCsvnhmXFm5hqNgwTTG8p7kQ6f3rx6f",
-  "7NAd2EpYGGeFofpyvgehSXhH5vg6Ry6VRMW2Y6jiqCu1",
-  "8DGbkGgQewL9mx4aXzZCUChr7hBVXvPK9fYqSqc7Ajpn",
-  "4iLVvoiPNQgjNjmx3STx3z3GV8Mf5fkjp5D1ebDENNQR",
-  "H31vEBxSJk1nQdUN11qZgZyhScyShhscKhvhZZU3dQoU",
-  "D7xK1ZLz8KQNWN8aU1jbzNAuT5xwqgFrCUUYodVU4G42",
-  "CgaA9a1JwAXJyfHuvZ7VW8YfTVRkdiT5mjBBSKcg7Rz5",
-  "AeLaMjzxErZt4drbWVWvcxpVyo8p94xu5vrg41eZPFe3",
-  "A88uMtYGRx5CF4TT8L4L7KxjbPeW1o21mKMwfNcmH1db",
-  "498g1rVnFcnjBjpfw1xyqA1WvgQXUU8RWuELjxkjAayQ",
-  "83b2LMf12aLec92kur3duRA8VvUkLaXUtML31aCcZNCM",
-  "71hrqoeuTKhfRogEQiDpY1mvRePBXMv8vuDYaV4YVpci",
-  "3QtkdYmRAGRVNWYQnv5bRL6GmZMHNDseJruTuzoLuGUB",
-  "DiaAmWrdWPF7RjyP75xENaapWLqYhG7ejH64xWVUsmuH",
-  "AZNV9zQXjWNgTxsmHobjV4KqCJPyjcmvjSmgTxEr2ztE",
-  "274vmGgKuYQp8Fxvb8n3cr9ZeY3SYM6LgeaXM6jS2nD6",
-  "4sAUSQFdvWRBxR8UoLBYbw8CcXuwXWxnN8pXa4mtm5nU",
-  "89HbgWduLwoxcofWpmn1EiF9wEdpgkNDEyPjzZ72mkDi",
-  "4vw54BmAogeRV3vPKWyFet5yf8DTLcREzdSzx4rw9Ud9",
-  "9tY7u1HgEt2RDcxym3RJ9sfvT3aZStiiUwXd44X9RUr8",
-  "D6QayRMD7iwWTFy2XeoCYMLAZyNeAd8gT5qxj71noptx",
-  "VJSDW6S74YXR4rRR9P4xwhMvLZJQMhrUb8XMFirUsy1",
-  "EDoonKrsParDnA4yJKJ3iDNEaFVfcaxSULqzQyNkwa61",
-  "AeLb2RpVwrqKZJ87PEiFdReiEXJXACQn17c8APQS1FHx",
-  "86AEJExyjeNNgcp7GrAvCXTDicf5aGWgoERbXFiG1EdD",
-  "215nhcAHjQQGgwpQSJQ7zR26etbjjtVdW74NLzwEgQjP",
-  "43Q33vir9vv2rgferWUw6zxv8ukLFRzdxmVctVRDufUB",
-  "G84Yz6fDA8wun3po1QG6SrGknK3cha2okXog9MmrqAQt",
-  "94JRjXuRjdo62mcyaxqmmYAFe9E73UZw5sRyJvQzzG2e",
-  "7iabBMwmSvS4CFPcjW2XYZY53bUCHzXjCFEFhxeYP4CY",
-  "5sLbBRU6KBpfSVXHrLtEWJmfyLtbbjidmVeiUzjPEMe5",
-  "ESfSy3R5M9tUTaxgWgJSwdqPCYz5T9TUUnm5Rh32H6Ab",
-  "DpNVrtA3ERfKzX4F8Pi2CVykdJJjoNxyY5QgoytAwD26",
-  "26kZ9rg8Y5pd4j1tdT4cbT8BQRu5uDbXkaVs3L5QasHy",
-  "JEETj9KvH3mm14NCUdrgZSZJf8U2rAbUa9gc6ADhA3of",
-  "Eq7vHwMDow22B8kJKEzYp478VpcYudfgvdvygeE1Q2Ys",
-  "GxNa3Fza4e3GSDqccT978EuheTwu7af3DaB6JkqPtjU5",
-  "3NzdGknBeQivGUoDzHhaHxLEDN7tNWUyKj5xkqyb4mui",
-  "DsqRyTUh1R37asYcVf1KdX4CNnz5DKEFmnXvgT4NfTPE",
-  "G4uvhRaa1sbBKpATd7DhYN5L3r2dDWj459naV51Tf8so",
-  "6V1ZnGc4sXtEJ26heqa9iZSMswqXgRsXB8NEAafPcSbw",
-  "FTg1gqW7vPm4kdU1LPM7JJnizbgPdRDy2PitKw6mY27j",
-  "6EDJ7JuynXSPaMvufzAX4swSRJZXv6uPi4s6jmo33xj5",
-  "dATMod1UTXYzvaXji4mBsvXTeAUAC73TNJQAejKS54X",
-  "7yhcD8sXi3rbCacekTwPNpsF55K3nN6WBJxsZHqr26o3",
-  "Hxm9JftymJVSoYFiwwA1owR5t2GH8WFZfEw4HZHRrMKk",
-  "4jSmEmBkuBi1JxZHM1khkf57xPR2oW1EnkRxqehq1cSK",
-  "4XMPyWFsYdNcCN4FG8geyytyTeUNacn4QundBzMqbGGT",
-  "Bi4rd5FH5bYEN8scZ7wevxNZyNmKHdaBcvewdPFxYdLt",
-  "CxnVxGM8iPkSXsxEUyLcqBVAKraWZ6U9FzcT9YoHMPmN",
-  "EABXkKHLdH8Cb8YjJ2Zcj4ybnY4xUDbXELs9cy6rMQi8",
-  "6JzaC7UFYdJYcz58EeBSjvYu5tyxg55igt2RyU9UiNm2",
-  "CkxVhktjqYuhsVfNQzqEZkwQ2gMU1wEFPM3FSSVXGjM9",
-  "96sErVjEN7LNJ6Uvj63bdRWZxNuBngj56fnT9biHLKBf",
-  "2N7qg9a3N6DXgDBXvgZ5JGnXvxUnX1YhBEC5Y7waqxmi",
-  "7r8t5zbZ3vNKh52iEwhL6ms8gZjzSALrSgJvcyz9iixQ",
-  "DgeoBRUzuuzpRYpLqFpSEkH5DBUAQR2WbSjcPobPFhb8",
-  "BFTCyf9BfP8WWuheCBoRfBWKz54JQ2aSQoGz1MGwwMNT",
-  "Dgehc8YMv6dHsiPJVoumvq4pSBkMVvrTgTUg7wdcYJPJ",
-  "9iJAzuBcDT1SRVALiNXSvWoHKTpNVACtdoQ3EnwzpqLK",
-  "5twwvp9YkX6WykbFuSe5xkmW5HQ4uwJyq7UPgcxLn1Ws",
-  "6ghddcbJBcnK4FgowbHPEsxRhkGxKhAkseDiL3tuEho4",
-  "Da59SHWe9G7vvHBxeYeypxw5HwqZibDKjpQLNFPpfbGt",
-  "7Sr67CKtXnuK38TtB2FGtAzu9fuJp5Zhpg5eFja931JX",
-  "8MaVa9kdt3NW4Q5HyNAm1X5LbR8PQRVDc1W8NMVK88D5",
-  "FWgwxkbvRPcTBA7AZ1weKp4kZJZMkwHhdDkmKncxAeC1",
-  "hahaXKR7g2VwnS7WguKvy7MQdZqi88EtKP7k2xTh4Qs",
-  "2sDCZ7mQJyphPeGpKCDUQvvUZEvGdK9PeLDuJ3n3M9V2",
-  "2iCmwtaM14u5XijJ6Wx6pbxSqvvPbvzUVXAhk1B4aEtr",
-  "BHhRbqadwedgwerPRKQYyf3QHvQyMJ6tFjt5rybaCxjU",
-  "HrWt6V3kjv26bfUTzBroVAp87W62AWD3LsRfsNdgXJrc",
-  "5afSYA7JRyTvpbiypNjTMj6SsYAopXjvZwSPpx6ZzdiU",
-  "89VB5UmvopuCFmp5Mf8YPX28fGvvqn79afCgouQuPyhY",
-  "73LnJ7G9ffBDjEBGgJDdgvLUhD5APLonKrNiHsKDCw5B",
-  "HQLeWLJRfhnzq4Ucdn3V1vgSw5ZLxRXT6QQa5bASXSdu",
-  "EVNLVqUuCdbU2ebAwmSPWRcQ73iR4W5cho6shH7fXXir",
-  "76ZUBj1JLz7arTVHSRJok5oSTEqDuVBgySFMVHtzxzZc",
-  "GNrmKZCxYyNiSUsjduwwPJzhed3LATjciiKVuSGrsHEC",
-  "E57hYjjwNAnvXe67C1q7nKRdC2jWMRGLWAJsBJAJrgzR",
-  "2CXbN6nuTTb4vCrtYM89SfQHMMKGPAW4mvFe6Ht4Yo6z",
-  "HkFt55P3PhRWHXoTFeuvkKEE4ab26xZ1bk6UmXV88Pwz",
-  "9HhLNKepBYJx4CLmatWD4PuQ7rHF6kXmzAzyF7pTbduT",
-  "CNudZYFgpbT26fidsiNrWfHeGTBMMeVWqruZXsEkcUPc",
-  "9GTVJLduxXwUR6otWSYgDLatYJCab61wHB8Vcoi2FNEf",
-  "kQdJVZvix2BPCz2i46ErUPk2a74Uf37QZL5jsRdAD8y",
-  "J8XcwF9NqgUdSV8LJGtUQjwRg1RhXjmFRDZUsAxWNaj4",
-  "H8QD9bFaGwnW3EYRLXmGFUG6aWsC1h7U8v7GnJwJ2Vys",
-  "6EDaVsS6enYgJ81tmhEkiKFcb4HuzPUVFZeom6PHUqN3",
-  "9ZzjXiwkGRDBwVHJitfx8AmnN2YUbnqW6M1tH38juEeJ",
-  "2NrrLM4TM4G5Qz3VXhQXMLFfA6KU76kS61iteBRkbmCR",
-  "FvTBarKFhrnhL9Q55bSJnMmAdXisayUb5u96eLejhMF9",
-  "EFgLmkDuqKt1bjLpee4s4Y5Xy26eYHVQLKULZeXSwdmd",
-  "6gHaLmWymSnpULsUkHPX7wKVjoiYFkeRQ2s6SBx5DY73",
-  "D18EmaqFyXJ35GA9XP41qecF72JsyJNo6ZtrTDfi5xGH",
-  "EmXjjMDbXQQG7miHGT82toR2H6DUQXHv4aJ9Cz6VfJbW",
-  "9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM",
-  "GdpQ9K3Z7k4CHuo9a8X417enk3qPAEPByNTza4bMn83u",
-  "frBh2eT1P2J3Shu6wYMXtM4o3EeFBvi7cs8cbq5DtjY",
-  "7w7tQnyfZUpdHNTbTX9MVZHhWdaNcYKZuWaSSweMJxUJ",
-  "DqrTpRqgiEE5GKePgYkhRyR2Vx9XnSJrV1Jd3ZZVECLF",
-  "4frBKrDzR63R8jAnZDkLTYRzUVByax6duBSruHeqdyv4",
-  "7M3AinEXjZ7okFPh8Xw7ESEayZFZzFAKGJTf6yNATPpn",
-  "GM7Hrz2bDq33ezMtL6KGidSWZXMWgZ6qBuugkb5H8NvN",
-  "5kV1MxKZd2cK7nJgUpxCdo9qwLeyLv4UzcCJLoGyEp7L",
-  "FyBQWMUXzzD7S6GAUWSqcTFhAiF86PQstyRHJdLfzz8J",
-  "5tzFkiKscXHK5ZXCGbXZxdw7gTjjD1mBwuoFbhUvuAi9",
-  "BTeqNydtKyDaSxQNRm8ByaUDPK3cpQ1FsXMtaF1Hfaom",
-  "unHEPBuKEQ5qf6JRRi1WZgJ1Pe5nuyCzSCDRyMkAn2X",
-  "HcPE7DGP3iRzBv9BJ4fYA5D5rLK84CHaRTn3dwukGxXe",
-  "286CHN57Km41GsAnDv866WKd6YB6HPSjFgF4rGDJTRLf",
-  "F5TjPySiUJMdvqMZHnPP85Rc1vErDGV5FR5P2vdVm429",
-  "3kebnKw7cPdSkLRfiMEALyZJGZ4wdiSRvmoN4rD1yPzV",
-  "2jHGY77pyUkSK4e2EVYJL6L24T3kNKRcZg1f4CV19Kgs",
-  "AT6FsbUy1jNR2AHE35WCVh3nSdDtYADtdhA2KitQXmL5",
-  "GKT2j5gPqY2ZKfhaGB5cn5bTHLSKTUrULe8wG1QwmLpt",
-  "3fEP8Ln26G4EXdBjjD4zH7sLXecv76aarneZcZhEFw6j",
-  "AMPhmcp3uVyYShFnaJDtLAM22CvJPLxwVFWarLHf2Fw5",
-  "EbHeQQp7B7nTQJDVN5WFL1wheficuMbp54ybsjmiXtsf",
-  "9NNS758mUGByRcFBSD79fLn2mYL3PGM9G9J5RjBV3kD4",
-  "EaVboaPxFCYanjoNWdkxTbPvt57nhXGu5i6m9m6ZS2kK",
-  "BoYHJoKntk3pjkaV8qFojEonSPWmWMfQocZTwDd1bcGG",
-  "7KpVvyBtxV962E4VEkycaguZkfys35iudnEwsKZAm4Ao",
-  "7qXC6p9U1wE4iGLAgpTfJHF8kvdvp3o9ekbuVADhNASm",
-  "RH6epK9UW5vA5rm23FcLi4rPuTJjwya6UQJeG1tigv3",
-  "2kv8X2a9bxnBM8NKLc6BBTX2z13GFNRL4oRotMUJRva9",
-  "7rxyLczJthc3s9SDtw5WaQ1bzcsSdChkbDQFUMFSN6zN",
-  "Av3xWHJ5EsoLZag6pr7LKbrGgLRTaykXomDD5kBhL9YQ",
-  "AGqjivJr1dSv73TVUvdtqAwogzmThzvYMVXjGWg2FYLm",
-  "8MoW9mtbEz6z3gPuAdYb1yWhjCAxQSYqpcTb1CQgN5qb",
-  "9N5pGaJFEsdwsRyB4XFuJPqTxmPqzUbj6SViTn4KHiTa",
-  "BCagckXeMChUKrHEd6fKFA1uiWDtcmCXMsqaheLiUPJd",
-  "D9gQ6RhKEpnobPBUdWY5bPQt2p3zGk3iVz6ChpUi2ArA",
-  "49LuRDK9EtRqQBFTtEJU8yPKWJQx3mSA7MtXNmwj8bqd",
-  "4FPtoaU6WmQk5jVygv14U5D7abh7cVTuQVAco7m5Djko",
-  "J3wA9xnAvuDYJ3BhtDvGh4VFPDUt5JXjEWiuvVtZDxTN",
-  "HrHJputHcA8mkwrcQB3GkrJ2u1f7Fm4LzAZptSYSsUcf",
-  "22kFm8b2Vb7itdz51dNGd1tn9hkKgF82sc2jNEQkGafp",
-  "7T6BwG26MHxgKYqG6Knzs7ViLcmwkcUHjjQu4ddn331o",
-  "BpycpQ7STrD8d73kjui5nzJmp7EBAgSmFfV8zeqMMX5z",
-  "ELSyW68qyAToytdaMkyQhgGL9FErGimoPA27AgingJtE",
-  "Gitmf7ap4gYgbEVzkaiy4sLtXev4kHPu8VYdbpcXTV3w",
-  "2WgDev67aT9sH8LBLxkaGuuXFdqyyGi3hkkgACQZJJw7",
-  "FKY9K9K2WjXP5i4FrAo3EZsyfqV4u9CjQAwj59QXh8Uv",
-  "AC5RDfQFmDS1deWZos921JfqscXdByf8BKHs5ACWjtW2",
-  "34ZEH778zL8ctkLwxxERLX5ZnUu6MuFyX9CWrs8kucMw",
-  "7Dt5oUpxHWuKH8bCTXDLz2j3JyxA7jEmtzqCG6pnh96X",
-  "4v98tazQGntQww6NbAGrKERohXLX79vfXqZJ8M1bL6DH",
-  "6RYVUPzp1rPaDQth8LaNLaMcZg4HRe3L9LhpJDV9ZZWf",
-  "9yYya3F5EJoLnBNKW6z4bZvyQytMXzDcpU5D6yYr4jqL",
-  "KANYEsXAntLxYUE6GtPJ5CahFGpEbaSbd5xhNFYbvq3",
-  "6EbQwK1bLmwwHPGYgUtGgH4PVA2Vq683SpmxauJXKC2m",
-  "A8sM47Xd1mA8zRjBKcKMHnhtGDwLtUNFq3n7YLej5ZZZ",
-  "ACTbvbNm5qTLuofNRPxFPMtHAAtdH1CtzhCZatYHy831",
-  "Dv4DyGEP2WinTUjBGLewQKYcgis46D8FZvt55y3Fsb39",
-  "HBAbw8VjQjCpE9hgBziwrGNoMsNKxH9WFvfBfVaP8C8L",
-  "4aDdi3EiDPMbeZ3e5BvbFMt4vfJaoahaHxZuwKQRtFc1",
-  "AqgRzTz1iPfR5jUVwnbiMLxcAK9er7Fu3x6QqEbL5dvz",
-  "ASAvw3GfTVH8CYnruEFLLYNkUP5tPLLGs4vU49P4tcj9",
-  "4ZjYSCH3Sib9iMSM3QN2sL2kwxNcXG2P4XCemSC2hsyb",
-  "CpGsmGiNYjiVwUpePRfGULbEdbkgDdv6WwnjZBVcyZ6D",
-  "E6pP9QF5nJXUrZXbq6egk5j8i5FPNNttvQKbowvcWK6s",
-  "GipUqsbqDCr4pkYi6UQASzRD92zJGFaJgw9jjCayYmcd",
-  "BfAgS1vsK2Wja56zxcBrMMdn6sFgTnMmZu3wi4XwiAt3",
-  "72e6QM7gn9MH5u1YpgQbduexm4WAon1cnsSXPqKnLQec",
-  "MNhBbrscBPmeid54buiqSgyWa4D8PY6uKHoK2wJsTJN",
-  "8DSii5GHqcRSufWsrQu1i3oDTnyFS5iD3Jc9PjE7XzWf",
-  "8M3ZArYWLNHbCTQpWwZzfZirmoCEj5uoggadfo5MG4f8",
-  "DAzemUqtoh1qH7A23YoDPSJwhEmdzUByors5m7Q11t5f",
-  "shottaxEfNihMUBWUHaQWjYc8n9XEMrUGTKwzY1tt1R",
+const WALLET_TRACKER = new Map([
+  ["AMaokHvLumVnwgYTPGEut9VPwRWXZy2jJQQzCkvrPafT", "DEV"],
+  ["MNhBbrscBPmeid54buiqSgyWa4D8PY6uKHoK2wJsTJN", "DEV"],
+  ["FXkGydbnG4jHVYqbBWWG4kkkwCpz6YEeVtM1vA6kZLaS", "DEV"],
+  ["HrHJputHcA8mkwrcQB3GkrJ2u1f7Fm4LzAZptSYSsUcf", "DEV"],
+  ["89VB5UmvopuCFmp5Mf8YPX28fGvvqn79afCgouQuPyhY", "DEV"],
+  ["DyvfC79QMJHXPTCoVMP3fcWvBnsenbDeD19WWacDgvXb", "DEV"],
+  ["LJ2X58hCR38qtvLBTEhwVAMALz7bbqR1YVvq2mnVnqq", "DEV"],
+  ["5qWya6UjwWnGVhdSBL3hyZ7B45jbk6Byt1hwd7ohEGXE", "DEV"],
+  ["45Y2i9ujmHYxrX6GvNC6EjUX57kd9zPw8GFsTLVrTJH5", "DEV"],
+  ["96A2MQYickSrtMxRkhwFPG7opLNTeRKRAJbKwuG3PCnZ", "DEV"],
+  ["ArfVe1K5gt5zsxzRCWSQeWc1rJSJjZzuuYxmvRh71mMQ", "DEV"],
+  ["D1DhSivDh6nuS3ecXN3ddx38vBxxBbj35Ak98gwHoGnR", "DEV"],
+  ["8HeDT75s5g4CtCimH5B5nySqCiQhtWii8UnZhxBtFo38", "DEV"],
+  ["CFNjTNoqr8Wpq7DVe5ymK9CKXNzoW5X6rMQQAPZh4kHg", "DEV"],
+  ["BT2sdwJeDWqXNUNBJwtKWBD7RjquACfjo1rT9vpZLUSA", "DEV"],
+  ["BXNiM7pqt9Ld3b2Hc8iT3mA5bSwoe9CRrtkSUs15SLWN", "DEV"],
+  ["CgmwCcCoF5YNhWrVBz2R2iH4MopfvYLfxLgSZsrnemi6", "DEV"],
+  ["2pZsbRPLrKMNRaxXrKfgUnRhkvdpB1PhCgewxzWyJZKx", "DEV"],
+  ["CtPxvpWo1pk7HtL6KwpCLMMdsXHC6fdqAN1bPiracaQq", "DEV"],
+  ["3tc4BVAdzjr1JpeZu6NAjLHyp4kK3iic7TexMBYGJ4Xk", "DEV"],
+  ["AMRsSeU5JpqwQWJGNLMpZzRCZSFEwYQYbMnms3dD4311", "DEV"],
+  ["5m9izRFh9ddMNoSGLA2vaFb1Fd4uNZyyg4AgY581Rxre", "DEV"],
+  ["HyYNVYmnFmi87NsQqWzLJhUTPBKQUfgfhdbBa554nMFF", "DEV"],
+  ["4sAUSQFdvWRBxR8UoLBYbw8CcXuwXWxnN8pXa4mtm5nU", "KOL"],
+  ["PMJA8UQDyWTFw2Smhyp9jGA6aTaP7jKHR7BPudrgyYN", "KOL"],
+  ["99xnE2zEFi8YhmKDaikc1EvH6ELTQJppnqUwMzmpLXrs", "KOL"],
+  ["EeXvxkcGqMDZeTaVeawzxm9mbzZwqDUMmfG3bF7uzumH", "KOL"],
+  ["FPx2BavA7J2C7Nz6WpoPL9f5kDAKjxLb38PHNZMoxCra", "KOL"],
+  ["9f5ywdCDA4QhSktBomozpHmZfSLqS6J9VqCrRehYWh1p", "KOL"],
+  ["ardinRsN1mNYVeoJWTBsWeYeXvuR9UUDGMsCDKpb6AT", "KOL"],
+  ["A8i6J8B1DgVdQaoeyrCmc18473EzYocEtZGavHT4sXzw", "KOL"],
+  ["3h65MmPZksoKKyEpEjnWU2Yk2iYT5oZDNitGy5cTaxoE", "KOL"],
+  ["2kv8X2a9bxnBM8NKLc6BBTX2z13GFNRL4oRotMUJRva9", "KOL"],
+  ["B9oKseVKRntTvfADyaUoH7oVmoyVbBfUf4NKyQc4KK2D", "KOL"],
+  ["EQaxqKT3N981QBmdSUGNzAGK5S26zUwAdRHhBCgn87zD", "KOL"],
+  ["87rRdssFiTJKY4MGARa4G5vQ31hmR7MxSmhzeaJ5AAxJ", "KOL"],
+  ["6wTsHoJz4VzPb6t7zyBxLXifJJWEvE3zYRuF2X8v1vG6", "KOL"],
+  ["ByXk1FEfaaX9sf9hSwFfkuZLBRZ7S9cutZsWMRQw2TjR", "KOL"],
+  ["41uh7g1DxYaYXdtjBiYCHcgBniV9Wx57b7HU7RXmx1Gg", "KOL"],
+  ["8fsKLLtvKNanL4ginCaiRS6UfeemY11rSf8U8fN1dJw4", "KOL"],
+  ["7cQjAvzJsmdePPMk8TiW8hYHHhCfdNtEaaNK3o46YP12", "KOL"],
+  ["5JrDgnED5QFiaE8Znny2S9GwCeDK2pLYjMfWmjKogs3w", "KOL"],
+  ["4uCT4g7YHH4xxfmfNfKUDenwGrRNGoZ9Ay1XFxfUGhQG", "KOL"],
+  ["6EDaVsS6enYgJ81tmhEkiKFcb4HuzPUVFZeom6PHUqN3", "KOL"],
+  ["7ABz8qEFZTHPkovMDsmQkm64DZWN5wRtU7LEtD2ShkQ6", "KOL"],
+  ["8TmEdDjLkwpWvNKTZtTtJcHjy5MuPbaGq1toY41WNCaf", "KOL"],
+  ["3kebnKw7cPdSkLRfiMEALyZJGZ4wdiSRvmoN4rD1yPzV", "KOL"],
+  ["2RyUYqX1VFoGdDSKm3brWV5c2bY4thXx1Wctz22uYS1p", "KOL"],
+  ["D2wBctC1K2mEtA17i8ZfdEubkiksiAH2j8F7ri3ec71V", "KOL"],
+  ["SAALE2x3sn51EyahJyqD6913L3GqHZdZo3egUdMayQp", "KOL"],
+  ["H84Wda2aSgKV1daCVV9ozWrSurjVnoSLY5GAymYArGPg", "KOL"],
+  ["8AtQ4ka3dgtrH1z4Uq3Tm4YdMN3cK5RRj1eKuGNnvenm", "KOL"],
+  ["67Nwfi9hgwqhxGoovT2JGLU67uxfomLwQAWncjXXzU6U", "KOL"],
+  ["2T5NgDDidkvhJQg8AHDi74uCFwgp25pYFMRZXBaCUNBH", "KOL"],
+  ["2W14ahXD3XBfWJchQ4K5NLXmguWWcTTUTuHDhEzeuvP3", "KOL"],
+  ["4s2WzRLa35FB58bZY1i4CN3WoywJeuYrGYHnTKFsT23z", "KOL"],
+  ["FpD6n8gfoZNxyAN6QqNH4TFQdV9vZEgcv5W4H2YL8k4X", "KOL"],
+  ["xyzfhxfy8NhfeNG3Um3WaUvFXzNuHkrhrZMD8dsStB6", "KOL"],
+  ["5V9zsFPtN2nxoA53Xm6FKbx797NBnBZFxMdr84H1QXNL", "KOL"],
+  ["Bi4rd5FH5bYEN8scZ7wevxNZyNmKHdaBcvewdPFxYdLt", "KOL"],
+  ["sAdNbe1cKNMDqDsa4npB3TfL62T14uAo2MsUQfLvzLT", "KOL"],
+  ["6aXFYXbFob1ZKAEDCcqZnX2vooA3TgEqDoy5dAQbeWoV", "KOL"],
+  ["J1XAE4onKYG1kTghgaytnyFgR3otQs1xEnJRRWM3djSQ", "KOL"],
+  ["6uwzmiSnR2vVwrh6EsQfuwSVk8ScqsfYkJPQQ2eydU2M", "KOL"],
+  ["DVMkhiQe1D8yenuEgsW44NjRn9LfVQjGEpZcez5x7Mff", "KOL"],
+  ["67SNjkjV2MEyhDZcDjvMQSqFtjkh6TjCq6KDLmCgUxx6", "KOL"],
+  ["3wjyaSegfV7SZzjv9Ut1p6AcY5ZdoZjmu6i6QPCVvnmz", "KOL"],
+  ["FRbUNvGxYNC1eFngpn7AD3f14aKKTJVC6zSMtvj2dyCS", "KOL"],
+  ["3tnzEgqo6U19ocZbbc49vcGv3mGSoWNFAYjQQk5gF2qP", "KOL"],
+  ["As7HjL7dzzvbRbaD3WCun47robib2kmAKRXMvjHkSMB5", "KOL"],
+  ["DZAa55HwXgv5hStwaTEJGXZz1DhHejvpb7Yr762urXam", "KOL"],
+  ["BQVz7fQ1WsQmSTMY3umdPEPPTm1sdcBcX9sP7o6kPRmB", "KOL"],
+  ["99i9uVA7Q56bY22ajKKUfTZTgTeP5yCtVGsrG9J4pDYQ", "KOL"],
+  ["4vw54BmAogeRV3vPKWyFet5yf8DTLcREzdSzx4rw9Ud9", "KOL"],
+  ["4BdKaxN8G6ka4GYtQQWk4G4dZRUTX2vQH9GcXdBREFUk", "KOL"],
+  ["FAicXNV5FVqtfbpn4Zccs71XcfGeyxBSGbqLDyDJZjke", "KOL"],
+  ["DYAn4XpAkN5mhiXkRB7dGq4Jadnx6XYgu8L5b3WGhbrt", "KOL"],
+  ["ENkZtLj1onzQRGnEeRkQfFzBeeY2dCeiQMXDzh8XbQbj", "KOL"],
+  ["8MoW9mtbEz6z3gPuAdYb1yWhjCAxQSYqpcTb1CQgN5qb", "KOL"],
+  ["6EDJ7JuynXSPaMvufzAX4swSRJZXv6uPi4s6jmo33xj5", "KOL"],
+  ["4nwfXw7n98jEQn93VWY7Cuf1jnn1scHXuXCPGVYS9k6T", "KOL"],
+  ["GZVSEAajExLJEvACHHQcujBw7nJq98GWUEZtood9LM9b", "KOL"],
+  ["AeLaMjzxErZt4drbWVWvcxpVyo8p94xu5vrg41eZPFe3", "KOL"],
+  ["G6fUXjMKPJzCY1rveAE6Qm7wy5U3vZgKDJmN1VPAdiZC", "KOL"],
+  ["4WPTQA7BB4iRdrPhgNpJihGcxKh8T43gLjMn5PbEVfQw", "KOL"],
+  ["6DtEedWf9Wk5hA7Xth82Eq441yf5DA4aGLqaQAVfDokm", "KOL"],
+  ["ATFRUwvyMh61w2Ab6AZxUyxsAfiiuG1RqL6iv3Vi9q2B", "KOL"],
+  ["9tY7u1HgEt2RDcxym3RJ9sfvT3aZStiiUwXd44X9RUr8", "KOL"],
+  ["DuQabFqdC9eeBULVa7TTdZYxe8vK8ct5DZr4Xcf7docy", "KOL"],
+  ["4YzpSZpxDdjNf3unjkCtdWEsz2FL5mok7e5XQaDNqry8", "KOL"],
+  ["3cG7d6GmX47HKSX5nWRX9MJpruCojbzUkak92gSXGtG5", "KOL"],
+  ["BtDaZUqHr2mKH5EYQCztuerHBuBEfQNYdquTDtEZp2Ym", "KOL"],
+  ["3MNu91fiPyCefHL88aBYntpwfraf3dBrqJ8VYjJQyaqt", "KOL"],
+  ["7j7AA3HZR2zEjwAQEKPFh2qucLY4fqZpB9iodf39w8xW", "KOL"],
+  ["HTM87R4mgjDdiF6Yfn8duK9vbDmZxiPCTRbGvm7eCAJY", "gros trader"],
+  ["9HhLNKepBYJx4CLmatWD4PuQ7rHF6kXmzAzyF7pTbduT", "gros trader"],
+  ["GipUqsbqDCr4pkYi6UQASzRD92zJGFaJgw9jjCayYmcd", "gros trader"],
+  ["GC1L8kEd3d7enstyMi6B1LKcRgtWKYrhb6jsGC4tHRUW", "gros trader"],
+  ["9jnafS92Q4uCFivMVc2C4hwowPg9TNYvdXeVqouqgbFX", "gros trader"],
+  ["AGqjivJr1dSv73TVUvdtqAwogzmThzvYMVXjGWg2FYLm", "gros trader"],
+  ["2AicNQ2LSEkSsFPxq4JnGrZLbbHyT2dqkhDaWX2SJ84U", "gros trader"],
+  ["8fSnLTnRViK83dDesivTsPx2wiRhwti9xoafeMGjEyLJ", "gros trader"],
+  ["G9VPG4XvHheUUbzPexNzx9Yyx97ii53WYb89PvdM2qQk", "gros trader"],
+  ["ACTbvbNm5qTLuofNRPxFPMtHAAtdH1CtzhCZatYHy831", "gros trader"],
+  ["ELSyW68qyAToytdaMkyQhgGL9FErGimoPA27AgingJtE", "gros trader"],
+  ["4ZjYSCH3Sib9iMSM3QN2sL2kwxNcXG2P4XCemSC2hsyb", "gros trader"],
+  ["6EbQwK1bLmwwHPGYgUtGgH4PVA2Vq683SpmxauJXKC2m", "gros trader"],
+  ["qNGhUruCGJpXJdsnV74USHErcbm3CrXRsnP8D6Z34Hh", "gros trader"],
+  ["ApRnQN2HkbCn7W2WWiT2FEKvuKJp9LugRyAE1a9Hdz1", "gros trader"],
+  ["2JarGaaVhqcV2FbsxQPLagFpPi4qh3SuKt7adYk299hr", "gros trader"],
+  ["9ecRdqNCBxwReiY2pxtnLeayeBzE1CrSSmKKJJGdmsaJ", "gros trader"],
+  ["5R4RJojpoKNwBcJNgVYGtwXdmhyEHWXGDBQqUnSpLfcW", "gros trader"],
+  ["J23qr98GjGJJqKq9CBEnyRhHbmkaVxtTJNNxKu597wsA", "gros trader"],
+  ["98T65wcMEjoNLDTJszBHGZEX75QRe8QaANXokv4yw3Mp", "gros trader"],
+  ["7SDs3PjT2mswKQ7Zo4FTucn9gJdtuW4jaacPA65BseHS", "gros trader"],
+  ["Hnnw2hAgPgGiFKouRWvM3fSk3HnYgRv4Xq1PjUEBEuWM", "gros trader"],
+  ["8uDfUvwik5PxdUPsQ6J7anyhChXLx8hQYNoRsusox9XB", "gros trader"],
+  ["C9fgBZaBoNmcZMknBnUdbQW8bUkkF6tdBKH74Ui7166r", "gros trader"],
+  ["rgPyefcNqJCsJj1wrWhdQqHVphVWFXLqU5wtiFStBEN", "gros trader"],
+  ["52kPsnhTpjHZucGUQy4YDm8g9ykXPMC47iNVSVRscikb", "gros trader"],
+  ["niggerd597QYedtvjQDVHZTCCGyJrwHNm2i49dkm5zS", "gros trader"],
+  ["5B52w1ZW9tuwUduueP5J7HXz5AcGfruGoX6YoAudvyxG", "gros trader"],
+  ["9yYya3F5EJoLnBNKW6z4bZvyQytMXzDcpU5D6yYr4jqL", "gros trader"],
+  ["5t9xBNuDdGTGpjaPTx6hKd7sdRJbvtKS8Mhq6qVbo8Qz", "gros trader"],
+  ["215nhcAHjQQGgwpQSJQ7zR26etbjjtVdW74NLzwEgQjP", "gros trader"],
+  ["BCnqsPEtA1TkgednYEebRpkmwFRJDCjMQcKZMMtEdArc", "gros trader"],
+  ["8deJ9xeUvXSJwicYptA9mHsU2rN2pDx37KWzkDkEXhU6", "gros trader"],
+  ["EHg5YkU2SZBTvuT87rUsvxArGp3HLeye1fXaSDfuMyaf", "gros trader"],
+  ["CWvdyvKHEu8Z6QqGraJT3sLPyp9bJfFhoXcxUYRKC8ou", "gros trader"],
+  ["CCUcjek5p6DLoH2YNtjizxYhAnStXAQAGVxhp1cYJF7w", "gros trader"],
+  ["D9gQ6RhKEpnobPBUdWY5bPQt2p3zGk3iVz6ChpUi2ArA", "gros trader"],
+  ["GKT2j5gPqY2ZKfhaGB5cn5bTHLSKTUrULe8wG1QwmLpt", "gros trader"],
+  ["J3wA9xnAvuDYJ3BhtDvGh4VFPDUt5JXjEWiuvVtZDxTN", "gros trader"],
+  ["BCagckXeMChUKrHEd6fKFA1uiWDtcmCXMsqaheLiUPJd", "gros trader"],
+  ["Av3xWHJ5EsoLZag6pr7LKbrGgLRTaykXomDD5kBhL9YQ", "gros trader"],
+  ["HcPE7DGP3iRzBv9BJ4fYA5D5rLK84CHaRTn3dwukGxXe", "gros trader"],
+  ["5kV1MxKZd2cK7nJgUpxCdo9qwLeyLv4UzcCJLoGyEp7L", "gros trader"],
+  ["kQdJVZvix2BPCz2i46ErUPk2a74Uf37QZL5jsRdAD8y", "gros trader"],
+  ["CNudZYFgpbT26fidsiNrWfHeGTBMMeVWqruZXsEkcUPc", "gros trader"],
+  ["9ZzjXiwkGRDBwVHJitfx8AmnN2YUbnqW6M1tH38juEeJ", "gros trader"],
+  ["GNrmKZCxYyNiSUsjduwwPJzhed3LATjciiKVuSGrsHEC", "gros trader"],
+  ["9GTVJLduxXwUR6otWSYgDLatYJCab61wHB8Vcoi2FNEf", "gros trader"],
+  ["HkFt55P3PhRWHXoTFeuvkKEE4ab26xZ1bk6UmXV88Pwz", "gros trader"],
+  ["Da59SHWe9G7vvHBxeYeypxw5HwqZibDKjpQLNFPpfbGt", "gros trader"],
+  ["2iCmwtaM14u5XijJ6Wx6pbxSqvvPbvzUVXAhk1B4aEtr", "gros trader"],
+  ["73LnJ7G9ffBDjEBGgJDdgvLUhD5APLonKrNiHsKDCw5B", "gros trader"],
+  ["HQLeWLJRfhnzq4Ucdn3V1vgSw5ZLxRXT6QQa5bASXSdu", "gros trader"],
+  ["DsqRyTUh1R37asYcVf1KdX4CNnz5DKEFmnXvgT4NfTPE", "gros trader"],
+  ["DR7ghPiRVBJ3YeP3FUJRuSa4XaWq4Pkw8ZM4JYs1PyJ9", "gros trader"],
+  ["EABXkKHLdH8Cb8YjJ2Zcj4ybnY4xUDbXELs9cy6rMQi8", "gros trader"],
+  ["ADRSHrTbiwESzPpXEjFXHmNFDSZwhFPC1W2bDrgSQwPh", "gros trader"],
+  ["BFTCyf9BfP8WWuheCBoRfBWKz54JQ2aSQoGz1MGwwMNT", "gros trader"],
+  ["Dgehc8YMv6dHsiPJVoumvq4pSBkMVvrTgTUg7wdcYJPJ", "gros trader"],
+  ["7yhcD8sXi3rbCacekTwPNpsF55K3nN6WBJxsZHqr26o3", "gros trader"],
+  ["FTg1gqW7vPm4kdU1LPM7JJnizbgPdRDy2PitKw6mY27j", "gros trader"],
+  ["BHREKFkPQgAtDs8Vb1UfLkUpjG6ScidTjHaCWFuG2AtX", "gros trader"],
+  ["34ZEH778zL8ctkLwxxERLX5ZnUu6MuFyX9CWrs8kucMw", "gros trader"],
+  ["9EyPAMyQvXaUWFxd2uQHvG8vpkKs33YdXvDvwmRXrUiH", "gros trader"],
+  ["9HCTuTPEiQvkUtLmTZvK6uch4E3pDynwJTbNw6jLhp9z", "gros trader"],
+  ["HiMomFaRLrcRuasmmpE9ixUrQKa4EgoP5r2HaHo73Qt1", "gros trader"],
+  ["F72vY99ihQsYwqEDCfz7igKXA5me6vN2zqVsVUTpw6qL", "gros trader"],
+  ["8CZjFG1EV3FduGV918QWUh7fevUoZSTffVY8bK6M3wbu", "gros trader"],
+  ["F2SuErm4MviWJ2HzKXk2nuzBC6xe883CFWUDCPz6cyWm", "gros trader"],
+  ["GfXQesPe3Zuwg8JhAt6Cg8euJDTVx751enp9EQQmhzPH", "gros trader"],
+  ["Ez2jp3rwXUbaTx7XwiHGaWVgTPFdzJoSg8TopqbxfaJN", "gros trader"],
+  ["4Bxf1mCFoaQmCxxB7obV4hjfYJqkCXVQVCTRkjT1YQuL", "gros trader"],
+  ["ACFUm3nxWyydwazkVJYEMfGoDuLoPvMhKrQokbRetE4n", "gros trader"],
+  ["mW4PZB45isHmnjGkLpJvjKBzVS5NXzTJ8UDyug4gTsM", "gros trader"],
+  ["Bq5N5kQYFDT9ZNE3CaZL519oyYbS3TokSspouzqJvKjR", "gros trader"],
+  ["Gp33W3sRrzdva7byyrd6Kme5RnA25jeAdXJr32uepV9k", "gros trader"],
+  ["7sA5em1nTKmLvGm8H85cpgA9hM9YvCoPp729mwe6akhh", "gros trader"],
+  ["EuC9bwq7AhtvgqhzFG5TtB2q8PYmgWbQ7Eei7FaC4oG3", "gros trader"],
+  ["GmM5UFm8xu6TnZD7avwYcQ1zq25hD5yvHfYyAksHu9vB", "gros trader"],
+  ["3pkY4S76Jw1UDS8Qgz4wD3DxrTxz7QfyC8yTbXJoZcMT", "gros trader"],
+  ["4tqHQiX1Y4qpqieaNZRn4XoAN5zmCPzvpG9NXHf2n85P", "gros trader"],
+  ["ByunCz4G2eN5bpmWBRKpuoa6uxGKAg9CX1Tef5iHdjaD", "gros trader"],
+  ["5mtbmPwj2SMkxPP9c93s9oD9bmMdByTqepNarM9Y7u7e", "gros trader"],
+  ["HGcXS42jHV5HLSaNi9njkVAXpGUnyrQc2kQUGn6zMoDK", "gros trader"],
+  ["CAPn1yH4oSywsxGU456jfgTrSSUidf9jgeAnHceNUJdw", "gros trader"],
+  ["3BLjRcxWGtR7WRshJ3hL25U3RjWr5Ud98wMcczQqk4Ei", "gros trader"],
+  ["3UNPM7X6LbmxUms5ij6zm9P7J1Ev2Wd7TwwXmYrPX3n3", "gros trader"],
+  ["KYSGYZp17p7hGsoTJRB4ffy3dpu5M6Xi77YKvB9Z4hs", "gros trader"],
+  ["8xi5GhYGFX8ZcWcFJxR2kbWdaLHjf1qBn5c5gqVSs6Pi", "gros trader"],
+  ["FkzekjMLgbXC8NuSQQ2u53rmdh3jhfAZr2psDouDYvfR", "gros trader"],
+  ["Ab2baaggUWJMsVUtCvpRjq6iBRDk2Lxr5qzicHueHxM1", "gros trader"],
+  ["CoDdw3cAX13dxwahw2C16ohsVhrDdrN3UVb4mvNLo9wD", "gros trader"],
+  ["Gf9XgdmvNHt8fUTFsWAccNbKeyDXsgJyZN8iFJKg5Pbd", "gros trader"],
+  ["BuhkHhM3j4viF71pMTd23ywxPhF35LUnc2QCLAvUxCdW", "gros trader"],
+  ["7tQfpMCM8bPWgfLGaQ2G3RQ5gAgQneqHbtgAn4FdN2m1", "gros trader"],
+  ["8taFLhEeNQvgQFqAzfgFvE6rBdhjTfFL1FPbSVZz5YLP", "gros trader"],
+  ["6HJetMbdHBuk3mLUainxAPpBpWzDgYbHGTS2TqDAUSX2", "gros trader"],
+  ["5W5vnVSX7NjaghpfMf1jyvtcQNyRffk7hDZS67rKXQpW", "gros trader"],
+  ["CA4keXLtGJWBcsWivjtMFBghQ8pFsGRWFxLrRCtirzu5", "gros trader"],
+  ["aSRkSqXSrfj6LsufqyoDSZXm51PiDGGhZgxowqtjfnY", "gros trader"],
+  ["9eK3sPqr1mifF7ben69WvbbKH2YG9NFYRpv3UcJxZ9oQ", "gros trader"],
+  ["HJqqAsg2MDwTpbB7rUEjNVbNvAGoXr6Ym2qENfc5RGtv", "gros trader"],
+  ["UxuuMeyX2pZPHmGZ2w3Q8MysvExCAquMtvEfqp2etvm", "gros trader"],
+  ["F5jWYuiDLTiaLYa54D88YbpXgEsA6NKHzWy4SN4bMYjt", "gros trader"],
+  ["HetnuaUUbBjFCx5wFYoiQuTRmDFKbEwqj1z4MsEJ1jYf", "gros trader"],
+  ["4DdrfiDHpmx55i4SPssxVzS9ZaKLb8qr45NKY9Er9nNh", "gros trader"],
+  ["G4fiaoKwBPTXH2JMekciosBUqjAQY3rQpWyGwZzPpb98", "gros trader"],
+  ["EwTNPYTuwxMzrvL19nzBsSLXdAoEmVBKkisN87csKgtt", "gros trader"],
+  ["4u3Baa6znzQ6pjQRLii8KV9tRhtNuXCqwVcY3b6nNpaZ", "gros trader"],
+  ["G5nxEXuFMfV74DSnsrSatqCW32F34XUnBeq3PfDS7w5E", "gros trader"],
+  ["CvNiezB8hofusHCKqu8irJ6t2FKY7VjzpSckofMzk5mB", "gros trader"],
+  ["CPydqKcEEeKTR6wt3L15G8S5Ea4bxjS2vvjiW9vw1UwK", "gros trader"],
+  ["HneDDt1gZq3tUia2R7KkBiwK6Y6nVf6qQDSUUK2X9jRR", "gros trader"],
+  ["AE3tJDEyUdwBM8ZoUb3iCo563gMbq26JtckfvjcVZbSa", "gros trader"],
+  ["2F19ZXrvQDCoYXdBoFBiBcEmgrAKYAheZHnQxZksHQhN", "gros trader"],
+  ["3Q86B4J5GQh9HU8UMz9YhGhpEavwemos9YzHLirRnYPv", "gros trader"],
+  ["DfMxre4cKmvogbLrPigxmibVTTQDuzjdXojWzjCXXhzj", "gros trader"],
+  ["FZVdsFTRTWwZEy6XC5GCtHNWdcAwiQtAeJ2NSpH6cQNz", "gros trader"],
+  ["BC8yiFFQWFEKrEEj75zYsuK3ZDCfv6QEeMRif9oZZ9TW", "gros trader"],
+  ["4EDTLThQyjGfu8PXKsQiAYCdpTcg6NnFVBHJDrvD9QVr", "gros trader"],
+  ["BieeZkdnBAgNYknzo3RH2vku7FcPkFZMZmRJANh2TpW", "gros trader"],
+  ["5D1RFRESCwbFswtwMX6F9MdHZK2nJ7tJjxXwxB9az47h", "gros trader"],
+  ["7w7f4P284zJhv3zotjCUmaNsZSsrHQKtpXGBJFq8gdzq", "gros trader"],
+  ["62FZUSWPMX9pofoV1uWHMdzFJRjwMa1LHgh2zhdEB7Zj", "gros trader"],
+  ["2K9KyJ2SSMgornoAK7X3sDGPT2kCoWci1zmxEtrnnTvo", "gros trader"],
+  ["EDajBBK71iW7jeVjfsmiGeneraPEsq2YrPgeAQkiLd6R", "gros trader"],
+  ["65paNEG8m7mCVoASVF2KbRdU21aKXdASSB9G3NjCSQuE", "gros trader"],
+  ["8DGbkGgQewL9mx4aXzZCUChr7hBVXvPK9fYqSqc7Ajpn", "gros trader"],
+  ["CDjiKpqT7XYRSSncmnK8Q5Fea1MrdszJXTmGf3B7HriZ", "gros trader"],
+  ["FateMietcaAAUvfQDHnnPDGmeYme7mvLqFYvLomWEmNw", "gros trader"],
+  ["AZNV9zQXjWNgTxsmHobjV4KqCJPyjcmvjSmgTxEr2ztE", "gros trader"],
+  ["HqFSouJjebYk1o25HvesioZczUj6pcFVZLkkWDYxwhaT", "gros trader"],
+  ["2ntectnzhhShGguJQniVTj5gwsGdoAgxCH6E4Eqee9j6", "gros trader"],
+  ["3URnnJKdG8eTjrKo7G8rN5GjzweYwSZSxwyJm5Ut5UmL", "gros trader"],
+  ["2mGNGKYNGCNNz4EXrxz4TPckwGkiyGRNe447HncebYRg", "gros trader"],
+  ["EJM2zrEd4uc6662LVVdDN5bH9iDFy2A4mDuhLttMkhby", "gros trader"],
+  ["AWxr21P2srfkPLiPpqDYyWsKWR1bpJWtw5beVMiRxwZm", "gros trader"],
+  ["57JMxCescrFBvb8bqjNwHPM9J7wPF12SV5KJa82HCd9B", "gros trader"],
+  ["274vmGgKuYQp8Fxvb8n3cr9ZeY3SYM6LgeaXM6jS2nD6", "gros trader"],
+  ["G3g1CKqKWSVEVURZDNMazDBv7YAhMNTjhJBVRTiKZygk", "gros trader"],
+  ["Act3pTw5yB8Xxk3mcTWqMQ3x9ctNCegnVAViMMnxMrkG", "gros trader"],
+  ["6Nh9gVwZ3wRazUq1ipZodAugaZhz5Yz8f5afPjC6qtDy", "gros trader"],
+  ["2BU3NAzgRA2gg2MpzwwXpA8X4CCRaLgrf6TY1FKfJPX2", "gros trader"],
+  ["8rvAsDKeAcEjEkiZMug9k8v1y8mW6gQQiMobd89Uy7qR", "gros trader"],
+  ["4xxBGBnXqfCyUpsKRix1VaWm15uND2P83ForEzYDngbD", "gros trader"],
+  ["2p2mgFLmzN82sShZeAaBGmj9zFpam4xu8g4g3wqx2ks6", "gros trader"],
+  ["DiaAmWrdWPF7RjyP75xENaapWLqYhG7ejH64xWVUsmuH", "gros trader"],
+  ["4SbDMrX8Zfj7qZtRKTBSQEavPkc7BP1kiJfT2f3dn8RL", "gros trader"],
+  ["GcvrwbW4Enidz4yoCDJF8Fy8JEyWuj3pw6L7TT4mDQ3d", "gros trader"],
+  ["53BnNc49Ajgstciq3CRoyxuBpkkW1r8pgPyvr7JGYnsh", "gros trader"],
+  ["GVc8ZLvzn8WEFZSzLgyRkzpZSLZWxSFVfMtmUd1noAt7", "gros trader"],
+  ["2zvSYhoejqAdAsH52gmWHM1dm179yDmBGcFbFxatHf6x", "gros trader"],
+  ["8kbkapCokSiMCgnoqJg36dgg8fXDcwFFJRfZrPWJpgrq", "gros trader"],
+  ["AoHnv7RA9oB7atFkNcqnCZAai9j6ff6HMZrUPiWzrpKJ", "gros trader"],
+  ["DNfuF1L62WWyW3pNakVkyGGFzVVhj4Yr52jSmdTyeBHm", "gros trader"],
+  ["RFSqPtn1JfavGiUD4HJsZyYXvZsycxf31hnYfbyG6iB", "gros trader"],
+  ["DScqtGwFoDTme2Rzdjpdb2w7CtuKc6Z8KF7hMhbx8ugQ", "gros trader"],
+  ["DKwybycDSWidrHfpMjaahUsT1Yid3kig86ncXPAGe7AU", "gros trader"],
+  ["CRVidEDtEUTYZisCxBZkpELzhQc9eauMLR3FWg74tReL", "gros trader"],
+  ["5B79fMkcFeRTiwm7ehsZsFiKsC7m7n1Bgv9yLxPp9q2X", "gros trader"],
+  ["B3wagQZiZU2hKa5pUCj6rrdhWsX3Q6WfTTnki9PjwzMh", "gros trader"],
+  ["nicom4SDQP5PpqdMzJHGA5ZtLi3A8hCZxNjC4vQTBF5", "gros trader"],
+  ["5EzUr1Z8nahDXXK7oki6pPeJ3aWoM8cxHJShFumJtsT9", "gros trader"],
+  ["DH5picTwbyk6CrRxVBn4tYwRY2axzEkma1ywtZiuBkrF", "gros trader"],
+  ["ACkvMCryf6XyAyZjUZomUHGGuL2eCTJLfCXgyJoCEVPR", "gros trader"],
+  ["7YndBV5gp3VvAiBbSfv8M7CoyMhFsiKeGYWkwee49fTg", "gros trader"],
+  ["YvEsBWpHK5PJ6Q8m4YrocwKeWys1NG67pbgi73UPnuX", "gros trader"],
+  ["2831MC5uak33SnwxE3DZ7gcZ8dYbjRCnVMqEuhqCve9a", "gros trader"],
+  ["DKgvpfttzmJqZXdavDwTxwSVkajibjzJnN2FA99dyciK", "gros trader"],
+  ["45yBcpnzFTqLYQJtjxsa1DdZkgrTYponCg6yLQ6LQPu6", "gros trader"],
+  ["EDoonKrsParDnA4yJKJ3iDNEaFVfcaxSULqzQyNkwa61", "gros trader"],
+  ["8xgu8h7zn6u6B1hGgygaAurYQfPsdB3JNF23Xbrb5jP5", "gros trader"],
+  ["EgzjRCbcdRiPc1bW52tcvGDnKDbQWCzQbUhDBszD2BZm", "gros trader"],
+  ["AeLb2RpVwrqKZJ87PEiFdReiEXJXACQn17c8APQS1FHx", "gros trader"],
+  ["9K18MstUaXmSFSBoa9qDTqWTnYhTZqdgEhuKRTVRgh6g", "gros trader"],
+  ["4jSmEmBkuBi1JxZHM1khkf57xPR2oW1EnkRxqehq1cSK", "gros trader"],
+  ["H31vEBxSJk1nQdUN11qZgZyhScyShhscKhvhZZU3dQoU", "gros trader"],
+  ["EaVboaPxFCYanjoNWdkxTbPvt57nhXGu5i6m9m6ZS2kK", "gros trader"],
+  ["6iLZbYvc7MrBRQvzAX8yJj85cb9cQF3Prvrn1D9vvLA2", "gros trader"],
+  ["4XMPyWFsYdNcCN4FG8geyytyTeUNacn4QundBzMqbGGT", "gros trader"],
+  ["D18EmaqFyXJ35GA9XP41qecF72JsyJNo6ZtrTDfi5xGH", "gros trader"],
+  ["mpa4abUkjQoAvPzREkh5Mo75hZhPFQ2FSH6w7dWKuQ5", "gros trader"],
+  ["6EaWAqk7BAaZTYce1tMpUkSPiW1pxs21bJvi9JY4fLtF", "gros trader"],
+  ["D7xK1ZLz8KQNWN8aU1jbzNAuT5xwqgFrCUUYodVU4G42", "gros trader"],
+  ["CgaA9a1JwAXJyfHuvZ7VW8YfTVRkdiT5mjBBSKcg7Rz5", "gros trader"],
+  ["HtucFepgUkMpHdrYsxMqjBNN6qVBdjmFaLZneNXopuJm", "gros trader"],
+  ["Fi2hrxExy6TJnKcbPtQpo6iZzX9SUVbB9mDw6d29NgCn", "gros trader"],
+  ["6LChaYRYtEYjLEHhzo4HdEmgNwu2aia8CM8VhR9wn6n7", "gros trader"],
+  ["6ryvxoTHMYkVUgTTexpqntYLfY4La582UGX7TSX4KRh7", "gros trader"],
+  ["HaZtFxgw99iM97LxmwFuDW6k4MP1XwsWTGoy7GUoSELj", "gros trader"],
+  ["6nhskL8RVpXzWXC7mcC1UXpe3ze2p6P6og1jXVGUW88s", "gros trader"],
+  ["Hp2JBrAhny1TDaC4YhHJLB5jBmcfVXB3A2GTUZzPkQaD", "gros trader"],
+  ["9Wagwcs6HVtMHaaxBjUbE7AKmxeg9nzEDcvXhN8bydUG", "gros trader"],
+  ["FtGWiQYZR8h1yVoSApwY2JPVrWXc7BJyvyiS3Xr1yZ7C", "gros trader"],
+  ["2PBRmZuPxeLAAmyHLCLQgikB5HGP1Y7mLzg6KpNNVJ16", "gros trader"],
+  ["3YRMrgGgFS8YQ7E3gcSCbMRa5spMqZt2Q19CTyKoXJeM", "gros trader"],
+  ["FEDt3TPMu2KTJpzPBMmxHN3zebs1oYGJrbxuE1ycKG9s", "gros trader"],
+  ["4Be9CvxqHW6BYiRAxW9Q3xu1ycTMWaL5z8NX4HR3ha7t", "gros trader"],
+  ["EXEeLF1YiZxC1tFneoQPv6rcdq5VMUbKNGy3DLPEo2oH", "gros trader"],
+  ["EP5mvfhGv6x1XR33Fd8eioiYjtRXAawafPmkz9xBpDvG", "gros trader"],
+  ["v2yNhm4KkC87MdBkvvYiMVP7UdSyNYLrfXrFte8A5a7", "gros trader"],
+  ["Af8Zu4DMx4KTtpwwKTE4yoYo4B5zoRhcBsxGYp5RN4bE", "gros trader"],
+  ["EpQAJcNcEaDAwFX5gXjtuMtGmRW6sUMFAEQnSEXoMwP1", "gros trader"],
+  ["719sfKUjiMThumTt2u39VMGn612BZyCcwbM5Pe8SqFYz", "gros trader"],
+  ["2HpvvY7TcbSdr8uNrDBUyEvbD9mcjg4ssmWQFcQcwJap", "gros trader"],
+  ["VJSDW6S74YXR4rRR9P4xwhMvLZJQMhrUb8XMFirUsy1", "gros trader"],
+  ["2aDBRNNdGEnCq2Av6Wz447CqgdEbmEaDudfGW1M85MAC", "gros trader"],
+  ["3rSZJHysEk2ueFVovRLtZ8LGnQBMZGg96H2Q4jErspAF", "gros trader"],
+  ["J6TDXvarvpBdPXTaTU8eJbtso1PUCYKGkVtMKUUY8iEa", "gros trader"],
+  ["7tiRXPM4wwBMRMYzmywRAE6jveS3gDbNyxgRrEoU6RLA", "gros trader"],
+  ["7VBTpiiEjkwRbRGHJFUz6o5fWuhPFtAmy8JGhNqwHNnn", "gros trader"],
+  ["9cqgXsqhksd16hLnupey9jt86jKDfbD6ZWVANccW1233", "gros trader"],
+  ["AbcX4XBm7DJ3i9p29i6sU8WLmiW4FWY5tiwB9D6UBbcE", "gros trader"],
+  ["HvNqQBTfoiksyvzGR5rrNAv46DjeNgGNMTB5YZpYh16W", "gros trader"],
+  ["AtqScWPNA72St8uANmneoX7hhgXvMqthMzBckUwwqsX1", "gros trader"],
+  ["5U1HMpLWyd8Qpq8YNBUSsRE8JmgFsJVwkuDP4kY3FD8u", "gros trader"],
+  ["HLv6yCEpgjQV9PcKsvJpem8ESyULTyh9HjHn9CtqSek1", "gros trader"],
+  ["m7Kaas3Kd8FHLnCioSjCoSuVDReZ6FDNBVM6HTNYuF7", "gros trader"],
+  ["5Z1nk3F8fWBYtFFSLPyxtE9qExaDnhLijurHFHjSNvWj", "gros trader"],
+  ["BTf4A2exGK9BCVDNzy65b9dUzXgMqB4weVkvTMFQsadd", "gros trader"],
+  ["G84Yz6fDA8wun3po1QG6SrGknK3cha2okXog9MmrqAQt", "gros trader"],
+  ["BoYHJoKntk3pjkaV8qFojEonSPWmWMfQocZTwDd1bcGG", "gros trader"],
+  ["HmBmSYwYEgEZuBUYuDs9xofyqBAkw4ywugB1d7R7sTGh", "gros trader"],
+  ["94JRjXuRjdo62mcyaxqmmYAFe9E73UZw5sRyJvQzzG2e", "gros trader"],
+  ["AJ6MGExeK7FXmeKkKPmALjcdXVStXYokYNv9uVfDRtvo", "gros trader"],
+  ["83b2LMf12aLec92kur3duRA8VvUkLaXUtML31aCcZNCM", "gros trader"],
+  ["498g1rVnFcnjBjpfw1xyqA1WvgQXUU8RWuELjxkjAayQ", "gros trader"],
+  ["2egyyfk5Zbit7vnJC28MqKaGSBWLxxdcZj9Wxmi8fuvj", "gros trader"],
+  ["DecXrBS8ADaac7yqLcC6WxNNAfMhVsF1SHmvSNv66yDe", "gros trader"],
+  ["2YJbcB9G8wePrpVBcT31o8JEed6L3abgyCjt5qkJMymV", "gros trader"],
+  ["9X5n5i1mugTjgGPhqf1KJDt8r4kD8TF3s62ttbxKzFHa", "gros trader"],
+  ["6m5sW6EAPAHncxnzapi1ZVJNRb9RZHQ3Bj7FD84X9rAF", "gros trader"],
+  ["3S7B49r7ToXNd8evFaPER1q23JtKg43TUD4Z2ncmvAGh", "gros trader"],
+  ["tYGCfzdZTXEkG9rvbxUH8f8AgGmPRNDdMPkR1ERcCu8", "gros trader"],
+  ["3ZtwP8peTwTfLUF1rgUQgUxwyeHCxfmoELXghQzKqnAJ", "gros trader"],
+  ["EcJWNtETrzdbj8s2dXpaE4Tu4r7fxALD6TNw9H8S6ksz", "gros trader"],
+  ["bozo8DPprqrU6N3y5cUDMDBCA61wGrk7qfy24Wm5rLB", "gros trader"],
+  ["HCQb4Qrtk4qCfChDH8XvM5onymmCSmRj9bddV6QCPdRe", "gros trader"],
+  ["xXpRSpAe1ajq4tJP78tS3X1AqNwJVQ4Vvb1Swg4hHQh", "gros trader"],
+  ["2huXTbjeBhtMZ1ugNwUGucYBRasRaaiypymUX6P1Kwjx", "gros trader"],
+  ["GJA1HEbxGnqBhBifH9uQauzXSB53to5rhDrzmKxhSU65", "gros trader"],
+  ["1TXsKzewQzFb8MYidNCmvmPWTma1DWyC6fpvd5gQa7W", "gros trader"],
+  ["71PCu3E4JP5RDBoY6wJteqzxkKNXLyE1byg5BTAL9UtQ", "gros trader"],
+  ["CkKEPH2xc122HS3458tA3sB6rgPwTjtUveiBFDaSFWHR", "gros trader"],
+  ["2ezv4U5HmPpkt2xLsKnw1FyyGmjFBeW7c166p99Hw2xB", "gros trader"],
+  ["4cXnf2z85UiZ5cyKsPMEULq1yufAtpkatmX4j4DBZqj2", "gros trader"],
+  ["8Zrr2Zwi2qvqLdU4ZE7dSYLsVA1z3qQwHDeN1EjrzeiC", "gros trader"],
+  ["JDd3hy3gQn2V982mi1zqhNqUw1GfV2UL6g76STojCJPN", "gros trader"],
+  ["58fnGhQQSLQebaXysboqY8Ske487j2KminKtyoyAkFRf", "gros trader"],
+  ["9jyqFiLnruggwNn4EQwBNFXwpbLM9hrA4hV59ytyAVVz", "gros trader"],
+  ["3w8N7ay9pvNaXxYUu7gFeZQ2zHg6FECSgwGWxcWwb8C8", "gros trader"],
+  ["6S8GezkxYUfZy9JPtYnanbcZTMB87Wjt1qx3c6ELajKC", "gros trader"],
+  ["HdxkiXqeN6qpK2YbG51W23QSWj3Yygc1eEk2zwmKJExp", "gros trader"],
+  ["2HWT2KLLdN2wxYTqdSuko5SBzg2SEJASgV4GE2tD7TML", "gros trader"],
+  ["7QZGS7MQ4S6hRmE8iXoFTXgQ2hXVUCho2ZhgeWvLNPZT", "gros trader"],
+  ["3jN1M8gWLk2ryTGnscrcwRK1Gy4Ttzq5QizWT8uizZsT", "gros trader"],
+  ["FWznbcNXWQuHTawe9RxvQ2LdCENssh12dsznf4RiouN5", "gros trader"],
+  ["4Uq8kK9rzb1BhLKez5LgfzQLHUn2TTX1LRnyfkxFBrDo", "gros trader"],
+  ["831yhv67QpKqLBJjbmw2xoDUeeFHGUx8RnuRj9imeoEs", "gros trader"],
+  ["kwhcooMFSt8k8S1RbdygHiYkAtyVVwcPMhyqBecTzBU", "gros trader"],
+  ["5M8ACGKEXG1ojKDTMH3sMqhTihTgHYMSsZc6W8i7QW3Y", "gros trader"],
+  ["Gmminb9hQJN4TSzxTD5hc4d2r63SiERTc4DU8QVYVUR9", "gros trader"],
+  ["6RoLbZJWJHpTk4sdPsWzocEHiRtzPS36WcBjnMXuQrfU", "gros trader"],
+  ["4hSXPtxZgXFpo6Vxq9yqxNjcBoqWN3VoaPJWonUtupzD", "gros trader"],
+  ["F5TjPySiUJMdvqMZHnPP85Rc1vErDGV5FR5P2vdVm429", "gros trader"],
+  ["DYmsQudNqJyyDvq86XmzAvrU9T7xwfQEwh6gPQw9TPNF", "gros trader"],
+  ["fLTnN43bDb5h8Shf5TjSD51FUL5XXvrZ8kFqLzAqJ32", "gros trader"],
+  ["89HbgWduLwoxcofWpmn1EiF9wEdpgkNDEyPjzZ72mkDi", "gros trader"],
+  ["DKCDzhHof5Wv7TzArkmu4yBnp2eGYULmj3zsLgr9ykck", "gros trader"],
+  ["AnsazR3Rf7LK2P6dKmwdyr6bzknaw8WyaVKzh5s8LXqM", "gros trader"],
+  ["G2mgnzpr59vYjKpwU9q5zVfS9yQ9HezMwjuqF7LACvR4", "gros trader"],
+  ["HMMCa4urRGSub1Emotaz5dJbG2YdAD5eEYSAocnpmVmf", "gros trader"],
+  ["HYWo71Wk9PNDe5sBaRKazPnVyGnQDiwgXCFKvgAQ1ENp", "gros trader"],
+  ["8yJFWmVTQq69p6VJxGwpzW7ii7c5J9GRAtHCNMMQPydj", "gros trader"],
+  ["4TS24wgLBMucbZt7zqhM3KakXwdNTT2ECxDXEpsn5AhZ", "gros trader"],
+  ["4CqecFud362LKgALvChyhj6276he3Sy8yKim1uvFNV1m", "gros trader"],
+  ["8MaVa9kdt3NW4Q5HyNAm1X5LbR8PQRVDc1W8NMVK88D5", "gros trader"],
+  ["5Q544fKrFoe6tsEbD7S8EmxGTJYAKtTVhAW5Q5pge4j1", "gros trader"],
+  ["HL3FZ8XWnLnn1HuktmgpNRyFRjuAxWbXNQVj5fPPzZwt", "gros trader"],
+  ["286CHN57Km41GsAnDv866WKd6YB6HPSjFgF4rGDJTRLf", "gros trader"],
+  ["Gmh3Wt423pU6GsS3FQyZjknifnAFW7g3J8HhbF2TrbZL", "gros trader"],
+  ["BDC19MFbzDpoF37QCxe4JR6i7UmXNMSiEqrxuQgJoWte", "gros trader"],
+  ["FbvUU5qvD9JsU9jp3KDweCpZiVZHLoQBQ1PPCAAbd6FB", "gros trader"],
+  ["86AEJExyjeNNgcp7GrAvCXTDicf5aGWgoERbXFiG1EdD", "gros trader"],
+  ["525LueqAyZJueCoiisfWy6nyh4MTvmF4X9jSqi6efXJT", "gros trader"],
+  ["7BbYhLfW74zRHuxBKW2thtFspuWHYfXBuCqjHvGqpwp2", "gros trader"],
+  ["9uyDy9VDBw4K7xoSkhmCAm8NAFCwu4pkF6JeHUCtVKcX", "gros trader"],
+  ["4CqV15axLaxkProjitfXKKZNkpNRun1Rspi8soSvW4Uf", "gros trader"],
+  ["4hfcN3bk5gCWNCrbowJBgFzvtPFCgf5bynR4bCBut7E3", "gros trader"],
+  ["DpYuj2At1Z1tH4baoz5A1XV4AanjJa8bgbB51BWSZUyn", "gros trader"],
+  ["CyaE1VxvBrahnPWkqm5VsdCvyS2QmNht2UFrKJHga54o", "farmer"],
+  ["2fg5QD1eD7rzNNCsvnhmXFm5hqNgwTTG8p7kQ6f3rx6f", "farmer"],
+  ["BtMBMPkoNbnLF9Xn552guQq528KKXcsNBNNBre3oaQtr", "farmer"],
+  ["suqh5sHtr8HyJ7q8scBimULPkPpA557prMG47xCHQfK", "farmer"],
+  ["BaLCEtq6qgPFruxfnjWBJBkWwCXdwmuodn4NUicQqMSw", "farmer"],
+  ["7NAd2EpYGGeFofpyvgehSXhH5vg6Ry6VRMW2Y6jiqCu1", "farmer"],
+  ["EiGjwgAWG89bDMEWGVMAQJ7jKv7tV8hrxp4waCoiB1De", "farmer"],
+  ["CEoJPnnCfYisckyJnqZLeefc559KeheVsFLbpfDuTPWo", "farmer"],
+  ["FxN3VZ4BosL5urG2yoeQ156JSdmavm9K5fdLxjkPmaMR", "farmer"],
+  ["G8n4gBsc9Z4P1q5JFJQUfxZs58zD7kF1CqowcTft18RL", "farmer"],
 ]);
 
 const KNOWN_RUGGERS = [];
@@ -4229,7 +3552,7 @@ async function fetchRetry(url, options, retries = 2, delayMs = 800) {
 
 // -- AXIOM wallet tracker -- verifie si des wallets AXIOM sont top holders --
 async function checkAxiomWallets(tokenAddr, pairAddr = null, deep = false) {
-  if (!tokenAddr) return { count: 0, wallets: [], clustered: false, badWalletCount: 0 };
+  if (!tokenAddr) return { count: 0, byGroup: { KOL: 0, 'gros trader': 0, DEV: 0, farmer: 0 }, wallets: [], clustered: false };
   const now = Date.now();
   const cached = swCache[tokenAddr];
   // Cache adaptatif : 5min si count=0 (permet re-check si wallets achetent plus tard),
@@ -4387,23 +3710,34 @@ async function checkAxiomWallets(tokenAddr, pairAddr = null, deep = false) {
     if (pairAddr) KNOWN_PROGRAMS.add(pairAddr);
     const allOwnersList = [...allOwners].filter(o => !KNOWN_PROGRAMS.has(o));
     console.log('[AXIOM] Total unique owners (excl. programs):', allOwnersList.length);
-    const matchingOwners = allOwnersList.filter(o => AXIOM_WALLETS.has(o));
-    console.log('[AXIOM] Matching Axiom wallets:', matchingOwners.length, matchingOwners);
+    const matchingOwners = allOwnersList.filter(o => WALLET_TRACKER.has(o));
+    console.log('[TRACKER] Matching wallets:', matchingOwners.length, matchingOwners);
     const newCount = matchingOwners.length;
     const newWallets = matchingOwners.slice(0, 4).map(w => w.slice(0, 8) + '…');
+    // Calculer le breakdown par groupe
+    const newByGroup = { KOL: 0, 'gros trader': 0, DEV: 0, farmer: 0 };
+    matchingOwners.forEach(o => {
+      const g = WALLET_TRACKER.get(o);
+      if (newByGroup[g] !== undefined) newByGroup[g]++;
+    });
+    console.log('[TRACKER] Par groupe:', newByGroup);
     // JAMAIS DIMINUER — garder le MAX historique absolu
     // Un trader qui a vendu reste compté définitivement
     const prevResult = swCache[tokenAddr]?.result;
     const prevCount = prevResult?.count || 0;
     const count = Math.max(newCount, prevCount);
+    // Merger byGroup : prendre le max par groupe
+    const prevByGroup = prevResult?.byGroup || { KOL: 0, 'gros trader': 0, DEV: 0, farmer: 0 };
+    const byGroup = {
+      KOL:          Math.max(newByGroup.KOL,          prevByGroup.KOL          || 0),
+      'gros trader':Math.max(newByGroup['gros trader'],prevByGroup['gros trader']|| 0),
+      DEV:          Math.max(newByGroup.DEV,           prevByGroup.DEV          || 0),
+      farmer:       Math.max(newByGroup.farmer,         prevByGroup.farmer       || 0),
+    };
     const wallets = count > newCount && prevResult?.wallets?.length
-      ? prevResult.wallets  // conserver les wallets de la meilleure détection
+      ? prevResult.wallets
       : newWallets;
-    // Bad wallets détectés
-    const badMatches = allOwnersList.filter(o => BAD_WALLETS.has(o));
-    const badWalletCount = Math.max(badMatches.length, prevResult?.badWalletCount || 0);
-    if (badWalletCount > 0) console.log('[AXIOM] Bad wallets détectés:', badWalletCount, badMatches);
-    const result = { count, wallets, clustered: count >= 2, badWalletCount };
+    const result = { count, byGroup, wallets, clustered: count >= 2 };
     const cacheEntry = { ts: now, result, maxEver: count };
     swCache[tokenAddr] = cacheEntry;
     // Persister en localStorage → survit aux rechargements de page (jamais diminuer)
@@ -4412,7 +3746,7 @@ async function checkAxiomWallets(tokenAddr, pairAddr = null, deep = false) {
 
   } catch(e) {
     console.warn('checkAxiomWallets error:', e.message);
-    return { count: 0, wallets: [], clustered: false, badWalletCount: 0 };
+    return { count: 0, byGroup: { KOL: 0, 'gros trader': 0, DEV: 0, farmer: 0 }, wallets: [], clustered: false };
   }
 }
 
@@ -4430,123 +3764,77 @@ function hardFilterV2(p){
 // ============================================================
 // SCORER v2
 // ============================================================
-// ── calculatePatternScore v3 ───────────────────────────────────────────────
-// Scoring Pattern strict : favorise vrais staircase (higher highs + higher lows,
-function calculatePatternScore(p) {
+// ── calculateActivityScore ─────────────────────────────────────────────────
+// Remplace Pattern. Basé UNIQUEMENT sur les counts de transactions (pas les %).
+// Signal clé : combien de vrais acheteurs actifs en ce moment ?
+// Anti-bundle : peu de txns mais gros volume = quelques wallets coordonnés
+function calculateActivityScore(p) {
   let score = 0;
-  const c5m = p.priceChange?.m5 || 0;
-  const c1h = p.priceChange?.h1 || 0;
-  const c6h = p.priceChange?.h6 || 0;
-  const m1  = p.priceChange?.m1 || 0;
   const buysM5  = p.txns?.m5?.buys  || 0;
   const sellsM5 = p.txns?.m5?.sells || 0;
-
   const buysH1  = p.txns?.h1?.buys  || 0;
   const sellsH1 = p.txns?.h1?.sells || 0;
-  const mcap    = p.marketCap || p.fdv || 1;
-  const volH1   = p.volume?.h1 || 0;
-  const liq     = p.liquidity?.usd || 0;
-  const totalTxH1 = buysH1 + sellsH1 || 1;
-  const buyRatioM5 = buysM5 / ((buysM5 + sellsM5) || 1);
-  const volMcapH1  = volH1 / mcap;
-  const avgTxSize  = volH1 / totalTxH1;
-  const ageMinP    = (Date.now() - (p.pairCreatedAt || 0)) / 60000; // déclaré ici pour tout le scope
-
-  // 0. GRADUATION RAPIDE — bonding curve remplie vite = demande explosive (signal #1 Satoshi)
-  // Détecté via : token jeune (<30min) + h6 massif (tout le pump = les premières minutes)
-  // + volume énorme = acheteurs qui se battent pour rentrer
-  const volMcapH6 = (p.volume?.h6 || 0) / mcap;
   const buysH6  = p.txns?.h6?.buys  || 0;
   const sellsH6 = p.txns?.h6?.sells || 0;
-  const buyRatioH6 = buysH6 / ((buysH6 + sellsH6) || 1);
-  if (ageMinP < 30 && c6h > 200 && volMcapH6 > 0.5 && buyRatioH6 >= 0.60) score += 18; // graduation rapide confirmée
-  else if (ageMinP < 60 && c6h > 100 && buyRatioH6 >= 0.58)                score += 10; // fort depuis le début
+  const volM5   = p.volume?.m5 || 0;
+  const volH1   = p.volume?.h1 || 0;
+  const totalM5 = buysM5 + sellsM5 || 1;
+  const totalH1 = buysH1 + sellsH1 || 1;
+  const totalH6 = buysH6 + sellsH6 || 1;
+  const buyRatioM5 = buysM5 / totalM5;
+  const buyRatioH1 = buysH1 / totalH1;
+  const buyRatioH6 = buysH6 / totalH6;
+  const avgTxSizeM5 = totalM5 > 1 ? volM5 / totalM5 : 0;
+  const avgTxSizeH1 = totalH1 > 1 ? volH1 / totalH1 : 0;
+  const ageMin = (Date.now() - (p.pairCreatedAt || 0)) / 60000;
 
-  // 1. Montée douce / Staircase : c1h fort mais c5m modéré = croissance régulière
-  if (c1h > 35 && c5m > 0 && c5m < 20 && c1h > c5m * 3) score += 15;
-  // 2. Correction saine (pas trop violente)
-  if (c1h >= -20 && c1h <= -5) score += 10;
-  // 3. Gros pump avec structure (multi-pumps)
-  if (c1h > 35 && c6h > 55) score += 10;
-  if (c6h > 75) score += 5;
-  // 4. Consolidation propre (stabilisation après pump)
-  if (Math.abs(c5m) < 7 && c1h > 22) score += 8;
-  // 5. Pas de dump violent
-  if (c5m > -25 && m1 > -16) score += 5;
-  // 6. Volume organique (anti-bundle) — 2 paliers
-  if      (buysM5 > sellsM5 * 3.0)  score += 12;  // ultra clean : quasi 0 sells
-  else if (buysM5 > sellsM5 * 1.55) score +=  7;  // organique standard
-  // 7. Buy ratio m5 élevé (bon: >0.55, mauvais: <0.50)
-  if (buyRatioM5 >= 0.58) score += 5;
-  else if (buyRatioM5 < 0.45) score -= 5;
-  // 8. Vol/Mcap ratio (bon: 1-6, mauvais: >10 = manipulation)
-  if (volMcapH1 >= 1 && volMcapH1 <= 7) score += 5;
-  else if (volMcapH1 > 12) score -= 8;
-  // 9. Taille moyenne des tx (bon: >$60 smart money, mauvais: <$50 bots)
-  if (avgTxSize >= 80) score += 5;
-  else if (avgTxSize < 40 && totalTxH1 > 100) score -= 5;
-  // 10. Liquidité > 0 = migré (signal fort)
-  if (liq > 5000) score += 5;
-  // 11. Multi-timeframe momentum : tous les TF positifs = pompe organique en cours
-  if (m1 > 0 && c5m > 0 && c1h > 5)                    score += 8;   // 3 TF verts = élan réel
-  if (c5m > 3 && c1h > 15 && buyRatioM5 >= 0.55)        score += 10;  // momentum propre + acheteurs majoritaires
-  // 12. Buy ratio h6 élevé = acheteurs constants depuis le début (signal Chiikawa 74%)
-  if (buyRatioH6 >= 0.65)      score += 8;   // acheteurs très majoritaires sur 6h
-  else if (buyRatioH6 >= 0.58) score += 4;   // légère majorité acheteuse sur 6h
-  // 13. Volume h6/mcap fort = activité intense et soutenue depuis launch
-  if (volMcapH6 >= 2 && buyRatioH6 >= 0.55) score += 7; // beaucoup de volume ET acheteurs = runner
+  // ── DÉTECTION BUNDLE (rejet immédiat) ────────────────────────────────────
+  // Bundle = peu de transactions MAIS volume énorme = quelques wallets qui se coordonnent
+  // Avgr tx size très élevé sur M5 = une ou deux baleines, pas des vrais acheteurs
+  if (totalM5 <= 3  && volM5 > 5000)   return 0; // quasi 0 txns mais gros vol = bundle
+  if (avgTxSizeM5 > 5000 && buysM5 <= 5) return 0; // tx moyennes énormes = coordinated
+  if (buysM5 === 0 && ageMin > 5)      return 0; // aucun achat depuis 5min = mort
 
-  // === BONUS EARLY TOKEN (<5 min) — pas assez d'historique pour les patterns classiques ===
-  if (ageMinP < 5) {
-    // Token très frais : juger sur les signaux immédiats
-    if (buysM5 >= 8 && buyRatioM5 >= 0.6) score += 12;        // beaucoup d'achats rapides + ratio sain
-    else if (buysM5 >= 5 && buyRatioM5 >= 0.55) score += 8;   // activité correcte
-    else if (buysM5 >= 3) score += 4;                           // un peu d'activité
+  // ── 1. ACTIVITÉ M5 (max 18pts) — ce qui se passe EN CE MOMENT ────────────
+  if      (buysM5 >= 25) score += 18;
+  else if (buysM5 >= 15) score += 14;
+  else if (buysM5 >= 8)  score += 10;
+  else if (buysM5 >= 4)  score +=  6;
+  else if (buysM5 >= 2)  score +=  3;
+  else                    score -=  5; // 0-1 buy en 5min = pas d'intérêt
 
-    if (c5m > 5 && c5m < 50) score += 8;                       // montée douce (pas spike)
-    if (sellsM5 <= 1 && buysM5 >= 3) score += 5;               // quasi 0 sells = organique
-  } else if (ageMinP < 10) {
-    // Token frais (5-10 min) : mix signaux courts + début h1
-    if (buysM5 >= 5 && buyRatioM5 >= 0.58) score += 8;
-    if (c5m > 0 && c5m < 30 && buysM5 > sellsM5) score += 5;  // montée propre récente
-  } else if (ageMinP > 20) {
-    // Token vieux sans élan récent = entrée tardive risquée
-    if (c5m <= 0 && c1h < 10)  score -= 8;   // stagnation sur un token de 20min+
-    if (ageMinP > 40 && c5m <= 0) score -= 5; // encore plus vieux et plat = danger
-  }
+  // ── 2. BUY RATIO M5 (max 10pts) ──────────────────────────────────────────
+  if      (buyRatioM5 >= 0.75) score += 10;
+  else if (buyRatioM5 >= 0.65) score +=  7;
+  else if (buyRatioM5 >= 0.55) score +=  4;
+  else if (buyRatioM5 < 0.40)  score -=  8; // majorité sells = fuite active
 
-  // === PÉNALITÉS ANTI-RUG / FAUX PUMP ===
-  if (c1h > 90 && c5m < -28) score -= 18;
-  if (c6h > 140 && c1h < 20) score -= 15;
-  if (sellsM5 > buysM5 * 1.7 && c1h > 30) score -= 12;
-  if (c1h > 60 && c5m < -20) score -= 10;
-  if (c5m < -35) score -= 8;
-  // Réversion M1 — pump M5 déjà retourné : on est dans le dump, pas le pump
-  // Signal : c5m fort (pompe récente) MAIS m1 déjà négatif (les SS ont commencé)
-  if (c5m > 15 && m1 < -5)  score -= 20;  // dump rapide en cours = sniper exit
-  if (c5m > 8  && m1 < -10) score -= 15;  // retournement brutal même sur pump modéré
-  // Spike sans acheteurs : grosse hausse M5 mais vente dominante = fake pump
-  if (c5m > 30 && sellsM5 > buysM5 * 1.3) score -= 18;
+  // ── 3. CONSISTANCE H1 (max 8pts) ─────────────────────────────────────────
+  if      (buysH1 >= 60 && buyRatioH1 >= 0.60) score += 8;
+  else if (buysH1 >= 30 && buyRatioH1 >= 0.55) score += 5;
+  else if (buysH1 >= 15)                         score += 2;
+  else if (buysH1 < 5 && ageMin > 15)            score -= 5; // token mort
 
-  // === PATTERN 1 : GROSSE BOUGIE INITIALE (bundle launch spike) ===
-  // Token jeune avec spike massif = achat bundle au launch, chart bizarre après
-  if (ageMinP < 10 && c5m > 80) score -= 20;          // spike >80% en 5min sur token <10min
-  if (ageMinP < 10 && c1h > 150) score -= 18;          // pump >150% sur token très jeune
-  if (c1h > 120 && c5m < -15) score -= 15;              // pump massif puis dump = bougie initiale retombée
-  if (ageMinP < 5 && m1 > 25) score -= 12;              // m1 >25% sur token <5min = spike artificiel
+  // ── 4. QUALITÉ DES TX M5 (max 4pts) — anti-bot / anti-bundle ─────────────
+  // Taille moyenne idéale : $30-$500 = retail organiques
+  // < $10 = bots spam     > $2000 = bundle / baleine
+  if      (avgTxSizeM5 >= 30  && avgTxSizeM5 <= 500)  score += 4;
+  else if (avgTxSizeM5 > 500  && avgTxSizeM5 <= 2000)  score += 1;
+  else if (avgTxSizeM5 > 2000 || avgTxSizeM5 < 5)      score -= 6;
 
-  // === PATTERN 2 : PUMP-DUMP CYCLES (manipulation) ===
-  // Grosse montée grosse descente répétée = vol/mcap élevé, sells~buys, c6h haut mais c1h bas
-  const sellBuyRatio = sellsH1 / (buysH1 || 1);
-  if (volMcapH1 > 8 && sellBuyRatio > 0.8 && sellBuyRatio < 1.3) score -= 18;  // volume énorme, sells≈buys = pump-dump en boucle
-  if (c6h > 80 && c1h < 15 && volMcapH1 > 5) score -= 15;   // monté haut sur 6h mais retombé = cycles
-  if (c6h > 60 && c1h < 0) score -= 12;                       // c6h positif mais c1h négatif = pattern dump
-  if (sellsH1 > buysH1 * 1.3 && c1h > 40) score -= 10;       // beaucoup de sells malgré pump = distribution
+  // ── 5. PRESSION ACHETEUSE H6 (max 4pts) ──────────────────────────────────
+  if      (buyRatioH6 >= 0.65) score += 4;
+  else if (buyRatioH6 >= 0.55) score += 2;
+
+  // ── PÉNALITÉS ACTIVITÉ ─────────────────────────────────────────────────────
+  if (sellsM5 > buysM5 * 2)    score -= 10; // 2x plus de sells que buys en M5
+  if (buyRatioH1 < 0.35)        score -= 8;  // H1 dominé par les vendeurs
+  if (totalH1 < 10 && ageMin > 20) score -= 8; // quasi mort depuis 20min
 
   return Math.max(0, Math.min(40, Math.round(score)));
 }
 
-function scoreTokenV2(p,walletData={count:0,wallets:[],clustered:false}){
+function scoreTokenV2(p,walletData={count:0,byGroup:{KOL:0,'gros trader':0,DEV:0,farmer:0},wallets:[],clustered:false}){
   const ageMs  = Date.now()-(p.pairCreatedAt||0);
   const ageH   = ageMs/3600000;
   const ageMin = ageMs/60000;
@@ -4571,24 +3859,17 @@ function scoreTokenV2(p,walletData={count:0,wallets:[],clustered:false}){
 
   let score = 0;
 
-  // ── 🎯 TRADERS AXIOM ──────────────────────────────────────────────────────
-  // Basé sur axiomData.count (wallets de ta liste Axiom détectés en top holders)
-  // AXIOM CONSENSUS (max 35)
-  let traderScore = 0;
-  const axiomCount = walletData.count || 0;
-  if      (axiomCount >= 6) traderScore = 35;
-  else if (axiomCount >= 5) traderScore = 30;
-  else if (axiomCount === 4) traderScore = 25;
-  else if (axiomCount === 3) traderScore = 18;
-  else if (axiomCount === 2) traderScore = 10;
-  else if (axiomCount === 1) traderScore =  5;
+  // ── 🎯 WALLET TRACKER ─────────────────────────────────────────────────────
+  // Points par catégorie : farmer=1, gros trader=3, KOL=4, DEV=5
+  const byGroup     = walletData.byGroup || {};
+  const kolCount    = byGroup['KOL']          || 0;
+  const traderCount = byGroup['gros trader']  || 0;
+  const devCount    = byGroup['DEV']          || 0;
+  const farmerCount = byGroup['farmer']       || 0;
+  const axiomCount  = walletData.count        || 0; // total (alias pour compat)
+  let traderScore = farmerCount * 1 + traderCount * 3 + kolCount * 4 + devCount * 5;
+  traderScore = Math.min(35, traderScore); // cap à 35 pour garder l'équilibre
   score += traderScore;
-
-  // ── ⚠️ BAD WALLETS ────────────────────────────────────────────────────────
-  // -5 si ≥1 bad wallet présent, -10 si les 3 sont présents
-  const badWalletCount = walletData.badWalletCount || 0;
-  const badWalletPenalty = badWalletCount >= 3 ? -10 : badWalletCount >= 1 ? -5 : 0;
-  score += badWalletPenalty;
 
   // ── 🌐 SOCIAL (max +26) ───────────────────────────────────────────────────
   // Socials lus depuis métadonnées Metaplex on-chain (Helius getAsset)
@@ -4657,9 +3938,9 @@ function scoreTokenV2(p,walletData={count:0,wallets:[],clustered:false}){
   // Proxy : utiliser les txns DexScreener pour estimer l'activité
   const totalTxns = (p.txns?.h1?.buys||0) + (p.txns?.h1?.sells||0)
                   + (p.txns?.h6?.buys||0) + (p.txns?.h6?.sells||0);
-  const hasProTraders = axiomCount >= 3
-    || (totalTxns >= 100 && top10pct <= 60)  // beaucoup de txns = token actif avec distribution OK
-    || (totalTxns >= 50  && top10pct <= 30); // txns modérées mais très bien distribué
+  const hasProTraders = (kolCount >= 1 || traderCount >= 2)
+    || (totalTxns >= 100 && top10pct <= 60)
+    || (totalTxns >= 50  && top10pct <= 30);
   if (hasProTraders) holderScore += 10;
   score += holderScore;
 
@@ -4689,8 +3970,8 @@ function scoreTokenV2(p,walletData={count:0,wallets:[],clustered:false}){
   else if (ageMin >  5  && ageMin <= 10)  ageScore =  3;
   score += ageScore;
 
-  // ── 📈 PATTERN (via calculatePatternScore) ────────────────────────────────
-  const patternScore = calculatePatternScore(p);
+  // ── 📈 ACTIVITÉ (via calculateActivityScore) ──────────────────────────────
+  const patternScore = calculateActivityScore(p); // alias conservé pour compat debug
   score += patternScore;
 
   // ── 🐦 KOL TWITTER MENTION ───────────────────────────────────────────────
@@ -4721,9 +4002,9 @@ function scoreTokenV2(p,walletData={count:0,wallets:[],clustered:false}){
   score += liqQualScore;
 
   // ── MINIMUMS OBLIGATOIRES ─────────────────────────────────────────────────
-  const _mkFail = (reason) => ({ score: 0, _minFail: reason, symbol: (p.baseToken?.symbol||'UNKNOWN').toUpperCase().slice(0,12), addr: p.baseToken?.address||'', mcap, liq, socials: hasSocials, rugRisk: 'HIGH', walletData, pairUrl: p.url||'', raw: p, debug: { traderScore, socialScore, holderScore, platformScore, mcapScore, ageScore, patternScore, washPenalty, liqQualScore, axiomCount, buyRatio: buyR, volAccel, c1h, m5, c6h, m1, ageH, top10pct, volMcapH1: vol1/mcap, sellBuyRatio: sells1/(buys1||1) } });
-  if (traderScore < 10)  return _mkFail('axiom');       // ≥ 2 Axiom wallets requis
-  if (patternScore < 12) return _mkFail('chart');       // chart signal réel requis
+  const _mkFail = (reason) => ({ score: 0, _minFail: reason, symbol: (p.baseToken?.symbol||'UNKNOWN').toUpperCase().slice(0,12), addr: p.baseToken?.address||'', mcap, liq, socials: hasSocials, rugRisk: 'HIGH', walletData, pairUrl: p.url||'', raw: p, debug: { traderScore, socialScore, holderScore, platformScore, mcapScore, ageScore, patternScore, washPenalty, liqQualScore, axiomCount, kolCount, traderCount, devCount, farmerCount, byGroup, buyRatio: buyR, volAccel, c1h, m5, c6h, m1, ageH, top10pct, volMcapH1: vol1/mcap, sellBuyRatio: sells1/(buys1||1) } });
+  if (kolCount < 1 || traderCount < 1) return _mkFail('wallet'); // 1 KOL + 1 gros trader obligatoires
+  if (patternScore < 8) return _mkFail('activity');     // activité minimale requise
   if (holderScore < 3)   return _mkFail('distrib');
   if (buyR < 0.40)       return _mkFail('sell_pressure'); // +60% sells en h1 = dump actif
 
@@ -4738,7 +4019,7 @@ function scoreTokenV2(p,walletData={count:0,wallets:[],clustered:false}){
   if(!hasSocials)rugPts++;
   if(liq<6000)rugPts+=2;
   if(ageH<0.5)rugPts++;
-  if(axiomCount>=1)rugPts=Math.max(0,rugPts-2);
+  if(kolCount>=1 || traderCount>=1)rugPts=Math.max(0,rugPts-2);
   const rugRisk = rugPts>=5?'HIGH':rugPts>=3?'MEDIUM':'LOW';
 
   const emoji = EMOJIS[Math.floor(Math.random()*EMOJIS.length)];
@@ -4758,6 +4039,7 @@ function scoreTokenV2(p,walletData={count:0,wallets:[],clustered:false}){
       momentumScore: patternScore,
       buyScore: 0, volScore: 0, // non utilisés dans ce scoring
       walletCount: axiomCount, clustered: walletData.clustered,
+      kolCount, traderCount, devCount, farmerCount, byGroup,
       buyRatio: buyR, volAccel, c1h, m5, ageH, c6h, m1,
       top10pct, axiomCount,
       volMcapH1: vol1/mcap,
@@ -6359,7 +5641,7 @@ function toggleDebugMode(){debugModeOn=!debugModeOn;const btn=document.getElemen
 function showDebug(idx){
   const t=lastScored[idx];if(!t)return;
   document.getElementById('debugOverlay').classList.add('open');
-  const cats=[{label:'TRACKER',val:t.debug.traderScore,max:35},{label:'SOCIAL',val:t.debug.socialScore,max:25},{label:'HOLDERS',val:t.debug.holderScore,max:25},{label:'TOKEN',val:t.debug.platformScore,max:10},{label:'MCAP',val:t.debug.mcapScore,max:15},{label:'AGE',val:t.debug.ageScore,max:10},{label:'PATTERN',val:t.debug.patternScore,max:40}];
+  const cats=[{label:'TRACKER',val:t.debug.traderScore,max:35},{label:'SOCIAL',val:t.debug.socialScore,max:25},{label:'HOLDERS',val:t.debug.holderScore,max:25},{label:'TOKEN',val:t.debug.platformScore,max:10},{label:'MCAP',val:t.debug.mcapScore,max:15},{label:'AGE',val:t.debug.ageScore,max:10},{label:'ACTIVITÉ',val:t.debug.patternScore,max:40}];
   const bars=cats.map(c=>{const pct=Math.max(0,Math.min(100,(Math.max(0,c.val)/c.max)*100));const color=c.val<0?'var(--red)':c.val>c.max*.7?'var(--green)':'#ffaa00';return`<div class="debug-bar-row"><div class="debug-bar-label">${c.label}</div><div class="debug-bar-track"><div class="debug-bar-fill" style="width:${pct}%;background:${color}"></div></div><div class="debug-bar-val">${c.val>0?'+':''}${c.val}</div></div>`;}).join('');
   const scoreColor=t.score>=110?'var(--gold)':t.score>=80?'var(--green)':t.score>=55?'var(--blue)':'var(--red)';
   const d=t.debug;
@@ -7122,7 +6404,7 @@ async function debugCA(){
       {name:'🪙 Token', val:platformScore,max:10},
       {name:'⭐ Mcap',     val:mcapScore,    max:15},
       {name:'⏱ Age',       val:ageScore,     max:10},
-      {name:'📈 Pattern',  val:patternScore, max:40},
+      {name:'📈 Activité', val:patternScore, max:40},
     ];
 
     const bars=cats.map(c=>{
@@ -7156,24 +6438,87 @@ async function debugCA(){
     const dbHasTG = dbDexSocials.some(s=>(s.url||'').includes('t.me'));
     const dbHasWEB= !!(pairData?.info?.websites?.length||pairData?.baseToken?.info?.websites?.length);
     const dbLiq   = pairData?.liquidity?.usd || 0;
-    const dbRawSocials = dbDexSocials.map(s=>s.type||s.url||'?').join(', ') || 'aucun';
 
     const dbHolderCount = sec?.holderCount || 0;
     const dbTop1  = sec ? parseFloat(sec.top1Pct||0)  : 0;
     const dbTop5  = sec ? parseFloat(sec.top5Pct||0)  : 0;
     const dbTop10 = sec ? parseFloat(sec.top10Pct||0) : 0;
 
-    const details=`TOKEN          : ${sym}
-CA             : ${addr.slice(0,12)}...${addr.slice(-6)}
-MCAP           : $${fmtNum(mcap)} | LIQ : $${fmtNum(dbLiq||liq)}
-AGE            : ${ageH.toFixed(1)}h (${ageMin.toFixed(0)}min)
-TRACKER WALLETS : ${wData.count} détectés${wData.wallets.length?' → '+wData.wallets.join(' '):''}
-HOLDERS HELIUS : ${dbHolderCount} comptes · top1=${dbTop1.toFixed(1)}% · top5=${dbTop5.toFixed(1)}% · top10=${dbTop10.toFixed(1)}%
-SOCIALS DEX    : ${dbHasX?'𝕏 ':''  }${dbHasTG?'TG ':''  }${dbHasWEB?'WEB ':''  }${!dbHasX&&!dbHasTG&&!dbHasWEB?'aucun':''}
-SOCIALS RAW    : ${dbRawSocials}
-HELIUS SEC     : ${sec?'✅ chargé':'❌ indisponible (Bonk/LaunchLab normal)'}
-DEX ID         : ${pairData?.dexId||'?'}
-PAIRE DEXSCR   : ${pairData?'✅ trouvée':'❌ non trouvée'}`;
+    // Récupérer le scored complet pour les filtres
+    let scored = null;
+    if(pairData){ pairData.security = sec; scored = scoreTokenV2(pairData, wData); }
+    const d = scored?.debug || {};
+    const wg = wData.byGroup || {};
+
+    // ── SECTION WALLETS DÉTECTÉS ──────────────────────────────────────────────
+    const groupColors = { KOL:'#1da1f2', 'gros trader':'#00ff88', DEV:'#ff9900', farmer:'#aaa' };
+    const groupEmojis = { KOL:'🐦', 'gros trader':'🐋', DEV:'🛠️', farmer:'🌾' };
+    let walletRows = '';
+    if(wData.count > 0){
+      // Afficher le breakdown par groupe
+      walletRows = Object.entries(wg).filter(([,n])=>n>0).map(([g,n])=>
+        `<span style="margin-right:.6rem;color:${groupColors[g]||'#fff'}">${groupEmojis[g]||''} ${g}: <b>${n}</b></span>`
+      ).join('');
+      if(wData.wallets?.length){
+        walletRows += `<div style="font-size:.65rem;color:var(--muted);margin-top:.3rem;font-family:var(--font-mono)">${wData.wallets.join('  ')}</div>`;
+      }
+    } else {
+      walletRows = '<span style="color:var(--red)">❌ Aucun wallet tracké détecté</span>';
+    }
+    const walletsHtml = `
+      <div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:.7rem .9rem;margin:.6rem 0">
+        <div style="font-size:.65rem;color:var(--muted);letter-spacing:.08em;margin-bottom:.4rem">WALLETS DÉTECTÉS (${wData.count})</div>
+        <div style="font-size:.8rem">${walletRows}</div>
+      </div>`;
+
+    // ── HARD FILTERS STATUS ──────────────────────────────────────────────────
+    const kolOk    = (wg['KOL']||0) >= 1;
+    const traderOk = (wg['gros trader']||0) >= 1;
+    const actOk    = (d.patternScore||0) >= 8;
+    const distribOk= (d.holderScore||0) >= 3;
+    const buyOk    = (d.buyRatio||0) >= 0.40;
+    const mkFilter = (label, ok, detail) =>
+      `<div style="display:flex;align-items:center;gap:.5rem;padding:.25rem 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:.75rem">
+        <span style="color:${ok?'#00ff88':'#ff4466'};font-size:.9rem">${ok?'✅':'❌'}</span>
+        <span style="flex:1">${label}</span>
+        <span style="color:${ok?'#00ff88':'#ff4466'};font-family:var(--font-mono)">${detail}</span>
+      </div>`;
+    const filtersHtml = `
+      <div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:.7rem .9rem;margin:.6rem 0">
+        <div style="font-size:.65rem;color:var(--muted);letter-spacing:.08em;margin-bottom:.4rem">HARD FILTERS</div>
+        ${mkFilter('1 KOL obligatoire',      kolOk,    `${wg['KOL']||0} KOL`)}
+        ${mkFilter('1 Gros trader obligatoire', traderOk, `${wg['gros trader']||0} trader`)}
+        ${mkFilter('Activité ≥ 8pts',        actOk,    `${d.patternScore||0}pts`)}
+        ${mkFilter('Distribution holders',  distribOk, `${d.holderScore||0}pts`)}
+        ${mkFilter('Buy ratio ≥ 40%',        buyOk,    `${((d.buyRatio||0)*100).toFixed(0)}%`)}
+      </div>`;
+
+    // ── CATÉGORIES DÉTAILLÉES ─────────────────────────────────────────────────
+    const buysM5  = pairData?.txns?.m5?.buys  || 0;
+    const sellsM5 = pairData?.txns?.m5?.sells || 0;
+    const buysH1  = pairData?.txns?.h1?.buys  || 0;
+    const sellsH1 = pairData?.txns?.h1?.sells || 0;
+    const buyRatioM5 = buysM5 / ((buysM5+sellsM5)||1);
+    const buyRatioH1d = buysH1 / ((buysH1+sellsH1)||1);
+    const catDetails = {
+      '🎯 Tracker':  `KOL:${wg['KOL']||0} Trader:${wg['gros trader']||0} DEV:${wg['DEV']||0} Farmer:${wg['farmer']||0}`,
+      '🌐 Social':   `${dbHasX?'𝕏 ':''}${dbHasTG?'TG ':''}${dbHasWEB?'WEB ':''} | Helius:${sec?'✅':'❌'}`,
+      '👥 Holders':  `top10=${dbTop10.toFixed(0)}% | ${dbHolderCount} comptes`,
+      '🪙 Token':    `DEX paid: ${d.platformScore>0?'✅':'❌'}`,
+      '⭐ Mcap':     `$${fmtNum(mcap)}`,
+      '⏱ Age':       `${(ageH*60).toFixed(0)}min`,
+      '📈 Activité': `buysM5=${buysM5} sellsM5=${sellsM5} ratioM5=${(buyRatioM5*100).toFixed(0)}% | buysH1=${buysH1} ratioH1=${(buyRatioH1d*100).toFixed(0)}%`,
+    };
+    const detailedBars = cats.map(c=>{
+      const pct=Math.max(0,Math.min(100,(Math.max(0,c.val)/c.max)*100));
+      const color=c.val<0?'var(--red)':c.val>c.max*.7?'var(--green)':'#ffaa00';
+      return `<div class="dca-cat-row">
+        <div style="min-width:90px;font-size:.72rem;color:rgba(255,255,255,.85)">${c.name}</div>
+        <div class="dca-cat-bar"><div class="dca-cat-fill" style="width:${pct}%;background:${color}"></div></div>
+        <div class="dca-cat-val" style="color:${color};min-width:34px">${c.val>=0?'+':''}${c.val}</div>
+        <div style="font-size:.6rem;color:var(--muted);margin-left:.4rem;flex:1">${catDetails[c.name]||''}</div>
+      </div>`;
+    }).join('');
 
     result.innerHTML=`
       <div class="dca-score-display">
@@ -7182,8 +6527,9 @@ PAIRE DEXSCR   : ${pairData?'✅ trouvée':'❌ non trouvée'}`;
         <div style="font-size:.65rem;color:var(--muted);margin-top:.3rem;font-family:var(--font-mono)">/ 150 pts max</div>
       </div>
       ${secHtml}
-      <div class="dca-cats">${bars}</div>
-      <div class="dca-details">${details}</div>
+      ${walletsHtml}
+      ${filtersHtml}
+      <div class="dca-cats" style="margin-top:.6rem">${detailedBars}</div>
       ${pairData?`<div style="margin-top:.8rem;text-align:center"><a href="${pairData.url||'https://dexscreener.com/solana/'+addr}" target="_blank" class="sc-btn-dex" style="display:inline-block">Voir sur DexScreener →</a></div>`:''}
     `;
   }catch(e){
@@ -7215,7 +6561,7 @@ async function fetchTokens(){
       socials: c.socials || false,
       pairUrl: c.pairUrl || `https://dexscreener.com/solana/${c.addr}`,
       emoji: c.emoji || '📡',
-      walletData: c.walletData || {count:0,wallets:[],clustered:false},
+      walletData: c.walletData || {count:0,byGroup:{KOL:0,'gros trader':0,DEV:0,farmer:0},wallets:[],clustered:false},
       _callTime: c.calledAt || c.savedAt || Date.now(),
       _callMcap: c.callMcap || c.mcap || 0,
       debug: c.debug || {traderScore:0,socialScore:0,holderScore:0,platformScore:0,mcapScore:0,ageScore:0,patternScore:0,axiomCount:0},
@@ -7253,7 +6599,7 @@ async function fetchTokens(){
             socials:c.socials||false,
             pairUrl:c.pairUrl||`https://dexscreener.com/solana/${c.addr}`,
             emoji:c.emoji||'📋',
-            walletData:c.walletData||{count:c.debug?.axiomCount||0,wallets:[],clustered:false},
+            walletData:c.walletData||{count:c.debug?.axiomCount||0,byGroup:{KOL:0,'gros trader':0,DEV:0,farmer:0},wallets:[],clustered:false},
             _callTime:c.calledAt||c.callTime||c.savedAt||Date.now(),
             _callMcap:c.callMcap||c.mcap||0,
             debug:c.debug||{traderScore:0,socialScore:0,holderScore:0,platformScore:0,mcapScore:0,ageScore:0,patternScore:0,axiomCount:0,ageH:0,c1h:0,m5:0,c6h:0,buyRatio:0.5},
@@ -7306,7 +6652,7 @@ async function fetchTokens(){
           lastScored=recentCalls.map(v=>({
             addr:v.addr, symbol:v.symbol||'?', score:v.score||80,
             mcap:v.athMcap||v.callMcap||0, liq:0,
-            walletData:{count:0,wallets:[],clustered:false},
+            walletData:{count:0,byGroup:{KOL:0,'gros trader':0,DEV:0,farmer:0},wallets:[],clustered:false},
             _callTime:v.callTime, _fromCache:true,
             pairUrl:`https://dexscreener.com/solana/${v.addr}`,
             emoji:'📋', rugRisk:'LOW', socials:false,
@@ -7491,8 +6837,10 @@ async function fetchTokens(){
       const rurl=(rp?.url||'').toLowerCase();
       const raddr=(rp?.baseToken?.address||'');
 
-      // HARD FILTER 0 — Axiom wallet obligatoire
-      if((rescored.debug?.axiomCount||0)<1){rejected['no_axiom']=(rejected['no_axiom']||0)+1;continue;}
+      // HARD FILTER 0 — 1 KOL + 1 gros trader obligatoires
+      const rKol=(rescored.debug?.kolCount||0);
+      const rTrader=(rescored.debug?.traderCount||0);
+      if(rKol<1||rTrader<1){rejected['no_wallet']=(rejected['no_wallet']||0)+1;continue;}
 
       // HARD FILTER 1 — Platform
       const isPump=rdex.includes('pump')||rurl.includes('pump')||raddr.endsWith('pump');
@@ -7500,9 +6848,9 @@ async function fetchTokens(){
       const isBags=rdex.includes('bags')||rurl.includes('bags');
       if(!isPump&&!isBonk&&!isBags){rejected[`platform:${rdex||'?'}`]=(rejected[`platform:${rdex||'?'}`]||0)+1;continue;}
 
-      // HARD FILTER 2 — Mcap : 15K → 75K (120K si ≥2 Axiom wallets — fast pumpers légitimes)
+      // HARD FILTER 2 — Mcap : 15K → 75K (120K si KOL + gros trader présents)
       const rmc=rescored.mcap||0;
-      const axiomBoost=(rescored.debug?.axiomCount||0)>=2;
+      const axiomBoost=(rKol>=1&&rTrader>=1);
       const mcapCeil=axiomBoost?120000:75000;
       if(rmc<15000){rejected[`mcap<15K`]=(rejected['mcap<15K']||0)+1;continue;}
       if(rmc>mcapCeil){rejected[`mcap>${axiomBoost?'120K':'75K'}`]=(rejected[`mcap>${axiomBoost?'120K':'75K'}`]||0)+1;continue;}
@@ -7666,8 +7014,9 @@ async function renderTokenTable(tokens){
     const athColor='#ffaa44';
     const xAth=callMcap>0&&athMcap>callMcap?(athMcap/callMcap):1;
     const xColor=xAth>=3?'#00ff88':xAth>=2?'#88ff44':xAth>=1.5?'#ffcc44':'#ff8866';
-    // Axiom wallets badge
-    const axiomBadge=t.walletData?.count>0?`<span class="sc-axiom">🎯 ${t.walletData.count} Tracker</span>`:'';
+    // Wallet tracker badge (groupe breakdown)
+    const wg=t.walletData?.byGroup||{};
+    const axiomBadge=t.walletData?.count>0?`<span class="sc-axiom" title="KOL:${wg['KOL']||0} Trader:${wg['gros trader']||0} DEV:${wg['DEV']||0} Farmer:${wg['farmer']||0}">🎯 ${t.walletData.count} Tracker</span>`:'';
     // KOL badge
     const kolList = d?.kolMentioned||[];
     const kolBadge = kolList.length>0
@@ -7710,7 +7059,7 @@ async function renderTokenTable(tokens){
       {lbl:'H',val:d.holderScore||0,max:25},
       {lbl:'P',val:d.platformScore||0,max:15},
       {lbl:'A',val:d.ageScore||0,max:20},
-      {lbl:'PAT',val:d.patternScore||0,max:45},
+      {lbl:'ACT',val:d.patternScore||0,max:40},
     ].map(({lbl,val,max})=>{
       const pct=max>0?val/max:0;
       const col=pct>=0.7?'#00ff88':pct>=0.35?'#ffcc44':'rgba(255,255,255,.35)';
