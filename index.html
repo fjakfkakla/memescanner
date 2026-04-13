@@ -63,7 +63,7 @@
 }
 /* ═══ RESET & BASE ══════════════════════════════════════════════ */
 * { margin: 0; padding: 0; box-sizing: border-box; }
-body { background: #fff; color: #0F1117; font-family: 'Inter', sans-serif; font-size: 15px; line-height: 1.6; overflow-x: hidden; }
+body { background: #080808; color: #f0f0f0; font-family: 'Inter', sans-serif; font-size: 15px; line-height: 1.6; overflow-x: hidden; }
 
 /* ═══ NAV ═══════════════════════════════════════════════════════ */
 nav {
@@ -90,159 +90,293 @@ nav.scrolled { box-shadow: 0 2px 20px rgba(0,0,0,0.08); }
 .lang-switch { background: transparent; border: 1px solid #E2E6ED; color: #6B7280; padding: .38rem .8rem; border-radius: 8px; cursor: pointer; font-size: .82rem; font-family: 'Inter', sans-serif; transition: .2s; }
 .lang-switch:hover { color: #4F46E5; border-color: #4F46E5; }
 
+/* ═══ LP — LANDING PAGE DARK PREMIUM ════════════════════════════ */
+:root {
+  --lp-bg: #080808;
+  --lp-bg2: #0d0d0d;
+  --lp-bg3: #111111;
+  --lp-card: #111111;
+  --lp-border: rgba(255,255,255,0.07);
+  --lp-text: #f0f0f0;
+  --lp-muted: #666666;
+  --lp-subtle: #444444;
+  --lp-violet: #6366f1;
+  --lp-violet2: #8b5cf6;
+  --lp-green: #00ff88;
+  --lp-green2: #00cc6a;
+  --lp-gold: #f59e0b;
+  --lp-blue: #3b82f6;
+}
+
+body { background: var(--lp-bg); color: var(--lp-text); font-family: var(--font); }
+#landing-wrap { background: var(--lp-bg); }
+
 /* ═══ LANDING WRAPPER ════════════════════════════════════════════ */
-#landing-wrap{background:#fff;position:relative;overflow:hidden;}
+#landing-wrap{background:var(--lp-bg);position:relative;overflow:hidden;}
 
-/* ═══ HERO ═══════════════════════════════════════════════════════ */
-.hero-section { background: linear-gradient(135deg, #FAFBFF 0%, #F0F4FF 100%); padding: 5rem 2rem 4rem; }
-.hero-container { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 5rem; align-items: center; }
-.hero-badge { display: inline-flex; align-items: center; gap: 0.5rem; background: #EEF2FF; border: 1px solid #C7D2FE; color: #4F46E5; font-size: 0.75rem; font-weight: 600; padding: 0.4rem 1rem; border-radius: 30px; margin-bottom: 1.5rem; letter-spacing: 0.02em; }
-.badge-dot { width: 6px; height: 6px; border-radius: 50%; background: #4F46E5; animation: pulse-blue 1.5s ease infinite; }
-@keyframes pulse-blue { 0%,100%{ box-shadow: 0 0 0 0 rgba(79,70,229,0.4); } 50%{ box-shadow: 0 0 0 6px rgba(79,70,229,0); } }
-.hero-title { font-family: 'Space Grotesk', sans-serif; font-size: 3.5rem; line-height: 1.1; font-weight: 800; letter-spacing: -0.03em; color: #0F1117; margin-bottom: 1.2rem; }
-.hero-highlight { color: #4F46E5; }
-.hero-subtitle { color: #6B7280; font-size: 1rem; line-height: 1.75; margin-bottom: 2rem; max-width: 440px; }
-.hero-search { display: flex; gap: 0; margin-bottom: 1.2rem; box-shadow: 0 4px 24px rgba(79,70,229,0.12); border-radius: 12px; overflow: hidden; border: 1.5px solid #C7D2FE; }
-.hero-input { flex: 1; padding: 0.9rem 1.2rem; border: none; outline: none; font-size: 0.9rem; font-family: 'Inter', sans-serif; color: #0F1117; background: #fff; }
-.hero-input::placeholder { color: #9CA3AF; }
-.hero-cta-btn { padding: 0 1.5rem; background: #4F46E5; color: #fff; border: none; font-weight: 700; font-size: 0.9rem; cursor: pointer; font-family: 'Inter', sans-serif; transition: background 0.2s; white-space: nowrap; }
-.hero-cta-btn:hover { background: #4338CA; }
-.hero-links { display: flex; gap: 1.5rem; }
-.hero-link-secondary { color: #6B7280; font-size: 0.85rem; text-decoration: none; font-weight: 500; transition: color 0.2s; }
-.hero-link-secondary:hover { color: #4F46E5; }
+/* NAV */
+nav {
+  position: sticky; top: 0; z-index: 1000;
+  background: rgba(8,8,8,0.85); backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--lp-border);
+  padding: 0 2.5rem; display: flex; align-items: center; gap: 1rem; height: 64px;
+  transition: box-shadow 0.3s;
+}
+nav.scrolled { box-shadow: 0 2px 20px rgba(0,0,0,0.4); }
+.nav-logo{display:flex;align-items:center;gap:.7rem;cursor:pointer;text-decoration:none;flex-shrink:0;}
+.nav-logo svg{width:34px;height:34px;flex-shrink:0;}
+.logo-text { font-family: 'Space Grotesk', sans-serif; font-size: 1.05rem; font-weight: 800; color: #fff; }
+.logo-text span { color: var(--lp-violet); }
+.logo-tagline{display:none;}
+.nav-links { display: flex; gap: 1.8rem; margin-left: 2.5rem; margin-right: auto; }
+.nav-links a { color: var(--lp-muted); font-size: 0.87rem; text-decoration: none; font-weight: 500; transition: color 0.2s; }
+.nav-links a:hover { color: #fff; }
+.nav-btn { padding: 0.48rem 1.1rem; border-radius: 8px; font-size: 0.87rem; font-weight: 600; cursor: pointer; border: none; font-family: 'Inter', sans-serif; transition: all 0.2s; }
+.btn-outline { background: transparent; border: 1px solid var(--lp-border); color: rgba(255,255,255,0.7); }
+.btn-outline:hover { border-color: var(--lp-violet); color: var(--lp-violet); }
+.btn-primary { background: var(--lp-violet); color: #fff; box-shadow: 0 0 20px rgba(99,102,241,0.3); }
+.btn-primary:hover { background: var(--lp-violet2); box-shadow: 0 0 30px rgba(99,102,241,0.5); transform: translateY(-1px); }
+.lang-switch { background: transparent; border: 1px solid var(--lp-border); color: var(--lp-muted); padding: .38rem .8rem; border-radius: 8px; cursor: pointer; font-size: .82rem; font-family: 'Inter', sans-serif; transition: .2s; }
+.lang-switch:hover { color: var(--lp-violet); border-color: var(--lp-violet); }
 
-/* Hero visual mock */
-.hero-visual { display: flex; justify-content: center; }
-.hero-card-mock { background: #fff; border-radius: 20px; padding: 1.5rem; box-shadow: 0 20px 60px rgba(79,70,229,0.12), 0 0 0 1px rgba(79,70,229,0.08); width: 100%; max-width: 360px; }
-.mock-header { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid #F0F4FF; }
-.mock-dots { display: flex; gap: 4px; }
-.mock-dots span { width: 10px; height: 10px; border-radius: 50%; background: #E2E6ED; }
-.mock-dots span:nth-child(1) { background: #FCA5A5; }
-.mock-dots span:nth-child(2) { background: #FCD34D; }
-.mock-dots span:nth-child(3) { background: #86EFAC; }
-.mock-title { font-size: 0.75rem; color: #6B7280; flex: 1; font-family: 'Space Mono', monospace; }
-.mock-live { font-size: 0.7rem; font-weight: 700; color: #059669; font-family: 'Space Mono', monospace; }
-.mock-body { display: flex; gap: 1.2rem; align-items: center; margin-bottom: 1.2rem; }
-.mock-score-ring { position: relative; width: 90px; height: 90px; flex-shrink: 0; }
-.score-svg { width: 90px; height: 90px; }
-.mock-score-val { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-family: 'Space Grotesk', sans-serif; font-size: 1.1rem; font-weight: 800; color: #4F46E5; flex-direction: column; line-height: 1; }
-.mock-score-val span { font-size: 0.6rem; color: #9CA3AF; font-weight: 400; }
-.mock-indicators { display: flex; flex-direction: column; gap: 0.45rem; flex: 1; }
-.mock-ind { font-size: 0.75rem; color: #374151; display: flex; align-items: center; gap: 0.4rem; font-weight: 500; }
-.ind-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
-.ind-dot.green { background: #059669; }
-.ind-dot.amber { background: #D97706; }
-.ind-dot.red { background: #DC2626; }
-.mock-footer { display: flex; align-items: center; justify-content: space-between; padding-top: 1rem; border-top: 1px solid #F0F4FF; }
-.mock-badge { font-size: 0.72rem; font-weight: 700; padding: 0.25rem 0.6rem; border-radius: 6px; }
-.mock-badge.safe { background: #ECFDF5; color: #059669; border: 1px solid #A7F3D0; }
-.mock-badge.risk { background: #FEF2F2; color: #DC2626; border: 1px solid #FCA5A5; }
-.mock-mcap { font-size: 0.75rem; color: #6B7280; font-family: 'Space Mono', monospace; }
+/* CONTAINER */
+.lp-container { max-width: 1200px; margin: 0 auto; padding: 0 2rem; }
 
-/* ═══ STATS STRIP ════════════════════════════════════════════════ */
-.stats-strip { background: #fff; border-top: 1px solid #E2E6ED; border-bottom: 1px solid #E2E6ED; padding: 1.8rem 2rem; }
-.stats-strip-inner { max-width: 1200px; margin: 0 auto; display: flex; align-items: center; justify-content: center; gap: 0; flex-wrap: wrap; }
-.stat-block { text-align: center; padding: 0 3rem; }
-.stat-val { font-family: 'Space Grotesk', sans-serif; font-size: 1.8rem; font-weight: 800; color: #0F1117; letter-spacing: -0.04em; line-height: 1; }
-.stat-lbl { font-size: 0.75rem; color: #6B7280; margin-top: 0.3rem; font-weight: 500; }
-.stat-divider { width: 1px; height: 36px; background: #E2E6ED; flex-shrink: 0; }
+/* HERO */
+.lp-hero { position: relative; padding: 7rem 2rem 5rem; overflow: hidden; }
+.lp-hero-glow { position: absolute; top: -200px; left: 50%; transform: translateX(-50%); width: 800px; height: 800px; border-radius: 50%; background: radial-gradient(circle, rgba(99,102,241,0.12) 0%, transparent 70%); pointer-events: none; }
+.lp-hero-eyebrow { display: inline-flex; align-items: center; gap: 0.5rem; background: rgba(99,102,241,0.1); border: 1px solid rgba(99,102,241,0.25); color: #a5b4fc; font-size: 0.75rem; font-weight: 600; padding: 0.4rem 1rem; border-radius: 30px; margin-bottom: 1.8rem; letter-spacing: 0.04em; }
+.lp-pulse-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--lp-green); animation: lp-pulse 1.5s infinite; }
+@keyframes lp-pulse { 0%,100%{box-shadow:0 0 0 0 rgba(0,255,136,0.4)}50%{box-shadow:0 0 0 6px rgba(0,255,136,0)} }
+.lp-hero-title { font-family: var(--font-head); font-size: 4.5rem; line-height: 1.05; font-weight: 800; letter-spacing: -0.04em; color: #fff; margin-bottom: 1.4rem; max-width: 700px; }
+.lp-hero-grad { background: linear-gradient(135deg, var(--lp-violet) 0%, var(--lp-violet2) 50%, #a78bfa 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+.lp-hero-sub { color: var(--lp-muted); font-size: 1.05rem; line-height: 1.75; margin-bottom: 2.2rem; max-width: 560px; }
+.lp-hero-cta { display: flex; gap: 1rem; margin-bottom: 2.5rem; flex-wrap: wrap; }
+.lp-btn-primary { padding: 0.9rem 2rem; background: var(--lp-violet); color: #fff; border: none; border-radius: 10px; font-size: 0.97rem; font-weight: 700; cursor: pointer; font-family: var(--font); transition: all 0.25s; box-shadow: 0 0 24px rgba(99,102,241,0.35); text-decoration: none; display: inline-block; }
+.lp-btn-primary:hover { background: var(--lp-violet2); transform: translateY(-2px); box-shadow: 0 0 36px rgba(99,102,241,0.5); }
+.lp-btn-ghost { padding: 0.9rem 2rem; background: transparent; color: rgba(255,255,255,0.7); border: 1px solid var(--lp-border); border-radius: 10px; font-size: 0.97rem; font-weight: 600; cursor: pointer; font-family: var(--font); transition: all 0.25s; }
+.lp-btn-ghost:hover { border-color: rgba(255,255,255,0.25); color: #fff; }
+.lp-hero-stats { display: flex; align-items: center; gap: 0; flex-wrap: wrap; }
+.lp-hstat { display: flex; flex-direction: column; gap: 0.2rem; padding: 0 1.8rem; }
+.lp-hstat:first-child { padding-left: 0; }
+.lp-hstat-val { font-family: var(--font-head); font-size: 1.6rem; font-weight: 800; color: #fff; letter-spacing: -0.03em; line-height: 1; }
+.lp-hstat-val.green { color: var(--lp-green); }
+.lp-hstat-val.violet { color: #a5b4fc; }
+.lp-hstat-lbl { font-size: 0.72rem; color: var(--lp-muted); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 500; }
+.lp-hstat-sep { width: 1px; height: 32px; background: var(--lp-border); flex-shrink: 0; }
 
-/* ═══ SECTIONS COMMUNES ══════════════════════════════════════════ */
-.section-container { max-width: 1200px; margin: 0 auto; padding: 0 2rem; }
-.section-header { text-align: center; margin-bottom: 3.5rem; }
-.section-tag { display: inline-block; background: #EEF2FF; color: #4F46E5; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; padding: 0.35rem 0.9rem; border-radius: 20px; margin-bottom: 0.9rem; }
-.section-title { font-family: 'Space Grotesk', sans-serif; font-size: 2.2rem; font-weight: 800; letter-spacing: -0.03em; color: #0F1117; margin-bottom: 0.7rem; line-height: 1.15; }
-.section-sub { color: #6B7280; font-size: 1rem; line-height: 1.7; max-width: 520px; margin: 0 auto; }
+/* SECTION LABELS */
+.lp-section-label { font-size: 0.7rem; font-weight: 700; color: var(--lp-violet); text-transform: uppercase; letter-spacing: 0.14em; margin-bottom: 0.7rem; display: block; }
+.lp-section-title { font-family: var(--font-head); font-size: 2.4rem; font-weight: 800; letter-spacing: -0.03em; color: #fff; margin-bottom: 1rem; line-height: 1.15; }
 
-/* ═══ COMMENT CA MARCHE ══════════════════════════════════════════ */
-.how-section { padding: 6rem 2rem; background: #fff; }
-.steps-grid { display: flex; align-items: center; gap: 1rem; }
-.step-card { flex: 1; background: #FAFBFF; border: 1px solid #E2E6ED; border-radius: 16px; padding: 2rem; text-align: center; transition: all 0.3s; }
-.step-card:hover { border-color: #C7D2FE; box-shadow: 0 8px 30px rgba(79,70,229,0.08); transform: translateY(-3px); }
-.step-num { font-family: 'Space Grotesk', sans-serif; font-size: 0.72rem; font-weight: 800; color: #C7D2FE; letter-spacing: 0.1em; margin-bottom: 1rem; }
-.step-icon { font-size: 2rem; margin-bottom: 1rem; }
-.step-title { font-family: 'Space Grotesk', sans-serif; font-size: 1.05rem; font-weight: 700; color: #0F1117; margin-bottom: 0.6rem; }
-.step-desc { font-size: 0.88rem; color: #6B7280; line-height: 1.65; }
-.step-connector { font-size: 1.5rem; color: #C7D2FE; flex-shrink: 0; font-weight: 300; }
+/* FEATURES */
+.lp-features { padding: 6rem 2rem; background: var(--lp-bg2); border-top: 1px solid var(--lp-border); }
+.lp-features-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin-top: 3rem; }
+.lp-feat-card { background: var(--lp-card); border: 1px solid var(--lp-border); border-radius: 20px; padding: 2rem; position: relative; transition: all 0.3s; overflow: hidden; }
+.lp-feat-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; border-radius: 2px 2px 0 0; }
+.lp-feat-card.accent-violet::before { background: linear-gradient(90deg, var(--lp-violet), var(--lp-violet2)); }
+.lp-feat-card.accent-green::before { background: linear-gradient(90deg, var(--lp-green2), var(--lp-green)); }
+.lp-feat-card.accent-gold::before { background: linear-gradient(90deg, #d97706, var(--lp-gold)); }
+.lp-feat-card.accent-blue::before { background: linear-gradient(90deg, #2563eb, var(--lp-blue)); }
+.lp-feat-card:hover { transform: translateY(-4px); border-color: rgba(255,255,255,0.12); box-shadow: 0 20px 50px rgba(0,0,0,0.4); }
+.lp-feat-icon { font-size: 1.8rem; margin-bottom: 1rem; }
+.lp-feat-badge { position: absolute; top: 1.2rem; right: 1.2rem; font-size: 0.6rem; font-weight: 800; letter-spacing: 0.1em; padding: 0.2rem 0.6rem; border-radius: 6px; border: 1px solid var(--lp-border); color: var(--lp-muted); }
+.lp-feat-name { font-family: var(--font-head); font-size: 1.15rem; font-weight: 800; color: #fff; margin-bottom: 0.6rem; }
+.lp-feat-desc { color: var(--lp-muted); font-size: 0.88rem; line-height: 1.68; margin-bottom: 1.2rem; }
+.lp-feat-pills { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+.lp-feat-pills span { font-size: 0.68rem; font-weight: 600; padding: 0.2rem 0.6rem; border-radius: 20px; border: 1px solid var(--lp-border); color: var(--lp-subtle); font-family: var(--font-mono); }
 
-/* ═══ EDUCATION ══════════════════════════════════════════════════ */
-.education-section { padding: 6rem 2rem; background: #F7F8FA; }
-.edu-tabs { display: flex; gap: 0.5rem; justify-content: center; margin-bottom: 2.5rem; }
-.edu-tab { padding: 0.5rem 1.2rem; border-radius: 20px; border: 1.5px solid #E2E6ED; background: #fff; color: #6B7280; font-size: 0.83rem; font-weight: 600; cursor: pointer; font-family: 'Inter', sans-serif; transition: all 0.2s; }
-.edu-tab.active, .edu-tab:hover { background: #4F46E5; border-color: #4F46E5; color: #fff; }
-.edu-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.2rem; }
-.edu-card { background: #fff; border: 1px solid #E2E6ED; border-radius: 16px; padding: 1.6rem; cursor: pointer; transition: all 0.25s; }
-.edu-card:hover { transform: translateY(-4px); box-shadow: 0 12px 36px rgba(0,0,0,0.08); border-color: #C7D2FE; }
-.edu-card-tag { display: inline-block; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; padding: 0.2rem 0.6rem; border-radius: 6px; margin-bottom: 0.9rem; }
-.edu-card-tag.beginner { background: #ECFDF5; color: #059669; }
-.edu-card-tag.analysis { background: #EEF2FF; color: #4F46E5; }
-.edu-card-tag.security { background: #FEF2F2; color: #DC2626; }
-.edu-card-title { font-family: 'Space Grotesk', sans-serif; font-size: 1rem; font-weight: 700; color: #0F1117; margin-bottom: 0.6rem; line-height: 1.3; }
-.edu-card-desc { font-size: 0.85rem; color: #6B7280; line-height: 1.6; margin-bottom: 1.2rem; }
-.edu-card-footer { display: flex; justify-content: space-between; align-items: center; }
-.edu-read-time { font-size: 0.75rem; color: #9CA3AF; }
-.edu-arrow { color: #C7D2FE; font-weight: 700; transition: all 0.2s; }
-.edu-card:hover .edu-arrow { color: #4F46E5; transform: translateX(3px); }
+/* ═══ SMART MONEY ════════════════════════════════════════════════ */
+.lp-smartmoney { padding: 6rem 2rem; background: var(--lp-bg); border-top: 1px solid var(--lp-border); }
+.lp-sm-inner { display: grid; grid-template-columns: 1fr 1fr; gap: 5rem; align-items: center; }
+.lp-sm-desc { color: var(--lp-muted); font-size: 0.97rem; line-height: 1.75; margin-bottom: 2rem; }
+.lp-sm-stats { display: flex; gap: 2rem; }
+.lp-sm-stat-val { font-family: var(--font-head); font-size: 1.7rem; font-weight: 800; color: #fff; letter-spacing: -0.03em; }
+.lp-sm-stat-lbl { font-size: 0.72rem; color: var(--lp-muted); text-transform: uppercase; letter-spacing: 0.08em; margin-top: 0.2rem; }
+.lp-wallet-card { background: var(--lp-card); border: 1px solid var(--lp-border); border-radius: 16px; overflow: hidden; }
+.lp-wc-header { background: #0a0a0a; padding: 0.7rem 1rem; display: flex; align-items: center; gap: 0.5rem; border-bottom: 1px solid var(--lp-border); }
+.lp-wc-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--lp-green); animation: lp-pulse 1.5s infinite; }
+.lp-wc-title { font-family: var(--font-mono); font-size: 0.65rem; color: var(--lp-muted); letter-spacing: 0.06em; }
+.lp-wc-rows { padding: 0.5rem; display: flex; flex-direction: column; gap: 0.3rem; }
+.lp-wc-row { display: flex; align-items: center; gap: 0.8rem; padding: 0.5rem 0.6rem; border-radius: 8px; }
+.lp-wc-row.hit { background: rgba(99,102,241,0.06); border: 1px solid rgba(99,102,241,0.12); }
+.lp-wc-addr { font-family: var(--font-mono); font-size: 0.72rem; color: var(--lp-muted); flex: 1; }
+.lp-wc-tag { font-size: 0.62rem; font-weight: 700; padding: 0.18rem 0.5rem; border-radius: 5px; }
+.lp-wc-tag.axiom { background: rgba(99,102,241,0.15); color: #a5b4fc; border: 1px solid rgba(99,102,241,0.2); }
+.lp-wc-tag.normal { background: rgba(255,255,255,0.04); color: var(--lp-subtle); border: 1px solid var(--lp-border); }
+.lp-wc-pts { font-family: var(--font-mono); font-size: 0.72rem; font-weight: 700; color: var(--lp-green); min-width: 40px; text-align: right; }
+.lp-wc-pts.muted { color: var(--lp-subtle); }
+.lp-wc-footer { padding: 0.6rem 1rem; border-top: 1px solid var(--lp-border); font-family: var(--font-mono); font-size: 0.62rem; color: var(--lp-muted); }
 
-/* ═══ ANTI-SCAM ══════════════════════════════════════════════════ */
-.antiscam-section { padding: 6rem 2rem; background: #fff; }
-.antiscam-inner { display: grid; grid-template-columns: 1fr 1fr; gap: 5rem; align-items: start; }
-.antiscam-left .section-title { text-align: left; }
-.antiscam-left .section-sub { text-align: left; margin: 0 0 1.5rem; }
-.antiscam-right { display: flex; flex-direction: column; gap: 1rem; }
-.check-item { display: flex; gap: 1rem; align-items: flex-start; padding: 1rem; border-radius: 12px; border: 1px solid #E2E6ED; background: #FAFBFF; transition: all 0.2s; }
-.check-item:hover { border-color: #C7D2FE; background: #F0F4FF; }
-.check-icon { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 800; flex-shrink: 0; margin-top: 0.1rem; }
-.check-icon.safe { background: #ECFDF5; color: #059669; border: 1.5px solid #A7F3D0; }
-.check-icon.warn { background: #FFFBEB; color: #D97706; border: 1.5px solid #FDE68A; }
-.check-icon.risk { background: #FEF2F2; color: #DC2626; border: 1.5px solid #FCA5A5; }
-.check-title { font-family: 'Space Grotesk', sans-serif; font-size: 0.9rem; font-weight: 700; color: #0F1117; margin-bottom: 0.25rem; }
-.check-desc { font-size: 0.82rem; color: #6B7280; line-height: 1.55; }
+/* ═══ SCORING ════════════════════════════════════════════════════ */
+.lp-scoring { padding: 6rem 2rem; background: var(--lp-bg2); border-top: 1px solid var(--lp-border); }
+.lp-score-grid { display: flex; flex-direction: column; gap: 0.8rem; margin: 3rem auto 2rem; max-width: 700px; }
+.lp-score-item { display: flex; align-items: center; gap: 1rem; }
+.lp-score-bar { flex: 1; height: 6px; background: rgba(255,255,255,0.06); border-radius: 3px; overflow: hidden; }
+.lp-score-fill { height: 100%; border-radius: 3px; }
+.lp-score-fill.violet { background: linear-gradient(90deg, var(--lp-violet), var(--lp-violet2)); }
+.lp-score-fill.green { background: linear-gradient(90deg, var(--lp-green2), var(--lp-green)); }
+.lp-score-fill.gold { background: linear-gradient(90deg, #d97706, var(--lp-gold)); }
+.lp-score-fill.blue { background: linear-gradient(90deg, #2563eb, var(--lp-blue)); }
+.lp-score-info { display: flex; justify-content: space-between; min-width: 240px; }
+.lp-score-name { font-size: 0.85rem; color: var(--lp-muted); }
+.lp-score-max { font-family: var(--font-mono); font-size: 0.8rem; color: #fff; font-weight: 700; }
+.lp-score-labels { display: flex; gap: 0.8rem; justify-content: center; flex-wrap: wrap; margin-top: 1rem; }
+.lp-slabel { font-size: 0.78rem; font-weight: 700; padding: 0.4rem 1rem; border-radius: 20px; border: 1px solid var(--lp-border); font-family: var(--font-mono); color: var(--lp-muted); }
+.lp-slabel.nuclear { color: #f87171; border-color: rgba(248,113,113,0.2); background: rgba(248,113,113,0.05); }
+.lp-slabel.diamond { color: #60a5fa; border-color: rgba(96,165,250,0.2); background: rgba(96,165,250,0.05); }
+.lp-slabel.runner { color: #a5b4fc; border-color: rgba(165,180,252,0.2); background: rgba(165,180,252,0.05); }
 
-/* ═══ MISSION ════════════════════════════════════════════════════ */
-.mission-section { padding: 6rem 2rem; background: #F7F8FA; }
-.mission-inner { display: grid; grid-template-columns: 1fr 1fr; gap: 5rem; align-items: center; }
-.mission-content .section-title { text-align: left; }
-.mission-text { color: #6B7280; font-size: 0.97rem; line-height: 1.8; margin-bottom: 1rem; }
-.mission-text strong { color: #0F1117; }
-.mission-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-.mission-stat-card { background: #fff; border: 1px solid #E2E6ED; border-radius: 16px; padding: 1.5rem; text-align: center; }
-.mission-stat-val { font-family: 'Space Grotesk', sans-serif; font-size: 2rem; font-weight: 800; color: #4F46E5; letter-spacing: -0.04em; line-height: 1; margin-bottom: 0.4rem; }
-.mission-stat-lbl { font-size: 0.78rem; color: #6B7280; font-weight: 500; }
+/* ═══ TESTIMONIALS ═══════════════════════════════════════════════ */
+.lp-testimonials { padding: 6rem 2rem; background: var(--lp-bg); border-top: 1px solid var(--lp-border); }
+.lp-testi-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-top: 3rem; }
+.lp-testi-card { background: var(--lp-card); border: 1px solid var(--lp-border); border-radius: 16px; padding: 1.8rem; transition: all 0.3s; }
+.lp-testi-card:hover { border-color: rgba(99,102,241,0.2); transform: translateY(-3px); }
+.lp-testi-stars { color: var(--lp-gold); font-size: 0.85rem; margin-bottom: 1rem; letter-spacing: 0.05em; }
+.lp-testi-text { color: rgba(255,255,255,0.65); font-size: 0.9rem; line-height: 1.7; margin-bottom: 1.2rem; font-style: italic; }
+.lp-testi-author { display: flex; align-items: center; justify-content: space-between; }
+.lp-testi-name { font-size: 0.82rem; font-weight: 600; color: rgba(255,255,255,0.5); font-family: var(--font-mono); }
+.lp-testi-badge { font-size: 0.65rem; font-weight: 700; padding: 0.18rem 0.5rem; border-radius: 5px; background: rgba(99,102,241,0.1); color: #a5b4fc; border: 1px solid rgba(99,102,241,0.2); }
 
-/* ═══ CTA SECTION ════════════════════════════════════════════════ */
-.cta-section { padding: 6rem 2rem; background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%); }
-.cta-inner { max-width: 700px; margin: 0 auto; text-align: center; }
-.cta-title { font-family: 'Space Grotesk', sans-serif; font-size: 2.4rem; font-weight: 800; color: #fff; letter-spacing: -0.03em; margin-bottom: 1rem; line-height: 1.2; }
-.cta-sub { color: rgba(255,255,255,0.75); font-size: 1rem; line-height: 1.7; margin-bottom: 2.2rem; }
-.cta-buttons { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+/* ═══ PRICING ════════════════════════════════════════════════════ */
+.lp-pricing-preview { padding: 6rem 2rem; background: var(--lp-bg2); border-top: 1px solid var(--lp-border); }
+.lp-pricing-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-top: 3rem; }
+.lp-price-card { background: var(--lp-card); border: 1px solid var(--lp-border); border-radius: 20px; padding: 2rem; position: relative; transition: all 0.3s; }
+.lp-price-card.featured { border-color: var(--lp-violet); box-shadow: 0 0 40px rgba(99,102,241,0.15); }
+.lp-price-card:hover { transform: translateY(-4px); }
+.lp-price-badge-top { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: var(--lp-violet); color: #fff; font-size: 0.65rem; font-weight: 800; padding: 0.25rem 0.8rem; border-radius: 20px; letter-spacing: 0.08em; white-space: nowrap; }
+.lp-price-tier { font-family: var(--font-mono); font-size: 0.72rem; font-weight: 700; letter-spacing: 0.12em; color: var(--lp-violet); margin-bottom: 0.5rem; }
+.lp-price-val { font-family: var(--font-head); font-size: 1.8rem; font-weight: 800; color: #fff; letter-spacing: -0.03em; margin-bottom: 0.5rem; }
+.lp-price-desc { font-size: 0.83rem; color: var(--lp-muted); margin-bottom: 1.5rem; line-height: 1.55; }
+.lp-price-list { list-style: none; display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1.8rem; }
+.lp-price-list li { font-size: 0.85rem; color: rgba(255,255,255,0.65); }
+.lp-price-list li.dim { color: var(--lp-subtle); }
+.lp-price-btn { width: 100%; padding: 0.8rem; border-radius: 10px; font-size: 0.92rem; font-weight: 700; cursor: pointer; font-family: var(--font); transition: all 0.25s; border: none; }
+.lp-price-btn.primary { background: var(--lp-violet); color: #fff; box-shadow: 0 0 20px rgba(99,102,241,0.3); }
+.lp-price-btn.primary:hover { background: var(--lp-violet2); }
+.lp-price-btn.outline { background: transparent; border: 1px solid var(--lp-border); color: rgba(255,255,255,0.6); }
+.lp-price-btn.outline:hover { border-color: rgba(255,255,255,0.2); color: #fff; }
 
-/* Buttons */
-.primary-btn { display: inline-block; padding: 0.85rem 2rem; background: #4F46E5; color: #fff; border: none; border-radius: 10px; font-size: 0.95rem; font-weight: 700; cursor: pointer; font-family: 'Inter', sans-serif; transition: all 0.25s; text-decoration: none; }
-.primary-btn:hover { background: #4338CA; transform: translateY(-2px); box-shadow: 0 8px 24px rgba(79,70,229,0.35); }
-.primary-btn.large { padding: 1rem 2.4rem; font-size: 1rem; }
-.cta-section .primary-btn { background: #fff; color: #4F46E5; }
-.cta-section .primary-btn:hover { background: #F0F4FF; box-shadow: 0 8px 24px rgba(255,255,255,0.2); }
-.secondary-btn { display: inline-block; padding: 0.85rem 2rem; background: transparent; color: rgba(255,255,255,0.85); border: 1.5px solid rgba(255,255,255,0.35); border-radius: 10px; font-size: 0.95rem; font-weight: 600; cursor: pointer; font-family: 'Inter', sans-serif; transition: all 0.25s; text-decoration: none; }
-.secondary-btn:hover { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.6); }
-.secondary-btn.large { padding: 1rem 2.4rem; font-size: 1rem; }
+/* ═══ DISCORD CTA ════════════════════════════════════════════════ */
+.lp-discord-cta { padding: 5rem 2rem; background: var(--lp-bg); text-align: center; border-top: 1px solid var(--lp-border); }
+.lp-discord-icon { font-size: 3rem; margin-bottom: 1rem; }
+.lp-discord-title { font-family: var(--font-head); font-size: 2.2rem; font-weight: 800; color: #fff; letter-spacing: -0.03em; margin-bottom: 0.7rem; }
+.lp-discord-sub { color: var(--lp-muted); font-size: 1rem; line-height: 1.7; margin-bottom: 2rem; max-width: 450px; margin-left: auto; margin-right: auto; }
 
 /* ═══ FOOTER ══════════════════════════════════════════════════════ */
-.site-footer { background: #0F1117; color: #9CA3AF; padding: 4rem 2rem 2rem; }
-.footer-inner { max-width: 1200px; margin: 0 auto 3rem; display: grid; grid-template-columns: 1fr 2fr; gap: 4rem; }
-.footer-logo { font-family: 'Space Grotesk', sans-serif; font-size: 1.2rem; font-weight: 800; color: #fff; margin-bottom: 0.5rem; }
-.footer-logo span { color: #6366F1; }
-.footer-tagline { font-size: 0.85rem; color: #4B5563; }
-.footer-links { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem; }
-.footer-col { display: flex; flex-direction: column; gap: 0.6rem; }
-.footer-col-title { font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: #6B7280; margin-bottom: 0.4rem; }
-.footer-col a { font-size: 0.85rem; color: #4B5563; text-decoration: none; transition: color 0.2s; }
-.footer-col a:hover { color: #9CA3AF; }
-.footer-bottom { max-width: 1200px; margin: 0 auto; padding-top: 2rem; border-top: 1px solid #1F2937; display: flex; flex-direction: column; gap: 0.5rem; }
-.footer-disclaimer { font-size: 0.75rem; color: #374151; line-height: 1.6; }
-.footer-copy { font-size: 0.78rem; color: #374151; }
+.lp-footer { background: #050505; border-top: 1px solid var(--lp-border); padding: 4rem 2rem 2rem; color: var(--lp-muted); }
+.lp-footer-inner { max-width: 1200px; margin: 0 auto 3rem; display: grid; grid-template-columns: 1fr 2fr; gap: 4rem; }
+.lp-footer-logo { font-family: var(--font-head); font-size: 1.2rem; font-weight: 800; color: #fff; margin-bottom: 0.4rem; }
+.lp-footer-logo span { color: var(--lp-violet); }
+.lp-footer-tag { font-size: 0.82rem; color: var(--lp-subtle); }
+.lp-footer-links { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem; }
+.lp-footer-col { display: flex; flex-direction: column; gap: 0.6rem; }
+.lp-footer-col-title { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: rgba(255,255,255,0.3); margin-bottom: 0.3rem; }
+.lp-footer-col a { font-size: 0.83rem; color: var(--lp-subtle); text-decoration: none; transition: color 0.2s; cursor: pointer; }
+.lp-footer-col a:hover { color: rgba(255,255,255,0.6); }
+.lp-footer-bottom { max-width: 1200px; margin: 0 auto; padding-top: 2rem; border-top: 1px solid var(--lp-border); font-size: 0.73rem; color: var(--lp-subtle); display: flex; flex-direction: column; gap: 0.4rem; }
 
-/* ═══ SCROLL REVEAL ══════════════════════════════════════════════ */
+/* ═══ RESPONSIVE ADDITIONS ═══════════════════════════════════════ */
+@media (max-width: 900px) {
+  .lp-sm-inner { grid-template-columns: 1fr; gap: 3rem; }
+  .lp-testi-grid { grid-template-columns: 1fr; }
+  .lp-pricing-grid { grid-template-columns: 1fr; }
+  .lp-footer-inner { grid-template-columns: 1fr; gap: 2rem; }
+  .lp-footer-links { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* SMART MONEY */
+.lp-smartmoney { padding: 6rem 2rem; background: var(--lp-bg); }
+.lp-sm-inner { display: grid; grid-template-columns: 1fr 1fr; gap: 5rem; align-items: center; }
+.lp-sm-desc { color: var(--lp-muted); font-size: 0.97rem; line-height: 1.75; margin-bottom: 2rem; }
+.lp-sm-stats { display: flex; gap: 2rem; }
+.lp-sm-stat-val { font-family: var(--font-head); font-size: 1.7rem; font-weight: 800; color: #fff; letter-spacing: -0.03em; }
+.lp-sm-stat-lbl { font-size: 0.72rem; color: var(--lp-muted); text-transform: uppercase; letter-spacing: 0.08em; margin-top: 0.2rem; }
+.lp-wallet-card { background: var(--lp-card); border: 1px solid var(--lp-border); border-radius: 16px; overflow: hidden; }
+.lp-wc-header { background: #0a0a0a; padding: 0.7rem 1rem; display: flex; align-items: center; gap: 0.5rem; border-bottom: 1px solid var(--lp-border); }
+.lp-wc-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--lp-green); animation: lp-pulse 1.5s infinite; }
+.lp-wc-title { font-family: var(--font-mono); font-size: 0.65rem; color: var(--lp-muted); letter-spacing: 0.06em; }
+.lp-wc-rows { padding: 0.5rem; display: flex; flex-direction: column; gap: 0.3rem; }
+.lp-wc-row { display: flex; align-items: center; gap: 0.8rem; padding: 0.5rem 0.6rem; border-radius: 8px; transition: background 0.2s; }
+.lp-wc-row.hit { background: rgba(99,102,241,0.06); border: 1px solid rgba(99,102,241,0.12); }
+.lp-wc-addr { font-family: var(--font-mono); font-size: 0.72rem; color: var(--lp-muted); flex: 1; }
+.lp-wc-tag { font-size: 0.62rem; font-weight: 700; padding: 0.18rem 0.5rem; border-radius: 5px; }
+.lp-wc-tag.axiom { background: rgba(99,102,241,0.15); color: #a5b4fc; border: 1px solid rgba(99,102,241,0.2); }
+.lp-wc-tag.normal { background: rgba(255,255,255,0.04); color: var(--lp-subtle); border: 1px solid var(--lp-border); }
+.lp-wc-pts { font-family: var(--font-mono); font-size: 0.72rem; font-weight: 700; color: var(--lp-green); min-width: 40px; text-align: right; }
+.lp-wc-pts.muted { color: var(--lp-subtle); }
+.lp-wc-footer { padding: 0.6rem 1rem; border-top: 1px solid var(--lp-border); font-family: var(--font-mono); font-size: 0.62rem; color: var(--lp-muted); }
+.lp-wc-footer .green { color: var(--lp-green); }
+
+/* SCORING */
+.lp-scoring { padding: 6rem 2rem; background: var(--lp-bg2); border-top: 1px solid var(--lp-border); }
+.lp-score-grid { display: flex; flex-direction: column; gap: 0.8rem; margin: 3rem auto 2rem; max-width: 700px; }
+.lp-score-item { display: flex; align-items: center; gap: 1rem; }
+.lp-score-bar { flex: 1; height: 6px; background: rgba(255,255,255,0.06); border-radius: 3px; overflow: hidden; }
+.lp-score-fill { height: 100%; border-radius: 3px; width: var(--w, 50%); }
+.lp-score-fill.violet { background: linear-gradient(90deg, var(--lp-violet), var(--lp-violet2)); }
+.lp-score-fill.green { background: linear-gradient(90deg, var(--lp-green2), var(--lp-green)); }
+.lp-score-fill.gold { background: linear-gradient(90deg, #d97706, var(--lp-gold)); }
+.lp-score-fill.blue { background: linear-gradient(90deg, #2563eb, var(--lp-blue)); }
+.lp-score-info { display: flex; justify-content: space-between; min-width: 240px; }
+.lp-score-name { font-size: 0.85rem; color: var(--lp-muted); }
+.lp-score-max { font-family: var(--font-mono); font-size: 0.8rem; color: #fff; font-weight: 700; }
+.lp-score-labels { display: flex; gap: 0.8rem; justify-content: center; flex-wrap: wrap; }
+.lp-slabel { font-size: 0.78rem; font-weight: 700; padding: 0.4rem 1rem; border-radius: 20px; border: 1px solid var(--lp-border); font-family: var(--font-mono); color: var(--lp-muted); }
+.lp-slabel.nuclear { color: #f87171; border-color: rgba(248,113,113,0.2); background: rgba(248,113,113,0.05); }
+.lp-slabel.diamond { color: #60a5fa; border-color: rgba(96,165,250,0.2); background: rgba(96,165,250,0.05); }
+.lp-slabel.runner { color: #a5b4fc; border-color: rgba(165,180,252,0.2); background: rgba(165,180,252,0.05); }
+.lp-slabel.watch { color: var(--lp-muted); }
+
+/* TESTIMONIALS */
+.lp-testimonials { padding: 6rem 2rem; background: var(--lp-bg); }
+.lp-testi-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-top: 3rem; }
+.lp-testi-card { background: var(--lp-card); border: 1px solid var(--lp-border); border-radius: 16px; padding: 1.8rem; transition: all 0.3s; }
+.lp-testi-card:hover { border-color: rgba(99,102,241,0.2); transform: translateY(-3px); }
+.lp-testi-stars { color: var(--lp-gold); font-size: 0.85rem; margin-bottom: 1rem; letter-spacing: 0.05em; }
+.lp-testi-text { color: rgba(255,255,255,0.65); font-size: 0.9rem; line-height: 1.7; margin-bottom: 1.2rem; font-style: italic; }
+.lp-testi-author { display: flex; align-items: center; justify-content: space-between; }
+.lp-testi-name { font-size: 0.82rem; font-weight: 600; color: rgba(255,255,255,0.5); font-family: var(--font-mono); }
+.lp-testi-badge { font-size: 0.65rem; font-weight: 700; padding: 0.18rem 0.5rem; border-radius: 5px; background: rgba(99,102,241,0.1); color: #a5b4fc; border: 1px solid rgba(99,102,241,0.2); }
+
+/* PRICING */
+.lp-pricing-preview { padding: 6rem 2rem; background: var(--lp-bg2); border-top: 1px solid var(--lp-border); }
+.lp-pricing-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-top: 3rem; }
+.lp-price-card { background: var(--lp-card); border: 1px solid var(--lp-border); border-radius: 20px; padding: 2rem; position: relative; transition: all 0.3s; }
+.lp-price-card.featured { border-color: var(--lp-violet); box-shadow: 0 0 40px rgba(99,102,241,0.15); }
+.lp-price-badge-top { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: var(--lp-violet); color: #fff; font-size: 0.65rem; font-weight: 800; padding: 0.25rem 0.8rem; border-radius: 20px; letter-spacing: 0.08em; white-space: nowrap; }
+.lp-price-tier { font-family: var(--font-mono); font-size: 0.72rem; font-weight: 700; letter-spacing: 0.12em; color: var(--lp-violet); margin-bottom: 0.5rem; }
+.lp-price-val { font-family: var(--font-head); font-size: 1.8rem; font-weight: 800; color: #fff; letter-spacing: -0.03em; margin-bottom: 0.5rem; }
+.lp-price-desc { font-size: 0.83rem; color: var(--lp-muted); margin-bottom: 1.5rem; line-height: 1.55; }
+.lp-price-list { list-style: none; display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1.8rem; }
+.lp-price-list li { font-size: 0.85rem; color: rgba(255,255,255,0.65); }
+.lp-price-list li.dim { color: var(--lp-subtle); }
+.lp-price-btn { width: 100%; padding: 0.8rem; border-radius: 10px; font-size: 0.92rem; font-weight: 700; cursor: pointer; font-family: var(--font); transition: all 0.25s; border: none; }
+.lp-price-btn.primary { background: var(--lp-violet); color: #fff; box-shadow: 0 0 20px rgba(99,102,241,0.3); }
+.lp-price-btn.primary:hover { background: var(--lp-violet2); box-shadow: 0 0 30px rgba(99,102,241,0.5); }
+.lp-price-btn.outline { background: transparent; border: 1px solid var(--lp-border); color: rgba(255,255,255,0.6); }
+.lp-price-btn.outline:hover { border-color: rgba(255,255,255,0.2); color: #fff; }
+
+/* DISCORD CTA */
+.lp-discord-cta { padding: 5rem 2rem; background: var(--lp-bg); text-align: center; border-top: 1px solid var(--lp-border); }
+.lp-discord-icon { font-size: 3rem; margin-bottom: 1rem; }
+.lp-discord-title { font-family: var(--font-head); font-size: 2.2rem; font-weight: 800; color: #fff; letter-spacing: -0.03em; margin-bottom: 0.7rem; }
+.lp-discord-sub { color: var(--lp-muted); font-size: 1rem; line-height: 1.7; margin-bottom: 2rem; max-width: 450px; margin-left: auto; margin-right: auto; }
+
+/* FOOTER */
+.lp-footer { background: #050505; border-top: 1px solid var(--lp-border); padding: 4rem 2rem 2rem; color: var(--lp-muted); }
+.lp-footer-inner { max-width: 1200px; margin: 0 auto 3rem; display: grid; grid-template-columns: 1fr 2fr; gap: 4rem; }
+.lp-footer-logo { font-family: var(--font-head); font-size: 1.2rem; font-weight: 800; color: #fff; margin-bottom: 0.4rem; }
+.lp-footer-logo span { color: var(--lp-violet); }
+.lp-footer-tag { font-size: 0.82rem; color: var(--lp-subtle); }
+.lp-footer-links { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem; }
+.lp-footer-col { display: flex; flex-direction: column; gap: 0.6rem; }
+.lp-footer-col-title { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: rgba(255,255,255,0.3); margin-bottom: 0.3rem; }
+.lp-footer-col a { font-size: 0.83rem; color: var(--lp-subtle); text-decoration: none; transition: color 0.2s; cursor: pointer; }
+.lp-footer-col a:hover { color: rgba(255,255,255,0.6); }
+.lp-footer-bottom { max-width: 1200px; margin: 0 auto; padding-top: 2rem; border-top: 1px solid var(--lp-border); font-size: 0.73rem; color: var(--lp-subtle); display: flex; flex-direction: column; gap: 0.4rem; }
+
+/* SCROLL REVEAL */
 .reveal { opacity: 0; transform: translateY(30px); transition: opacity 0.7s cubic-bezier(0.16,1,0.3,1), transform 0.7s cubic-bezier(0.16,1,0.3,1); }
 .reveal.visible { opacity: 1; transform: translateY(0); }
 .reveal-left{opacity:0;transform:translateX(-40px);transition:opacity .7s cubic-bezier(.16,1,.3,1),transform .7s cubic-bezier(.16,1,.3,1);}
@@ -255,9 +389,26 @@ nav.scrolled { box-shadow: 0 2px 20px rgba(0,0,0,0.08); }
 .reveal-delay-4{transition-delay:.4s;}
 
 /* ═══ TRANSITION VERS L'APP ══════════════════════════════════════ */
-.app-divider { background: linear-gradient(180deg, #fff 0%, #080808 100%); padding: 4rem 2rem; text-align: center; }
+.app-divider { background: linear-gradient(180deg, #080808 0%, #080808 100%); padding: 4rem 2rem; text-align: center; }
 .app-divider-title { font-family: 'Space Grotesk', sans-serif; font-size: 2rem; font-weight: 800; background: linear-gradient(135deg, #fff 30%, rgba(255,255,255,0.4)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: 0.7rem; }
 .app-divider-sub { color: rgba(255,255,255,0.35); font-size: 0.95rem; }
+
+/* ═══ RESPONSIVE ══════════════════════════════════════════════════ */
+@media (max-width: 900px) {
+  .lp-hero-title { font-size: 3rem; }
+  .lp-features-grid { grid-template-columns: 1fr; }
+  .lp-sm-inner { grid-template-columns: 1fr; gap: 3rem; }
+  .lp-testi-grid { grid-template-columns: 1fr; }
+  .lp-pricing-grid { grid-template-columns: 1fr; }
+  .lp-footer-inner { grid-template-columns: 1fr; gap: 2rem; }
+}
+@media (max-width: 600px) {
+  .lp-hero-title { font-size: 2.2rem; }
+  .lp-section-title { font-size: 1.8rem; }
+  .lp-hero-stats { gap: 0; }
+  .lp-hstat { padding: 0 1rem; }
+  .nav-links { display: none; }
+}
 
 /* ═══ DEMO / HERO LIVE (compat) ══════════════════════════════════ */
 .demo-section{padding:5rem 4rem;background:#fff;position:relative;z-index:1;}
@@ -297,29 +448,6 @@ nav.scrolled { box-shadow: 0 2px 20px rgba(0,0,0,0.08); }
 .demo-footer-stat span{color:#888;}
 .hero-live{border-radius:20px;overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,.18),0 0 0 1px rgba(0,0,0,.06);position:relative;}
 
-/* ═══ RESPONSIVE ══════════════════════════════════════════════════ */
-@media (max-width: 900px) {
-  .hero-container { grid-template-columns: 1fr; gap: 3rem; }
-  .hero-title { font-size: 2.5rem; }
-  .hero-visual { display: none; }
-  .steps-grid { flex-direction: column; }
-  .step-connector { transform: rotate(90deg); }
-  .edu-grid { grid-template-columns: 1fr 1fr; }
-  .antiscam-inner { grid-template-columns: 1fr; gap: 3rem; }
-  .mission-inner { grid-template-columns: 1fr; gap: 3rem; }
-  .footer-inner { grid-template-columns: 1fr; gap: 2rem; }
-  .footer-links { grid-template-columns: repeat(2, 1fr); }
-  .stats-strip-inner { gap: 0; }
-  .stat-block { padding: 0 1.5rem; }
-}
-@media (max-width: 600px) {
-  .hero-title { font-size: 2rem; }
-  .edu-grid { grid-template-columns: 1fr; }
-  .nav-links { display: none; }
-  .section-title { font-size: 1.8rem; }
-  .cta-title { font-size: 1.8rem; }
-  .mission-stats { grid-template-columns: 1fr 1fr; }
-}
 /* ═══ APP DARK SECTION OVERRIDES ═════════════════════════════════
    Les sections app (#scanner, #panelPaperBot, etc.) utilisent le dark theme.
    On redéfinit les variables dans le contexte de section#scanner pour
@@ -341,8 +469,6 @@ section#scanner, #panelPaperBot, #panelGems, section#rugsnip, .admin-panel {
   --text: #f2f2f2;
   --muted: #555555;
 }
-body { background: #080808; }
-#landing-wrap { background: #fff; }
 .scanner-section{padding:4rem;max-width:1400px;margin:0 auto;position:relative;z-index:1;}
 .scanner-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;flex-wrap:wrap;gap:1rem;}
 .scanner-title{font-family:var(--font-head);font-size:1.7rem;font-weight:700;}
@@ -1605,15 +1731,13 @@ nav{background:rgba(0,0,0,.96)!important;border-bottom:1px solid rgba(255,109,0,
     </div>
   </a>
   <div class="nav-links">
-    <a href="#hero">Accueil</a>
-    <a href="#how">Comment ça marche</a>
-    <a href="#education">Guides</a>
-    <a href="#antiscam">Anti-Scam</a>
-    <a href="#scanner">Scanner</a>
+    <a href="#features">Features</a>
+    <a href="#pricing-preview">Pricing</a>
+    <a href="#">Discord</a>
   </div>
   <button class="lang-switch" onclick="toggleLang()">🇫🇷 FR</button>
   <button class="nav-btn btn-outline" onclick="openCode()">Se connecter</button>
-  <button class="nav-btn btn-primary" onclick="document.getElementById('scanner').scrollIntoView({behavior:'smooth'})">Scanner →</button>
+  <button class="nav-btn btn-primary" onclick="openCode()">Accès VIP →</button>
   <button class="nav-btn btn-outline" onclick="openAdmin()" id="adminBtn">⚙ Admin</button>
   <button id="notifBtn" onclick="handleNotifBtn()" title="Activer les alertes calls" style="background:transparent;border:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.35);padding:.4rem .75rem;border-radius:8px;cursor:pointer;font-size:.85rem;transition:.2s;font-family:'Space Mono',monospace;">🔔</button>
   <div id="streakBadge" style="display:flex;align-items:center;gap:4px;background:linear-gradient(135deg,rgba(255,170,0,.15),rgba(255,107,53,.1));border:1px solid rgba(255,170,0,.25);border-radius:10px;padding:5px 12px;cursor:default;" title="Jours de connexion consécutifs">
@@ -1625,338 +1749,257 @@ nav{background:rgba(0,0,0,.96)!important;border-bottom:1px solid rgba(255,109,0,
 <div id="landing-wrap">
 
 <!-- ═══ HERO ═══════════════════════════════════════════════════ -->
-<section id="hero" class="hero-section">
-  <div class="hero-container">
-    <div class="hero-content">
-      <div class="hero-badge">
-        <span class="badge-dot"></span>
-        Scanner actif · Analyse en continu
+<section id="hero" class="lp-hero">
+  <div class="lp-hero-glow"></div>
+  <div class="lp-container">
+    <div class="lp-hero-eyebrow">
+      <span class="lp-pulse-dot"></span>
+      Scanner actif · <span id="hlvCycle">847</span> cycles · Solana
+    </div>
+    <h1 class="lp-hero-title">
+      Trouve le prochain<br>
+      <span class="lp-hero-grad">100x avant tout le monde.</span>
+    </h1>
+    <p class="lp-hero-sub">
+      Un algorithme qui tourne 24/7 — smart money Axiom, 15 filtres, scoring 150pts.<br>
+      Tu vois les tokens avant la masse. Tu décides en premier.
+    </p>
+    <div class="lp-hero-cta">
+      <button class="lp-btn-primary" onclick="openCode()">Accès immédiat →</button>
+      <button class="lp-btn-ghost" onclick="document.getElementById('scanner').scrollIntoView({behavior:'smooth'})">Voir le scanner live</button>
+    </div>
+    <div class="lp-hero-stats">
+      <div class="lp-hstat"><span class="lp-hstat-val green" id="heroStatWr">68%</span><span class="lp-hstat-lbl">Winrate</span></div>
+      <div class="lp-hstat-sep"></div>
+      <div class="lp-hstat"><span class="lp-hstat-val">95%</span><span class="lp-hstat-lbl">Rugs bloqués</span></div>
+      <div class="lp-hstat-sep"></div>
+      <div class="lp-hstat"><span class="lp-hstat-val violet">45s</span><span class="lp-hstat-lbl">Cycle scan</span></div>
+      <div class="lp-hstat-sep"></div>
+      <div class="lp-hstat"><span class="lp-hstat-val">150pts</span><span class="lp-hstat-lbl">Score max</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ FEATURES ════════════════════════════════════════════════ -->
+<section class="lp-features" id="features">
+  <div class="lp-container">
+    <div class="lp-section-label">Ce qu'on a construit</div>
+    <h2 class="lp-section-title">Tout ce dont tu as besoin<br>pour trader les memes.</h2>
+    <div class="lp-features-grid">
+      <div class="lp-feat-card accent-violet">
+        <div class="lp-feat-icon">⚡</div>
+        <div class="lp-feat-badge">CORE</div>
+        <h3 class="lp-feat-name">SmartScan™</h3>
+        <p class="lp-feat-desc">L'algo tourne toutes les 45s. 12 sources DexScreener + Helius en parallèle. Score 150pts sur chaque token. Tu reçois les calls avant tout le monde.</p>
+        <div class="lp-feat-pills"><span>150pts scoring</span><span>15 filtres</span><span>45s cycle</span></div>
       </div>
-      <h1 class="hero-title">Analyse les memecoins<br><span class="hero-highlight">avant d'investir</span></h1>
-      <p class="hero-subtitle">Un outil sérieux pour naviguer dans l'univers des memecoins Solana. Score de risque, filtres avancés et éducation — tout en un.</p>
-      <div class="hero-search">
-        <input type="text" class="hero-input" placeholder="Colle une adresse de token Solana..." id="heroSearchInput">
-        <button class="hero-cta-btn" onclick="document.getElementById('scanner').scrollIntoView({behavior:'smooth'})">Analyser →</button>
+      <div class="lp-feat-card accent-green">
+        <div class="lp-feat-icon">🛡️</div>
+        <div class="lp-feat-badge">PROTECTION</div>
+        <h3 class="lp-feat-name">Rug Snip™</h3>
+        <p class="lp-feat-desc">Détection des rugs en temps réel. Staircase patterns, sell pressure massive, pump & dump — alertes avant que ça crash. Score danger 0-12.</p>
+        <div class="lp-feat-pills"><span>Temps réel</span><span>Score danger</span><span>Pump.fun</span></div>
       </div>
-      <div class="hero-links">
-        <a href="#education" class="hero-link-secondary">Voir les guides ↓</a>
-        <a href="#scanner" class="hero-link-secondary">Scanner live ↓</a>
+      <div class="lp-feat-card accent-gold">
+        <div class="lp-feat-icon">🤖</div>
+        <div class="lp-feat-badge">SIMULATION</div>
+        <h3 class="lp-feat-name">Paper Bot</h3>
+        <p class="lp-feat-desc">Simule des trades automatiques sur chaque call. Capital fictif, ROI réel. Mesure la performance de l'algo sans risquer un seul SOL.</p>
+        <div class="lp-feat-pills"><span>Auto-trading</span><span>PnL tracker</span><span>Equity curve</span></div>
+      </div>
+      <div class="lp-feat-card accent-blue">
+        <div class="lp-feat-icon">👁️</div>
+        <div class="lp-feat-badge">INTELLIGENCE</div>
+        <h3 class="lp-feat-name">KOL Tracker</h3>
+        <p class="lp-feat-desc">Track les tweets des influenceurs Solana en temps réel. Quand un KOL mentionne un token, tu es le premier informé. Alpha pur.</p>
+        <div class="lp-feat-pills"><span>Mentions live</span><span>KOL scoring</span><span>Early alpha</span></div>
       </div>
     </div>
-    <div class="hero-visual">
-      <div class="hero-card-mock">
-        <div class="mock-header">
-          <div class="mock-dots">
-            <span></span><span></span><span></span>
-          </div>
-          <span class="mock-title">Analyse en cours...</span>
-          <span class="mock-live">● LIVE</span>
+  </div>
+</section>
+
+<!-- ═══ SMART MONEY ══════════════════════════════════════════════ -->
+<section class="lp-smartmoney">
+  <div class="lp-container">
+    <div class="lp-sm-inner">
+      <div class="lp-sm-left">
+        <div class="lp-section-label">Axiom Intelligence</div>
+        <h2 class="lp-section-title">Suis les wallets<br>qui font +10x.</h2>
+        <p class="lp-sm-desc">Notre base de données contient 1 064 wallets profitables identifiés sur Axiom. Quand l'un d'eux entre sur un token — le score monte automatiquement.</p>
+        <div class="lp-sm-stats">
+          <div class="lp-sm-stat"><div class="lp-sm-stat-val">1 064</div><div class="lp-sm-stat-lbl">Wallets trackés</div></div>
+          <div class="lp-sm-stat"><div class="lp-sm-stat-val">+20pts</div><div class="lp-sm-stat-lbl">Bonus score max</div></div>
+          <div class="lp-sm-stat"><div class="lp-sm-stat-val">10min</div><div class="lp-sm-stat-lbl">Cache live</div></div>
         </div>
-        <div class="mock-body">
-          <div class="mock-score-ring">
-            <svg viewBox="0 0 100 100" class="score-svg">
-              <circle cx="50" cy="50" r="40" fill="none" stroke="#EEF2FF" stroke-width="8"/>
-              <circle cx="50" cy="50" r="40" fill="none" stroke="#4F46E5" stroke-width="8" stroke-dasharray="188 251" stroke-linecap="round" transform="rotate(-90 50 50)"/>
-            </svg>
-            <div class="mock-score-val">75<span>/150</span></div>
+      </div>
+      <div class="lp-sm-right">
+        <div class="lp-wallet-card">
+          <div class="lp-wc-header">
+            <span class="lp-wc-dot"></span>
+            <span class="lp-wc-title">Axiom Wallets — Live Detection</span>
           </div>
-          <div class="mock-indicators">
-            <div class="mock-ind safe"><span class="ind-dot green"></span> Liquidité OK</div>
-            <div class="mock-ind safe"><span class="ind-dot green"></span> Holders sains</div>
-            <div class="mock-ind warn"><span class="ind-dot amber"></span> Âge &lt; 24h</div>
-            <div class="mock-ind safe"><span class="ind-dot green"></span> Pas de bundle</div>
+          <div class="lp-wc-rows">
+            <div class="lp-wc-row hit"><span class="lp-wc-addr">7xKp...mN3f</span><span class="lp-wc-tag axiom">AXIOM ⚡</span><span class="lp-wc-pts">+15pts</span></div>
+            <div class="lp-wc-row hit"><span class="lp-wc-addr">Bq9R...vL2k</span><span class="lp-wc-tag axiom">AXIOM ⚡</span><span class="lp-wc-pts">+15pts</span></div>
+            <div class="lp-wc-row"><span class="lp-wc-addr">3mNx...wP8s</span><span class="lp-wc-tag normal">HOLDER</span><span class="lp-wc-pts muted">—</span></div>
+            <div class="lp-wc-row"><span class="lp-wc-addr">Kp2L...eR5t</span><span class="lp-wc-tag normal">HOLDER</span><span class="lp-wc-pts muted">—</span></div>
+            <div class="lp-wc-row hit"><span class="lp-wc-addr">9nFv...qM1a</span><span class="lp-wc-tag axiom">AXIOM ⚡</span><span class="lp-wc-pts">+20pts</span></div>
           </div>
-        </div>
-        <div class="mock-footer">
-          <span class="mock-badge safe">✓ Passe les filtres</span>
-          <span class="mock-mcap">Mcap $420K</span>
+          <div class="lp-wc-footer">3 Axiom wallets détectés · Score: <span style="color:var(--lp-green)">+20pts bonus</span></div>
         </div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- ═══ STATS STRIP ════════════════════════════════════════════ -->
-<div class="stats-strip">
-  <div class="stats-strip-inner">
-    <div class="stat-block">
-      <div class="stat-val">95%</div>
-      <div class="stat-lbl">Rugs filtrés</div>
+<!-- ═══ SCORING ══════════════════════════════════════════════════ -->
+<section class="lp-scoring">
+  <div class="lp-container">
+    <div class="lp-section-label" style="text-align:center">Le moteur</div>
+    <h2 class="lp-section-title" style="text-align:center">150 points pour<br>ne rien laisser au hasard.</h2>
+    <div class="lp-score-grid">
+      <div class="lp-score-item"><div class="lp-score-bar"><div class="lp-score-fill violet" style="width:13%"></div></div><div class="lp-score-info"><span class="lp-score-name">Axiom Smart Money</span><span class="lp-score-max">+20pts</span></div></div>
+      <div class="lp-score-item"><div class="lp-score-bar"><div class="lp-score-fill violet" style="width:17%"></div></div><div class="lp-score-info"><span class="lp-score-name">Présence Sociale</span><span class="lp-score-max">+26pts</span></div></div>
+      <div class="lp-score-item"><div class="lp-score-bar"><div class="lp-score-fill green" style="width:13%"></div></div><div class="lp-score-info"><span class="lp-score-name">Distribution Holders</span><span class="lp-score-max">+20pts</span></div></div>
+      <div class="lp-score-item"><div class="lp-score-bar"><div class="lp-score-fill green" style="width:10%"></div></div><div class="lp-score-info"><span class="lp-score-name">Platform &amp; Mcap</span><span class="lp-score-max">+15pts</span></div></div>
+      <div class="lp-score-item"><div class="lp-score-bar"><div class="lp-score-fill gold" style="width:7%"></div></div><div class="lp-score-info"><span class="lp-score-name">Âge du token</span><span class="lp-score-max">+10pts</span></div></div>
+      <div class="lp-score-item"><div class="lp-score-bar"><div class="lp-score-fill gold" style="width:30%"></div></div><div class="lp-score-info"><span class="lp-score-name">Pattern de prix</span><span class="lp-score-max">+45pts</span></div></div>
+      <div class="lp-score-item"><div class="lp-score-bar"><div class="lp-score-fill blue" style="width:10%"></div></div><div class="lp-score-info"><span class="lp-score-name">Platform Score</span><span class="lp-score-max">+15pts</span></div></div>
     </div>
-    <div class="stat-divider"></div>
-    <div class="stat-block">
-      <div class="stat-val">15</div>
-      <div class="stat-lbl">Hard filters</div>
-    </div>
-    <div class="stat-divider"></div>
-    <div class="stat-block">
-      <div class="stat-val" id="heroStatWr">68%</div>
-      <div class="stat-lbl">Winrate</div>
-    </div>
-    <div class="stat-divider"></div>
-    <div class="stat-block">
-      <div class="stat-val">45s</div>
-      <div class="stat-lbl">Cycle de scan</div>
-    </div>
-    <div class="stat-divider"></div>
-    <div class="stat-block">
-      <div class="stat-val">150pts</div>
-      <div class="stat-lbl">Score max</div>
+    <div class="lp-score-labels">
+      <div class="lp-slabel nuclear">☢️ NUCLEAR ≥130</div>
+      <div class="lp-slabel diamond">💎 DIAMOND ≥110</div>
+      <div class="lp-slabel runner">🚀 RUNNER ≥95</div>
+      <div class="lp-slabel watch">👁 WATCHLIST ≥80</div>
     </div>
   </div>
-</div>
+</section>
 
-<!-- ═══ COMMENT CA MARCHE ══════════════════════════════════════ -->
-<section class="how-section" id="how">
-  <div class="section-container">
-    <div class="section-header">
-      <div class="section-tag">Comment ça marche</div>
-      <h2 class="section-title">Simple, rapide, fiable.</h2>
-      <p class="section-sub">Trois étapes pour analyser un token et prendre une décision informée.</p>
-    </div>
-    <div class="steps-grid">
-      <div class="step-card">
-        <div class="step-num">01</div>
-        <div class="step-icon">🔍</div>
-        <h3 class="step-title">Entre un token</h3>
-        <p class="step-desc">Colle l'adresse du contrat ou le nom du token. Le scanner récupère automatiquement toutes les données on-chain.</p>
+<!-- ═══ TESTIMONIALS ════════════════════════════════════════════ -->
+<section class="lp-testimonials">
+  <div class="lp-container">
+    <div class="lp-section-label" style="text-align:center">Ils utilisent le scanner</div>
+    <h2 class="lp-section-title" style="text-align:center">Des résultats concrets.</h2>
+    <div class="lp-testi-grid">
+      <div class="lp-testi-card">
+        <div class="lp-testi-stars">★★★★★</div>
+        <p class="lp-testi-text">"Le Rug Snip m'a sauvé 2 fois cette semaine. L'algo voit les staircase patterns avant que ça dump. Indispensable."</p>
+        <div class="lp-testi-author"><span class="lp-testi-name">@SolTrader_fr</span><span class="lp-testi-badge">Alpha ✓</span></div>
       </div>
-      <div class="step-connector">→</div>
-      <div class="step-card">
-        <div class="step-num">02</div>
-        <div class="step-icon">⚙️</div>
-        <h3 class="step-title">Analyse automatique</h3>
-        <p class="step-desc">15 filtres s'exécutent en parallèle : liquidité, holders, smart money, contrat, âge, distribution...</p>
+      <div class="lp-testi-card">
+        <div class="lp-testi-stars">★★★★★</div>
+        <p class="lp-testi-text">"Premier outil qui détecte vraiment le smart money. Quand je vois 3 wallets Axiom sur un token, j'entre direct. +6.2x sur le dernier call."</p>
+        <div class="lp-testi-author"><span class="lp-testi-name">@MemePump_sol</span><span class="lp-testi-badge">Dubai ✓</span></div>
       </div>
-      <div class="step-connector">→</div>
-      <div class="step-card">
-        <div class="step-num">03</div>
-        <div class="step-icon">📊</div>
-        <h3 class="step-title">Score de risque</h3>
-        <p class="step-desc">Tu reçois un score sur 150 points avec le détail de chaque critère. Vert = safe, Rouge = risqué.</p>
+      <div class="lp-testi-card">
+        <div class="lp-testi-stars">★★★★★</div>
+        <p class="lp-testi-text">"Le Paper Bot m'a permis de valider la stratégie avant de mettre du vrai argent. 68% winrate confirmé sur 3 semaines de simulation."</p>
+        <div class="lp-testi-author"><span class="lp-testi-name">@CryptoAnalyst9</span><span class="lp-testi-badge">Alpha ✓</span></div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- ═══ EDUCATION ══════════════════════════════════════════════ -->
-<section class="education-section" id="education">
-  <div class="section-container">
-    <div class="section-header">
-      <div class="section-tag">Guides &amp; Formation</div>
-      <h2 class="section-title">Comprendre avant d'investir.</h2>
-      <p class="section-sub">Des ressources claires pour éviter les pièges et développer une vraie méthode d'analyse.</p>
-    </div>
-    <div class="edu-tabs">
-      <button class="edu-tab active">Tous</button>
-      <button class="edu-tab">Débutant</button>
-      <button class="edu-tab">Analyse</button>
-      <button class="edu-tab">Sécurité</button>
-    </div>
-    <div class="edu-grid">
-      <div class="edu-card">
-        <div class="edu-card-tag beginner">Débutant</div>
-        <h3 class="edu-card-title">C'est quoi un memecoin ?</h3>
-        <p class="edu-card-desc">Comprendre la nature spéculative des memecoins, leur cycle de vie et pourquoi la majorité échouent.</p>
-        <div class="edu-card-footer">
-          <span class="edu-read-time">⏱ 5 min</span>
-          <span class="edu-arrow">→</span>
-        </div>
+<!-- ═══ PRICING ══════════════════════════════════════════════════ -->
+<section class="lp-pricing-preview" id="pricing-preview">
+  <div class="lp-container">
+    <div class="lp-section-label" style="text-align:center">Accès</div>
+    <h2 class="lp-section-title" style="text-align:center">Choisis ton niveau.</h2>
+    <div class="lp-pricing-grid">
+      <div class="lp-price-card">
+        <div class="lp-price-tier">BASE</div>
+        <div class="lp-price-val">Gratuit</div>
+        <div class="lp-price-desc">Accès limité au scanner — parfait pour découvrir.</div>
+        <ul class="lp-price-list">
+          <li>✓ Scanner live (lecture seule)</li>
+          <li>✓ Score visible</li>
+          <li class="dim">✗ Alertes calls</li>
+          <li class="dim">✗ Rug Snip</li>
+          <li class="dim">✗ Paper Bot</li>
+        </ul>
+        <button class="lp-price-btn outline" onclick="openCode()">Commencer</button>
       </div>
-      <div class="edu-card">
-        <div class="edu-card-tag analysis">Analyse</div>
-        <h3 class="edu-card-title">Lire la liquidité d'un token</h3>
-        <p class="edu-card-desc">Pourquoi la liquidité est le premier indicateur à vérifier et comment éviter les pièges classiques.</p>
-        <div class="edu-card-footer">
-          <span class="edu-read-time">⏱ 7 min</span>
-          <span class="edu-arrow">→</span>
-        </div>
+      <div class="lp-price-card featured">
+        <div class="lp-price-badge-top">POPULAIRE</div>
+        <div class="lp-price-tier">ALPHA</div>
+        <div class="lp-price-val">Accès code</div>
+        <div class="lp-price-desc">L'accès complet à tous les outils du scanner.</div>
+        <ul class="lp-price-list">
+          <li>✓ Scanner live complet</li>
+          <li>✓ Alertes calls push</li>
+          <li>✓ Rug Snip™</li>
+          <li>✓ Paper Bot</li>
+          <li>✓ Gems tracker</li>
+        </ul>
+        <button class="lp-price-btn primary" onclick="openCode()">Obtenir l'accès →</button>
       </div>
-      <div class="edu-card">
-        <div class="edu-card-tag security">Sécurité</div>
-        <h3 class="edu-card-title">Reconnaître un rug pull</h3>
-        <p class="edu-card-desc">Les 8 signaux d'alarme qui précèdent un rug et comment les détecter avant qu'il soit trop tard.</p>
-        <div class="edu-card-footer">
-          <span class="edu-read-time">⏱ 8 min</span>
-          <span class="edu-arrow">→</span>
-        </div>
-      </div>
-      <div class="edu-card">
-        <div class="edu-card-tag analysis">Analyse</div>
-        <h3 class="edu-card-title">Analyser les holders</h3>
-        <p class="edu-card-desc">Distribution saine vs concentration dangereuse : comment lire le wallet chart pour évaluer le risque.</p>
-        <div class="edu-card-footer">
-          <span class="edu-read-time">⏱ 6 min</span>
-          <span class="edu-arrow">→</span>
-        </div>
-      </div>
-      <div class="edu-card">
-        <div class="edu-card-tag beginner">Débutant</div>
-        <h3 class="edu-card-title">Le timing d'entrée</h3>
-        <p class="edu-card-desc">Early vs late : comprendre les phases d'un memecoin et identifier la fenêtre d'opportunité optimale.</p>
-        <div class="edu-card-footer">
-          <span class="edu-read-time">⏱ 5 min</span>
-          <span class="edu-arrow">→</span>
-        </div>
-      </div>
-      <div class="edu-card">
-        <div class="edu-card-tag security">Sécurité</div>
-        <h3 class="edu-card-title">Smart money : qui suivre ?</h3>
-        <p class="edu-card-desc">Comment identifier les wallets profitables sur Solana et ce que leurs positions révèlent sur un token.</p>
-        <div class="edu-card-footer">
-          <span class="edu-read-time">⏱ 9 min</span>
-          <span class="edu-arrow">→</span>
-        </div>
+      <div class="lp-price-card">
+        <div class="lp-price-tier">DUBAI 🏆</div>
+        <div class="lp-price-val">VIP</div>
+        <div class="lp-price-desc">Accès prioritaire + KOL Tracker + support direct.</div>
+        <ul class="lp-price-list">
+          <li>✓ Tout Alpha inclus</li>
+          <li>✓ KOL Tracker live</li>
+          <li>✓ Accès prioritaire calls</li>
+          <li>✓ Support direct</li>
+          <li>✓ Features bêta exclusives</li>
+        </ul>
+        <button class="lp-price-btn outline" onclick="openCode()">Contacter →</button>
       </div>
     </div>
   </div>
 </section>
 
-<!-- ═══ ANTI-SCAM ══════════════════════════════════════════════ -->
-<section class="antiscam-section" id="antiscam">
-  <div class="section-container">
-    <div class="antiscam-inner">
-      <div class="antiscam-left">
-        <div class="section-tag">Checklist Anti-Scam</div>
-        <h2 class="section-title">Les 6 vérifications<br>indispensables.</h2>
-        <p class="section-sub">Avant d'investir dans n'importe quel memecoin, passe ces 6 points en revue. Le scanner les vérifie automatiquement.</p>
-        <button class="primary-btn" onclick="document.getElementById('scanner').scrollIntoView({behavior:'smooth'})">Lancer le scanner →</button>
-      </div>
-      <div class="antiscam-right">
-        <div class="check-item">
-          <div class="check-icon safe">✓</div>
-          <div class="check-content">
-            <div class="check-title">Liquidité verrouillée</div>
-            <div class="check-desc">La liquidité doit être locked ou burned. Si elle est retirable, le rug est possible à tout moment.</div>
-          </div>
-        </div>
-        <div class="check-item">
-          <div class="check-icon safe">✓</div>
-          <div class="check-content">
-            <div class="check-title">Contrat vérifié</div>
-            <div class="check-desc">Le mint authority doit être revoked. Sans ça, le créateur peut émettre des tokens à l'infini.</div>
-          </div>
-        </div>
-        <div class="check-item">
-          <div class="check-icon safe">✓</div>
-          <div class="check-content">
-            <div class="check-title">Distribution saine</div>
-            <div class="check-desc">Aucun wallet ne doit détenir plus de 10% du supply. La concentration = manipulation = dump.</div>
-          </div>
-        </div>
-        <div class="check-item">
-          <div class="check-icon warn">!</div>
-          <div class="check-content">
-            <div class="check-title">Volume organique</div>
-            <div class="check-desc">Un volume artificiel créé par quelques wallets est un signe de wash trading. Regarde la source des trades.</div>
-          </div>
-        </div>
-        <div class="check-item">
-          <div class="check-icon safe">✓</div>
-          <div class="check-content">
-            <div class="check-title">Pas de bundle au launch</div>
-            <div class="check-desc">Un bundle = des wallets coordonnés qui snipe au lancement pour dumper ensuite. Red flag absolu.</div>
-          </div>
-        </div>
-        <div class="check-item">
-          <div class="check-icon safe">✓</div>
-          <div class="check-content">
-            <div class="check-title">Présence sociale réelle</div>
-            <div class="check-desc">Twitter, Telegram actifs avec une vraie communauté — pas des bots. Vérifie l'engagement réel.</div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ═══ MISSION ════════════════════════════════════════════════ -->
-<section class="mission-section">
-  <div class="section-container">
-    <div class="mission-inner">
-      <div class="mission-content">
-        <div class="section-tag">Notre mission</div>
-        <h2 class="section-title">Un outil, pas une promesse.</h2>
-        <p class="mission-text">MemeScanner est né d'un constat simple : trop d'investisseurs particuliers perdent de l'argent sur des tokens qu'une analyse basique aurait éliminés.</p>
-        <p class="mission-text">Notre algorithme analyse chaque token sur 150 points — liquidité, smart money, holders, contrat, pattern de prix — pour te donner une image claire du risque <strong>avant</strong> d'investir.</p>
-        <p class="mission-text">Nous ne promettons pas de gains. Nous promettons de la clarté.</p>
-      </div>
-      <div class="mission-stats">
-        <div class="mission-stat-card">
-          <div class="mission-stat-val">150</div>
-          <div class="mission-stat-lbl">Points d'analyse par token</div>
-        </div>
-        <div class="mission-stat-card">
-          <div class="mission-stat-val">15</div>
-          <div class="mission-stat-lbl">Filtres de sécurité actifs</div>
-        </div>
-        <div class="mission-stat-card">
-          <div class="mission-stat-val">45s</div>
-          <div class="mission-stat-lbl">Temps de scan complet</div>
-        </div>
-        <div class="mission-stat-card">
-          <div class="mission-stat-val">24/7</div>
-          <div class="mission-stat-lbl">Surveillance continue</div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ═══ CTA FINAL ══════════════════════════════════════════════ -->
-<section class="cta-section">
-  <div class="section-container">
-    <div class="cta-inner">
-      <h2 class="cta-title">Prêt à analyser ton prochain token ?</h2>
-      <p class="cta-sub">Accède au scanner, consulte les guides et prends des décisions basées sur des données — pas sur de la hype.</p>
-      <div class="cta-buttons">
-        <button class="primary-btn large" onclick="document.getElementById('scanner').scrollIntoView({behavior:'smooth'})">Lancer le scanner →</button>
-        <a href="#education" class="secondary-btn large">Voir les guides</a>
-      </div>
-    </div>
+<!-- ═══ DISCORD CTA ══════════════════════════════════════════════ -->
+<section class="lp-discord-cta">
+  <div class="lp-container">
+    <div class="lp-discord-icon">💬</div>
+    <h2 class="lp-discord-title">Rejoins la communauté.</h2>
+    <p class="lp-discord-sub">Calls en temps réel, partage de setups, entraide — tout se passe sur le Discord.</p>
+    <a href="#" class="lp-btn-primary">Rejoindre le Discord →</a>
   </div>
 </section>
 
 <!-- ═══ FOOTER ══════════════════════════════════════════════════ -->
-<footer class="site-footer">
-  <div class="footer-inner">
-    <div class="footer-brand">
-      <div class="footer-logo">Memecoin<span>Scanner</span></div>
-      <p class="footer-tagline">Analyse. Comprends. Décide.</p>
+<footer class="lp-footer">
+  <div class="lp-footer-inner">
+    <div class="lp-footer-brand">
+      <div class="lp-footer-logo">Memecoin<span>Scanner</span></div>
+      <p class="lp-footer-tag">Smart. Fast. Alpha.</p>
     </div>
-    <div class="footer-links">
-      <div class="footer-col">
-        <div class="footer-col-title">Outil</div>
-        <a href="#scanner">Scanner live</a>
-        <a href="#how">Comment ça marche</a>
-        <a href="#antiscam">Checklist anti-scam</a>
+    <div class="lp-footer-links">
+      <div class="lp-footer-col">
+        <div class="lp-footer-col-title">Produit</div>
+        <a href="#features">SmartScan™</a>
+        <a href="#features">Rug Snip™</a>
+        <a href="#features">Paper Bot</a>
+        <a href="#features">KOL Tracker</a>
       </div>
-      <div class="footer-col">
-        <div class="footer-col-title">Formation</div>
-        <a href="#education">Guides débutant</a>
-        <a href="#education">Analyse de tokens</a>
-        <a href="#education">Sécurité</a>
+      <div class="lp-footer-col">
+        <div class="lp-footer-col-title">Accès</div>
+        <a href="#" onclick="openCode()">Se connecter</a>
+        <a href="#pricing-preview">Plans</a>
+        <a href="#">Discord</a>
       </div>
-      <div class="footer-col">
-        <div class="footer-col-title">Légal</div>
+      <div class="lp-footer-col">
+        <div class="lp-footer-col-title">Légal</div>
         <a href="#">Mentions légales</a>
         <a href="#">Pas de conseil financier</a>
       </div>
     </div>
   </div>
-  <div class="footer-bottom">
-    <p class="footer-disclaimer">⚠️ MemeScanner est un outil d'analyse informatif. Il ne constitue pas un conseil financier. Investir dans les cryptomonnaies comporte des risques importants de perte en capital.</p>
-    <p class="footer-copy">© 2025 MemeScanner · Tous droits réservés</p>
+  <div class="lp-footer-bottom">
+    <p>⚠️ MemeScanner est un outil d'analyse. Il ne constitue pas un conseil financier. Les performances passées ne garantissent pas les résultats futurs.</p>
+    <p>© 2025 MemeScanner · Tous droits réservés</p>
   </div>
 </footer>
 
-<!-- Hidden stub elements for JS compatibility -->
+<!-- Hidden stubs for JS compatibility -->
 <span id="h-title" style="display:none"></span>
 <span id="h-sub" style="display:none"></span>
 <span id="heroStatRug" style="display:none">95%</span>
 <span id="heroStatScan" style="display:none">45s</span>
 <span id="hlvCycleN" style="display:none">0</span>
-<span id="hlvCycle" style="display:none">0</span>
 <span id="hlvTime" style="display:none"></span>
 <span id="hlvTokens" style="display:none"></span>
 <span id="hlvFooter" style="display:none"></span>
