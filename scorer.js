@@ -79,7 +79,7 @@ function calculatePatternScore(p) {
   return Math.max(0, Math.min(45, Math.round(score)));
 }
 
-export function scoreTokenV2(p, walletData = { count: 0, wallets: [], clustered: false }) {
+export function scoreTokenV2(p, walletData = { count: 0, byGroup: { KOL: 0, 'gros trader': 0, DEV: 0, farmer: 0 }, wallets: [], clustered: false }) {
   const ageMs  = Date.now() - (p.pairCreatedAt || 0);
   const ageH   = ageMs / 3600000;
   const ageMin = ageMs / 60000;
@@ -106,16 +106,30 @@ export function scoreTokenV2(p, walletData = { count: 0, wallets: [], clustered:
 
   let score = 0;
 
-  // TRADERS AXIOM
-  let traderScore = 0;
-  const axiomCount = walletData.count || 0;
-  if      (axiomCount >= 6) traderScore = 30;
-  else if (axiomCount >= 5) traderScore = 20;
-  else if (axiomCount === 4) traderScore = 15;
-  else if (axiomCount === 3) traderScore = 10;
-  else if (axiomCount === 2) traderScore =  8;
-  else if (axiomCount === 1) traderScore =  5;
+  // ── WALLET TRACKER (groupes) ──────────────────────────────────
+  // farmer=-2, gros trader=+3, KOL=+4, DEV=+5 | cap 35
+  const byGroup     = walletData.byGroup || {};
+  const kolCount    = byGroup['KOL']          || 0;
+  const traderCount = byGroup['gros trader']  || 0;
+  const devCount    = byGroup['DEV']          || 0;
+  const farmerCount = byGroup['farmer']       || 0;
+  const axiomCount  = walletData.count        || 0;
+  let traderScore = farmerCount * (-2) + traderCount * 3 + kolCount * 4 + devCount * 5;
+  traderScore = Math.min(35, traderScore);
   score += traderScore;
+
+  // HARD FILTER — 1 KOL + 1 gros trader obligatoires
+  if (kolCount < 1 || traderCount < 1) {
+    return {
+      score: 0, _minFail: 'wallet',
+      symbol: (p.baseToken?.symbol || 'UNKNOWN').toUpperCase().slice(0, 12),
+      addr: p.baseToken?.address || '', mcap, liq,
+      socials: hasSocials, rugRisk: 'HIGH', walletData,
+      pairUrl: p.url || '',
+      raw: p,
+      debug: { traderScore, kolCount, traderCount, devCount, farmerCount, byGroup, axiomCount, buyRatio: buyR, c1h, m5, ageH }
+    };
+  }
 
   // SOCIAL
   const hasX   = sec?.hasTwitter  || false;
@@ -156,7 +170,7 @@ export function scoreTokenV2(p, walletData = { count: 0, wallets: [], clustered:
     else if (top10pct <= 50) holderScore +=  2;
   }
   const totalTxns = (p.txns?.h1?.buys || 0) + (p.txns?.h1?.sells || 0) + (p.txns?.h6?.buys || 0) + (p.txns?.h6?.sells || 0);
-  const hasProTraders = axiomCount >= 3 || (totalTxns >= 100 && top10pct <= 60) || (totalTxns >= 50 && top10pct <= 30);
+  const hasProTraders = (kolCount >= 1 || traderCount >= 2) || (totalTxns >= 100 && top10pct <= 60) || (totalTxns >= 50 && top10pct <= 30);
   if (hasProTraders) holderScore += 10;
   score += holderScore;
 
@@ -197,7 +211,7 @@ export function scoreTokenV2(p, walletData = { count: 0, wallets: [], clustered:
   if (!hasSocials)      rugPts++;
   if (liq < 6000)       rugPts += 2;
   if (ageH < 0.5)       rugPts++;
-  if (axiomCount >= 1)  rugPts = Math.max(0, rugPts - 2);
+  if (kolCount >= 1 || traderCount >= 1) rugPts = Math.max(0, rugPts - 2);
   const rugRisk = rugPts >= 5 ? 'HIGH' : rugPts >= 3 ? 'MEDIUM' : 'LOW';
 
   const emoji = EMOJIS[Math.floor(Math.random() * EMOJIS.length)];
@@ -213,11 +227,10 @@ export function scoreTokenV2(p, walletData = { count: 0, wallets: [], clustered:
     debug: {
       traderScore, socialScore, holderScore, platformScore,
       mcapScore, ageScore, patternScore,
-      walletCount: axiomCount, clustered: walletData.clustered,
+      walletCount: axiomCount, axiomCount, clustered: walletData.clustered,
+      kolCount, traderCount, devCount, farmerCount, byGroup,
       buyRatio: buyR, volAccel, c1h, m5, c6h, m1, ageH,
-      top10pct, axiomCount,
-      volMcapH1: vol1/mcap,
-      sellBuyRatio: sells1/(buys1||1)
+      top10pct, volMcapH1: vol1/mcap, sellBuyRatio: sells1/(buys1||1)
     }
   };
 }

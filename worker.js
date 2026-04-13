@@ -1,5 +1,5 @@
 import fetch from 'node-fetch';
-import { AXIOM_WALLETS } from './axiomWallets.js';
+import { WALLET_TRACKER, AXIOM_WALLETS } from './axiomWallets.js';
 import { scoreTokenV2, hardFilterV2 } from './scorer.js';
 import { saveCall, getCallByAddr } from './firebase.js';
 import { checkSmartFilters } from './aiEngine.js';
@@ -8,7 +8,7 @@ const HELIUS_KEY  = process.env.HELIUS_KEY;
 const HELIUS_RPC  = `https://mainnet.helius-rpc.com/?api-key=${HELIUS_KEY}`;
 const HELIUS_API  = `https://api.helius.xyz`;
 
-const AXIOM_SET   = new Set(AXIOM_WALLETS);
+const AXIOM_SET   = new Set(AXIOM_WALLETS); // flat Set pour lookups rapides
 
 // ── Discord Webhook ──
 const DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1493295269423354057/jXnzyFDjDDD1ZdlZ0bbRwgFDSDOr1pQyU9kryqAIOefvJQBacg1SkA_d_toKVuFRcPNn";
@@ -401,21 +401,36 @@ async function checkAxiomWallets(tokenAddr, pairAddr = null, deep = false) {
     ]);
     if (pairAddr) KNOWN_PROGRAMS.add(pairAddr);
 
-    const ownersList    = [...allOwners].filter(o => !KNOWN_PROGRAMS.has(o));
+    const ownersList     = [...allOwners].filter(o => !KNOWN_PROGRAMS.has(o));
     const matchingOwners = ownersList.filter(o => AXIOM_SET.has(o));
-    const newCount      = matchingOwners.length;
-    const newWallets    = matchingOwners.slice(0, 4).map(w => w.slice(0, 8) + '…');
+    const newCount       = matchingOwners.length;
+    const newWallets     = matchingOwners.slice(0, 4).map(w => w.slice(0, 8) + '…');
 
-    const prev      = swCache.get(tokenAddr)?.result;
-    const prevCount = prev?.count || 0;
-    const count     = Math.max(newCount, prevCount);
-    const wallets   = count > newCount && prev?.wallets?.length ? prev.wallets : newWallets;
+    // byGroup : compter par catégorie
+    const newByGroup = { KOL: 0, 'gros trader': 0, DEV: 0, farmer: 0 };
+    for (const addr of matchingOwners) {
+      const grp = WALLET_TRACKER.get(addr);
+      if (grp && newByGroup[grp] !== undefined) newByGroup[grp]++;
+    }
 
-    const result = { count, wallets, clustered: count >= 2 };
+    const prev       = swCache.get(tokenAddr)?.result;
+    const prevCount  = prev?.count || 0;
+    const prevByGroup = prev?.byGroup || { KOL: 0, 'gros trader': 0, DEV: 0, farmer: 0 };
+    const count      = Math.max(newCount, prevCount);
+    const wallets    = count > newCount && prev?.wallets?.length ? prev.wallets : newWallets;
+    // byGroup : prendre le max par groupe (sticky)
+    const byGroup = {
+      KOL:          Math.max(newByGroup.KOL,          prevByGroup.KOL || 0),
+      'gros trader':Math.max(newByGroup['gros trader'],prevByGroup['gros trader'] || 0),
+      DEV:          Math.max(newByGroup.DEV,           prevByGroup.DEV || 0),
+      farmer:       Math.max(newByGroup.farmer,        prevByGroup.farmer || 0),
+    };
+
+    const result = { count, wallets, clustered: count >= 2, byGroup };
     swCache.set(tokenAddr, { ts: Date.now(), result, maxEver: count });
     return result;
   } catch (e) {
-    return { count: 0, wallets: [], clustered: false };
+    return { count: 0, wallets: [], clustered: false, byGroup: { KOL: 0, 'gros trader': 0, DEV: 0, farmer: 0 } };
   }
 }
 
