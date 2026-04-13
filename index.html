@@ -3764,118 +3764,72 @@ function hardFilterV2(p){
 // ============================================================
 // SCORER v2
 // ============================================================
-// ── calculatePatternScore v3 ───────────────────────────────────────────────
-// Scoring Pattern strict : favorise vrais staircase (higher highs + higher lows,
-function calculatePatternScore(p) {
+// ── calculateActivityScore ─────────────────────────────────────────────────
+// Remplace Pattern. Basé UNIQUEMENT sur les counts de transactions (pas les %).
+// Signal clé : combien de vrais acheteurs actifs en ce moment ?
+// Anti-bundle : peu de txns mais gros volume = quelques wallets coordonnés
+function calculateActivityScore(p) {
   let score = 0;
-  const c5m = p.priceChange?.m5 || 0;
-  const c1h = p.priceChange?.h1 || 0;
-  const c6h = p.priceChange?.h6 || 0;
-  const m1  = p.priceChange?.m1 || 0;
   const buysM5  = p.txns?.m5?.buys  || 0;
   const sellsM5 = p.txns?.m5?.sells || 0;
-
   const buysH1  = p.txns?.h1?.buys  || 0;
   const sellsH1 = p.txns?.h1?.sells || 0;
-  const mcap    = p.marketCap || p.fdv || 1;
-  const volH1   = p.volume?.h1 || 0;
-  const liq     = p.liquidity?.usd || 0;
-  const totalTxH1 = buysH1 + sellsH1 || 1;
-  const buyRatioM5 = buysM5 / ((buysM5 + sellsM5) || 1);
-  const volMcapH1  = volH1 / mcap;
-  const avgTxSize  = volH1 / totalTxH1;
-  const ageMinP    = (Date.now() - (p.pairCreatedAt || 0)) / 60000; // déclaré ici pour tout le scope
-
-  // 0. GRADUATION RAPIDE — bonding curve remplie vite = demande explosive (signal #1 Satoshi)
-  // Détecté via : token jeune (<30min) + h6 massif (tout le pump = les premières minutes)
-  // + volume énorme = acheteurs qui se battent pour rentrer
-  const volMcapH6 = (p.volume?.h6 || 0) / mcap;
   const buysH6  = p.txns?.h6?.buys  || 0;
   const sellsH6 = p.txns?.h6?.sells || 0;
-  const buyRatioH6 = buysH6 / ((buysH6 + sellsH6) || 1);
-  if (ageMinP < 30 && c6h > 200 && volMcapH6 > 0.5 && buyRatioH6 >= 0.60) score += 18; // graduation rapide confirmée
-  else if (ageMinP < 60 && c6h > 100 && buyRatioH6 >= 0.58)                score += 10; // fort depuis le début
+  const volM5   = p.volume?.m5 || 0;
+  const volH1   = p.volume?.h1 || 0;
+  const totalM5 = buysM5 + sellsM5 || 1;
+  const totalH1 = buysH1 + sellsH1 || 1;
+  const totalH6 = buysH6 + sellsH6 || 1;
+  const buyRatioM5 = buysM5 / totalM5;
+  const buyRatioH1 = buysH1 / totalH1;
+  const buyRatioH6 = buysH6 / totalH6;
+  const avgTxSizeM5 = totalM5 > 1 ? volM5 / totalM5 : 0;
+  const avgTxSizeH1 = totalH1 > 1 ? volH1 / totalH1 : 0;
+  const ageMin = (Date.now() - (p.pairCreatedAt || 0)) / 60000;
 
-  // 1. Montée douce / Staircase : c1h fort mais c5m modéré = croissance régulière
-  if (c1h > 35 && c5m > 0 && c5m < 20 && c1h > c5m * 3) score += 15;
-  // 2. Correction saine (pas trop violente)
-  if (c1h >= -20 && c1h <= -5) score += 10;
-  // 3. Gros pump avec structure (multi-pumps)
-  if (c1h > 35 && c6h > 55) score += 10;
-  if (c6h > 75) score += 5;
-  // 4. Consolidation propre (stabilisation après pump)
-  if (Math.abs(c5m) < 7 && c1h > 22) score += 8;
-  // 5. Pas de dump violent
-  if (c5m > -25 && m1 > -16) score += 5;
-  // 6. Volume organique (anti-bundle) — 2 paliers
-  if      (buysM5 > sellsM5 * 3.0)  score += 12;  // ultra clean : quasi 0 sells
-  else if (buysM5 > sellsM5 * 1.55) score +=  7;  // organique standard
-  // 7. Buy ratio m5 élevé (bon: >0.55, mauvais: <0.50)
-  if (buyRatioM5 >= 0.58) score += 5;
-  else if (buyRatioM5 < 0.45) score -= 5;
-  // 8. Vol/Mcap ratio (bon: 1-6, mauvais: >10 = manipulation)
-  if (volMcapH1 >= 1 && volMcapH1 <= 7) score += 5;
-  else if (volMcapH1 > 12) score -= 8;
-  // 9. Taille moyenne des tx (bon: >$60 smart money, mauvais: <$50 bots)
-  if (avgTxSize >= 80) score += 5;
-  else if (avgTxSize < 40 && totalTxH1 > 100) score -= 5;
-  // 10. Liquidité > 0 = migré (signal fort)
-  if (liq > 5000) score += 5;
-  // 11. Multi-timeframe momentum : tous les TF positifs = pompe organique en cours
-  if (m1 > 0 && c5m > 0 && c1h > 5)                    score += 8;   // 3 TF verts = élan réel
-  if (c5m > 3 && c1h > 15 && buyRatioM5 >= 0.55)        score += 10;  // momentum propre + acheteurs majoritaires
-  // 12. Buy ratio h6 élevé = acheteurs constants depuis le début (signal Chiikawa 74%)
-  if (buyRatioH6 >= 0.65)      score += 8;   // acheteurs très majoritaires sur 6h
-  else if (buyRatioH6 >= 0.58) score += 4;   // légère majorité acheteuse sur 6h
-  // 13. Volume h6/mcap fort = activité intense et soutenue depuis launch
-  if (volMcapH6 >= 2 && buyRatioH6 >= 0.55) score += 7; // beaucoup de volume ET acheteurs = runner
+  // ── DÉTECTION BUNDLE (rejet immédiat) ────────────────────────────────────
+  // Bundle = peu de transactions MAIS volume énorme = quelques wallets qui se coordonnent
+  // Avgr tx size très élevé sur M5 = une ou deux baleines, pas des vrais acheteurs
+  if (totalM5 <= 3  && volM5 > 5000)   return 0; // quasi 0 txns mais gros vol = bundle
+  if (avgTxSizeM5 > 5000 && buysM5 <= 5) return 0; // tx moyennes énormes = coordinated
+  if (buysM5 === 0 && ageMin > 5)      return 0; // aucun achat depuis 5min = mort
 
-  // === BONUS EARLY TOKEN (<5 min) — pas assez d'historique pour les patterns classiques ===
-  if (ageMinP < 5) {
-    // Token très frais : juger sur les signaux immédiats
-    if (buysM5 >= 8 && buyRatioM5 >= 0.6) score += 12;        // beaucoup d'achats rapides + ratio sain
-    else if (buysM5 >= 5 && buyRatioM5 >= 0.55) score += 8;   // activité correcte
-    else if (buysM5 >= 3) score += 4;                           // un peu d'activité
+  // ── 1. ACTIVITÉ M5 (max 18pts) — ce qui se passe EN CE MOMENT ────────────
+  if      (buysM5 >= 25) score += 18;
+  else if (buysM5 >= 15) score += 14;
+  else if (buysM5 >= 8)  score += 10;
+  else if (buysM5 >= 4)  score +=  6;
+  else if (buysM5 >= 2)  score +=  3;
+  else                    score -=  5; // 0-1 buy en 5min = pas d'intérêt
 
-    if (c5m > 5 && c5m < 50) score += 8;                       // montée douce (pas spike)
-    if (sellsM5 <= 1 && buysM5 >= 3) score += 5;               // quasi 0 sells = organique
-  } else if (ageMinP < 10) {
-    // Token frais (5-10 min) : mix signaux courts + début h1
-    if (buysM5 >= 5 && buyRatioM5 >= 0.58) score += 8;
-    if (c5m > 0 && c5m < 30 && buysM5 > sellsM5) score += 5;  // montée propre récente
-  } else if (ageMinP > 20) {
-    // Token vieux sans élan récent = entrée tardive risquée
-    if (c5m <= 0 && c1h < 10)  score -= 8;   // stagnation sur un token de 20min+
-    if (ageMinP > 40 && c5m <= 0) score -= 5; // encore plus vieux et plat = danger
-  }
+  // ── 2. BUY RATIO M5 (max 10pts) ──────────────────────────────────────────
+  if      (buyRatioM5 >= 0.75) score += 10;
+  else if (buyRatioM5 >= 0.65) score +=  7;
+  else if (buyRatioM5 >= 0.55) score +=  4;
+  else if (buyRatioM5 < 0.40)  score -=  8; // majorité sells = fuite active
 
-  // === PÉNALITÉS ANTI-RUG / FAUX PUMP ===
-  if (c1h > 90 && c5m < -28) score -= 18;
-  if (c6h > 140 && c1h < 20) score -= 15;
-  if (sellsM5 > buysM5 * 1.7 && c1h > 30) score -= 12;
-  if (c1h > 60 && c5m < -20) score -= 10;
-  if (c5m < -35) score -= 8;
-  // Réversion M1 — pump M5 déjà retourné : on est dans le dump, pas le pump
-  // Signal : c5m fort (pompe récente) MAIS m1 déjà négatif (les SS ont commencé)
-  if (c5m > 15 && m1 < -5)  score -= 20;  // dump rapide en cours = sniper exit
-  if (c5m > 8  && m1 < -10) score -= 15;  // retournement brutal même sur pump modéré
-  // Spike sans acheteurs : grosse hausse M5 mais vente dominante = fake pump
-  if (c5m > 30 && sellsM5 > buysM5 * 1.3) score -= 18;
+  // ── 3. CONSISTANCE H1 (max 8pts) ─────────────────────────────────────────
+  if      (buysH1 >= 60 && buyRatioH1 >= 0.60) score += 8;
+  else if (buysH1 >= 30 && buyRatioH1 >= 0.55) score += 5;
+  else if (buysH1 >= 15)                         score += 2;
+  else if (buysH1 < 5 && ageMin > 15)            score -= 5; // token mort
 
-  // === PATTERN 1 : GROSSE BOUGIE INITIALE (bundle launch spike) ===
-  // Token jeune avec spike massif = achat bundle au launch, chart bizarre après
-  if (ageMinP < 10 && c5m > 80) score -= 20;          // spike >80% en 5min sur token <10min
-  if (ageMinP < 10 && c1h > 150) score -= 18;          // pump >150% sur token très jeune
-  if (c1h > 120 && c5m < -15) score -= 15;              // pump massif puis dump = bougie initiale retombée
-  if (ageMinP < 5 && m1 > 25) score -= 12;              // m1 >25% sur token <5min = spike artificiel
+  // ── 4. QUALITÉ DES TX M5 (max 4pts) — anti-bot / anti-bundle ─────────────
+  // Taille moyenne idéale : $30-$500 = retail organiques
+  // < $10 = bots spam     > $2000 = bundle / baleine
+  if      (avgTxSizeM5 >= 30  && avgTxSizeM5 <= 500)  score += 4;
+  else if (avgTxSizeM5 > 500  && avgTxSizeM5 <= 2000)  score += 1;
+  else if (avgTxSizeM5 > 2000 || avgTxSizeM5 < 5)      score -= 6;
 
-  // === PATTERN 2 : PUMP-DUMP CYCLES (manipulation) ===
-  // Grosse montée grosse descente répétée = vol/mcap élevé, sells~buys, c6h haut mais c1h bas
-  const sellBuyRatio = sellsH1 / (buysH1 || 1);
-  if (volMcapH1 > 8 && sellBuyRatio > 0.8 && sellBuyRatio < 1.3) score -= 18;  // volume énorme, sells≈buys = pump-dump en boucle
-  if (c6h > 80 && c1h < 15 && volMcapH1 > 5) score -= 15;   // monté haut sur 6h mais retombé = cycles
-  if (c6h > 60 && c1h < 0) score -= 12;                       // c6h positif mais c1h négatif = pattern dump
-  if (sellsH1 > buysH1 * 1.3 && c1h > 40) score -= 10;       // beaucoup de sells malgré pump = distribution
+  // ── 5. PRESSION ACHETEUSE H6 (max 4pts) ──────────────────────────────────
+  if      (buyRatioH6 >= 0.65) score += 4;
+  else if (buyRatioH6 >= 0.55) score += 2;
+
+  // ── PÉNALITÉS ACTIVITÉ ─────────────────────────────────────────────────────
+  if (sellsM5 > buysM5 * 2)    score -= 10; // 2x plus de sells que buys en M5
+  if (buyRatioH1 < 0.35)        score -= 8;  // H1 dominé par les vendeurs
+  if (totalH1 < 10 && ageMin > 20) score -= 8; // quasi mort depuis 20min
 
   return Math.max(0, Math.min(40, Math.round(score)));
 }
@@ -4016,8 +3970,8 @@ function scoreTokenV2(p,walletData={count:0,byGroup:{KOL:0,'gros trader':0,DEV:0
   else if (ageMin >  5  && ageMin <= 10)  ageScore =  3;
   score += ageScore;
 
-  // ── 📈 PATTERN (via calculatePatternScore) ────────────────────────────────
-  const patternScore = calculatePatternScore(p);
+  // ── 📈 ACTIVITÉ (via calculateActivityScore) ──────────────────────────────
+  const patternScore = calculateActivityScore(p); // alias conservé pour compat debug
   score += patternScore;
 
   // ── 🐦 KOL TWITTER MENTION ───────────────────────────────────────────────
@@ -4050,7 +4004,7 @@ function scoreTokenV2(p,walletData={count:0,byGroup:{KOL:0,'gros trader':0,DEV:0
   // ── MINIMUMS OBLIGATOIRES ─────────────────────────────────────────────────
   const _mkFail = (reason) => ({ score: 0, _minFail: reason, symbol: (p.baseToken?.symbol||'UNKNOWN').toUpperCase().slice(0,12), addr: p.baseToken?.address||'', mcap, liq, socials: hasSocials, rugRisk: 'HIGH', walletData, pairUrl: p.url||'', raw: p, debug: { traderScore, socialScore, holderScore, platformScore, mcapScore, ageScore, patternScore, washPenalty, liqQualScore, axiomCount, kolCount, traderCount, devCount, farmerCount, byGroup, buyRatio: buyR, volAccel, c1h, m5, c6h, m1, ageH, top10pct, volMcapH1: vol1/mcap, sellBuyRatio: sells1/(buys1||1) } });
   if (kolCount < 1 || traderCount < 1) return _mkFail('wallet'); // 1 KOL + 1 gros trader obligatoires
-  if (patternScore < 12) return _mkFail('chart');       // chart signal réel requis
+  if (patternScore < 8) return _mkFail('activity');     // activité minimale requise
   if (holderScore < 3)   return _mkFail('distrib');
   if (buyR < 0.40)       return _mkFail('sell_pressure'); // +60% sells en h1 = dump actif
 
@@ -5687,7 +5641,7 @@ function toggleDebugMode(){debugModeOn=!debugModeOn;const btn=document.getElemen
 function showDebug(idx){
   const t=lastScored[idx];if(!t)return;
   document.getElementById('debugOverlay').classList.add('open');
-  const cats=[{label:'TRACKER',val:t.debug.traderScore,max:35},{label:'SOCIAL',val:t.debug.socialScore,max:25},{label:'HOLDERS',val:t.debug.holderScore,max:25},{label:'TOKEN',val:t.debug.platformScore,max:10},{label:'MCAP',val:t.debug.mcapScore,max:15},{label:'AGE',val:t.debug.ageScore,max:10},{label:'PATTERN',val:t.debug.patternScore,max:40}];
+  const cats=[{label:'TRACKER',val:t.debug.traderScore,max:35},{label:'SOCIAL',val:t.debug.socialScore,max:25},{label:'HOLDERS',val:t.debug.holderScore,max:25},{label:'TOKEN',val:t.debug.platformScore,max:10},{label:'MCAP',val:t.debug.mcapScore,max:15},{label:'AGE',val:t.debug.ageScore,max:10},{label:'ACTIVITÉ',val:t.debug.patternScore,max:40}];
   const bars=cats.map(c=>{const pct=Math.max(0,Math.min(100,(Math.max(0,c.val)/c.max)*100));const color=c.val<0?'var(--red)':c.val>c.max*.7?'var(--green)':'#ffaa00';return`<div class="debug-bar-row"><div class="debug-bar-label">${c.label}</div><div class="debug-bar-track"><div class="debug-bar-fill" style="width:${pct}%;background:${color}"></div></div><div class="debug-bar-val">${c.val>0?'+':''}${c.val}</div></div>`;}).join('');
   const scoreColor=t.score>=110?'var(--gold)':t.score>=80?'var(--green)':t.score>=55?'var(--blue)':'var(--red)';
   const d=t.debug;
@@ -6450,7 +6404,7 @@ async function debugCA(){
       {name:'🪙 Token', val:platformScore,max:10},
       {name:'⭐ Mcap',     val:mcapScore,    max:15},
       {name:'⏱ Age',       val:ageScore,     max:10},
-      {name:'📈 Pattern',  val:patternScore, max:40},
+      {name:'📈 Activité', val:patternScore, max:40},
     ];
 
     const bars=cats.map(c=>{
@@ -7041,7 +6995,7 @@ async function renderTokenTable(tokens){
       {lbl:'H',val:d.holderScore||0,max:25},
       {lbl:'P',val:d.platformScore||0,max:15},
       {lbl:'A',val:d.ageScore||0,max:20},
-      {lbl:'PAT',val:d.patternScore||0,max:45},
+      {lbl:'ACT',val:d.patternScore||0,max:40},
     ].map(({lbl,val,max})=>{
       const pct=max>0?val/max:0;
       const col=pct>=0.7?'#00ff88':pct>=0.35?'#ffcc44':'rgba(255,255,255,.35)';
