@@ -210,22 +210,27 @@ nav.scrolled { box-shadow: 0 2px 20px rgba(0,0,0,0.4); }
 
 /* ═══ SCORING ════════════════════════════════════════════════════ */
 .lp-scoring { padding: 6rem 2rem; background: var(--lp-bg2); border-top: 1px solid var(--lp-border); }
-.lp-score-grid { display: flex; flex-direction: column; gap: 0.8rem; margin: 3rem auto 2rem; max-width: 700px; }
-.lp-score-item { display: flex; align-items: center; gap: 1rem; }
-.lp-score-bar { flex: 1; height: 6px; background: rgba(255,255,255,0.06); border-radius: 3px; overflow: hidden; }
-.lp-score-fill { height: 100%; border-radius: 3px; }
-.lp-score-fill.violet { background: linear-gradient(90deg, var(--lp-violet), var(--lp-violet2)); }
-.lp-score-fill.green { background: linear-gradient(90deg, var(--lp-green2), var(--lp-green)); }
-.lp-score-fill.gold { background: linear-gradient(90deg, #d97706, var(--lp-gold)); }
-.lp-score-fill.blue { background: linear-gradient(90deg, #2563eb, var(--lp-blue)); }
-.lp-score-info { display: flex; justify-content: space-between; min-width: 240px; }
-.lp-score-name { font-size: 0.85rem; color: var(--lp-muted); }
-.lp-score-max { font-family: var(--font-mono); font-size: 0.8rem; color: #fff; font-weight: 700; }
-.lp-score-labels { display: flex; gap: 0.8rem; justify-content: center; flex-wrap: wrap; margin-top: 1rem; }
-.lp-slabel { font-size: 0.78rem; font-weight: 700; padding: 0.4rem 1rem; border-radius: 20px; border: 1px solid var(--lp-border); font-family: var(--font-mono); color: var(--lp-muted); }
-.lp-slabel.nuclear { color: #f87171; border-color: rgba(248,113,113,0.2); background: rgba(248,113,113,0.05); }
-.lp-slabel.diamond { color: #60a5fa; border-color: rgba(96,165,250,0.2); background: rgba(96,165,250,0.05); }
-.lp-slabel.runner { color: #a5b4fc; border-color: rgba(165,180,252,0.2); background: rgba(165,180,252,0.05); }
+.lp-score-cats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-top: 3rem; }
+.lp-score-cat { background: var(--lp-card); border: 1px solid var(--lp-border); border-radius: 14px; padding: 1.4rem 1rem; text-align: center; transition: all 0.25s; }
+.lp-score-cat:hover { border-color: rgba(99,102,241,0.3); transform: translateY(-3px); }
+.lp-score-cat-icon { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; margin: 0 auto 0.8rem; }
+.lp-score-cat-name { font-size: 0.85rem; font-weight: 600; color: rgba(255,255,255,0.75); }
+
+/* ═══ PRICING ADDITIONS ══════════════════════════════════════════ */
+.lp-price-tagline { font-size: 0.78rem; color: var(--lp-muted); margin-bottom: 1rem; font-style: italic; }
+.lp-price-period { font-size: 1rem; font-weight: 400; color: var(--lp-muted); }
+.lp-price-base { background: #fff; }
+.lp-price-base .lp-price-tier { color: #374151; }
+.lp-price-base .lp-price-val { color: #111; }
+.lp-price-base .lp-price-tagline { color: #16a34a; font-style: normal; font-weight: 600; }
+.lp-price-base .lp-price-list li { color: #374151; }
+.lp-price-base .lp-price-list li.dim { color: #9ca3af; }
+.lp-price-dubai { background: linear-gradient(135deg, #1a1a1a 0%, #111 100%); border-color: rgba(245,158,11,0.3); }
+.lp-price-dubai .lp-price-tier { color: #f59e0b; }
+.lp-price-dubai .lp-price-val { color: #f59e0b; }
+.dubai-badge { background: #f59e0b !important; color: #000 !important; }
+.lp-price-btn.dubai { background: #f59e0b; color: #000; font-weight: 800; letter-spacing: 0.04em; }
+.lp-price-btn.dubai:hover { background: #d97706; transform: translateY(-2px); }
 
 /* ═══ TESTIMONIALS ═══════════════════════════════════════════════ */
 .lp-testimonials { padding: 6rem 2rem; background: var(--lp-bg); border-top: 1px solid var(--lp-border); }
@@ -1856,46 +1861,16 @@ nav{background:rgba(0,0,0,.96)!important;border-bottom:1px solid rgba(255,109,0,
 <section class="lp-scoring">
   <div class="lp-container">
     <div class="lp-section-label" style="text-align:center">Le moteur</div>
-    <h2 class="lp-section-title" style="text-align:center">150 points pour<br>ne rien laisser au hasard.</h2>
-    <div class="lp-score-grid">
-      <div class="lp-score-item"><div class="lp-score-bar"><div class="lp-score-fill violet" style="width:13%"></div></div><div class="lp-score-info"><span class="lp-score-name">Axiom Smart Money</span><span class="lp-score-max">+20pts</span></div></div>
-      <div class="lp-score-item"><div class="lp-score-bar"><div class="lp-score-fill violet" style="width:17%"></div></div><div class="lp-score-info"><span class="lp-score-name">Présence Sociale</span><span class="lp-score-max">+26pts</span></div></div>
-      <div class="lp-score-item"><div class="lp-score-bar"><div class="lp-score-fill green" style="width:13%"></div></div><div class="lp-score-info"><span class="lp-score-name">Distribution Holders</span><span class="lp-score-max">+20pts</span></div></div>
-      <div class="lp-score-item"><div class="lp-score-bar"><div class="lp-score-fill green" style="width:10%"></div></div><div class="lp-score-info"><span class="lp-score-name">Platform &amp; Mcap</span><span class="lp-score-max">+15pts</span></div></div>
-      <div class="lp-score-item"><div class="lp-score-bar"><div class="lp-score-fill gold" style="width:7%"></div></div><div class="lp-score-info"><span class="lp-score-name">Âge du token</span><span class="lp-score-max">+10pts</span></div></div>
-      <div class="lp-score-item"><div class="lp-score-bar"><div class="lp-score-fill gold" style="width:30%"></div></div><div class="lp-score-info"><span class="lp-score-name">Pattern de prix</span><span class="lp-score-max">+45pts</span></div></div>
-      <div class="lp-score-item"><div class="lp-score-bar"><div class="lp-score-fill blue" style="width:10%"></div></div><div class="lp-score-info"><span class="lp-score-name">Platform Score</span><span class="lp-score-max">+15pts</span></div></div>
-    </div>
-    <div class="lp-score-labels">
-      <div class="lp-slabel nuclear">☢️ NUCLEAR ≥130</div>
-      <div class="lp-slabel diamond">💎 DIAMOND ≥110</div>
-      <div class="lp-slabel runner">🚀 RUNNER ≥95</div>
-      <div class="lp-slabel watch">👁 WATCHLIST ≥80</div>
-    </div>
-  </div>
-</section>
-
-<!-- ═══ TESTIMONIALS ════════════════════════════════════════════ -->
-<section class="lp-testimonials">
-  <div class="lp-container">
-    <div class="lp-section-label" style="text-align:center">Ils utilisent le scanner</div>
-    <h2 class="lp-section-title" style="text-align:center">Des résultats concrets.</h2>
-    <div class="lp-testi-grid">
-      <div class="lp-testi-card">
-        <div class="lp-testi-stars">★★★★★</div>
-        <p class="lp-testi-text">"Le Rug Snip m'a sauvé 2 fois cette semaine. L'algo voit les staircase patterns avant que ça dump. Indispensable."</p>
-        <div class="lp-testi-author"><span class="lp-testi-name">@SolTrader_fr</span><span class="lp-testi-badge">Alpha ✓</span></div>
-      </div>
-      <div class="lp-testi-card">
-        <div class="lp-testi-stars">★★★★★</div>
-        <p class="lp-testi-text">"Premier outil qui détecte vraiment le smart money. Quand je vois 3 wallets Axiom sur un token, j'entre direct. +6.2x sur le dernier call."</p>
-        <div class="lp-testi-author"><span class="lp-testi-name">@MemePump_sol</span><span class="lp-testi-badge">Dubai ✓</span></div>
-      </div>
-      <div class="lp-testi-card">
-        <div class="lp-testi-stars">★★★★★</div>
-        <p class="lp-testi-text">"Le Paper Bot m'a permis de valider la stratégie avant de mettre du vrai argent. 68% winrate confirmé sur 3 semaines de simulation."</p>
-        <div class="lp-testi-author"><span class="lp-testi-name">@CryptoAnalyst9</span><span class="lp-testi-badge">Alpha ✓</span></div>
-      </div>
+    <h2 class="lp-section-title" style="text-align:center">Un algorithme de scoring qui<br>ne laisse rien au hasard.</h2>
+    <div class="lp-score-cats">
+      <div class="lp-score-cat"><div class="lp-score-cat-icon" style="background:rgba(99,102,241,0.15);color:#a5b4fc">👛</div><div class="lp-score-cat-name">Wallet Analysis</div></div>
+      <div class="lp-score-cat"><div class="lp-score-cat-icon" style="background:rgba(0,255,136,0.1);color:#00ff88">📣</div><div class="lp-score-cat-name">Social</div></div>
+      <div class="lp-score-cat"><div class="lp-score-cat-icon" style="background:rgba(0,255,136,0.1);color:#00ff88">👥</div><div class="lp-score-cat-name">Holders</div></div>
+      <div class="lp-score-cat"><div class="lp-score-cat-icon" style="background:rgba(245,158,11,0.12);color:#f59e0b">📊</div><div class="lp-score-cat-name">Platform &amp; Mcap</div></div>
+      <div class="lp-score-cat"><div class="lp-score-cat-icon" style="background:rgba(245,158,11,0.12);color:#f59e0b">⏱</div><div class="lp-score-cat-name">Âge</div></div>
+      <div class="lp-score-cat"><div class="lp-score-cat-icon" style="background:rgba(139,92,246,0.15);color:#c4b5fd">🤖</div><div class="lp-score-cat-name">IA Analysis</div></div>
+      <div class="lp-score-cat"><div class="lp-score-cat-icon" style="background:rgba(59,130,246,0.12);color:#60a5fa">🔷</div><div class="lp-score-cat-name">Platform Score</div></div>
+      <div class="lp-score-cat"><div class="lp-score-cat-icon" style="background:rgba(239,68,68,0.1);color:#f87171">🎯</div><div class="lp-score-cat-name">KOL Analysis</div></div>
     </div>
   </div>
 </section>
@@ -1904,59 +1879,53 @@ nav{background:rgba(0,0,0,.96)!important;border-bottom:1px solid rgba(255,109,0,
 <section class="lp-pricing-preview" id="pricing-preview">
   <div class="lp-container">
     <div class="lp-section-label" style="text-align:center">Accès</div>
-    <h2 class="lp-section-title" style="text-align:center">Choisis ton niveau.</h2>
+    <h2 class="lp-section-title" style="text-align:center">Choisis ton niveau.<br><span style="font-size:1.2rem;font-weight:500;color:var(--lp-muted)">Plus tu print, plus ça vaut.</span></h2>
     <div class="lp-pricing-grid">
-      <div class="lp-price-card">
-        <div class="lp-price-tier">BASE</div>
-        <div class="lp-price-val">Gratuit</div>
-        <div class="lp-price-desc">Accès limité au scanner — parfait pour découvrir.</div>
+      <div class="lp-price-card lp-price-base">
+        <div class="lp-price-tier">BASE 🌿</div>
+        <div class="lp-price-tagline">pour commencer à print</div>
+        <div class="lp-price-val">$19<span class="lp-price-period">/mois</span></div>
         <ul class="lp-price-list">
-          <li>✓ Scanner live (lecture seule)</li>
-          <li>✓ Score visible</li>
-          <li class="dim">✗ Alertes calls</li>
-          <li class="dim">✗ Rug Snip</li>
-          <li class="dim">✗ Paper Bot</li>
+          <li>✓ Algo Tracker (top 5)</li>
+          <li>✓ Scoring BUY/AVOID</li>
+          <li>✓ Refresh 60s</li>
+          <li class="dim">✗ Rug Sniping</li>
+          <li class="dim">✗ Dev Token Tracker</li>
+          <li class="dim">✗ Wallet &amp; Whales</li>
         </ul>
         <button class="lp-price-btn outline" onclick="openCode()">Commencer</button>
       </div>
       <div class="lp-price-card featured">
-        <div class="lp-price-badge-top">POPULAIRE</div>
-        <div class="lp-price-tier">ALPHA</div>
-        <div class="lp-price-val">Accès code</div>
-        <div class="lp-price-desc">L'accès complet à tous les outils du scanner.</div>
+        <div class="lp-price-badge-top">⭐ POPULAIRE</div>
+        <div class="lp-price-tier">ALPHA ⚡</div>
+        <div class="lp-price-tagline">tu vois ce que les autres voient pas</div>
+        <div class="lp-price-val">$49<span class="lp-price-period">/mois</span></div>
         <ul class="lp-price-list">
-          <li>✓ Scanner live complet</li>
-          <li>✓ Alertes calls push</li>
-          <li>✓ Rug Snip™</li>
-          <li>✓ Paper Bot</li>
-          <li>✓ Gems tracker</li>
+          <li>✓ Algo Tracker illimité</li>
+          <li>✓ Scoring complet + debug</li>
+          <li>✓ Refresh 30s</li>
+          <li>✓ 🛡️ Rug Sniping</li>
+          <li>✓ 👥 Dev Token Tracker</li>
+          <li class="dim">✗ Wallet &amp; Whales</li>
         </ul>
-        <button class="lp-price-btn primary" onclick="openCode()">Obtenir l'accès →</button>
+        <button class="lp-price-btn primary" onclick="openCode()">Prendre ALPHA</button>
       </div>
-      <div class="lp-price-card">
-        <div class="lp-price-tier">DUBAI 🏆</div>
-        <div class="lp-price-val">VIP</div>
-        <div class="lp-price-desc">Accès prioritaire + KOL Tracker + support direct.</div>
+      <div class="lp-price-card lp-price-dubai">
+        <div class="lp-price-badge-top dubai-badge">🚀 FULL SEND</div>
+        <div class="lp-price-tier">DUBAI MODE AE</div>
+        <div class="lp-price-tagline">full send, no limits, ngmi les autres</div>
+        <div class="lp-price-val">$99<span class="lp-price-period">/mois</span></div>
         <ul class="lp-price-list">
-          <li>✓ Tout Alpha inclus</li>
-          <li>✓ KOL Tracker live</li>
-          <li>✓ Accès prioritaire calls</li>
-          <li>✓ Support direct</li>
-          <li>✓ Features bêta exclusives</li>
+          <li>✓ Tout ALPHA inclus</li>
+          <li>✓ 🐋 Wallet &amp; Whales</li>
+          <li>✓ KOL Tracker complet</li>
+          <li>✓ Alertes prioritaires</li>
+          <li>✓ Refresh 15s</li>
+          <li>✓ Support Discord VIP</li>
         </ul>
-        <button class="lp-price-btn outline" onclick="openCode()">Contacter →</button>
+        <button class="lp-price-btn dubai" onclick="openCode()">DUBAI MODE 🚀</button>
       </div>
     </div>
-  </div>
-</section>
-
-<!-- ═══ DISCORD CTA ══════════════════════════════════════════════ -->
-<section class="lp-discord-cta">
-  <div class="lp-container">
-    <div class="lp-discord-icon">💬</div>
-    <h2 class="lp-discord-title">Rejoins la communauté.</h2>
-    <p class="lp-discord-sub">Calls en temps réel, partage de setups, entraide — tout se passe sur le Discord.</p>
-    <a href="#" class="lp-btn-primary">Rejoindre le Discord →</a>
   </div>
 </section>
 
