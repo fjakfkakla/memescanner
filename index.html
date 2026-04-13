@@ -6438,24 +6438,87 @@ async function debugCA(){
     const dbHasTG = dbDexSocials.some(s=>(s.url||'').includes('t.me'));
     const dbHasWEB= !!(pairData?.info?.websites?.length||pairData?.baseToken?.info?.websites?.length);
     const dbLiq   = pairData?.liquidity?.usd || 0;
-    const dbRawSocials = dbDexSocials.map(s=>s.type||s.url||'?').join(', ') || 'aucun';
 
     const dbHolderCount = sec?.holderCount || 0;
     const dbTop1  = sec ? parseFloat(sec.top1Pct||0)  : 0;
     const dbTop5  = sec ? parseFloat(sec.top5Pct||0)  : 0;
     const dbTop10 = sec ? parseFloat(sec.top10Pct||0) : 0;
 
-    const details=`TOKEN          : ${sym}
-CA             : ${addr.slice(0,12)}...${addr.slice(-6)}
-MCAP           : $${fmtNum(mcap)} | LIQ : $${fmtNum(dbLiq||liq)}
-AGE            : ${ageH.toFixed(1)}h (${ageMin.toFixed(0)}min)
-TRACKER WALLETS : ${wData.count} détectés${wData.wallets.length?' → '+wData.wallets.join(' '):''}
-HOLDERS HELIUS : ${dbHolderCount} comptes · top1=${dbTop1.toFixed(1)}% · top5=${dbTop5.toFixed(1)}% · top10=${dbTop10.toFixed(1)}%
-SOCIALS DEX    : ${dbHasX?'𝕏 ':''  }${dbHasTG?'TG ':''  }${dbHasWEB?'WEB ':''  }${!dbHasX&&!dbHasTG&&!dbHasWEB?'aucun':''}
-SOCIALS RAW    : ${dbRawSocials}
-HELIUS SEC     : ${sec?'✅ chargé':'❌ indisponible (Bonk/LaunchLab normal)'}
-DEX ID         : ${pairData?.dexId||'?'}
-PAIRE DEXSCR   : ${pairData?'✅ trouvée':'❌ non trouvée'}`;
+    // Récupérer le scored complet pour les filtres
+    let scored = null;
+    if(pairData){ pairData.security = sec; scored = scoreTokenV2(pairData, wData); }
+    const d = scored?.debug || {};
+    const wg = wData.byGroup || {};
+
+    // ── SECTION WALLETS DÉTECTÉS ──────────────────────────────────────────────
+    const groupColors = { KOL:'#1da1f2', 'gros trader':'#00ff88', DEV:'#ff9900', farmer:'#aaa' };
+    const groupEmojis = { KOL:'🐦', 'gros trader':'🐋', DEV:'🛠️', farmer:'🌾' };
+    let walletRows = '';
+    if(wData.count > 0){
+      // Afficher le breakdown par groupe
+      walletRows = Object.entries(wg).filter(([,n])=>n>0).map(([g,n])=>
+        `<span style="margin-right:.6rem;color:${groupColors[g]||'#fff'}">${groupEmojis[g]||''} ${g}: <b>${n}</b></span>`
+      ).join('');
+      if(wData.wallets?.length){
+        walletRows += `<div style="font-size:.65rem;color:var(--muted);margin-top:.3rem;font-family:var(--font-mono)">${wData.wallets.join('  ')}</div>`;
+      }
+    } else {
+      walletRows = '<span style="color:var(--red)">❌ Aucun wallet tracké détecté</span>';
+    }
+    const walletsHtml = `
+      <div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:.7rem .9rem;margin:.6rem 0">
+        <div style="font-size:.65rem;color:var(--muted);letter-spacing:.08em;margin-bottom:.4rem">WALLETS DÉTECTÉS (${wData.count})</div>
+        <div style="font-size:.8rem">${walletRows}</div>
+      </div>`;
+
+    // ── HARD FILTERS STATUS ──────────────────────────────────────────────────
+    const kolOk    = (wg['KOL']||0) >= 1;
+    const traderOk = (wg['gros trader']||0) >= 1;
+    const actOk    = (d.patternScore||0) >= 8;
+    const distribOk= (d.holderScore||0) >= 3;
+    const buyOk    = (d.buyRatio||0) >= 0.40;
+    const mkFilter = (label, ok, detail) =>
+      `<div style="display:flex;align-items:center;gap:.5rem;padding:.25rem 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:.75rem">
+        <span style="color:${ok?'#00ff88':'#ff4466'};font-size:.9rem">${ok?'✅':'❌'}</span>
+        <span style="flex:1">${label}</span>
+        <span style="color:${ok?'#00ff88':'#ff4466'};font-family:var(--font-mono)">${detail}</span>
+      </div>`;
+    const filtersHtml = `
+      <div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:.7rem .9rem;margin:.6rem 0">
+        <div style="font-size:.65rem;color:var(--muted);letter-spacing:.08em;margin-bottom:.4rem">HARD FILTERS</div>
+        ${mkFilter('1 KOL obligatoire',      kolOk,    `${wg['KOL']||0} KOL`)}
+        ${mkFilter('1 Gros trader obligatoire', traderOk, `${wg['gros trader']||0} trader`)}
+        ${mkFilter('Activité ≥ 8pts',        actOk,    `${d.patternScore||0}pts`)}
+        ${mkFilter('Distribution holders',  distribOk, `${d.holderScore||0}pts`)}
+        ${mkFilter('Buy ratio ≥ 40%',        buyOk,    `${((d.buyRatio||0)*100).toFixed(0)}%`)}
+      </div>`;
+
+    // ── CATÉGORIES DÉTAILLÉES ─────────────────────────────────────────────────
+    const buysM5  = pairData?.txns?.m5?.buys  || 0;
+    const sellsM5 = pairData?.txns?.m5?.sells || 0;
+    const buysH1  = pairData?.txns?.h1?.buys  || 0;
+    const sellsH1 = pairData?.txns?.h1?.sells || 0;
+    const buyRatioM5 = buysM5 / ((buysM5+sellsM5)||1);
+    const buyRatioH1d = buysH1 / ((buysH1+sellsH1)||1);
+    const catDetails = {
+      '🎯 Tracker':  `KOL:${wg['KOL']||0} Trader:${wg['gros trader']||0} DEV:${wg['DEV']||0} Farmer:${wg['farmer']||0}`,
+      '🌐 Social':   `${dbHasX?'𝕏 ':''}${dbHasTG?'TG ':''}${dbHasWEB?'WEB ':''} | Helius:${sec?'✅':'❌'}`,
+      '👥 Holders':  `top10=${dbTop10.toFixed(0)}% | ${dbHolderCount} comptes`,
+      '🪙 Token':    `DEX paid: ${d.platformScore>0?'✅':'❌'}`,
+      '⭐ Mcap':     `$${fmtNum(mcap)}`,
+      '⏱ Age':       `${(ageH*60).toFixed(0)}min`,
+      '📈 Activité': `buysM5=${buysM5} sellsM5=${sellsM5} ratioM5=${(buyRatioM5*100).toFixed(0)}% | buysH1=${buysH1} ratioH1=${(buyRatioH1d*100).toFixed(0)}%`,
+    };
+    const detailedBars = cats.map(c=>{
+      const pct=Math.max(0,Math.min(100,(Math.max(0,c.val)/c.max)*100));
+      const color=c.val<0?'var(--red)':c.val>c.max*.7?'var(--green)':'#ffaa00';
+      return `<div class="dca-cat-row">
+        <div style="min-width:90px;font-size:.72rem;color:rgba(255,255,255,.85)">${c.name}</div>
+        <div class="dca-cat-bar"><div class="dca-cat-fill" style="width:${pct}%;background:${color}"></div></div>
+        <div class="dca-cat-val" style="color:${color};min-width:34px">${c.val>=0?'+':''}${c.val}</div>
+        <div style="font-size:.6rem;color:var(--muted);margin-left:.4rem;flex:1">${catDetails[c.name]||''}</div>
+      </div>`;
+    }).join('');
 
     result.innerHTML=`
       <div class="dca-score-display">
@@ -6464,8 +6527,9 @@ PAIRE DEXSCR   : ${pairData?'✅ trouvée':'❌ non trouvée'}`;
         <div style="font-size:.65rem;color:var(--muted);margin-top:.3rem;font-family:var(--font-mono)">/ 150 pts max</div>
       </div>
       ${secHtml}
-      <div class="dca-cats">${bars}</div>
-      <div class="dca-details">${details}</div>
+      ${walletsHtml}
+      ${filtersHtml}
+      <div class="dca-cats" style="margin-top:.6rem">${detailedBars}</div>
       ${pairData?`<div style="margin-top:.8rem;text-align:center"><a href="${pairData.url||'https://dexscreener.com/solana/'+addr}" target="_blank" class="sc-btn-dex" style="display:inline-block">Voir sur DexScreener →</a></div>`:''}
     `;
   }catch(e){
