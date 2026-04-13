@@ -6371,12 +6371,14 @@ async function debugCA(){
       pairData = (dex.pairs||[]).sort((a,b)=>(b.volume?.h1||0)-(a.volume?.h1||0))[0] || null;
     }catch(e){}
 
-    // 2+3. Security + Axiom wallets via backend Railway (clé Helius côté serveur)
+    // 2+3. Security via backend Railway + wallets via frontend (WALLET_TRACKER local = groupes à jour)
     const pairAddr = pairData?.pairAddress || null;
     const backendUrl = `${BACKEND_URL}/debug/${addr}${pairAddr?'?pair='+pairAddr:''}`;
     const backendResp = await fetch(backendUrl, {signal:AbortSignal.timeout(30000)}).then(r=>r.json());
-    const sec   = backendResp.sec   || null;
-    const wData = backendResp.wData || {count:0,wallets:[],clustered:false};
+    const sec   = backendResp.sec || null;
+    // Toujours re-checker wallets côté frontend : le backend retourne l'ancien format sans byGroup
+    // checkAxiomWallets utilise WALLET_TRACKER local (groupes KOL/trader/DEV/farmer à jour)
+    const wData = await checkAxiomWallets(addr, pairAddr, true);
 
     // 4. Score
     let score=0,traderScore=0,socialScore=0,holderScore=0,platformScore=0,mcapScore=0,ageScore=0,patternScore=0;
