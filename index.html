@@ -3869,14 +3869,14 @@ function scoreTokenV2(p,walletData={count:0,byGroup:{KOL:0,'gros trader':0,DEV:0
   let score = 0;
 
   // ── 🎯 WALLET TRACKER ─────────────────────────────────────────────────────
-  // Points par catégorie : farmer=1, gros trader=3, KOL=4, DEV=5
+  // Points par catégorie : farmer=-2, gros trader=3, KOL=4, DEV=5
   const byGroup     = walletData.byGroup || {};
   const kolCount    = byGroup['KOL']          || 0;
   const traderCount = byGroup['gros trader']  || 0;
   const devCount    = byGroup['DEV']          || 0;
   const farmerCount = byGroup['farmer']       || 0;
   const axiomCount  = walletData.count        || 0; // total (alias pour compat)
-  let traderScore = farmerCount * 1 + traderCount * 3 + kolCount * 4 + devCount * 5;
+  let traderScore = farmerCount * (-2) + traderCount * 3 + kolCount * 4 + devCount * 5;
   traderScore = Math.min(35, traderScore); // cap à 35 pour garder l'équilibre
   score += traderScore;
 
