@@ -1276,6 +1276,13 @@ footer{border-top:1px solid var(--border);}
 .sc-pvp-badge.pvp-w{background:rgba(255,140,0,.18);color:#ffaa22;border:1px solid rgba(255,140,0,.35);animation:pvp-badge-pulse 1.2s ease-in-out infinite alternate;}
 .sc-pvp-badge.pvp-l{background:rgba(255,60,60,.1);color:#ff6655;border:1px solid rgba(255,60,60,.2);}
 @keyframes pvp-badge-pulse{from{box-shadow:0 0 4px rgba(255,140,0,.3)}to{box-shadow:0 0 12px rgba(255,140,0,.7)}}
+/* ── ENTRY QUALITY BADGE ─────────────────────────────────────── */
+.sc-entry-badge{font-size:.68rem;font-weight:700;padding:.2rem .55rem;border-radius:6px;white-space:nowrap;letter-spacing:.03em;}
+.sc-entry-badge.entry-good{background:rgba(0,255,136,.12);color:#00ff88;border:1px solid rgba(0,255,136,.3);}
+.sc-entry-badge.entry-dip{background:rgba(0,200,255,.12);color:#00ccff;border:1px solid rgba(0,200,255,.35);animation:dip-pulse 1.4s ease-in-out infinite alternate;}
+.sc-entry-badge.entry-risky{background:rgba(255,100,60,.1);color:#ff7755;border:1px solid rgba(255,100,60,.25);}
+.sc-card.dip-entry{border-color:rgba(0,200,255,.4);box-shadow:0 4px 20px rgba(0,200,255,.12);}
+@keyframes dip-pulse{from{box-shadow:0 0 4px rgba(0,200,255,.2)}to{box-shadow:0 0 14px rgba(0,200,255,.6)}}
 /* Metrics row (1h%, 5m%, buy ratio) */
 .sc-metrics{display:flex;gap:.45rem;flex-wrap:wrap;align-items:center;padding:.35rem 1rem;
   border-bottom:1px solid rgba(97,86,217,.06);background:rgba(0,0,0,.1);
@@ -2916,6 +2923,8 @@ let isAdminMode = false;
 let debugModeOn = false;
 let lastScored = [];
 let refreshTimer = null;
+// dipTracker : addr → { peakMcap, callMcap, firstSeenAt }
+const dipTracker = new Map();
 let rugRefreshTimer = null;
 let currentLang = 'fr';
 let currentRsTab = 'token';
@@ -6613,7 +6622,7 @@ async function fetchTokens(){
           await renderTokenTable(recentH);
           if(currentTab==='history')renderHistory();
           if(refreshTimer)clearTimeout(refreshTimer);
-          refreshTimer=setTimeout(fetchTokens,45000);
+          refreshTimer=setTimeout(fetchTokens,15000);
           return;
         }
       }catch(e){}
@@ -6623,7 +6632,7 @@ async function fetchTokens(){
     }
     if(currentTab==='history')renderHistory();
     if(refreshTimer)clearTimeout(refreshTimer);
-    refreshTimer=setTimeout(fetchTokens,45000);
+    refreshTimer=setTimeout(fetchTokens,15000);
     return;
   }catch(eBackend){
     console.warn('[fetchTokens] Backend injoignable, fallback local:', eBackend.message);
@@ -6934,7 +6943,7 @@ async function fetchTokens(){
   else{await renderTokenTable(finalScored);}
   if(currentTab==='history')renderHistory();
   if(refreshTimer)clearTimeout(refreshTimer);
-  refreshTimer=setTimeout(fetchTokens,45000);
+  refreshTimer=setTimeout(fetchTokens,15000);
 }
 
 // ============================================================
@@ -6999,6 +7008,29 @@ async function renderTokenTable(tokens){
     athMcap=Math.max(athMcap,nowMcap);
     if(athMcap>(callData?.athMcap||0))updateAth(t.addr,athMcap).catch(()=>{});
     t._athMcap=athMcap; // stocké pour refreshLiveMcap
+
+    // ── DIP TRACKER : suivi peak depuis le call ──────────────────
+    const _dtNow = nowMcap || t.mcap || 0;
+    if(!dipTracker.has(t.addr)){
+      dipTracker.set(t.addr, { peakMcap: _dtNow, callMcap: callMcap, firstSeenAt: Date.now() });
+    } else {
+      const _dt = dipTracker.get(t.addr);
+      if(_dtNow > _dt.peakMcap) _dt.peakMcap = _dtNow;
+    }
+    const _dt = dipTracker.get(t.addr);
+    const _peakMcap = _dt.peakMcap || callMcap;
+    // % de chute depuis le peak
+    const _dipPct = _peakMcap > 0 ? (_dtNow - _peakMcap) / _peakMcap * 100 : 0;
+    // % de hausse depuis le call mcap
+    const _riseFromCall = callMcap > 0 ? (_dtNow - callMcap) / callMcap * 100 : 0;
+    const _m5v = +(t.debug?.m5 || 0);
+    const _buyRatio = +(t.debug?.buyRatio || 0.5);
+    // DIP ENTRY : a chuté ≥25% depuis peak ET montre recovery (m5>0 + buy ratio >50%)
+    const _isDipEntry = _dipPct <= -25 && _m5v > 0 && _buyRatio >= 0.50;
+    // BONNE ENTRÉE : pas trop pompé depuis le call (<20%)
+    const _isGoodEntry = _riseFromCall < 20 && !_isDipEntry;
+    // RISQUÉ : a déjà +20% depuis le call
+    const _isRisky = _riseFromCall >= 20 && !_isDipEntry;
     const mult=callMcap>0?t.mcap/callMcap:1;
     const athMult=callMcap>0?athMcap/callMcap:1;
     const d=t.debug;
@@ -7071,8 +7103,14 @@ async function renderTokenTable(tokens){
     const scoresHtml=`<div class="sc-scores">${scoreChips}</div>`;
     // ── Wallet addresses ──
     const walletsHtml=wallets.length>0?`<div class="sc-wallets">🎯 ${wallets.slice(0,4).join(' · ')}</div>`:'';
+    // ── ENTRY BADGE ──────────────────────────────────────────────
+    const entryBadge = _isDipEntry
+      ? `<span class="sc-entry-badge entry-dip">📉↗ DIP ENTRY</span>`
+      : _isRisky
+        ? `<span class="sc-entry-badge entry-risky">⚠️ POMPÉ +${_riseFromCall.toFixed(0)}%</span>`
+        : `<span class="sc-entry-badge entry-good">✅ ENTRÉE OK</span>`;
     // PVP badge + card class
-    const pvpCls = t.pvp==='winner'?'pvp-winner':t.pvp==='loser'?'pvp-loser':'';
+    const pvpCls = (t.pvp==='winner'?'pvp-winner':t.pvp==='loser'?'pvp-loser':'') + (_isDipEntry?' dip-entry':'');
     const pvpBadge = t.pvp==='winner'
       ? `<span class="sc-pvp-badge pvp-w">⚔️ PVP WIN</span>`
       : t.pvp==='loser'
@@ -7083,7 +7121,7 @@ async function renderTokenTable(tokens){
         <span style="font-size:1.2rem;flex-shrink:0">${scoreEmoji}</span>
         <span class="sc-sym">${t.symbol}</span>
         <div style="display:flex;gap:.3rem;align-items:center;flex-shrink:0">
-          ${pvpBadge}${kolBadge}${axiomBadge}${debugBtn}
+          ${pvpBadge}${entryBadge}${kolBadge}${axiomBadge}${debugBtn}
           <span class="sc-badge ${badgeCls}">${label.text} ${t.score}</span>
         </div>
       </div>
