@@ -2569,6 +2569,28 @@ nav{background:rgba(0,0,0,.96)!important;border-bottom:1px solid rgba(255,109,0,
             <option value="30">30 derniers jours</option>
           </select>
           <button class="btn-admin" onclick="runHourlyHeatmap()" style="padding:8px 20px;font-size:12px;">▶ LANCER</button>
+          <button class="btn-admin" onclick="toggleHmCustom()" id="btnHmCustom" style="padding:8px 14px;font-size:12px;background:rgba(167,139,250,.15);border:1px solid rgba(167,139,250,.35);color:#a78bfa;">⚙ Custom</button>
+        </div>
+        <!-- Mini panel Custom -->
+        <div id="hmCustomPanel" style="display:none;margin-top:10px;padding:12px 14px;background:rgba(167,139,250,.07);border:1px solid rgba(167,139,250,.2);border-radius:10px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+          <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:rgba(255,255,255,.6);">
+            <span>De</span>
+            <input id="hmFromH" type="number" min="0" max="23" placeholder="0" value="" style="width:48px;padding:4px 6px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15);border-radius:6px;color:#fff;font-size:12px;text-align:center;">
+            <span>h à</span>
+            <input id="hmToH" type="number" min="0" max="23" placeholder="23" value="" style="width:48px;padding:4px 6px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15);border-radius:6px;color:#fff;font-size:12px;text-align:center;">
+            <span>h</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:rgba(255,255,255,.6);">
+            <span>Win %</span>
+            <input id="hmWinPct" type="number" min="1" max="100" placeholder="60" value="" style="width:52px;padding:4px 6px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15);border-radius:6px;color:#fff;font-size:12px;text-align:center;">
+            <span>%</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:rgba(255,255,255,.6);">
+            <span>ATH ≥ ×</span>
+            <input id="hmCustomMult" type="number" min="1" max="100" step="0.1" placeholder="1.2" value="" style="width:56px;padding:4px 6px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15);border-radius:6px;color:#fff;font-size:12px;text-align:center;">
+          </div>
+          <button class="btn-admin" onclick="runHourlyHeatmap(true)" style="padding:6px 14px;font-size:12px;background:rgba(167,139,250,.2);border-color:rgba(167,139,250,.4);color:#a78bfa;">▶ Appliquer</button>
+          <button onclick="clearHmCustom()" style="background:none;border:none;color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;padding:4px;">✕ Reset</button>
         </div>
         <div id="hmResults"></div>
       </div>
@@ -4516,12 +4538,33 @@ async function runBacktest() {
 // ═══════════════════════════════════════════════════════════════
 // 🕐 HEATMAP HORAIRE
 // ═══════════════════════════════════════════════════════════════
-async function runHourlyHeatmap() {
+function toggleHmCustom() {
+  const p = document.getElementById('hmCustomPanel');
+  const isHidden = p.style.display === 'none' || p.style.display === '';
+  p.style.display = isHidden ? 'flex' : 'none';
+  document.getElementById('btnHmCustom').style.background = isHidden ? 'rgba(167,139,250,.3)' : 'rgba(167,139,250,.15)';
+}
+function clearHmCustom() {
+  ['hmFromH','hmToH','hmWinPct','hmCustomMult'].forEach(id => document.getElementById(id).value = '');
+}
+
+async function runHourlyHeatmap(useCustom=false) {
   const container = document.getElementById('hmResults');
   container.innerHTML = '<div class="ai-empty">⏳ Chargement…</div>';
 
-  const winDef = parseFloat(document.getElementById('hmWinDef').value || '1.2');
+  // Params custom si activés
+  const fromH    = useCustom ? parseInt(document.getElementById('hmFromH').value) : NaN;
+  const toH      = useCustom ? parseInt(document.getElementById('hmToH').value)   : NaN;
+  const winPct   = useCustom ? parseInt(document.getElementById('hmWinPct').value) : NaN;
+  const custMult = useCustom ? parseFloat(document.getElementById('hmCustomMult').value) : NaN;
+  const hasHourFilter = !isNaN(fromH) || !isNaN(toH);
+  const effectiveFrom = isNaN(fromH) ? 0  : fromH;
+  const effectiveTo   = isNaN(toH)   ? 23 : toH;
+
+  const winDef = (!isNaN(custMult) && custMult > 0) ? custMult : parseFloat(document.getElementById('hmWinDef').value || '1.2');
   const days   = parseInt(document.getElementById('hmPeriod').value   || '7');
+  // Seuil winrate custom pour coloration (défaut : 70% vert, 50% orange)
+  const winThresh = (!isNaN(winPct) && winPct > 0) ? winPct : 70;
 
   try {
     const resp = await fetch(`${FB_URL}/calls.json`, { signal: AbortSignal.timeout(10000) });
@@ -4568,19 +4611,30 @@ async function runHourlyHeatmap() {
       const wr = Math.round(h.wins / h.total * 100);
       const avgX = (h.athXs.reduce((a,b)=>a+b,0)/h.athXs.length).toFixed(1);
       const barH = Math.round((h.total / maxCalls) * 100);
-      const color = wr >= 70 ? '#00ff88' : wr >= 50 ? '#ffaa00' : '#ff4466';
+      // Coloration basée sur winThresh custom (défaut 70/50)
+      const color = wr >= winThresh ? '#00ff88' : wr >= Math.round(winThresh*0.7) ? '#ffaa00' : '#ff4466';
       const isNow = i === currentHour;
-      return `<div class="hm-cell${isNow ? ' hm-now' : ''}" title="${i}h — ${h.total} calls · winrate ${wr}% · ATH moy. ${avgX}x">
-        <div class="hm-bar-wrap"><div class="hm-bar" style="height:${barH}%;background:${color};"></div></div>
+      // Heure dans la plage custom ? (gère le chevauchement minuit ex: 21h→2h)
+      const inRange = !hasHourFilter ? true :
+        effectiveFrom <= effectiveTo
+          ? i >= effectiveFrom && i <= effectiveTo
+          : i >= effectiveFrom || i <= effectiveTo;
+      const dimmed = hasHourFilter && !inRange;
+      return `<div class="hm-cell${isNow ? ' hm-now' : ''}" title="${i}h — ${h.total} calls · winrate ${wr}% · ATH moy. ${avgX}x" style="${dimmed?'opacity:.2;':''}">
+        <div class="hm-bar-wrap"><div class="hm-bar" style="height:${barH}%;background:${inRange?color:'rgba(255,255,255,.2)'};"></div></div>
         <div class="hm-hour" style="${isNow?'color:#a78bfa;font-weight:700;':''}">${String(i).padStart(2,'0')}</div>
-        <div class="hm-stat" style="color:${color};font-size:9px;font-weight:700;">${wr}%</div>
+        <div class="hm-stat" style="color:${inRange?color:'rgba(255,255,255,.25)'};font-size:9px;font-weight:700;">${wr}%</div>
         <div class="hm-calls" style="color:rgba(255,255,255,.35);font-size:8px;">${h.total}</div>
       </div>`;
     }).join('');
 
-    // Top 3 meilleures heures (min 2 calls)
+    // Top 3 meilleures heures (min 2 calls) — filtrées par plage si custom
     const ranked = byHour
-      .map((h, i) => ({ h: i, ...h, wr: h.total >= 2 ? Math.round(h.wins/h.total*100) : -1 }))
+      .map((h, i) => {
+        const inR = !hasHourFilter ? true :
+          effectiveFrom <= effectiveTo ? i >= effectiveFrom && i <= effectiveTo : i >= effectiveFrom || i <= effectiveTo;
+        return { h: i, ...h, wr: h.total >= 2 && inR ? Math.round(h.wins/h.total*100) : -1 };
+      })
       .filter(x => x.wr >= 0)
       .sort((a, b) => b.wr - a.wr || b.total - a.total);
 
@@ -4590,6 +4644,12 @@ async function runHourlyHeatmap() {
     const botHours = ranked.slice(-3).reverse().map(x =>
       `<span style="background:rgba(255,68,102,.1);border:1px solid rgba(255,68,102,.3);color:#ff4466;border-radius:6px;padding:2px 8px;font-size:11px;font-weight:700;">${String(x.h).padStart(2,'0')}h — ${x.wr}% (${x.total} calls)</span>`
     ).join(' ');
+
+    // Résumé custom
+    const customTag = useCustom && (hasHourFilter || !isNaN(winPct) || !isNaN(custMult))
+      ? `<span style="background:rgba(167,139,250,.1);border:1px solid rgba(167,139,250,.3);color:#a78bfa;border-radius:6px;padding:2px 8px;font-size:10px;font-weight:700;">
+          ⚙ Custom : ${hasHourFilter ? `${String(effectiveFrom).padStart(2,'0')}h→${String(effectiveTo).padStart(2,'0')}h` : 'toutes heures'} · ATH≥×${winDef} · win≥${winThresh}%
+        </span>` : '';
 
     container.innerHTML = `
       <div style="display:flex;align-items:flex-end;gap:3px;height:90px;margin:16px 0 4px;padding:0 4px;">
@@ -4608,8 +4668,9 @@ async function runHourlyHeatmap() {
           ${botHours || '<span style="color:rgba(255,255,255,.3);font-size:11px;">—</span>'}
         </div>
       </div>
-      <div style="font-size:10px;color:rgba(255,255,255,.25);margin-top:12px;">
-        ${calls.length} calls analysés · heure locale · barre = volume de calls · couleur = winrate
+      <div style="font-size:10px;color:rgba(255,255,255,.25);margin-top:12px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+        <span>${calls.length} calls analysés · heure locale · barre = volume de calls · couleur = winrate</span>
+        ${customTag}
       </div>`;
 
   } catch(e) {
