@@ -2571,26 +2571,26 @@ nav{background:rgba(0,0,0,.96)!important;border-bottom:1px solid rgba(255,109,0,
           <button class="btn-admin" onclick="runHourlyHeatmap()" style="padding:8px 20px;font-size:12px;">▶ LANCER</button>
           <button class="btn-admin" onclick="toggleHmCustom()" id="btnHmCustom" style="padding:8px 14px;font-size:12px;background:rgba(167,139,250,.15);border:1px solid rgba(167,139,250,.35);color:#a78bfa;">⚙ Custom</button>
         </div>
-        <!-- Mini panel Custom -->
-        <div id="hmCustomPanel" style="display:none;margin-top:10px;padding:12px 14px;background:rgba(167,139,250,.07);border:1px solid rgba(167,139,250,.2);border-radius:10px;gap:12px;align-items:center;flex-wrap:wrap;">
-          <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:rgba(255,255,255,.6);">
-            <span>De</span>
-            <input id="hmFromH" type="number" min="0" max="23" placeholder="0" value="" style="width:48px;padding:4px 6px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15);border-radius:6px;color:#fff;font-size:12px;text-align:center;">
-            <span>h à</span>
-            <input id="hmToH" type="number" min="0" max="23" placeholder="23" value="" style="width:48px;padding:4px 6px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15);border-radius:6px;color:#fff;font-size:12px;text-align:center;">
-            <span>h</span>
+        <!-- Mini panel Custom winrate -->
+        <div id="hmCustomPanel" style="display:none;margin-top:10px;padding:14px 16px;background:rgba(167,139,250,.07);border:1px solid rgba(167,139,250,.25);border-radius:10px;">
+          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+            <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:rgba(255,255,255,.6);">
+              <span>Depuis</span>
+              <input id="hmCustDur" type="number" min="1" placeholder="24" value="" style="width:56px;padding:5px 7px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.15);border-radius:6px;color:#fff;font-size:13px;font-weight:600;text-align:center;">
+              <select id="hmCustUnit" style="padding:5px 7px;background:rgba(30,20,50,.9);border:1px solid rgba(255,255,255,.15);border-radius:6px;color:#fff;font-size:12px;">
+                <option value="min">min</option>
+                <option value="h" selected>h</option>
+                <option value="j">j</option>
+              </select>
+            </div>
+            <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:rgba(255,255,255,.6);">
+              <span>Call → ATH ≥</span>
+              <input id="hmCustPct" type="number" min="1" placeholder="20" value="" style="width:56px;padding:5px 7px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.15);border-radius:6px;color:#fff;font-size:13px;font-weight:600;text-align:center;">
+              <span>%</span>
+            </div>
+            <button class="btn-admin" onclick="runCustomWinrate()" style="padding:6px 16px;font-size:12px;background:rgba(167,139,250,.2);border-color:rgba(167,139,250,.4);color:#a78bfa;">▶ Calculer</button>
           </div>
-          <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:rgba(255,255,255,.6);">
-            <span>Win %</span>
-            <input id="hmWinPct" type="number" min="1" max="100" placeholder="60" value="" style="width:52px;padding:4px 6px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15);border-radius:6px;color:#fff;font-size:12px;text-align:center;">
-            <span>%</span>
-          </div>
-          <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:rgba(255,255,255,.6);">
-            <span>ATH ≥ ×</span>
-            <input id="hmCustomMult" type="number" min="1" max="100" step="0.1" placeholder="1.2" value="" style="width:56px;padding:4px 6px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15);border-radius:6px;color:#fff;font-size:12px;text-align:center;">
-          </div>
-          <button class="btn-admin" onclick="runHourlyHeatmap(true)" style="padding:6px 14px;font-size:12px;background:rgba(167,139,250,.2);border-color:rgba(167,139,250,.4);color:#a78bfa;">▶ Appliquer</button>
-          <button onclick="clearHmCustom()" style="background:none;border:none;color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;padding:4px;">✕ Reset</button>
+          <div id="hmCustomResult" style="margin-top:12px;display:none;"></div>
         </div>
         <div id="hmResults"></div>
       </div>
@@ -4541,11 +4541,65 @@ async function runBacktest() {
 function toggleHmCustom() {
   const p = document.getElementById('hmCustomPanel');
   const isHidden = p.style.display === 'none' || p.style.display === '';
-  p.style.display = isHidden ? 'flex' : 'none';
+  p.style.display = isHidden ? 'block' : 'none';
   document.getElementById('btnHmCustom').style.background = isHidden ? 'rgba(167,139,250,.3)' : 'rgba(167,139,250,.15)';
 }
-function clearHmCustom() {
-  ['hmFromH','hmToH','hmWinPct','hmCustomMult'].forEach(id => document.getElementById(id).value = '');
+
+async function runCustomWinrate() {
+  const dur  = parseFloat(document.getElementById('hmCustDur').value);
+  const unit = document.getElementById('hmCustUnit').value;
+  const pct  = parseFloat(document.getElementById('hmCustPct').value);
+  const res  = document.getElementById('hmCustomResult');
+
+  if (isNaN(dur) || dur <= 0 || isNaN(pct) || pct <= 0) {
+    res.style.display = 'block';
+    res.innerHTML = '<span style="color:#ff4466;font-size:12px;">⚠ Remplis les deux champs</span>';
+    return;
+  }
+
+  const msMap = { min: 60000, h: 3600000, j: 86400000 };
+  const since = Date.now() - dur * msMap[unit];
+  const mult  = 1 + pct / 100;
+
+  res.style.display = 'block';
+  res.innerHTML = '<span style="color:rgba(255,255,255,.4);font-size:12px;">⏳ Calcul…</span>';
+
+  try {
+    const resp = await fetch(`${FB_URL}/calls.json`, { signal: AbortSignal.timeout(8000) });
+    const raw  = await resp.json();
+    if (!raw) { res.innerHTML = '<span style="color:#ff4466;font-size:12px;">Aucune donnée</span>'; return; }
+
+    const calls = Object.values(raw).filter(c =>
+      c?.callMcap && c?.athMcap && c?.callTime &&
+      c.callTime >= since &&
+      (Date.now() - c.callTime) > 60000   // au moins 1min de recul
+    );
+
+    if (!calls.length) {
+      res.innerHTML = `<span style="color:rgba(255,255,255,.4);font-size:12px;">Aucun call sur cette période</span>`;
+      return;
+    }
+
+    const wins    = calls.filter(c => (c.athMcap / c.callMcap) >= mult).length;
+    const total   = calls.length;
+    const wr      = Math.round(wins / total * 100);
+    const color   = wr >= 70 ? '#00ff88' : wr >= 50 ? '#ffaa00' : '#ff4466';
+    const durLabel = `${dur}${unit}`;
+
+    res.innerHTML = `
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+        <div style="font-size:28px;font-weight:800;color:${color};font-family:var(--font-mono);">${wr}%</div>
+        <div style="font-size:13px;color:rgba(255,255,255,.7);">
+          <span style="color:#fff;font-weight:700;">${wins}</span>
+          <span style="color:rgba(255,255,255,.4);"> / ${total} calls</span>
+        </div>
+        <div style="font-size:11px;color:rgba(255,255,255,.35);">
+          depuis ${durLabel} · ATH ≥ +${pct}%
+        </div>
+      </div>`;
+  } catch(e) {
+    res.innerHTML = `<span style="color:#ff4466;font-size:12px;">Erreur : ${e.message}</span>`;
+  }
 }
 
 async function runHourlyHeatmap(useCustom=false) {
