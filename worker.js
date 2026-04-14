@@ -11,7 +11,7 @@ const HELIUS_API  = `https://api.helius.xyz`;
 const AXIOM_SET   = new Set(AXIOM_WALLETS); // flat Set pour lookups rapides
 
 // ── Discord Webhook ──
-const DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1493295269423354057/jXnzyFDjDDD1ZdlZ0bbRwgFDSDOr1pQyU9kryqAIOefvJQBacg1SkA_d_toKVuFRcPNn";
+const DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1493544718380957776/VykJRVOdAwPLd5jIJ2ODAFhZRSgdX5DKO6nf0AzYXr7HGQZxfI66e7AlOmYkLM4AbGE5";
 
 async function sendDiscordCall(token) {
   const mcapStr = token.mcap >= 1000
