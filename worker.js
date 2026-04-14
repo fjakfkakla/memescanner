@@ -556,7 +556,7 @@ export async function runScanCycle() {
         if (!isPump && !isBonk && !isRay && !isPumpSwap && !isBags) { rejected['platform'] = (rejected['platform'] || 0) + 1; continue; }
 
         // HARD FILTER 2 — Mcap min
-        if (scored.mcap < 15000) { rejected['mcap<15K'] = (rejected['mcap<15K'] || 0) + 1; continue; }
+        if (scored.mcap < 13000) { rejected['mcap<13K'] = (rejected['mcap<13K'] || 0) + 1; continue; }
 
         // SMART FILTER IA — filtres adaptatifs appris des données
         const smartCheck = checkSmartFilters(scored.debug || {});
