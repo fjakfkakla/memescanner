@@ -2050,7 +2050,7 @@ nav{background:rgba(0,0,0,.96)!important;border-bottom:1px solid rgba(255,109,0,
         </div>
         <button class="scan-btn scan-btn-outline" onclick="toggleBacktest()" style="font-size:.72rem">📊 Backtest</button>
         <button class="btn-reset" onclick="resetHistory()">🗑 Tout supprimer</button>
-        <button class="scan-btn scan-btn-outline" onclick="renderHistory()" style="font-size:.72rem">↻ Refresh</button>
+        <button class="scan-btn scan-btn-outline" onclick="renderHistory(true)" style="font-size:.72rem">↻ Refresh</button>
       </div>
     </div>
     <!-- BACKTEST PANEL -->
@@ -5939,7 +5939,7 @@ function switchTab(tab){
   document.getElementById('tabGems').classList.toggle('active',tab==='gems');
   document.getElementById('btnResetLive').style.display=tab==='live'?'inline-block':'none';
   document.getElementById('btnResetHistory').style.display=tab==='history'?'inline-block':'none';
-  if(tab==='history')renderHistory();
+  if(tab==='history')renderHistory(true);
   if(tab==='paperbot')ptRender();
   if(tab==='gems')gemRender();
 }
@@ -6169,9 +6169,16 @@ function renderBacktest(){
   </div>`:''}`;
 }
 
-async function renderHistory(){
+let _lastHistoryRender=0;
+async function renderHistory(force=false){
+  const now=Date.now();
+  // Throttle : ne pas re-render si <60s sauf si switch de tab ou refresh manuel
+  if(!force && _lastHistoryRender && (now-_lastHistoryRender)<60000) return;
+  _lastHistoryRender=now;
   const container=document.getElementById('historyContent');
-  container.innerHTML='<div class="hist-empty"><div class="hist-empty-icon">⏳</div><div style="color:var(--muted)">Chargement...</div></div>';
+  // Ne pas effacer si contenu déjà affiché — juste spinner discret en haut
+  const hasContent=container.querySelector('.sc-card,.hist-card');
+  if(!hasContent) container.innerHTML='<div class="hist-empty"><div class="hist-empty-icon">⏳</div><div style="color:var(--muted)">Chargement...</div></div>';
   // Charger depuis Firebase + localStorage, garder le meilleur ATH des 2
   let calls={};
  try{const fb=await fetch(`${FB_URL}/calls.json`,{signal:AbortSignal.timeout(5000)}).then(r=>r.json());
