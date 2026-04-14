@@ -1,6 +1,6 @@
 // WALLET_TRACKER : addr → group (KOL / gros trader / DEV / farmer)
 // Source : wallettracker1304.txt — 394 wallets
-export const WALLET_TRACKER = new Map(
+export const WALLET_TRACKER = new Map([
   ["AMaokHvLumVnwgYTPGEut9VPwRWXZy2jJQQzCkvrPafT", "DEV"],
   ["MNhBbrscBPmeid54buiqSgyWa4D8PY6uKHoK2wJsTJN", "DEV"],
   ["FXkGydbnG4jHVYqbBWWG4kkkwCpz6YEeVtM1vA6kZLaS", "DEV"],
@@ -395,7 +395,7 @@ export const WALLET_TRACKER = new Map(
   ["CEoJPnnCfYisckyJnqZLeefc559KeheVsFLbpfDuTPWo", "farmer"],
   ["FxN3VZ4BosL5urG2yoeQ156JSdmavm9K5fdLxjkPmaMR", "farmer"],
   ["G8n4gBsc9Z4P1q5JFJQUfxZs58zD7kF1CqowcTft18RL", "farmer"],
-);
+]);
 
 // Flat Set pour compat (discovery wallets)
 export const AXIOM_WALLETS = [...WALLET_TRACKER.keys()];
