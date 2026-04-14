@@ -624,6 +624,20 @@ export async function runScanCycle() {
 
       // Sauvegarder dans Firebase (saveCall gère le dedup)
       if (!calledTokens.has(token.addr)) {
+        // ── Mcap frais : utiliser le prix actuel comme callMcap, pas celui du scan ──
+        try {
+          const freshResp = await fetch(
+            `https://api.dexscreener.com/latest/dex/tokens/${token.addr}`,
+            { signal: AbortSignal.timeout(5000) }
+          );
+          const freshData = await freshResp.json();
+          const freshPair = (freshData.pairs || []).find(p => p.chainId === 'solana');
+          if (freshPair) {
+            const freshMcap = freshPair.marketCap || freshPair.fdv || 0;
+            if (freshMcap > 0) token.mcap = freshMcap;
+          }
+        } catch (e) { /* on garde le mcap du scan si erreur */ }
+
         calledTokens.set(token.addr, now);
         try {
           await saveCall({
