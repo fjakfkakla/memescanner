@@ -160,8 +160,8 @@ app.listen(PORT, () => {
 
   // Premier cycle immédiat
   runScanCycle();
-  // Cycle toutes les 45s
-  setInterval(runScanCycle, 45000);
+  // Cycle toutes les 25s
+  setInterval(runScanCycle, 25000);
 
   // AI: track outcomes toutes les 5 min (check prix des calls passés)
   setInterval(trackOutcomes, 5 * 60 * 1000);
