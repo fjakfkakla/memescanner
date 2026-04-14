@@ -624,7 +624,7 @@ export async function runScanCycle() {
 
       // Sauvegarder dans Firebase (saveCall gère le dedup)
       if (!calledTokens.has(token.addr)) {
-        // ── Vérif mcap frais : éviter de call un token qui dumpe déjà ──
+        // ── Mcap frais : utiliser le prix actuel comme callMcap, pas celui du scan ──
         try {
           const freshResp = await fetch(
             `https://api.dexscreener.com/latest/dex/tokens/${token.addr}`,
@@ -634,11 +634,6 @@ export async function runScanCycle() {
           const freshPair = (freshData.pairs || []).find(p => p.chainId === 'solana');
           if (freshPair) {
             const freshMcap = freshPair.marketCap || freshPair.fdv || 0;
-            if (freshMcap > 0 && freshMcap < token.mcap * 0.75) {
-              console.log(`[Worker] SKIP ${token.symbol}: dump détecté scan=$${token.mcap} → now=$${freshMcap}`);
-              liveTokens.delete(token.addr);
-              continue;
-            }
             if (freshMcap > 0) token.mcap = freshMcap;
           }
         } catch (e) { /* on garde le mcap du scan si erreur */ }
