@@ -6063,13 +6063,13 @@ function switchTab(tab){
 // RENDER HISTORY
 // ============================================================
 // ══════════════════════════════════════════════════════════
-// VRAI ATH via DexScreener candles (même source que GMGN/Axiom)
-// Endpoint non documenté mais public — retourne les bougies OHLCV
-// ATH = max(high) de toutes les bougies depuis la création
+// VRAI ATH via GeckoTerminal OHLCV candles
+// ATH = max(high) de toutes les bougies horaires depuis la création
+// Fallback : estimation priceChange DexScreener si GeckoTerminal échoue
 // ══════════════════════════════════════════════════════════
 const athCandleCache = {}; // addr → {athMcap, ts}
 
-async function fetchRealAth(pairAddress, tokenAddr) {
+async function fetchRealAth(pairAddress, tokenAddr, _mcap, _priceUsd) {
   if (!pairAddress && !tokenAddr) return 0;
   const cacheKey = tokenAddr || pairAddress;
   const now = Date.now();
@@ -6077,8 +6077,11 @@ async function fetchRealAth(pairAddress, tokenAddr) {
     return athCandleCache[cacheKey].athMcap;
   }
 
-  // Fetch la paire pour avoir mcap + priceChange sur toutes les périodes
-  // api.dexscreener.com = pas de CORS, public
+  let mcap = _mcap || 0;
+  let priceUsd = _priceUsd || 0;
+  let bestPair = null;
+
+  // Fetch la paire pour avoir mcap + priceUsd si pas fournis
   try {
     const endpoint = pairAddress
       ? `https://api.dexscreener.com/latest/dex/pairs/solana/${pairAddress}`
@@ -6087,39 +6090,61 @@ async function fetchRealAth(pairAddress, tokenAddr) {
     const pairsArr = dex.pairs
       ? (Array.isArray(dex.pairs) ? dex.pairs : [dex.pairs])
       : (dex.pair ? [dex.pair] : []);
-    const best = pairsArr
+    bestPair = pairsArr
       .filter(p => p?.chainId === 'solana')
       .sort((a,b) => (b.volume?.h24||0) - (a.volume?.h24||0))[0];
-    if (!best) return 0;
+    if (!bestPair) return 0;
 
-    const mcap = best.marketCap || best.fdv || 0;
+    if (!mcap) mcap = bestPair.marketCap || bestPair.fdv || 0;
+    if (!priceUsd) priceUsd = parseFloat(bestPair.priceUsd) || 0;
+    if (!pairAddress) pairAddress = bestPair.pairAddress;
+  } catch(e) {
     if (!mcap) return 0;
+  }
+  if (!mcap) return 0;
 
-    // Reconstruire l'ATH depuis les priceChange
-    // priceChange.hX = variation depuis il y a X heures
-    // Si négatif : mcap était plus haut → ATH = mcap / (1 + c/100)
-    const c24 = best.priceChange?.h24 || 0;
-    const c6  = best.priceChange?.h6  || 0;
-    const c1  = best.priceChange?.h1  || 0;
+  // ── Méthode 1 : GeckoTerminal OHLCV (vrai ATH via bougies) ──
+  if (pairAddress && priceUsd > 0) {
+    try {
+      const ohlcv = await fetch(
+        `https://api.geckoterminal.com/api/v2/networks/solana/pools/${pairAddress}/ohlcv/hour?aggregate=1&limit=1000&currency=usd`,
+        { signal: AbortSignal.timeout(7000), headers: { 'Accept': 'application/json' } }
+      ).then(r => r.json());
 
+      const candles = ohlcv?.data?.attributes?.ohlcv_list;
+      if (candles && candles.length > 0) {
+        // Chaque bougie = [timestamp, open, high, low, close, volume]
+        const maxHigh = Math.max(...candles.map(c => parseFloat(c[2]) || 0));
+        if (maxHigh > 0) {
+          // Convertir prix ATH → mcap ATH (supply constante)
+          const athMcap = Math.round(mcap * (maxHigh / priceUsd));
+          console.log(`[ATH-OHLCV] ${(tokenAddr||pairAddress).slice(0,8)} bougies=${candles.length} maxHigh=$${maxHigh.toFixed(8)} now=$${priceUsd.toFixed(8)} → ATH=$${fmtNum(athMcap)}`);
+          athCandleCache[cacheKey] = { athMcap, ts: now };
+          return athMcap;
+        }
+      }
+    } catch(e) { /* fallback priceChange */ }
+  }
+
+  // ── Méthode 2 (fallback) : estimation priceChange DexScreener ──
+  if (bestPair) {
+    const c24 = bestPair.priceChange?.h24 || 0;
+    const c6  = bestPair.priceChange?.h6  || 0;
+    const c1  = bestPair.priceChange?.h1  || 0;
     let athEst = mcap;
-    // Formule inverse : si c=-91.7% → mcap/(1-0.917) = mcap/0.083 = ATH
-    // Plafond : 200x mcap pour éviter les spikes MEV aberrants
-    // Plafond anti-spike : max 30x le mcap actuel
-    // Un vrai ATH > 30x le prix actuel dans les 24h est extrêmement rare
     const cap = mcap * 30;
     if (c24 < -5) { const e = mcap / Math.max(0.001, 1 + c24/100); if(e < cap) athEst = Math.max(athEst, e); }
     if (c6  < -5) { const e = mcap / Math.max(0.001, 1 + c6/100);  if(e < cap) athEst = Math.max(athEst, e); }
     if (c1  < -5) { const e = mcap / Math.max(0.001, 1 + c1/100);  if(e < cap) athEst = Math.max(athEst, e); }
-    if (c24 > 0)  athEst = Math.max(athEst, mcap); // en hausse = now est potentiellement l'ATH
-
+    if (c24 > 0)  athEst = Math.max(athEst, mcap);
     const athMcap = Math.round(athEst);
-    console.log(`[ATH] ${tokenAddr?.slice(0,8)||pairAddress?.slice(0,8)} mcap=$${fmtNum(mcap)} c24=${c24}% → ATH=$${fmtNum(athMcap)}`);
+    console.log(`[ATH-PC] ${(tokenAddr||pairAddress).slice(0,8)} mcap=$${fmtNum(mcap)} c24=${c24}% → ATH=$${fmtNum(athMcap)} (fallback priceChange)`);
     athCandleCache[cacheKey] = { athMcap, ts: now };
     return athMcap;
-  } catch(e) {
-    return 0;
   }
+
+  athCandleCache[cacheKey] = { athMcap: mcap, ts: now };
+  return mcap;
 }
 
 // ── Winrate Banner ─────────────────────────────────────────
@@ -6349,33 +6374,50 @@ async function renderHistory(force=false){
         if(c24<-3){const est=now/Math.max(0.001,1+c24/100);if(est<cap)athEst=Math.max(athEst,est);}
         if(c6 <-3){const est=now/Math.max(0.001,1+c6/100); if(est<cap)athEst=Math.max(athEst,est);}
         if(c1 <-3){const est=now/Math.max(0.001,1+c1/100); if(est<cap)athEst=Math.max(athEst,est);}
-        liveMap[a]={now, athEst:Math.round(athEst), c24, c6, c1};
+        liveMap[a]={now, athEst:Math.round(athEst), c24, c6, c1, priceUsd:parseFloat(p.priceUsd)||0, pairAddress:p.pairAddress||''};
       });
     }catch(e){}
   }
 
-  // Mettre a jour ATH via vrai ATH candles DexScreener (meme source GMGN/Axiom)
+  // Mettre a jour ATH via vrai OHLCV GeckoTerminal (bougies horaires)
+  // Phase 1 : quick pass avec priceChange + nowMcap (instantané)
   const athUpdates=[];
-  const sevenDaysAgo=Date.now()-7*24*3600000;
   for(const [key,v] of entries){
     const addr=v.addr||v.address||'';if(!addr)continue;
     const live=liveMap[addr];
-    const callMcap=v.callMcap||0;
     const nowMcap=live?.now||0;
     let bestKnown=Math.max(nowMcap,live?.athEst||0,v.athMcap||0);
-
-    // Pour les tokens callés il y a <24h : calcul ATH via priceChange (fiable)
-    // Pour les plus vieux : garder max(now, athStored) — pas de recalcul risqué
-    // Appliquer fetchRealAth pour tous les tokens < 7 jours
-    // La formule priceChange h24 est utile même pour tokens >24h
-    // car elle donne le range du dernier jour (souvent contient l'ATH ou proche)
-   // fetchRealAth skippé — ATH calculé depuis liveMap déjà fetchée en batch
-
     if(bestKnown>0&&bestKnown>(v.athMcap||0)){
       v.athMcap=bestKnown;
       athUpdates.push({key,addr,athMcap:bestKnown});
     }
   }
+
+  // Phase 2 : vrai ATH via GeckoTerminal OHLCV pour tokens récents (<7j)
+  // Batch de 3 avec délai pour respecter rate limit (30 req/min)
+  const sevenDaysAgo=Date.now()-7*24*3600000;
+  const recentForOhlcv=entries.filter(([,v])=>{
+    const age=Date.now()-(v.callTime||0);
+    return age<7*24*3600000;
+  });
+  for(let i=0;i<recentForOhlcv.length;i+=3){
+    const batch=recentForOhlcv.slice(i,i+3);
+    await Promise.all(batch.map(async([key,v])=>{
+      const addr=v.addr||v.address||'';if(!addr)return;
+      const live=liveMap[addr];
+      const pAddr=v.pairAddress||live?.pairAddress||'';
+      if(!pAddr)return;
+      try{
+        const realAth=await fetchRealAth(pAddr,addr,live?.now||0,live?.priceUsd||0);
+        if(realAth>0&&realAth>(v.athMcap||0)){
+          v.athMcap=realAth;
+          athUpdates.push({key,addr,athMcap:realAth});
+        }
+      }catch(e){}
+    }));
+    if(i+3<recentForOhlcv.length)await new Promise(r=>setTimeout(r,2200));
+  }
+
   // Sauvegarder les nouveaux ATH en Firebase en batch (non bloquant)
   if(athUpdates.length){
     athUpdates.forEach(({key,athMcap})=>{
@@ -7097,7 +7139,7 @@ async function renderTokenTable(tokens){
         if(!best[a]||(p.volume?.h24||0)>(best[a].volume?.h24||0))best[a]=p;
       });
       Object.entries(best).forEach(([a,p])=>{
-        livePriceMap[a]=p.marketCap||p.fdv||0;
+        livePriceMap[a]={mcap:p.marketCap||p.fdv||0, priceUsd:parseFloat(p.priceUsd)||0, pairAddress:p.pairAddress||''};
       });
     }catch(e){}
   }
@@ -7110,21 +7152,16 @@ async function renderTokenTable(tokens){
     const callMcap=t._callMcap||callData?.callMcap||t.mcap;
     const callTime=t._callTime||callData?.callTime||Date.now();
     // nowMcap = prix live (DexScreener) ou fallback sur mcap du scan
-    const nowMcap=livePriceMap[t.addr]||t.mcap||0;
-    // ATH Live : prendre le max entre ATH stocké ET estimation via priceChange
+    const _lp=livePriceMap[t.addr];
+    const nowMcap=_lp?.mcap||t.mcap||0;
+    // ATH Live : vrai ATH via OHLCV GeckoTerminal (cache 10min) + fallback priceChange
     let athMcap=callData?.athMcap||t.mcap;
-    // Recalcul ATH via priceChange du token live (même logique que Historique)
-    if(t.mcap>0){
-      const rp=t.raw||{};
-      const c24=rp.priceChange?.h24||0;
-      const c6=rp.priceChange?.h6||0;
-      const c1=rp.priceChange?.h1||0;
-      const cap=t.mcap*30;
-      let athEst=t.mcap;
-      if(c24<-5){const e=t.mcap/Math.max(0.001,1+c24/100);if(e<cap)athEst=Math.max(athEst,e);}
-      if(c6<-5) {const e=t.mcap/Math.max(0.001,1+c6/100); if(e<cap)athEst=Math.max(athEst,e);}
-      if(c1<-5) {const e=t.mcap/Math.max(0.001,1+c1/100); if(e<cap)athEst=Math.max(athEst,e);}
-      athMcap=Math.max(athMcap,Math.round(athEst));
+    const _pAddr=t.raw?.pairAddress||callData?.pairAddress||_lp?.pairAddress||'';
+    if(_pAddr&&_lp?.priceUsd>0){
+      try{
+        const realAth=await fetchRealAth(_pAddr,t.addr,nowMcap,_lp.priceUsd);
+        if(realAth>0)athMcap=Math.max(athMcap,realAth);
+      }catch(e){}
     }
     // NOW est toujours un candidat ATH valide (ATH ne peut jamais être < NOW)
     athMcap=Math.max(athMcap,nowMcap);
