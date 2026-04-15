@@ -2620,11 +2620,117 @@ let currentRugSort = 'recent';
 
 const EMOJIS = ['🐸','🚀','💎','🌙','🔥','⚡','🦊','🐶','🐱','🎰','🍌','🧸','🦍','🐻','🎯'];
 
-// Wallets à pénaliser : -5 si 1+ présent, -10 si les 3 présents
+// Wallets farmer à pénaliser : -4 pts par wallet présent
 const BAD_WALLETS = new Set([
-  "7NAd2EpYGGeFofpyvgehSXhH5vg6Ry6VRMW2Y6jiqCu1",
-  "FxN3VZ4BosL5urG2yoeQ156JSdmavm9K5fdLxjkPmaMR",
+  "CyaE1VxvBrahnPWkqm5VsdCvyS2QmNht2UFrKJHga54o",
   "2fg5QD1eD7rzNNCsvnhmXFm5hqNgwTTG8p7kQ6f3rx6f",
+  "BtMBMPkoNbnLF9Xn552guQq528KKXcsNBNNBre3oaQtr",
+  "suqh5sHtr8HyJ7q8scBimULPkPpA557prMG47xCHQfK",
+  "BaLCEtq6qgPFruxfnjWBJBkWwCXdwmuodn4NUicQqMSw",
+  "7NAd2EpYGGeFofpyvgehSXhH5vg6Ry6VRMW2Y6jiqCu1",
+  "EiGjwgAWG89bDMEWGVMAQJ7jKv7tV8hrxp4waCoiB1De",
+  "CEoJPnnCfYisckyJnqZLeefc559KeheVsFLbpfDuTPWo",
+  "FxN3VZ4BosL5urG2yoeQ156JSdmavm9K5fdLxjkPmaMR",
+  "G8n4gBsc9Z4P1q5JFJQUfxZs58zD7kF1CqowcTft18RL",
+]);
+
+// Wallets KOL : +4 pts par wallet présent
+const KOL_WALLETS = new Set([
+  "4sAUSQFdvWRBxR8UoLBYbw8CcXuwXWxnN8pXa4mtm5nU",
+  "PMJA8UQDyWTFw2Smhyp9jGA6aTaP7jKHR7BPudrgyYN",
+  "99xnE2zEFi8YhmKDaikc1EvH6ELTQJppnqUwMzmpLXrs",
+  "EeXvxkcGqMDZeTaVeawzxm9mbzZwqDUMmfG3bF7uzumH",
+  "FPx2BavA7J2C7Nz6WpoPL9f5kDAKjxLb38PHNZMoxCra",
+  "9f5ywdCDA4QhSktBomozpHmZfSLqS6J9VqCrRehYWh1p",
+  "ardinRsN1mNYVeoJWTBsWeYeXvuR9UUDGMsCDKpb6AT",
+  "A8i6J8B1DgVdQaoeyrCmc18473EzYocEtZGavHT4sXzw",
+  "3h65MmPZksoKKyEpEjnWU2Yk2iYT5oZDNitGy5cTaxoE",
+  "2kv8X2a9bxnBM8NKLc6BBTX2z13GFNRL4oRotMUJRva9",
+  "87rRdssFiTJKY4MGARa4G5vQ31hmR7MxSmhzeaJ5AAxJ",
+  "B9oKseVKRntTvfADyaUoH7oVmoyVbBfUf4NKyQc4KK2D",
+  "EQaxqKT3N981QBmdSUGNzAGK5S26zUwAdRHhBCgn87zD",
+  "6wTsHoJz4VzPb6t7zyBxLXifJJWEvE3zYRuF2X8v1vG6",
+  "ByXk1FEfaaX9sf9hSwFfkuZLBRZ7S9cutZsWMRQw2TjR",
+  "41uh7g1DxYaYXdtjBiYCHcgBniV9Wx57b7HU7RXmx1Gg",
+  "8fsKLLtvKNanL4ginCaiRS6UfeemY11rSf8U8fN1dJw4",
+  "5JrDgnED5QFiaE8Znny2S9GwCeDK2pLYjMfWmjKogs3w",
+  "4uCT4g7YHH4xxfmfNfKUDenwGrRNGoZ9Ay1XFxfUGhQG",
+  "6EDaVsS6enYgJ81tmhEkiKFcb4HuzPUVFZeom6PHUqN3",
+  "7ABz8qEFZTHPkovMDsmQkm64DZWN5wRtU7LEtD2ShkQ6",
+  "8TmEdDjLkwpWvNKTZtTtJcHjy5MuPbaGq1toY41WNCaf",
+  "3kebnKw7cPdSkLRfiMEALyZJGZ4wdiSRvmoN4rD1yPzV",
+  "2RyUYqX1VFoGdDSKm3brWV5c2bY4thXx1Wctz22uYS1p",
+  "D2wBctC1K2mEtA17i8ZfdEubkiksiAH2j8F7ri3ec71V",
+  "7cQjAvzJsmdePPMk8TiW8hYHHhCfdNtEaaNK3o46YP12",
+  "SAALE2x3sn51EyahJyqD6913L3GqHZdZo3egUdMayQp",
+  "H84Wda2aSgKV1daCVV9ozWrSurjVnoSLY5GAymYArGPg",
+  "8AtQ4ka3dgtrH1z4Uq3Tm4YdMN3cK5RRj1eKuGNnvenm",
+  "67Nwfi9hgwqhxGoovT2JGLU67uxfomLwQAWncjXXzU6U",
+  "2T5NgDDidkvhJQg8AHDi74uCFwgp25pYFMRZXBaCUNBH",
+  "2W14ahXD3XBfWJchQ4K5NLXmguWWcTTUTuHDhEzeuvP3",
+  "4s2WzRLa35FB58bZY1i4CN3WoywJeuYrGYHnTKFsT23z",
+  "FpD6n8gfoZNxyAN6QqNH4TFQdV9vZEgcv5W4H2YL8k4X",
+  "xyzfhxfy8NhfeNG3Um3WaUvFXzNuHkrhrZMD8dsStB6",
+  "5V9zsFPtN2nxoA53Xm6FKbx797NBnBZFxMdr84H1QXNL",
+  "AGqjivJr1dSv73TVUvdtqAwogzmThzvYMVXjGWg2FYLm",
+  "Bi4rd5FH5bYEN8scZ7wevxNZyNmKHdaBcvewdPFxYdLt",
+  "sAdNbe1cKNMDqDsa4npB3TfL62T14uAo2MsUQfLvzLT",
+  "6aXFYXbFob1ZKAEDCcqZnX2vooA3TgEqDoy5dAQbeWoV",
+  "J1XAE4onKYG1kTghgaytnyFgR3otQs1xEnJRRWM3djSQ",
+  "6uwzmiSnR2vVwrh6EsQfuwSVk8ScqsfYkJPQQ2eydU2M",
+  "DVMkhiQe1D8yenuEgsW44NjRn9LfVQjGEpZcez5x7Mff",
+  "67SNjkjV2MEyhDZcDjvMQSqFtjkh6TjCq6KDLmCgUxx6",
+  "3wjyaSegfV7SZzjv9Ut1p6AcY5ZdoZjmu6i6QPCVvnmz",
+  "FRbUNvGxYNC1eFngpn7AD3f14aKKTJVC6zSMtvj2dyCS",
+  "3tnzEgqo6U19ocZbbc49vcGv3mGSoWNFAYjQQk5gF2qP",
+  "As7HjL7dzzvbRbaD3WCun47robib2kmAKRXMvjHkSMB5",
+  "DZAa55HwXgv5hStwaTEJGXZz1DhHejvpb7Yr762urXam",
+  "8deJ9xeUvXSJwicYptA9mHsU2rN2pDx37KWzkDkEXhU6",
+  "BQVz7fQ1WsQmSTMY3umdPEPPTm1sdcBcX9sP7o6kPRmB",
+  "99i9uVA7Q56bY22ajKKUfTZTgTeP5yCtVGsrG9J4pDYQ",
+  "4vw54BmAogeRV3vPKWyFet5yf8DTLcREzdSzx4rw9Ud9",
+  "4BdKaxN8G6ka4GYtQQWk4G4dZRUTX2vQH9GcXdBREFUk",
+  "FAicXNV5FVqtfbpn4Zccs71XcfGeyxBSGbqLDyDJZjke",
+  "DYAn4XpAkN5mhiXkRB7dGq4Jadnx6XYgu8L5b3WGhbrt",
+  "ENkZtLj1onzQRGnEeRkQfFzBeeY2dCeiQMXDzh8XbQbj",
+  "8MoW9mtbEz6z3gPuAdYb1yWhjCAxQSYqpcTb1CQgN5qb",
+  "Av3xWHJ5EsoLZag6pr7LKbrGgLRTaykXomDD5kBhL9YQ",
+  "BCagckXeMChUKrHEd6fKFA1uiWDtcmCXMsqaheLiUPJd",
+  "6EDJ7JuynXSPaMvufzAX4swSRJZXv6uPi4s6jmo33xj5",
+  "Dgehc8YMv6dHsiPJVoumvq4pSBkMVvrTgTUg7wdcYJPJ",
+  "4nwfXw7n98jEQn93VWY7Cuf1jnn1scHXuXCPGVYS9k6T",
+  "GZVSEAajExLJEvACHHQcujBw7nJq98GWUEZtood9LM9b",
+  "DfMxre4cKmvogbLrPigxmibVTTQDuzjdXojWzjCXXhzj",
+  "AeLaMjzxErZt4drbWVWvcxpVyo8p94xu5vrg41eZPFe3",
+  "2zvSYhoejqAdAsH52gmWHM1dm179yDmBGcFbFxatHf6x",
+  "8rvAsDKeAcEjEkiZMug9k8v1y8mW6gQQiMobd89Uy7qR",
+  "G6fUXjMKPJzCY1rveAE6Qm7wy5U3vZgKDJmN1VPAdiZC",
+  "5B79fMkcFeRTiwm7ehsZsFiKsC7m7n1Bgv9yLxPp9q2X",
+  "4WPTQA7BB4iRdrPhgNpJihGcxKh8T43gLjMn5PbEVfQw",
+  "6DtEedWf9Wk5hA7Xth82Eq441yf5DA4aGLqaQAVfDokm",
+  "ATFRUwvyMh61w2Ab6AZxUyxsAfiiuG1RqL6iv3Vi9q2B",
+  "9tY7u1HgEt2RDcxym3RJ9sfvT3aZStiiUwXd44X9RUr8",
+  "BTf4A2exGK9BCVDNzy65b9dUzXgMqB4weVkvTMFQsadd",
+  "DuQabFqdC9eeBULVa7TTdZYxe8vK8ct5DZr4Xcf7docy",
+  "JDd3hy3gQn2V982mi1zqhNqUw1GfV2UL6g76STojCJPN",
+  "4YzpSZpxDdjNf3unjkCtdWEsz2FL5mok7e5XQaDNqry8",
+  "3cG7d6GmX47HKSX5nWRX9MJpruCojbzUkak92gSXGtG5",
+  "BtDaZUqHr2mKH5EYQCztuerHBuBEfQNYdquTDtEZp2Ym",
+  "3MNu91fiPyCefHL88aBYntpwfraf3dBrqJ8VYjJQyaqt",
+  "7j7AA3HZR2zEjwAQEKPFh2qucLY4fqZpB9iodf39w8xW",
+  "A2MwjTFz4jzT1mY4xrqkwm1vAbZDrqnA6QJoyTAU8Djw",
+  "3LUfv2u5yzsDtUzPdsSJ7ygPBuqwfycMkjpNreRR2Yww",
+  "j38fhfqWsJyt8hzym48P8QMsXWx1FfLUxQwuor7Ti4o",
+  "EA4MXkyF8C2NzY8fw2acJPuarmoU271KRCCAYpLzMBJr",
+  "8nqtxpFpuXwfXG4pBLsDkkuMMPK9FjSkBMCn542HiM3v",
+  "A8Z1ejQGk45EJibBPJviWnM3UvwKSuYun53nSCkWKM52",
+  "8Ltv5royXzxVG3tAhVhRnfXrzapS5Dwqt1ocxprgu6YP",
+  "8mp548ZBaSavzpTHVeytQ4XGpVpbVZx9p2UxVyAJvRxV",
+  "CUHBzSPSaNS3tArEtM3maSV6pNdJhHJFYZpurPPK9P7H",
+  "ADC1QV9raLnGGDbnWdnsxazeZ4Tsiho4vrWadYswA2ph",
+  "gangJEP5geDHjPVRhDS5dTF5e6GtRvtNogMEEVs91RV",
+  "9FNz4MjPUmnJqTf6yEDbL1D4SsHVh7uA8zRHhR5K138r",
+  "89HbgWduLwoxcofWpmn1EiF9wEdpgkNDEyPjzZ72mkDi",
 ]);
 
 const AXIOM_WALLETS = new Set([
@@ -3301,11 +3407,16 @@ async function checkAxiomWallets(tokenAddr, pairAddr = null, deep = false) {
     const wallets = count > newCount && prevResult?.wallets?.length
       ? prevResult.wallets  // conserver les wallets de la meilleure détection
       : newWallets;
-    // Bad wallets détectés
+    // KOL wallets détectés (+4pts chacun)
+    const kolMatches = allOwnersList.filter(o => KOL_WALLETS.has(o));
+    const newKolCount = kolMatches.length;
+    const kolCount = Math.max(newKolCount, prevResult?.kolCount || 0);
+    if (kolCount > 0) console.log('[AXIOM] KOL wallets détectés:', kolCount, kolMatches);
+    // Farmer wallets détectés (-4pts chacun)
     const badMatches = allOwnersList.filter(o => BAD_WALLETS.has(o));
     const badWalletCount = Math.max(badMatches.length, prevResult?.badWalletCount || 0);
-    if (badWalletCount > 0) console.log('[AXIOM] Bad wallets détectés:', badWalletCount, badMatches);
-    const result = { count, wallets, clustered: count >= 2, badWalletCount };
+    if (badWalletCount > 0) console.log('[AXIOM] Farmer wallets détectés:', badWalletCount, badMatches);
+    const result = { count, wallets, clustered: count >= 2, badWalletCount, kolCount };
     const cacheEntry = { ts: now, result, maxEver: count };
     swCache[tokenAddr] = cacheEntry;
     // Persister en localStorage → survit aux rechargements de page (jamais diminuer)
@@ -3314,7 +3425,7 @@ async function checkAxiomWallets(tokenAddr, pairAddr = null, deep = false) {
 
   } catch(e) {
     console.warn('checkAxiomWallets error:', e.message);
-    return { count: 0, wallets: [], clustered: false, badWalletCount: 0 };
+    return { count: 0, wallets: [], clustered: false, badWalletCount: 0, kolCount: 0 };
   }
 }
 
@@ -3474,22 +3585,17 @@ function scoreTokenV2(p,walletData={count:0,wallets:[],clustered:false}){
   let score = 0;
 
   // ── 🎯 TRADERS AXIOM ──────────────────────────────────────────────────────
-  // Basé sur axiomData.count (wallets de ta liste Axiom détectés en top holders)
-  // AXIOM CONSENSUS (max 35)
+  // Gros trader : +3 pts par wallet | KOL : +4 pts par wallet
   let traderScore = 0;
   const axiomCount = walletData.count || 0;
-  if      (axiomCount >= 6) traderScore = 35;
-  else if (axiomCount >= 5) traderScore = 30;
-  else if (axiomCount === 4) traderScore = 25;
-  else if (axiomCount === 3) traderScore = 18;
-  else if (axiomCount === 2) traderScore = 10;
-  else if (axiomCount === 1) traderScore =  5;
+  const kolCount   = walletData.kolCount || 0;
+  traderScore = axiomCount * 3 + kolCount * 4;
   score += traderScore;
 
-  // ── ⚠️ BAD WALLETS ────────────────────────────────────────────────────────
-  // -5 si ≥1 bad wallet présent, -10 si les 3 sont présents
+  // ── ⚠️ FARMER WALLETS ─────────────────────────────────────────────────────
+  // -4 pts par wallet farmer présent
   const badWalletCount = walletData.badWalletCount || 0;
-  const badWalletPenalty = badWalletCount >= 3 ? -10 : badWalletCount >= 1 ? -5 : 0;
+  const badWalletPenalty = badWalletCount * -4;
   score += badWalletPenalty;
 
   // ── 🌐 SOCIAL (max +26) ───────────────────────────────────────────────────
@@ -3596,7 +3702,7 @@ function scoreTokenV2(p,walletData={count:0,wallets:[],clustered:false}){
   score += patternScore;
 
   // ── MINIMUMS OBLIGATOIRES ─────────────────────────────────────────────────
-  const _mkFail = (reason) => ({ score: 0, _minFail: reason, symbol: (p.baseToken?.symbol||'UNKNOWN').toUpperCase().slice(0,12), addr: p.baseToken?.address||'', mcap, liq, socials: hasSocials, rugRisk: 'HIGH', walletData, pairUrl: p.url||'', raw: p, debug: { traderScore, socialScore, holderScore, platformScore, mcapScore, ageScore, patternScore, axiomCount, buyRatio: buyR, volAccel, c1h, m5, c6h, m1, ageH, top10pct, volMcapH1: vol1/mcap, sellBuyRatio: sells1/(buys1||1) } });
+  const _mkFail = (reason) => ({ score: 0, _minFail: reason, symbol: (p.baseToken?.symbol||'UNKNOWN').toUpperCase().slice(0,12), addr: p.baseToken?.address||'', mcap, liq, socials: hasSocials, rugRisk: 'HIGH', walletData, pairUrl: p.url||'', raw: p, debug: { traderScore, socialScore, holderScore, platformScore, mcapScore, ageScore, patternScore, axiomCount, kolCount, buyRatio: buyR, volAccel, c1h, m5, c6h, m1, ageH, top10pct, volMcapH1: vol1/mcap, sellBuyRatio: sells1/(buys1||1) } });
   if (traderScore < 5)  return _mkFail('axiom');
   if (patternScore < 3) return _mkFail('chart');
   if (holderScore < 3)  return _mkFail('distrib');
@@ -3633,7 +3739,7 @@ function scoreTokenV2(p,walletData={count:0,wallets:[],clustered:false}){
       buyScore: 0, volScore: 0, // non utilisés dans ce scoring
       walletCount: axiomCount, clustered: walletData.clustered,
       buyRatio: buyR, volAccel, c1h, m5, ageH, c6h, m1,
-      top10pct, axiomCount,
+      top10pct, axiomCount, kolCount,
       volMcapH1: vol1/mcap,
       sellBuyRatio: sells1/(buys1||1)
     }
@@ -5181,7 +5287,7 @@ function toggleDebugMode(){debugModeOn=!debugModeOn;const btn=document.getElemen
 function showDebug(idx){
   const t=lastScored[idx];if(!t)return;
   document.getElementById('debugOverlay').classList.add('open');
-  const cats=[{label:'TRACKER',val:t.debug.traderScore,max:35},{label:'SOCIAL',val:t.debug.socialScore,max:25},{label:'HOLDERS',val:t.debug.holderScore,max:25},{label:'TOKEN',val:t.debug.platformScore,max:10},{label:'MCAP',val:t.debug.mcapScore,max:15},{label:'AGE',val:t.debug.ageScore,max:10},{label:'PATTERN',val:t.debug.patternScore,max:40}];
+  const cats=[{label:'TRACKER',val:t.debug.traderScore,max:50},{label:'SOCIAL',val:t.debug.socialScore,max:25},{label:'HOLDERS',val:t.debug.holderScore,max:25},{label:'TOKEN',val:t.debug.platformScore,max:10},{label:'MCAP',val:t.debug.mcapScore,max:15},{label:'AGE',val:t.debug.ageScore,max:10},{label:'PATTERN',val:t.debug.patternScore,max:40}];
   const bars=cats.map(c=>{const pct=Math.max(0,Math.min(100,(Math.max(0,c.val)/c.max)*100));const color=c.val<0?'var(--red)':c.val>c.max*.7?'var(--green)':'#ffaa00';return`<div class="debug-bar-row"><div class="debug-bar-label">${c.label}</div><div class="debug-bar-track"><div class="debug-bar-fill" style="width:${pct}%;background:${color}"></div></div><div class="debug-bar-val">${c.val>0?'+':''}${c.val}</div></div>`;}).join('');
   const scoreColor=t.score>=110?'var(--gold)':t.score>=80?'var(--green)':t.score>=55?'var(--blue)':'var(--red)';
   const d=t.debug;
@@ -6457,7 +6563,7 @@ async function renderTokenTable(tokens){
     </div>`;
     // ── Score breakdown chips ──
     const scoreChips=[
-      {lbl:'T',val:d.traderScore||0,max:30},
+      {lbl:'T',val:d.traderScore||0,max:50},
       {lbl:'S',val:d.socialScore||0,max:26},
       {lbl:'H',val:d.holderScore||0,max:25},
       {lbl:'P',val:d.platformScore||0,max:15},
