@@ -2430,14 +2430,14 @@ nav{background:rgba(0,0,0,.96)!important;border-bottom:1px solid rgba(255,109,0,
           <button class="btn-admin ghost" onclick="refreshAI()" style="font-size:12px;padding:6px 14px;">REFRESH</button>
         </div>
         <div class="ai-stats" id="aiStats">
-          <div class="ai-stat green"><div class="ai-stat-val" id="aiWinrate">—</div><div class="ai-stat-lbl">Winrate (x1.2+)</div></div>
+          <div class="ai-stat green"><div class="ai-stat-val" id="aiWinrate">—</div><div class="ai-stat-lbl">Winrate (x1.01+)</div></div>
           <div class="ai-stat gold"><div class="ai-stat-val" id="aiTotal">—</div><div class="ai-stat-lbl">Calls traqués</div></div>
           <div class="ai-stat"><div class="ai-stat-val" id="aiAvgAthX">—</div><div class="ai-stat-lbl">ATH moyen</div></div>
           <div class="ai-stat"><div class="ai-stat-val" id="aiAvgRoi6h">—</div><div class="ai-stat-lbl">ROI moyen 6h</div></div>
         </div>
         <div class="ai-stats" style="grid-template-columns:repeat(5,1fr);margin-top:8px;">
           <div class="ai-stat green"><div class="ai-stat-val" id="aiMoons">0</div><div class="ai-stat-lbl">Moons (x2+)</div></div>
-          <div class="ai-stat green"><div class="ai-stat-val" id="aiWins">0</div><div class="ai-stat-lbl">Wins (x1.2+)</div></div>
+          <div class="ai-stat green"><div class="ai-stat-val" id="aiWins">0</div><div class="ai-stat-lbl">Wins (x1.01+)</div></div>
           <div class="ai-stat gold"><div class="ai-stat-val" id="aiFlats">0</div><div class="ai-stat-lbl">Flats</div></div>
           <div class="ai-stat red"><div class="ai-stat-val" id="aiLosses">0</div><div class="ai-stat-lbl">Losses</div></div>
           <div class="ai-stat"><div class="ai-stat-val" id="aiPending">0</div><div class="ai-stat-lbl">En attente</div></div>
@@ -2468,10 +2468,10 @@ nav{background:rgba(0,0,0,.96)!important;border-bottom:1px solid rgba(255,109,0,
         <!-- TABLEAU 2 : BONS CALLS -->
         <div class="ai-section">
           <div class="ai-section-title">
-            <span>✅ Bons calls (x1.2 et plus)</span>
+            <span>✅ Bons calls (x1.01 et plus)</span>
             <span id="goodCallsCount" style="font-size:13px;color:var(--green);font-weight:700;"></span>
           </div>
-          <div style="font-size:13px;color:var(--muted);margin-bottom:12px;">Tokens qui ont performé — ATH au dessus de x1.2 depuis le call</div>
+          <div style="font-size:13px;color:var(--muted);margin-bottom:12px;">Tokens qui ont performé — ATH au dessus de x1.01 depuis le call</div>
           <div id="goodCallsTable" style="max-height:400px;overflow-y:auto;"></div>
         </div>
 
@@ -6183,7 +6183,7 @@ function updateWrStats(calls){
   let wins=0,sumX=0;
   filtered.forEach(v=>{
     const xAth=v.callMcap>0&&v.athMcap>0?v.athMcap/v.callMcap:1;
-    if(xAth>=1.2)wins++;
+    if(xAth>1.01)wins++;
     sumX+=xAth;
   });
   const wr=Math.round(wins/total*100);
