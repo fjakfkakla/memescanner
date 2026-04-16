@@ -4834,6 +4834,8 @@ async function ptOpenTrade(token){
     const best = (res.pairs||[]).sort((a,b)=>(b.volume?.h24||0)-(a.volume?.h24||0))[0];
     if(best) entryMcap = best.marketCap || best.fdv || entryMcap;
   } catch(e) {}
+  // Mettre à jour le callMcap affiché sur la carte live avec le prix réel du moment
+  if(entryMcap) { token.mcap = entryMcap; token._callMcap = entryMcap; }
 
   const trade = {
     id:             'pt_' + Date.now(),
