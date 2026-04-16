@@ -6590,14 +6590,8 @@ async function renderHistory(force=false){
     const live=liveMap[addr];
     const callMcap=v.callMcap||0;
     const nowMcap=live?.now||0;
-    let bestKnown=Math.max(nowMcap,live?.athEst||0,v.athMcap||0);
-
-    // Pour les tokens callés il y a <24h : calcul ATH via priceChange (fiable)
-    // Pour les plus vieux : garder max(now, athStored) — pas de recalcul risqué
-    // Appliquer fetchRealAth pour tous les tokens < 7 jours
-    // La formule priceChange h24 est utile même pour tokens >24h
-    // car elle donne le range du dernier jour (souvent contient l'ATH ou proche)
-   // fetchRealAth skippé — ATH calculé depuis liveMap déjà fetchée en batch
+    // ATH = max entre stocké et prix live actuel uniquement — pas d'estimation pre-call via priceChange
+    let bestKnown=Math.max(nowMcap,v.athMcap||0);
 
     if(bestKnown>0&&bestKnown>(v.athMcap||0)){
       v.athMcap=bestKnown;
@@ -7359,27 +7353,12 @@ async function renderTokenTable(tokens){
     const label=getLabel(t.score);
     if(!label)continue;
     const callData=await getCallData(t.addr);
-    const callMcap=t._callMcap||callData?.callMcap||t.mcap;
+    const callMcap=callData?.callMcap||t._callMcap||t.mcap;
     const callTime=t._callTime||callData?.callTime||Date.now();
     // nowMcap = prix live (DexScreener) ou fallback sur mcap du scan
     const nowMcap=livePriceMap[t.addr]||t.mcap||0;
-    // ATH Live : prendre le max entre ATH stocké ET estimation via priceChange
-    let athMcap=callData?.athMcap||t.mcap;
-    // Recalcul ATH via priceChange du token live (même logique que Historique)
-    if(t.mcap>0){
-      const rp=t.raw||{};
-      const c24=rp.priceChange?.h24||0;
-      const c6=rp.priceChange?.h6||0;
-      const c1=rp.priceChange?.h1||0;
-      const cap=t.mcap*30;
-      let athEst=t.mcap;
-      if(c24<-5){const e=t.mcap/Math.max(0.001,1+c24/100);if(e<cap)athEst=Math.max(athEst,e);}
-      if(c6<-5) {const e=t.mcap/Math.max(0.001,1+c6/100); if(e<cap)athEst=Math.max(athEst,e);}
-      if(c1<-5) {const e=t.mcap/Math.max(0.001,1+c1/100); if(e<cap)athEst=Math.max(athEst,e);}
-      athMcap=Math.max(athMcap,Math.round(athEst));
-    }
-    // NOW est toujours un candidat ATH valide (ATH ne peut jamais être < NOW)
-    athMcap=Math.max(athMcap,nowMcap);
+    // ATH = max entre ATH stocké et prix live actuel uniquement (pas d'estimation pre-call via priceChange)
+    let athMcap=Math.max(callData?.athMcap||callMcap, nowMcap);
     if(athMcap>(callData?.athMcap||0))updateAth(t.addr,athMcap).catch(()=>{});
     t._athMcap=athMcap; // stocké pour refreshLiveMcap
 
