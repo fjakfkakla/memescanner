@@ -4820,19 +4820,28 @@ function ptSaveConfig(){
 }
 
 // ── Ouvrir un trade ──
-function ptOpenTrade(token){
+async function ptOpenTrade(token){
   const cfg = ptConfig();
   if(!cfg.enabled) return;
   if((token.score||0) < cfg.minScore) return;
   const trades = ptTrades();
   if(trades.some(t => t.addr === token.addr && t.status === 'open')) return;
+
+  // Fetch mcap actuel au moment de l'entrée (pas le mcap stale du scan)
+  let entryMcap = token.mcap || 0;
+  try {
+    const res = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${token.addr}`,{signal:AbortSignal.timeout(4000)}).then(r=>r.json());
+    const best = (res.pairs||[]).sort((a,b)=>(b.volume?.h24||0)-(a.volume?.h24||0))[0];
+    if(best) entryMcap = best.marketCap || best.fdv || entryMcap;
+  } catch(e) {}
+
   const trade = {
     id:             'pt_' + Date.now(),
     addr:           token.addr,
     symbol:         (token.symbol||'?').toUpperCase(),
     score:          token.score || 0,
     axiom:          token.debug?.axiomCount || 0,
-    entryMcap:      token.mcap || 0,
+    entryMcap,
     entryTime:      Date.now(),
     posSize:        cfg.posSize,
     status:         'open',
