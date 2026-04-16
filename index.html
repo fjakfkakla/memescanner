@@ -4962,7 +4962,8 @@ async function ptCheckPositions(){
     // Migrate old trades
     if(t.sells===undefined){ t.sells=[]; t.athX=1; t.remainFraction=1; t.totalPnlUsd=0; }
 
-    if(xNow > t.athX) t.athX = xNow;
+    if(xNow > t.athX) { t.athX = xNow; changed = true; }
+    if(Math.abs(xNow - (t.currentX||1)) > 0.005) changed = true; // save si X change de >0.5%
     t.currentX = xNow;
 
     // doSell : fraction = % du reste encore en position
