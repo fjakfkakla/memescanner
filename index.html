@@ -2966,6 +2966,7 @@ window.addEventListener('unhandledrejection', function(e) { console.error('Promi
 // ADMIN_PW supprimé du frontend — vérification via backend Railway uniquement
 const HELIUS_KEY = 'df64cfbc-e1e4-4fdf-9ff3-a8fa9abd42d3'; // conservé pour debug CA local uniquement
 const HELIUS_RPC = `https://mainnet.helius-rpc.com/?api-key=${HELIUS_KEY}`;
+const PUBLIC_RPC = 'https://api.mainnet-beta.solana.com'; // RPC gratuit pour appels standard (getAccountInfo, getSignaturesForAddress, etc.)
 const FB_URL = 'https://memescanner-calls-default-rtdb.firebaseio.com';
 const BACKEND_URL = 'https://memescanner-production-342a.up.railway.app';
 const STORAGE_KEY = 'ms_calls_v1';
@@ -3516,12 +3517,12 @@ async function checkTokenSecurity(mintAddr, pairAddress = null) {
   try {
     // 3 appels PARALLÈLES pour réduire la latence (avant : 3x5s = 15s max, maintenant : 8s max)
     const [accRes, holdRes, dasRes] = await Promise.allSettled([
-      fetch(HELIUS_RPC, {
+      fetch(PUBLIC_RPC, {
         method:'POST', headers:{'Content-Type':'application/json'},
         body:JSON.stringify({jsonrpc:'2.0',id:1,method:'getAccountInfo',params:[mintAddr,{encoding:'jsonParsed'}]}),
         signal:AbortSignal.timeout(8000)
       }).then(r=>r.json()),
-      fetch(HELIUS_RPC, {
+      fetch(PUBLIC_RPC, {
         method:'POST', headers:{'Content-Type':'application/json'},
         body:JSON.stringify({jsonrpc:'2.0',id:2,method:'getTokenLargestAccounts',params:[mintAddr]}),
         signal:AbortSignal.timeout(8000)
@@ -3696,7 +3697,7 @@ async function checkAxiomWallets(tokenAddr, pairAddr = null, deep = false) {
     const sigLimit = deep ? 500 : 100;
     const [sigPairRes, sigMintRes, dasRes] = await Promise.allSettled([
       // A1) Signatures via pairAddr (pool actuel — PumpSwap ou bonding curve)
-      fetchRetry(HELIUS_RPC, {
+      fetchRetry(PUBLIC_RPC, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ jsonrpc: '2.0', id: 'sigs1',
           method: 'getSignaturesForAddress',
@@ -3704,7 +3705,7 @@ async function checkAxiomWallets(tokenAddr, pairAddr = null, deep = false) {
         signal: AbortSignal.timeout(20000)
       }).then(r => r.json()),
       // A2) Signatures via mintAddr (couvre toutes les txs depuis le lancement)
-      fetchRetry(HELIUS_RPC, {
+      fetchRetry(PUBLIC_RPC, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ jsonrpc: '2.0', id: 'sigs2',
           method: 'getSignaturesForAddress',
@@ -7046,7 +7047,7 @@ async function fetchTokens(){
     const oneHourAgo=Math.floor((now-3600000)/1000);
     try{
       // Etape 1 : signatures recentes du programme Pump.fun
-      const sigsResp=await fetch(HELIUS_RPC,{
+      const sigsResp=await fetch(PUBLIC_RPC,{
         method:'POST',headers:{'Content-Type':'application/json'},
         body:JSON.stringify({jsonrpc:'2.0',id:'pump-sigs',method:'getSignaturesForAddress',
           params:[PUMP_PROGRAM,{limit:100}]}),
