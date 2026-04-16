@@ -4096,7 +4096,7 @@ function getLabel(score){
   if(score>=130)return{text:'☢️ NUCLEAR SEND',   cls:'score-god-gem'};
   if(score>=110)return{text:'💎 DIAMOND RADAR',  cls:'score-god-gem'};
   if(score>=95) return{text:'🚀 EARLY RUNNER',   cls:'score-high-pot'};
-  if(score>=80) return{text:'👁 WATCHLIST',       cls:'score-solid'};
+  if(score>=80) return{text:'📋 CALL',             cls:'score-solid'};
   if(score>=55) return{text:'📡 ON RADAR',        cls:'score-solid'};
   return null; // sous 55 = pas affiché
 }
@@ -6410,7 +6410,7 @@ async function renderHistory(force=false){
     const savedScore=v.score||0;
     const scoreEmoji=savedScore>=130?'☢️':savedScore>=110?'💎':savedScore>=95?'🚀':savedScore>=80?'👁':'📡';
     const badgeCls=savedScore>=130?'nuclear':savedScore>=110?'diamond':savedScore>=95?'runner':savedScore>=80?'watchlist':'radar';
-    const labelTxt=savedScore>=130?'☢️ NUCLEAR':savedScore>=110?'💎 DIAMOND':savedScore>=95?'🚀 RUNNER':savedScore>=80?'👁 WATCHLIST':'📋 CALL';
+    const labelTxt=savedScore>=130?'☢️ NUCLEAR':savedScore>=110?'💎 DIAMOND':savedScore>=95?'🚀 RUNNER':savedScore>=80?'📋 CALL':'📡 RADAR';
     cards.push(`<div class="sc-card" style="opacity:${isLive?1:.8}">
       <div class="sc-header">
         <span style="font-size:1.2rem;flex-shrink:0">${scoreEmoji}</span>
@@ -6699,7 +6699,7 @@ async function fetchTokens(){
       if(!_prevAddrs.has(token.addr)){
         // Seulement les calls frais (<2min) pour ne pas entrer sur des positions vieilles
         const age=_nowTs-(token._callTime||0);
-        if(age<120000) onNewCall(token);
+        if(age<300000) onNewCall(token);
       }
     }
     if(loadEl)loadEl.style.display='none';
