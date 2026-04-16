@@ -4912,15 +4912,8 @@ async function ptOpenTrade(token){
   const trades = ptTrades();
   if(trades.some(t => t.addr === token.addr && t.status === 'open')) return;
 
-  // Fetch mcap actuel au moment de l'entrée (pas le mcap stale du scan)
-  let entryMcap = token.mcap || 0;
-  try {
-    const res = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${token.addr}`,{signal:AbortSignal.timeout(4000)}).then(r=>r.json());
-    const best = (res.pairs||[]).sort((a,b)=>(b.volume?.h24||0)-(a.volume?.h24||0))[0];
-    if(best) entryMcap = best.marketCap || best.fdv || entryMcap;
-  } catch(e) {}
-  // Mettre à jour le callMcap affiché sur la carte live avec le prix réel du moment
-  if(entryMcap) { token.mcap = entryMcap; token._callMcap = entryMcap; }
+  // Utiliser le callMcap du serveur (déjà frais au moment du call backend)
+  const entryMcap = token._callMcap || token.mcap || 0;
 
   const trade = {
     id:             'pt_' + Date.now(),
@@ -6985,7 +6978,7 @@ async function fetchTokens(){
           await renderTokenTable(recentH);
           if(currentTab==='history')renderHistory();
           if(refreshTimer)clearTimeout(refreshTimer);
-          refreshTimer=setTimeout(fetchTokens,15000);
+          refreshTimer=setTimeout(fetchTokens,7000);
           return;
         }
       }catch(e){}
@@ -6995,7 +6988,7 @@ async function fetchTokens(){
     }
     if(currentTab==='history')renderHistory();
     if(refreshTimer)clearTimeout(refreshTimer);
-    refreshTimer=setTimeout(fetchTokens,15000);
+    refreshTimer=setTimeout(fetchTokens,7000);
     return;
   }catch(eBackend){
     console.warn('[fetchTokens] Backend injoignable, fallback local:', eBackend.message);
@@ -7328,7 +7321,7 @@ async function fetchTokens(){
   else{await renderTokenTable(finalScored);}
   if(currentTab==='history')renderHistory();
   if(refreshTimer)clearTimeout(refreshTimer);
-  refreshTimer=setTimeout(fetchTokens,15000);
+  refreshTimer=setTimeout(fetchTokens,7000);
 }
 
 // ============================================================
