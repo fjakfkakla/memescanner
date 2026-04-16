@@ -3645,6 +3645,23 @@ function swCacheSave(addr, entry) {
 const swCache = swCacheLoad();
 const scoreHistory = {}; // addr → {maxAxiom, maxSocial, maxHolder}
 
+// Migration one-shot : reset athMcap corrompu par ancien calcul priceChange
+(function migrateAth(){
+  if(localStorage.getItem('ath_migration_v1')) return;
+  try{
+    const all=JSON.parse(localStorage.getItem('ms_calls_v1')||'{}');
+    const cutoff=Date.now()-3*3600000; // dernières 3h seulement
+    let changed=false;
+    Object.values(all).forEach(c=>{
+      if(c&&c.callTime>=cutoff&&c.athMcap&&c.callMcap&&c.athMcap>c.callMcap){
+        c.athMcap=c.callMcap; changed=true;
+      }
+    });
+    if(changed) localStorage.setItem('ms_calls_v1',JSON.stringify(all));
+  }catch(e){}
+  localStorage.setItem('ath_migration_v1','1');
+})();
+
 // Helper : fetch avec retry automatique sur 429
 async function fetchRetry(url, options, retries = 2, delayMs = 800) {
   for (let i = 0; i <= retries; i++) {
