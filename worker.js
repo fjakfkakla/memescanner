@@ -323,7 +323,12 @@ async function checkTokenSecurity(tokenAddr, pairAddr = null) {
 
 async function checkAxiomWallets(tokenAddr, pairAddr = null, deep = false) {
   const cached = swCache.get(tokenAddr);
-  if (cached && Date.now() - cached.ts < 1800000) return cached.result;
+  if (cached) {
+    // 0-count entries expire après 90s (wallet pas encore arrivé → retenter vite)
+    // Entries avec wallets → 30min (données stables)
+    const ttl = (cached.result?.count || 0) === 0 ? 90000 : 1800000;
+    if (Date.now() - cached.ts < ttl) return cached.result;
+  }
   if (!canCallHelius()) return { count: 0, wallets: [], clustered: false };
 
   const sigAddr  = pairAddr || tokenAddr;

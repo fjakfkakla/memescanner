@@ -486,7 +486,7 @@ async function deepAnalyze() {
 
     // Formatter les calls pour le frontend
     const formatCall = (c) => ({
-      sym: c.sym || c.name || '???',
+      sym: c.symbol || c.name || '???',
       addr: c.addr,
       score: c.score || 0,
       callMcap: c.callMcap || 0,
@@ -670,10 +670,10 @@ function findOptimalThreshold(goodCalls, badCalls, featureKey, direction) {
 function findToxicCombos(goodCalls, badCalls) {
   const combos = [];
   const featurePairs = [
-    ['c5m', 'c1h'], ['m5', 'c1h'], ['c5m', 'volMcapH1'],
+    ['m5', 'c1h'], ['m5', 'volMcapH1'],
     ['c6h', 'c1h'], ['sellBuyRatio', 'volMcapH1'], ['sellBuyRatio', 'c1h'],
     ['top10pct', 'sellBuyRatio'], ['buyRatio', 'volMcapH1'],
-    ['c5m', 'sellBuyRatio'], ['c1h', 'volMcapH1'],
+    ['m5', 'sellBuyRatio'], ['c1h', 'volMcapH1'],
     ['patternScore', 'buyRatio'], ['patternScore', 'c1h'],
     ['score', 'c1h'], ['score', 'buyRatio'],
     ['traderScore', 'patternScore'], ['socialScore', 'patternScore'],
@@ -778,7 +778,7 @@ async function buildSmartFilters() {
     const featureConfigs = [
       { key: 'volMcapH1', direction: 'high_is_bad', name: 'Volume/Mcap ratio' },
       { key: 'sellBuyRatio', direction: 'high_is_bad', name: 'Ratio Sells/Buys' },
-      { key: 'c5m', direction: 'high_is_bad', name: 'Variation 5min (%)' },
+      { key: 'm5', direction: 'high_is_bad', name: 'Variation 5min (%)' },
       { key: 'c1h', direction: 'high_is_bad', name: 'Variation 1h (%)' },
       { key: 'top10pct', direction: 'high_is_bad', name: 'Top 10 holders (%)' },
       { key: 'buyRatio', direction: 'low_is_bad', name: 'Buy Ratio' },
