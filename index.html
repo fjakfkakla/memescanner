@@ -4201,7 +4201,13 @@ async function submitCode(){
   localStorage.setItem(SESSION_KEY,JSON.stringify({plan:found.plan,expires,registeredAt}));
   isUnlocked=true;closeCode();onUnlock(found.plan);
 }
-function onUnlock(plan){loadReviews();fetchTokens();fetchRugs().then(()=>{if(rugPriceTimer)clearTimeout(rugPriceTimer);rugPriceTimer=setTimeout(refreshRugPrices,3000);});}
+function onUnlock(plan){
+  loadReviews();fetchTokens();
+  fetchRugs().then(()=>{if(rugPriceTimer)clearTimeout(rugPriceTimer);rugPriceTimer=setTimeout(refreshRugPrices,3000);});
+  // Vérifier les positions paper bot toutes les 7s (indépendant du cycle scanner)
+  // → attrape les pumps rapides entre deux cycles de 15s
+  setInterval(()=>{ if(ptTrades().some(t=>t.status==='open')) ptCheckPositions(); }, 7000);
+}
 function formatCode(input){let v=input.value.replace(/[^A-Za-z0-9]/g,'').toUpperCase();let out='';for(let i=0;i<v.length&&i<12;i++){if(i>0&&i%4===0)out+='-';out+=v[i];}input.value=out;}
 
 // ============================================================
@@ -5010,8 +5016,63 @@ function ptRecordEquity(trade, cfg){
   ptSaveEquity(eq);
 }
 
-// ── Detail modal ──
+// ── Detail modal (commun open + closed) ──
 let _ptDetailId = null, _ptDetailTimer = null;
+
+function ptOpenHistDetail(id){
+  const t = ptTrades().find(x=>x.id===id);
+  if(!t || t.status!=='closed') return;
+  const cfg = ptConfig();
+  const pnl = t.totalPnlUsd||0;
+  const pnlPct = t.posSize ? pnl/t.posSize*100 : 0;
+  const dur = t.exitTime&&t.entryTime ? Math.round((t.exitTime-t.entryTime)/60000) : '?';
+  const TP_LEVELS = [
+    {n:1,mult:cfg.tp1,frac:30},{n:2,mult:cfg.tp2,frac:30},{n:3,mult:cfg.tp3,frac:20},
+    {n:4,mult:cfg.tp4,frac:60},{n:5,mult:cfg.tp5,frac:25},{n:6,mult:cfg.tp6,frac:50},
+    {n:7,mult:cfg.tp7,frac:50},{n:8,mult:cfg.tp8,frac:100}
+  ];
+  const hitTps = new Set((t.sells||[]).map(s=>s.reason));
+  const overlay = document.getElementById('ptDetailOverlay');
+
+  document.getElementById('ptdSym').textContent   = '$' + t.symbol + ' — FERMÉ';
+  document.getElementById('ptdScore').textContent = t.score + ' pts · durée ' + dur + 'min · ' + (t.exitReason||'?');
+  document.getElementById('ptdEntry').textContent = '$' + fmtNum(t.entryMcap);
+  document.getElementById('ptdNow').textContent   = t.exitMcap ? '$'+fmtNum(t.exitMcap) : '—';
+
+  const xExit = t.exitMcap&&t.entryMcap ? t.exitMcap/t.entryMcap : (t.sells[t.sells.length-1]?.xAt||1);
+  const xEl = document.getElementById('ptdX');
+  xEl.textContent = xExit.toFixed(3)+'x (sortie)';
+  xEl.style.color = xExit>=1?'#00ff88':'#ff4466';
+
+  const athEl = document.getElementById('ptdAth');
+  athEl.textContent = (t.athX||1).toFixed(3)+'x';
+  athEl.style.color = '#ffd700';
+
+  const pnlEl = document.getElementById('ptdPnl');
+  pnlEl.textContent = (pnl>=0?'+':'')+'$'+pnl.toFixed(2)+' ('+(pnlPct>=0?'+':'')+pnlPct.toFixed(1)+'%)';
+  pnlEl.style.color = pnl>=0?'#00ff88':'#ff4466';
+
+  document.getElementById('ptdRest').textContent = '0% (clôturé)';
+  document.getElementById('ptdSl').textContent = '';
+
+  document.getElementById('ptdTpList').innerHTML = TP_LEVELS.map(tp=>{
+    const key='TP'+tp.n;
+    const sell=(t.sells||[]).find(s=>s.reason===key);
+    const isHit=!!sell;
+    const dot=isHit?'hit':'pending';
+    const label=isHit
+      ? `<b style="color:#00ff88">✓ TP${tp.n}</b> ×${tp.mult} — ${Math.round(sell.fraction*100)}% du reste → ${sell.pnlUsd>=0?'+':''}$${sell.pnlUsd.toFixed(1)}`
+      : `<span style="color:rgba(255,255,255,.25)">TP${tp.n} ×${tp.mult} — non atteint</span>`;
+    return `<div class="pt-detail-tp-row"><div class="pt-detail-tp-dot ${dot}"></div>${label}</div>`;
+  }).join('');
+
+  const closeBtn = document.getElementById('ptdCloseBtn');
+  closeBtn.textContent = '✕ Fermer';
+  closeBtn.onclick = ptCloseDetail;
+
+  overlay.classList.add('open');
+  _ptDetailId = null; // pas de refresh auto pour historique
+}
 
 function ptOpenDetail(id){
   const t = ptTrades().find(x=>x.id===id);
@@ -5236,7 +5297,7 @@ function ptRender(){
         const sellsHtml=sells.length
           ? sells.map(s=>`<span class="pt-sell-badge ${s.reason.toLowerCase()}">${s.reason} <b>${s.xAt.toFixed(2)}x</b> ${s.pnlUsd>=0?'+':''}$${s.pnlUsd.toFixed(0)} (${Math.round(s.fraction*100)}%)</span>`).join('')
           : `<span class="pt-sell-badge ${(t.exitReason||'').toLowerCase()}">${t.exitReason||'?'}</span>`;
-        return `<div class="pt-trade-row ${winLoss}">
+        return `<div class="pt-trade-row ${winLoss}" style="cursor:pointer" onclick="ptOpenHistDetail('${t.id}')">
           <div class="pt-trade-top">
             <span class="pt-trade-sym">${t.symbol}</span>
             <span class="pt-trade-score">${t.score}pts</span>
