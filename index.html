@@ -4108,7 +4108,7 @@ function scoreTokenV2(p,walletData={count:0,byGroup:{KOL:0,'gros trader':0,DEV:0
 
   // ── MINIMUMS OBLIGATOIRES ─────────────────────────────────────────────────
   const _mkFail = (reason) => ({ score: 0, _minFail: reason, symbol: (p.baseToken?.symbol||'UNKNOWN').toUpperCase().slice(0,12), addr: p.baseToken?.address||'', mcap, liq, socials: hasSocials, rugRisk: 'HIGH', walletData, pairUrl: p.url||'', raw: p, debug: { traderScore, socialScore, holderScore, platformScore, mcapScore, ageScore, patternScore, washPenalty, liqQualScore, axiomCount, kolCount, traderCount, devCount, farmerCount, byGroup, buyRatio: buyR, volAccel, c1h, m5, c6h, m1, ageH, top10pct, volMcapH1: vol1/mcap, sellBuyRatio: sells1/(buys1||1) } });
-  if (kolCount < 1 || traderCount < 1) return _mkFail('wallet'); // 1 KOL + 1 gros trader obligatoires
+  if (kolCount < 1 || traderCount < 1) { const r=_mkFail('wallet'); r.score=Math.round(score); return r; } // partial score pour pre-ranking
   if (patternScore < 8) return _mkFail('activity');     // activité minimale requise
   if (holderScore < 3)   return _mkFail('distrib');
   if (buyR < 0.40)       return _mkFail('sell_pressure'); // +60% sells en h1 = dump actif
