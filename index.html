@@ -4764,12 +4764,31 @@ function ptSaveTrades(arr){ try{ localStorage.setItem(PT_LS, JSON.stringify(arr)
 function ptEquity()  { try{ return JSON.parse(localStorage.getItem(PT_EQUITY_LS)||'[]'); }catch(e){ return []; } }
 function ptSaveEquity(arr){ try{ localStorage.setItem(PT_EQUITY_LS, JSON.stringify(arr.slice(-200))); }catch(e){} }
 
+// ── Sync positions depuis les calls live déjà connus (chargement page / activation bot) ──
+// Ouvre les positions pour les calls récents (<30min) pas encore en portefeuille
+function ptSyncFromLive(){
+  const cfg = ptConfig();
+  if(!cfg.enabled) return;
+  if(typeof lastScored === 'undefined' || !lastScored.length) return;
+  const now = Date.now();
+  const MAX_AGE = 30 * 60 * 1000; // 30 minutes
+  let opened = 0;
+  for(const token of lastScored){
+    const age = now - (token._callTime || 0);
+    if(age > MAX_AGE) continue;          // trop vieux → skip
+    ptOpenTrade(token);                  // ptOpenTrade vérifie déjà les doublons
+    opened++;
+  }
+  if(opened > 0){ ptRender(); showToast(`🤖 Paper Bot — ${opened} position(s) synchro depuis les calls live`, 'call'); }
+}
+
 // ── Toggle ──
 function ptToggleBot(){
   const cfg = ptConfig(); cfg.enabled = !cfg.enabled;
   localStorage.setItem(PT_CFG_LS, JSON.stringify(cfg));
   ptUpdateToggleUI(cfg.enabled);
   showToast(cfg.enabled ? '🤖 Paper Bot ON — trade sur chaque call' : '⏸ Paper Bot OFF', 'call');
+  if(cfg.enabled) setTimeout(ptSyncFromLive, 200); // synchro immédiate sur les calls déjà live
 }
 function ptUpdateToggleUI(on){
   const tog=document.getElementById('ptToggle'), st=document.getElementById('ptStatusText');
@@ -6691,9 +6710,12 @@ async function fetchTokens(){
     }));
     finalScored.sort((a,b)=>b.score-a.score);
     // ── FIX : détecter les nouveaux calls → paper bot + notifications ──
+    const _isFirstFetch = lastScored.length === 0;
     const _prevAddrs=new Set(lastScored.map(t=>t.addr));
     lastScored=finalScored;
     await ptCheckPositions();
+    // Premier fetch : synchro paper bot sur les calls déjà live (<30min)
+    if(_isFirstFetch) ptSyncFromLive();
     const _nowTs=Date.now();
     for(const token of finalScored){
       if(!_prevAddrs.has(token.addr)){
