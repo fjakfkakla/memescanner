@@ -435,7 +435,10 @@ async function checkAxiomWallets(tokenAddr, pairAddr = null, deep = false) {
 }
 
 // Pipeline principal — tourne toutes les 45s
+let _scanRunning = false;
 export async function runScanCycle() {
+  if (_scanRunning) { console.log('[Worker] Cycle skipped — précédent encore en cours'); return; }
+  _scanRunning = true;
   console.log(`[Worker] Cycle démarré ${new Date().toISOString()}`);
   const rejected = {};
 
@@ -683,6 +686,8 @@ export async function runScanCycle() {
     console.log(`[Worker] Live tokens: ${liveTokens.size}`);
   } catch (e) {
     console.error('[Worker] Cycle error:', e.message);
+  } finally {
+    _scanRunning = false;
   }
 }
 
