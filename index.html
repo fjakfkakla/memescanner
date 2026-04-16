@@ -3660,9 +3660,9 @@ async function checkAxiomWallets(tokenAddr, pairAddr = null, deep = false) {
   if (!tokenAddr) return { count: 0, byGroup: { KOL: 0, 'gros trader': 0, DEV: 0, farmer: 0 }, wallets: [], clustered: false };
   const now = Date.now();
   const cached = swCache[tokenAddr];
-  // Cache adaptatif : 5min si count=0 (permet re-check si wallets achetent plus tard),
+  // Cache adaptatif : 90s si count=0 (re-check rapide si KOLs achètent après),
   // 60min si count>0 (on a déjà détecté des wallets, pas besoin de refaire)
-  const cacheTTL = (cached?.result?.count || 0) > 0 ? 3600000 : 300000;
+  const cacheTTL = (cached?.result?.count || 0) > 0 ? 3600000 : 90000;
   if (cached && now - cached.ts < cacheTTL) return cached.result;
   // Pour getSignaturesForAddress : utiliser pairAddress (bonding curve) si dispo
   // Les swaps Pump.fun sont indexés sous la bonding curve, PAS sous le mint
