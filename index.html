@@ -6004,8 +6004,10 @@ function showDebug(idx){
 // ============================================================
 async function saveCall(addr,callMcap,callTime,symbol='',score=0,pairAddress=''){
   const entry={callMcap,callTime,athMcap:callMcap,addr,symbol,score,pairAddress};
-  try{const all=JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}');if(!all[addr]){all[addr]=entry;localStorage.setItem(STORAGE_KEY,JSON.stringify(all));}}catch(e){}
+  let saved=false;
+  try{const all=JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}');if(!all[addr]){all[addr]=entry;localStorage.setItem(STORAGE_KEY,JSON.stringify(all));saved=true;}}catch(e){}
   try{const key=addr.replace(/[.#$\/\[\]]/g,'_');const ex=await fetch(`${FB_URL}/calls/${key}.json`).then(r=>r.json()).catch(()=>null);if(!ex)await fetch(`${FB_URL}/calls/${key}.json`,{method:'PUT',body:JSON.stringify(entry)});}catch(e){}
+  return saved;
 }
 async function updateAth(addr,currentMcap){
   try{const all=JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}');if(all[addr]&&currentMcap>(all[addr].athMcap||0)){all[addr].athMcap=currentMcap;localStorage.setItem(STORAGE_KEY,JSON.stringify(all));}}catch(e){}
@@ -7290,7 +7292,7 @@ async function fetchTokens(){
     // PVP loser → affiché en UI mais jamais sauvegardé comme call
     if(t.pvp==='loser'){t._callTime=_now5;continue;}
     const existing=existingMap[t.addr]||null;
-    if(!existing){ await saveCall(t.addr,t.mcap,_now5,t.symbol,t.score||0,t.raw?.pairAddress||''); t._callTime=_now5; onNewCall(t); }
+    if(!existing){ const saved=await saveCall(t.addr,t.mcap,_now5,t.symbol,t.score||0,t.raw?.pairAddress||''); t._callTime=_now5; if(saved)onNewCall(t); }
     else{ if(t.mcap>(existing.athMcap||0)){await updateAth(t.addr,t.mcap); const xAth=t.mcap/(existing.callMcap||t.mcap); if(xAth>=2)onX2Call(t,xAth);} t._callTime=existing.callTime||_now5; }
   }
   const newAddrs=new Set(finalScored.map(t=>t.addr));
