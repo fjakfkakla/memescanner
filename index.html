@@ -2135,36 +2135,44 @@ nav{background:rgba(0,0,0,.96)!important;border-bottom:1px solid rgba(255,109,0,
           <input type="number" id="ptCfgSize" value="100" min="1" max="10000" class="pt-inp">
         </div>
         <div class="pt-config-item">
-          <label>TP1 (×) — 30%</label>
-          <input type="number" id="ptCfgTp1" value="2" min="1.1" step="0.1" class="pt-inp">
+          <label>TP1 (×) — 30% reste</label>
+          <input type="number" id="ptCfgTp1" value="1.3" min="1.05" step="0.05" class="pt-inp">
         </div>
         <div class="pt-config-item">
-          <label>TP2 (×) — 30%</label>
-          <input type="number" id="ptCfgTp2" value="4" min="1.5" step="0.5" class="pt-inp">
+          <label>TP2 (×) — 30% reste</label>
+          <input type="number" id="ptCfgTp2" value="1.5" min="1.1" step="0.1" class="pt-inp">
         </div>
         <div class="pt-config-item">
-          <label>TP3 (×) — 20%</label>
-          <input type="number" id="ptCfgTp3" value="8" min="3" step="1" class="pt-inp">
+          <label>TP3 (×) — 20% reste</label>
+          <input type="number" id="ptCfgTp3" value="2" min="1.5" step="0.1" class="pt-inp">
         </div>
         <div class="pt-config-item">
-          <label>Trail ATH (%)</label>
-          <input type="number" id="ptCfgTrail" value="28" min="10" max="50" class="pt-inp" title="Sell remaining if drops X% from ATH">
+          <label>TP4 (×) — 60% reste</label>
+          <input type="number" id="ptCfgTp4" value="3" min="2" step="0.5" class="pt-inp">
         </div>
         <div class="pt-config-item">
-          <label>SL dur (%)</label>
-          <input type="number" id="ptCfgSl" value="45" min="10" max="90" class="pt-inp">
+          <label>TP5 (×) — 25% reste</label>
+          <input type="number" id="ptCfgTp5" value="5" min="3" step="1" class="pt-inp">
         </div>
         <div class="pt-config-item">
-          <label>Early exit (min)</label>
-          <input type="number" id="ptCfgEarly" value="20" min="5" max="60" class="pt-inp" title="Exit fast if no pump in X minutes">
+          <label>TP6 (×) — 50% reste</label>
+          <input type="number" id="ptCfgTp6" value="10" min="5" step="1" class="pt-inp">
         </div>
         <div class="pt-config-item">
-          <label>Max hold (h)</label>
-          <input type="number" id="ptCfgTime" value="4" min="1" max="24" class="pt-inp">
+          <label>TP7 (×) — 50% reste</label>
+          <input type="number" id="ptCfgTp7" value="15" min="8" step="1" class="pt-inp">
         </div>
         <div class="pt-config-item">
-          <label>Score min</label>
-          <input type="number" id="ptCfgScore" value="80" min="60" max="140" class="pt-inp">
+          <label>TP8 (×) — 100% reste</label>
+          <input type="number" id="ptCfgTp8" value="20" min="10" step="1" class="pt-inp">
+        </div>
+        <div class="pt-config-item">
+          <label>SL (%) — sell tout</label>
+          <input type="number" id="ptCfgSl" value="20" min="5" max="50" class="pt-inp">
+        </div>
+        <div class="pt-config-item">
+          <label>Score min (0 = tous)</label>
+          <input type="number" id="ptCfgScore" value="0" min="0" max="140" class="pt-inp">
         </div>
       </div>
       <div style="display:flex;gap:8px;margin-top:10px;">
@@ -4735,17 +4743,15 @@ async function runHourlyHeatmap(useCustom=false) {
 // ═══════════════════════════════════════════════════════════════
 // 🤖 PAPER TRADING BOT
 // ═══════════════════════════════════════════════════════════════
-const PT_LS       = 'paperTrades_v2';
-const PT_CFG_LS   = 'paperConfig_v2';
-const PT_EQUITY_LS= 'paperEquity_v2';
+const PT_LS       = 'paperTrades_v3';
+const PT_CFG_LS   = 'paperConfig_v3';
+const PT_EQUITY_LS= 'paperEquity_v3';
 
 const PT_CFG_DEFAULT = {
   enabled:true, posSize:100,
-  tp1:2.0, tp2:4.0, tp3:8.0,
-  trailPct:28,   // trailing stop: sell rest at ATH * (1 - trailPct/100)
-  sl:45,         // hard SL if never hit TP1
-  earlyMin:20,   // early exit: if no pump after X minutes AND down -35%
-  maxHoldH:4, minScore:85
+  tp1:1.3, tp2:1.5, tp3:2.0, tp4:3.0, tp5:5.0, tp6:10.0, tp7:15.0, tp8:20.0,
+  sl:20,   // seul SL : -20% → sell tout
+  minScore:0  // entre sur tous les calls
 };
 
 function ptConfig()  { try{ return {...PT_CFG_DEFAULT,...JSON.parse(localStorage.getItem(PT_CFG_LS)||'{}')}; }catch(e){ return {...PT_CFG_DEFAULT}; } }
@@ -4773,14 +4779,16 @@ function ptSaveConfig(){
   const cfg = {
     enabled:  ptConfig().enabled,
     posSize:  v('ptCfgSize')||100,
-    tp1:      v('ptCfgTp1')||2,
-    tp2:      v('ptCfgTp2')||4,
-    tp3:      v('ptCfgTp3')||8,
-    trailPct: v('ptCfgTrail')||28,
-    sl:       v('ptCfgSl')||45,
-    earlyMin: v('ptCfgEarly')||20,
-    maxHoldH: v('ptCfgTime')||4,
-    minScore: v('ptCfgScore')||80,
+    tp1:      v('ptCfgTp1')||1.3,
+    tp2:      v('ptCfgTp2')||1.5,
+    tp3:      v('ptCfgTp3')||2.0,
+    tp4:      v('ptCfgTp4')||3.0,
+    tp5:      v('ptCfgTp5')||5.0,
+    tp6:      v('ptCfgTp6')||10.0,
+    tp7:      v('ptCfgTp7')||15.0,
+    tp8:      v('ptCfgTp8')||20.0,
+    sl:       v('ptCfgSl')||20,
+    minScore: v('ptCfgScore')||0,
   };
   localStorage.setItem(PT_CFG_LS, JSON.stringify(cfg));
   showToast('💾 Config Paper Bot sauvegardée', 'call');
@@ -4840,34 +4848,36 @@ async function ptCheckPositions(){
 
   let changed = false;
   const now = Date.now();
-  const trailFactor = 1 - cfg.trailPct / 100;
+
+  // Définition des 8 TPs : [mult, fraction_du_reste_à_vendre]
+  const TP_LEVELS = [
+    {n:1, mult:'tp1', frac:0.30},
+    {n:2, mult:'tp2', frac:0.30},
+    {n:3, mult:'tp3', frac:0.20},
+    {n:4, mult:'tp4', frac:0.60},
+    {n:5, mult:'tp5', frac:0.25},
+    {n:6, mult:'tp6', frac:0.50},
+    {n:7, mult:'tp7', frac:0.50},
+    {n:8, mult:'tp8', frac:1.00},
+  ];
 
   for(const t of open){
     const curMcap = priceMap[t.addr] || 0;
     if(!curMcap || !t.entryMcap) continue;
-    const xNow  = curMcap / t.entryMcap;
-    const holdH = (now - t.entryTime) / 3600000;
-    const holdM = holdH * 60;
+    const xNow = curMcap / t.entryMcap;
 
-    // Migrate old trades that don't have new fields
+    // Migrate old trades
     if(t.sells===undefined){ t.sells=[]; t.athX=1; t.remainFraction=1; t.totalPnlUsd=0; }
 
-    // Update ATH + store current X for display
     if(xNow > t.athX) t.athX = xNow;
     t.currentX = xNow;
 
-    const hasSoldAny = t.sells.length > 0;
-    const hasTp1 = t.sells.some(s=>s.reason==='TP1');
-    const hasTp2 = t.sells.some(s=>s.reason==='TP2');
-    const hasTp3 = t.sells.some(s=>s.reason==='TP3');
-
-    // ── Helper: exécuter une vente partielle ──
-    const doSell = (reason, fraction, toastEmoji='📊') => {
-      const realFrac = Math.min(fraction, t.remainFraction);
-      if(realFrac <= 0) return;
+    // doSell : fraction = % du reste encore en position
+    const doSell = (reason, fracOfRemain) => {
+      const realFrac = t.remainFraction * fracOfRemain;
+      if(realFrac < 0.001) return;
       const pnlUsd = t.posSize * realFrac * (xNow - 1);
-      const sell = { reason, xAt:xNow, fraction:realFrac, pnlUsd, time:now };
-      t.sells.push(sell);
+      t.sells.push({ reason, xAt:xNow, fraction:realFrac, pnlUsd, time:now });
       t.remainFraction = Math.max(0, t.remainFraction - realFrac);
       t.totalPnlUsd = (t.totalPnlUsd||0) + pnlUsd;
       changed = true;
@@ -4875,56 +4885,23 @@ async function ptCheckPositions(){
       showToast(`🤖 ${t.symbol} ${reason} @${xNow.toFixed(2)}x — ${sign}$${pnlUsd.toFixed(1)}`, pnlUsd>=0?'call':'');
     };
 
-    // ── EARLY EXIT : dead token — aucun pump en X minutes + en baisse ──
-    const earlyThresh = 1 - 35/100; // -35%
-    if(!hasSoldAny && holdM >= cfg.earlyMin && t.athX < 1.15 && xNow <= earlyThresh){
-      doSell('EARLY', t.remainFraction);
-      t.status = 'closed'; t.exitReason = 'EARLY'; t.exitMcap = curMcap; t.exitTime = now;
-      ptRecordEquity(t, cfg);
-      continue;
-    }
-
-    // ── HARD SL : jamais touché TP1, drop brutal ──
-    if(!hasTp1 && xNow <= (1 - cfg.sl/100)){
-      doSell('SL', t.remainFraction);
+    // ── SL unique : -20% → sell tout ──
+    if(xNow <= (1 - cfg.sl/100)){
+      doSell('SL', 1.0);
       t.status = 'closed'; t.exitReason = 'SL'; t.exitMcap = curMcap; t.exitTime = now;
       ptRecordEquity(t, cfg);
       continue;
     }
 
-    // ── TP1 : vend 30% à tp1x ──
-    if(!hasTp1 && xNow >= cfg.tp1){
-      doSell('TP1', 0.30);
+    // ── TPs séquentiels (chaque % = fraction du RESTE) ──
+    for(const tp of TP_LEVELS){
+      if(!t.sells.some(s=>s.reason===`TP${tp.n}`) && xNow >= cfg[tp.mult] && t.remainFraction > 0.001){
+        doSell(`TP${tp.n}`, tp.frac);
+      }
     }
 
-    // ── TP2 : vend 30% à tp2x ──
-    if(hasTp1 && !hasTp2 && xNow >= cfg.tp2){
-      doSell('TP2', 0.30);
-    }
-
-    // ── TP3 : vend 20% à tp3x ──
-    if(hasTp2 && !hasTp3 && xNow >= cfg.tp3){
-      doSell('TP3', 0.20);
-    }
-
-    // ── TRAILING STOP : une fois qu'on a ATH >= tp1x, trailing sur le reste ──
-    if(hasTp1 && t.athX >= cfg.tp1 && xNow <= t.athX * trailFactor && t.remainFraction > 0){
-      doSell('TRAIL', t.remainFraction);
-      t.status = 'closed'; t.exitReason = 'TRAIL'; t.exitMcap = curMcap; t.exitTime = now;
-      ptRecordEquity(t, cfg);
-      continue;
-    }
-
-    // ── TIME : sortie temporelle — vend le reste au prix actuel ──
-    if(holdH >= cfg.maxHoldH && t.remainFraction > 0){
-      doSell('TIME', t.remainFraction);
-      t.status = 'closed'; t.exitReason = 'TIME'; t.exitMcap = curMcap; t.exitTime = now;
-      ptRecordEquity(t, cfg);
-      continue;
-    }
-
-    // Si tout vendu (via TPs successifs sans trailing), fermer
-    if(t.remainFraction <= 0 && t.status === 'open'){
+    // Si tout vendu via TPs, fermer
+    if(t.remainFraction <= 0.001 && t.status === 'open'){
       t.status = 'closed'; t.exitReason = t.sells[t.sells.length-1]?.reason||'DONE';
       t.exitMcap = curMcap; t.exitTime = now;
       ptRecordEquity(t, cfg);
@@ -5008,7 +4985,7 @@ function ptRender(){
   ptUpdateToggleUI(cfg.enabled);
 
   // Config inputs
-  const cfgMap={ptCfgSize:'posSize',ptCfgTp1:'tp1',ptCfgTp2:'tp2',ptCfgTp3:'tp3',ptCfgTrail:'trailPct',ptCfgSl:'sl',ptCfgEarly:'earlyMin',ptCfgTime:'maxHoldH',ptCfgScore:'minScore'};
+  const cfgMap={ptCfgSize:'posSize',ptCfgTp1:'tp1',ptCfgTp2:'tp2',ptCfgTp3:'tp3',ptCfgTp4:'tp4',ptCfgTp5:'tp5',ptCfgTp6:'tp6',ptCfgTp7:'tp7',ptCfgTp8:'tp8',ptCfgSl:'sl',ptCfgScore:'minScore'};
   Object.entries(cfgMap).forEach(([id,key])=>{ const el=document.getElementById(id); if(el) el.value=cfg[key]??el.value; });
 
   // Stats header
