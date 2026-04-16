@@ -225,13 +225,17 @@ async function fetchDexScreener() {
     'solana memecoin',      // memecoins généraux
     'solana new token',     // nouveaux tokens
   ];
-  for (const q of searchQueries) {
-    try {
-      const resp = await fetch(`https://api.dexscreener.com/latest/dex/search?q=${encodeURIComponent(q)}`,
-        { signal: AbortSignal.timeout(8000) });
-      const data = await resp.json();
-      addPairs(data.pairs, `search "${q}"`);
-    } catch (e) { console.warn(`[DexScreener] search error: ${e.message}`); }
+  // Toutes les requêtes search en parallèle (was: séquentiel → ~12s de latence)
+  const searchResults = await Promise.allSettled(
+    searchQueries.map(q =>
+      fetch(`https://api.dexscreener.com/latest/dex/search?q=${encodeURIComponent(q)}`,
+        { signal: AbortSignal.timeout(8000) }).then(r => r.json())
+    )
+  );
+  for (let i = 0; i < searchResults.length; i++) {
+    const res = searchResults[i];
+    if (res.status === 'fulfilled') addPairs(res.value?.pairs, `search "${searchQueries[i]}"`);
+    else console.warn(`[DexScreener] search error "${searchQueries[i]}": ${res.reason?.message}`);
   }
 
   console.log(`[DexScreener] Total unique: ${pairMap.size}, paid: ${paidTokens.size}`);
@@ -632,22 +636,9 @@ export async function runScanCycle() {
 
       // Sauvegarder dans Firebase (saveCall gère le dedup)
       if (!calledTokens.has(token.addr)) {
-        // ── Mcap frais : utiliser le prix actuel comme callMcap, pas celui du scan ──
-        try {
-          const freshResp = await fetch(
-            `https://api.dexscreener.com/latest/dex/tokens/${token.addr}`,
-            { signal: AbortSignal.timeout(5000) }
-          );
-          const freshData = await freshResp.json();
-          const freshPair = (freshData.pairs || []).find(p => p.chainId === 'solana');
-          if (freshPair) {
-            const freshMcap = freshPair.marketCap || freshPair.fdv || 0;
-            if (freshMcap > 0) token.mcap = freshMcap;
-          }
-        } catch (e) { /* on garde le mcap du scan si erreur */ }
-
         calledTokens.set(token.addr, now);
         try {
+          // 1. Sauvegarder + notifier Discord immédiatement avec le mcap du scan
           await saveCall({
             addr:       token.addr,
             symbol:     token.symbol,
@@ -663,8 +654,19 @@ export async function runScanCycle() {
             calledAt:   now,
           });
           console.log(`[Worker] CALL: ${token.symbol} score=${token.score} mcap=$${token.mcap}`);
-          // ── Notification Discord ──
+          // Discord en premier — pas de fetch mcap frais qui bloque
           await sendDiscordCall(token);
+
+          // 2. Mcap frais en arrière-plan (ne bloque plus le Discord)
+          fetch(`https://api.dexscreener.com/latest/dex/tokens/${token.addr}`,
+            { signal: AbortSignal.timeout(5000) })
+            .then(r => r.json())
+            .then(freshData => {
+              const freshPair = (freshData.pairs || []).find(p => p.chainId === 'solana');
+              const freshMcap = freshPair?.marketCap || freshPair?.fdv || 0;
+              if (freshMcap > 0) saveCall({ addr: token.addr, mcap: freshMcap }).catch(() => {});
+            })
+            .catch(() => {});
         } catch (e) {
           console.warn('[Worker] saveCall error:', e.message);
         }
