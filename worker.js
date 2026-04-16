@@ -556,7 +556,7 @@ export async function runScanCycle() {
         if (!isPump && !isBonk && !isRay && !isPumpSwap && !isBags) { rejected['platform'] = (rejected['platform'] || 0) + 1; continue; }
 
         // HARD FILTER 2 — Mcap min
-        if (scored.mcap < 10000) { rejected['mcap<10K'] = (rejected['mcap<10K'] || 0) + 1; continue; }
+        if (scored.mcap < 8000) { rejected['mcap<8K'] = (rejected['mcap<8K'] || 0) + 1; continue; }
 
         // SMART FILTER IA — filtres adaptatifs appris des données
         const smartCheck = checkSmartFilters(scored.debug || {});
@@ -572,10 +572,10 @@ export async function runScanCycle() {
           scored.debug.aiReasons = smartCheck.reasons;
         }
 
-        if (scored.score >= 85) {
+        if (scored.score >= 80) {
           finalScored.push(scored);
         } else {
-          rejected[`score<90 (${scored.score})`] = (rejected[`score<90 (${scored.score})`] || 0) + 1;
+          rejected[`score<80 (${scored.score})`] = (rejected[`score<80 (${scored.score})`] || 0) + 1;
         }
       } catch (e) {
         console.warn('[Worker] Scoring error:', e.message);

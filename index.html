@@ -4771,7 +4771,7 @@ function ptSyncFromLive(){
   if(!cfg.enabled) return;
   if(typeof lastScored === 'undefined' || !lastScored.length) return;
   const now = Date.now();
-  const MAX_AGE = 30 * 60 * 1000; // 30 minutes
+  const MAX_AGE = 4 * 60 * 60 * 1000; // 4 heures
   let opened = 0;
   for(const token of lastScored){
     const age = now - (token._callTime || 0);
@@ -6719,9 +6719,8 @@ async function fetchTokens(){
     const _nowTs=Date.now();
     for(const token of finalScored){
       if(!_prevAddrs.has(token.addr)){
-        // Seulement les calls frais (<2min) pour ne pas entrer sur des positions vieilles
-        const age=_nowTs-(token._callTime||0);
-        if(age<300000) onNewCall(token);
+        // Le backend contrôle ce qui est dans /live → on call tout ce qui apparaît
+        onNewCall(token);
       }
     }
     if(loadEl)loadEl.style.display='none';
