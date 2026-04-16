@@ -1372,6 +1372,27 @@ footer{border-top:1px solid var(--border);}
 /* kept old helpers */
 .pt-close-btn{font-size:9px;padding:2px 7px;background:rgba(255,68,102,.08);border:1px solid rgba(255,68,102,.15);color:#ff4466;border-radius:4px;cursor:pointer;transition:.15s;}
 .pt-close-btn:hover{background:rgba(255,68,102,.18);}
+/* ── PT DETAIL MODAL ── */
+.pt-detail-overlay{position:fixed;inset:0;background:rgba(0,0,0,.82);backdrop-filter:blur(10px);z-index:600;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:.25s;}
+.pt-detail-overlay.open{opacity:1;pointer-events:all;}
+.pt-detail-box{background:linear-gradient(160deg,#130e22,#0a0612);border:1px solid rgba(97,86,217,.25);border-radius:18px;padding:28px 28px 22px;width:90%;max-width:480px;position:relative;box-shadow:0 24px 80px rgba(0,0,0,.7);}
+.pt-detail-sym{font-family:'Space Mono',monospace;font-size:1.3rem;font-weight:700;color:#fff;margin-bottom:2px;}
+.pt-detail-score{font-size:.72rem;color:#ff9500;font-family:'Space Mono',monospace;margin-bottom:16px;}
+.pt-detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;}
+.pt-detail-cell{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:8px;padding:10px 12px;}
+.pt-detail-cell-lbl{font-size:9px;color:rgba(255,255,255,.35);text-transform:uppercase;letter-spacing:.08em;margin-bottom:3px;font-family:'Space Mono',monospace;}
+.pt-detail-cell-val{font-family:'Space Mono',monospace;font-size:.95rem;font-weight:700;color:#fff;}
+.pt-detail-tps{margin-bottom:16px;}
+.pt-detail-tps-title{font-size:9px;color:rgba(255,255,255,.35);text-transform:uppercase;letter-spacing:.08em;margin-bottom:7px;font-family:'Space Mono',monospace;}
+.pt-detail-tp-row{display:flex;align-items:center;gap:8px;padding:4px 0;font-size:.78rem;font-family:'Space Mono',monospace;}
+.pt-detail-tp-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.pt-detail-tp-dot.hit{background:#00ff88;}
+.pt-detail-tp-dot.next{background:#ffaa00;box-shadow:0 0 6px #ffaa00;}
+.pt-detail-tp-dot.pending{background:rgba(255,255,255,.2);}
+.pt-detail-close-btn{width:100%;padding:10px;background:rgba(255,68,102,.1);border:1px solid rgba(255,68,102,.3);color:#ff4466;border-radius:8px;cursor:pointer;font-size:.8rem;font-weight:700;transition:.2s;margin-top:4px;}
+.pt-detail-close-btn:hover{background:rgba(255,68,102,.2);}
+.pt-detail-x-btn{position:absolute;top:14px;right:14px;background:none;border:none;color:rgba(255,255,255,.35);cursor:pointer;font-size:1.1rem;padding:4px 8px;}
+.pt-detail-sl{font-size:.75rem;color:rgba(255,68,102,.7);font-family:'Space Mono',monospace;margin-bottom:14px;}
 /* ── DEBUG CA PANEL ─── */
 .dca-panel{background:linear-gradient(160deg,var(--bg2),var(--bg));border:1px solid rgba(97,86,217,.15);border-radius:16px;padding:1.6rem;margin-top:.5rem;box-shadow:0 4px 30px rgba(0,0,0,.3);}
 .dca-input-row{display:flex;gap:.6rem;margin-bottom:1.2rem;}
@@ -2197,6 +2218,29 @@ nav{background:rgba(0,0,0,.96)!important;border-bottom:1px solid rgba(255,109,0,
       <div id="ptClosedTable"><div class="pt-empty">Aucun trade fermé pour l'instant</div></div>
     </div>
 
+  </div>
+</div>
+
+<!-- PT DETAIL MODAL -->
+<div class="pt-detail-overlay" id="ptDetailOverlay" onclick="if(event.target===this)ptCloseDetail()">
+  <div class="pt-detail-box">
+    <button class="pt-detail-x-btn" onclick="ptCloseDetail()">✕</button>
+    <div class="pt-detail-sym" id="ptdSym">—</div>
+    <div class="pt-detail-score" id="ptdScore"></div>
+    <div class="pt-detail-grid">
+      <div class="pt-detail-cell"><div class="pt-detail-cell-lbl">Entrée</div><div class="pt-detail-cell-val" id="ptdEntry">—</div></div>
+      <div class="pt-detail-cell"><div class="pt-detail-cell-lbl">Actuel</div><div class="pt-detail-cell-val" id="ptdNow">—</div></div>
+      <div class="pt-detail-cell"><div class="pt-detail-cell-lbl">× Actuel</div><div class="pt-detail-cell-val" id="ptdX">—</div></div>
+      <div class="pt-detail-cell"><div class="pt-detail-cell-lbl">ATH ×</div><div class="pt-detail-cell-val" id="ptdAth">—</div></div>
+      <div class="pt-detail-cell"><div class="pt-detail-cell-lbl">Gains actuel</div><div class="pt-detail-cell-val" id="ptdPnl">—</div></div>
+      <div class="pt-detail-cell"><div class="pt-detail-cell-lbl">Reste position</div><div class="pt-detail-cell-val" id="ptdRest">—</div></div>
+    </div>
+    <div class="pt-detail-sl" id="ptdSl"></div>
+    <div class="pt-detail-tps">
+      <div class="pt-detail-tps-title">Take Profits</div>
+      <div id="ptdTpList"></div>
+    </div>
+    <button class="pt-detail-close-btn" id="ptdCloseBtn">🔴 Fermer la position</button>
   </div>
 </div>
 
@@ -4874,12 +4918,20 @@ async function ptCheckPositions(){
   // Fetch mcap actuel
   const addrs = [...new Set(open.map(t=>t.addr))].slice(0,20);
   let priceMap = {};
-  try{
-    const res = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${addrs.join(',')}`,{signal:AbortSignal.timeout(6000)}).then(r=>r.json());
-    const best = {};
-    (res.pairs||[]).forEach(p=>{ const a=p.baseToken?.address; if(!a)return; if(!best[a]||(p.volume?.h24||0)>(best[a].volume?.h24||0))best[a]=p; });
-    Object.entries(best).forEach(([a,p])=>{ priceMap[a]=p.marketCap||p.fdv||0; });
-  }catch(e){}
+  // 1. Utiliser lastScored en priorité (déjà frais, 0 appel API)
+  if(typeof lastScored !== 'undefined'){
+    lastScored.forEach(ls=>{ if(ls.mcap>0) priceMap[ls.addr]=ls.mcap; });
+  }
+  // 2. Compléter avec DexScreener pour les tokens pas dans lastScored
+  const missing = addrs.filter(a=>!priceMap[a]);
+  if(missing.length){
+    try{
+      const res = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${missing.join(',')}`,{signal:AbortSignal.timeout(6000)}).then(r=>r.json());
+      const best = {};
+      (res.pairs||[]).forEach(p=>{ const a=p.baseToken?.address; if(!a)return; if(!best[a]||(p.volume?.h24||0)>(best[a].volume?.h24||0))best[a]=p; });
+      Object.entries(best).forEach(([a,p])=>{ priceMap[a]=p.marketCap||p.fdv||0; });
+    }catch(e){}
+  }
 
   let changed = false;
   const now = Date.now();
@@ -4956,6 +5008,82 @@ function ptRecordEquity(trade, cfg){
   const last = eq.length ? eq[eq.length-1].val : cfg.capital;
   eq.push({ ts: trade.exitTime, val: Math.round((last + (trade.totalPnlUsd||0))*100)/100 });
   ptSaveEquity(eq);
+}
+
+// ── Detail modal ──
+let _ptDetailId = null, _ptDetailTimer = null;
+
+function ptOpenDetail(id){
+  const t = ptTrades().find(x=>x.id===id);
+  if(!t) return;
+  _ptDetailId = id;
+  const overlay = document.getElementById('ptDetailOverlay');
+  overlay.classList.add('open');
+  ptRefreshDetail();
+  _ptDetailTimer = setInterval(ptRefreshDetail, 5000);
+}
+
+function ptCloseDetail(){
+  document.getElementById('ptDetailOverlay').classList.remove('open');
+  clearInterval(_ptDetailTimer);
+  _ptDetailId = null;
+}
+
+function ptRefreshDetail(){
+  const t = ptTrades().find(x=>x.id===_ptDetailId);
+  if(!t){ ptCloseDetail(); return; }
+  const cfg = ptConfig();
+
+  const curX    = t.currentX || 1;
+  const curMcap = t.entryMcap * curX;
+  const rem     = t.remainFraction || 1;
+  const unrealPnl = t.posSize * rem * (curX - 1);
+  const totalPnl  = unrealPnl + (t.totalPnlUsd||0);
+  const pnlPct    = totalPnl / t.posSize * 100;
+  const slMcap    = t.entryMcap * (1 - cfg.sl/100);
+  const ageM      = Math.round((Date.now() - t.entryTime) / 60000);
+
+  document.getElementById('ptdSym').textContent   = '$' + t.symbol;
+  document.getElementById('ptdScore').textContent = t.score + ' pts · ' + ageM + 'min';
+  document.getElementById('ptdEntry').textContent = '$' + fmtNum(t.entryMcap);
+  document.getElementById('ptdNow').textContent   = '$' + fmtNum(curMcap);
+
+  const xEl = document.getElementById('ptdX');
+  xEl.textContent  = curX.toFixed(3) + 'x';
+  xEl.style.color  = curX>=2?'#00ff88':curX>=1.2?'#aaffcc':curX>=0.9?'rgba(255,255,255,.6)':'#ff4466';
+
+  document.getElementById('ptdAth').textContent   = (t.athX||1).toFixed(3) + 'x';
+
+  const pnlEl = document.getElementById('ptdPnl');
+  pnlEl.textContent = (totalPnl>=0?'+':'') + '$' + totalPnl.toFixed(2) + ' (' + (pnlPct>=0?'+':'') + pnlPct.toFixed(1) + '%)';
+  pnlEl.style.color = totalPnl>=0?'#00ff88':'#ff4466';
+
+  document.getElementById('ptdRest').textContent  = Math.round(rem*100) + '%';
+  document.getElementById('ptdSl').textContent    = '🛑 SL: $' + fmtNum(slMcap) + ' (-' + cfg.sl + '%)';
+
+  // TPs
+  const TP_LEVELS = [
+    {n:1,mult:cfg.tp1,frac:30},{n:2,mult:cfg.tp2,frac:30},{n:3,mult:cfg.tp3,frac:20},
+    {n:4,mult:cfg.tp4,frac:60},{n:5,mult:cfg.tp5,frac:25},{n:6,mult:cfg.tp6,frac:50},
+    {n:7,mult:cfg.tp7,frac:50},{n:8,mult:cfg.tp8,frac:100}
+  ];
+  const hitTps = new Set((t.sells||[]).map(s=>s.reason));
+  const nextTp = TP_LEVELS.find(tp=>!hitTps.has('TP'+tp.n));
+  document.getElementById('ptdTpList').innerHTML = TP_LEVELS.map(tp=>{
+    const key = 'TP'+tp.n;
+    const sell = (t.sells||[]).find(s=>s.reason===key);
+    const isHit  = !!sell;
+    const isNext = !isHit && nextTp?.n === tp.n;
+    const dot = isHit?'hit':isNext?'next':'pending';
+    const label = isHit
+      ? `<b style="color:#00ff88">✓ TP${tp.n}</b> ×${tp.mult} — vendu ${Math.round(sell.fraction*100)}% → ${sell.pnlUsd>=0?'+':''}$${sell.pnlUsd.toFixed(1)}`
+      : isNext
+        ? `<b style="color:#ffaa00">→ TP${tp.n}</b> ×${tp.mult} — ${tp.frac}% du reste · à $${fmtNum(t.entryMcap*tp.mult)}`
+        : `<span style="color:rgba(255,255,255,.3)">TP${tp.n} ×${tp.mult}</span>`;
+    return `<div class="pt-detail-tp-row"><div class="pt-detail-tp-dot ${dot}"></div>${label}</div>`;
+  }).join('');
+
+  document.getElementById('ptdCloseBtn').onclick = ()=>{ ptCloseManual(t.id); ptCloseDetail(); };
 }
 
 // ── Fermeture manuelle ──
@@ -5069,7 +5197,7 @@ function ptRender(){
           const pnlColor=totalPnl>0?'#00ff88':totalPnl<0?'#ff4466':'rgba(255,255,255,.4)';
           const pnlSign=totalPnl>=0?'+':'';
           const curXColor=curX>=2?'#00ff88':curX>=1.2?'#aaffcc':curX>=0.8?'rgba(255,255,255,.5)':'#ff4466';
-          return `<tr>
+          return `<tr style="cursor:pointer" onclick="ptOpenDetail('${t.id}')">
             <td><span style="font-family:'Space Mono',monospace;font-size:11px;font-weight:700;color:#fff">${t.symbol}</span></td>
             <td style="font-size:10px;color:#ff9500">${t.score}</td>
             <td style="font-family:'Space Mono',monospace;font-size:10px;color:rgba(255,255,255,.4)">$${fmtNum(t.entryMcap)}</td>
