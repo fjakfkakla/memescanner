@@ -2096,7 +2096,7 @@ nav{background:rgba(0,0,0,.96)!important;border-bottom:1px solid rgba(255,109,0,
     <div class="pt-stats" id="ptStats">
       <div class="pt-stat">
         <div class="pt-stat-val" id="ptCapital">$0</div>
-        <div class="pt-stat-lbl">Capital simulé</div>
+        <div class="pt-stat-lbl">Capital actuel</div>
       </div>
       <div class="pt-stat green">
         <div class="pt-stat-val" id="ptRoi">+0%</div>
@@ -2131,8 +2131,12 @@ nav{background:rgba(0,0,0,.96)!important;border-bottom:1px solid rgba(255,109,0,
       <summary class="pt-config-summary">⚙️ Configuration</summary>
       <div class="pt-config-grid">
         <div class="pt-config-item">
+          <label>Capital total ($)</label>
+          <input type="number" id="ptCfgCapital" value="400" min="10" class="pt-inp">
+        </div>
+        <div class="pt-config-item">
           <label>Mise/trade ($)</label>
-          <input type="number" id="ptCfgSize" value="100" min="1" max="10000" class="pt-inp">
+          <input type="number" id="ptCfgSize" value="50" min="1" max="10000" class="pt-inp">
         </div>
         <div class="pt-config-item">
           <label>TP1 (×) — 30% reste</label>
@@ -4748,7 +4752,7 @@ const PT_CFG_LS   = 'paperConfig_v3';
 const PT_EQUITY_LS= 'paperEquity_v3';
 
 const PT_CFG_DEFAULT = {
-  enabled:true, posSize:100,
+  enabled:true, capital:400, posSize:50,
   tp1:1.3, tp2:1.5, tp3:2.0, tp4:3.0, tp5:5.0, tp6:10.0, tp7:15.0, tp8:20.0,
   sl:20,   // seul SL : -20% → sell tout
   minScore:0  // entre sur tous les calls
@@ -4778,7 +4782,8 @@ function ptSaveConfig(){
   const v = id => parseFloat(document.getElementById(id)?.value||0);
   const cfg = {
     enabled:  ptConfig().enabled,
-    posSize:  v('ptCfgSize')||100,
+    capital:  v('ptCfgCapital')||400,
+    posSize:  v('ptCfgSize')||50,
     tp1:      v('ptCfgTp1')||1.3,
     tp2:      v('ptCfgTp2')||1.5,
     tp3:      v('ptCfgTp3')||2.0,
@@ -4918,7 +4923,7 @@ async function ptCheckPositions(){
 
 function ptRecordEquity(trade, cfg){
   const eq = ptEquity();
-  const last = eq.length ? eq[eq.length-1].val : cfg.posSize;
+  const last = eq.length ? eq[eq.length-1].val : cfg.capital;
   eq.push({ ts: trade.exitTime, val: Math.round((last + (trade.totalPnlUsd||0))*100)/100 });
   ptSaveEquity(eq);
 }
@@ -4947,14 +4952,19 @@ function ptCalcStats(){
   const closed = trades.filter(t=>t.status==='closed');
   const open   = trades.filter(t=>t.status==='open');
   const wins   = closed.filter(t=>(t.totalPnlUsd||0)>0);
-  const totalPnl = closed.reduce((s,t)=>s+(t.totalPnlUsd||0),0);
   const cfg    = ptConfig();
-  const capital= cfg.posSize * Math.max(1, closed.length + open.length);
-  const roi    = capital > 0 ? (totalPnl/capital*100) : 0;
-  const best   = closed.length ? closed.reduce((a,b)=>((b.totalPnlUsd||0)>(a.totalPnlUsd||0)?b:a)) : null;
+  const realizedPnl  = closed.reduce((s,t)=>s+(t.totalPnlUsd||0),0);
+  const unrealizedPnl= open.reduce((t2,t)=>{
+    const curX=t.currentX||1;
+    return t2 + t.posSize*(t.remainFraction||1)*(curX-1) + (t.totalPnlUsd||0);
+  },0);
+  const totalPnl = realizedPnl + unrealizedPnl;
+  const roi = cfg.capital > 0 ? (totalPnl / cfg.capital * 100) : 0;
+  const currentCapital = cfg.capital + realizedPnl;
+  const best = closed.length ? closed.reduce((a,b)=>((b.totalPnlUsd||0)>(a.totalPnlUsd||0)?b:a)) : null;
   return { closed:closed.length, open:open.length, wins:wins.length,
     wr: closed.length ? Math.round(wins.length/closed.length*100) : null,
-    totalPnl, roi, best };
+    realizedPnl, unrealizedPnl, totalPnl, roi, currentCapital, best };
 }
 
 // ── Equity SVG ──
@@ -4985,12 +4995,13 @@ function ptRender(){
   ptUpdateToggleUI(cfg.enabled);
 
   // Config inputs
-  const cfgMap={ptCfgSize:'posSize',ptCfgTp1:'tp1',ptCfgTp2:'tp2',ptCfgTp3:'tp3',ptCfgTp4:'tp4',ptCfgTp5:'tp5',ptCfgTp6:'tp6',ptCfgTp7:'tp7',ptCfgTp8:'tp8',ptCfgSl:'sl',ptCfgScore:'minScore'};
+  const cfgMap={ptCfgCapital:'capital',ptCfgSize:'posSize',ptCfgTp1:'tp1',ptCfgTp2:'tp2',ptCfgTp3:'tp3',ptCfgTp4:'tp4',ptCfgTp5:'tp5',ptCfgTp6:'tp6',ptCfgTp7:'tp7',ptCfgTp8:'tp8',ptCfgSl:'sl',ptCfgScore:'minScore'};
   Object.entries(cfgMap).forEach(([id,key])=>{ const el=document.getElementById(id); if(el) el.value=cfg[key]??el.value; });
 
   // Stats header
   const roiSign=stats.roi>=0?'+':'';
-  document.getElementById('ptCapital').textContent=`$${cfg.posSize*Math.max(1,stats.closed+stats.open)}`;
+  const capEl=document.getElementById('ptCapital');
+  if(capEl){ capEl.textContent=`$${stats.currentCapital.toFixed(0)}`; capEl.style.color=stats.currentCapital>=cfg.capital?'#00ff88':stats.currentCapital<cfg.capital?'#ff4466':''; }
   const roiEl=document.getElementById('ptRoi');
   if(roiEl){roiEl.textContent=`${roiSign}${stats.roi.toFixed(1)}%`;roiEl.style.color=stats.roi>=0?'#00ff88':'#ff4466';}
   document.getElementById('ptWinrate').textContent=stats.wr!=null?`${stats.wr}%`:'—';
