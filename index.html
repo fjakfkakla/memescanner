@@ -7191,11 +7191,11 @@ async function fetchTokens(){
       const isBags=rdex.includes('bags')||rurl.includes('bags');
       if(!isPump&&!isBonk&&!isBags){rejected[`platform:${rdex||'?'}`]=(rejected[`platform:${rdex||'?'}`]||0)+1;continue;}
 
-      // HARD FILTER 2 — Mcap : 15K → 75K (120K si KOL + gros trader présents)
+      // HARD FILTER 2 — Mcap : 13K → 75K (120K si KOL + gros trader présents)
       const rmc=rescored.mcap||0;
       const axiomBoost=(rKol>=1&&rTrader>=1);
       const mcapCeil=axiomBoost?120000:75000;
-      if(rmc<15000){rejected[`mcap<15K`]=(rejected['mcap<15K']||0)+1;continue;}
+      if(rmc<13000){rejected[`mcap<13K`]=(rejected['mcap<13K']||0)+1;continue;}
       if(rmc>mcapCeil){rejected[`mcap>${axiomBoost?'120K':'75K'}`]=(rejected[`mcap>${axiomBoost?'120K':'75K'}`]||0)+1;continue;}
 
       // HARD FILTER 3 — Âge < 1h
