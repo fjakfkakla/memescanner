@@ -1667,6 +1667,146 @@ nav{background:rgba(0,0,0,.96)!important;border-bottom:1px solid rgba(255,109,0,
 .hlv-stat-v{font-family:'Space Mono',monospace;font-size:.75rem;font-weight:700;color:#ff9500;}
 .hlv-stat-l{font-size:.55rem;color:rgba(255,255,255,.2);text-transform:uppercase;letter-spacing:.06em;margin-top:1px;}
 
+/* ═══ HERO WEBGL CANVAS ══════════════════════════════════════ */
+#heroGLCanvas {
+  position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+  opacity: 0.55; pointer-events: none; z-index: 0;
+}
+.lp-hero { position: relative; overflow: hidden; }
+.lp-hero > .lp-container { position: relative; z-index: 1; }
+.lp-hero-glow { display: none; }
+
+/* ═══ NEW FEATURE CARDS (icônes SVG) ════════════════════════ */
+.lp-feat-icon-wrap {
+  width: 48px; height: 48px; border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 1.2rem; flex-shrink: 0;
+}
+.lp-feat-icon-wrap.violet { background: rgba(99,102,241,0.12); }
+.lp-feat-icon-wrap.green { background: rgba(0,255,136,0.1); }
+.lp-feat-icon-wrap.gold { background: rgba(245,158,11,0.12); }
+.lp-feat-icon-wrap.blue { background: rgba(59,130,246,0.12); }
+.lp-feat-icon-wrap svg { width: 22px; height: 22px; }
+
+/* ═══ COMPARISON SECTION ═════════════════════════════════════ */
+.lp-comparison { padding: 6rem 2rem; background: var(--lp-bg2); border-top: 1px solid var(--lp-border); }
+.lp-cmp-table { width: 100%; border-collapse: collapse; margin-top: 2.5rem; }
+.lp-cmp-table th {
+  padding: 0.9rem 1.2rem; font-size: 0.75rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.1em;
+  color: var(--lp-muted); border-bottom: 1px solid var(--lp-border); text-align: center;
+}
+.lp-cmp-table th.ours {
+  color: #a5b4fc; background: rgba(99,102,241,0.06);
+  border-radius: 8px 8px 0 0; border-bottom: 2px solid var(--lp-violet);
+}
+.lp-cmp-table td {
+  padding: 0.85rem 1.2rem; font-size: 0.88rem; color: rgba(255,255,255,0.55);
+  border-bottom: 1px solid rgba(255,255,255,0.04); text-align: center;
+}
+.lp-cmp-table td.feature-name { text-align: left; color: rgba(255,255,255,0.75); font-weight: 500; }
+.lp-cmp-table td.ours { background: rgba(99,102,241,0.04); color: rgba(255,255,255,0.85); }
+.lp-cmp-table tr:hover td { background: rgba(255,255,255,0.02); }
+.lp-cmp-yes { color: #00ff88; font-weight: 700; font-size: 1rem; }
+.lp-cmp-no { color: rgba(255,255,255,0.2); }
+.lp-cmp-partial { color: #f59e0b; font-weight: 600; font-size: 0.78rem; }
+.lp-cmp-header-row { background: transparent; }
+
+/* ═══ MASCOT SOLANA COIN ══════════════════════════════════════ */
+.sol-mascot {
+  position: fixed; bottom: 24px; right: 24px; z-index: 900;
+  cursor: pointer; width: 56px; height: 56px;
+  animation: mascot-float 3s ease-in-out infinite;
+  filter: drop-shadow(0 8px 24px rgba(153,69,255,0.4));
+  transition: transform 0.2s;
+}
+.sol-mascot:hover { transform: scale(1.15); }
+.sol-mascot:active { transform: scale(0.9); }
+@keyframes mascot-float {
+  0%, 100% { transform: translateY(0px) rotate(-2deg); }
+  50% { transform: translateY(-10px) rotate(2deg); }
+}
+.sol-mascot-tooltip {
+  position: fixed; bottom: 90px; right: 20px; z-index: 900;
+  background: rgba(15,15,25,0.95); border: 1px solid rgba(99,102,241,0.3);
+  border-radius: 10px; padding: 0.5rem 0.9rem;
+  font-size: 0.75rem; color: #a5b4fc; font-family: 'Space Mono', monospace;
+  white-space: nowrap; opacity: 0; pointer-events: none;
+  transition: opacity 0.3s;
+}
+.sol-mascot:hover + .sol-mascot-tooltip { opacity: 1; }
+
+/* ═══ SPARKLINES PAPER BOT ═══════════════════════════════════ */
+.pb-sparkline-wrap {
+  display: flex; gap: 6px; align-items: flex-end; height: 32px;
+}
+.pb-sparkline-wrap canvas { display: block; }
+
+/* ═══ MINI PNL CHART ══════════════════════════════════════════ */
+.pb-equity-canvas {
+  width: 100%; height: 80px; display: block;
+  border-radius: 8px; margin: 8px 0;
+}
+
+/* ═══ PRICING MINI TREND ══════════════════════════════════════ */
+.lp-price-trend {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 0.72rem; color: var(--lp-green); margin-bottom: 1rem;
+  font-family: var(--font-mono);
+}
+.lp-price-trend-bars {
+  display: flex; gap: 2px; align-items: flex-end; height: 16px;
+}
+.lp-price-trend-bars span {
+  width: 3px; border-radius: 2px; background: currentColor;
+  display: block; opacity: 0.7;
+}
+
+/* ═══ NAV PREMIUM ════════════════════════════════════════════ */
+nav { background: rgba(5,5,10,0.92) !important; border-bottom: 1px solid rgba(255,255,255,0.06) !important; }
+nav.scrolled { box-shadow: 0 1px 40px rgba(0,0,0,0.6) !important; }
+.nav-links a { font-size: 0.84rem !important; letter-spacing: 0.01em; }
+.btn-primary {
+  background: linear-gradient(135deg, #5b52f0, #7c3aed) !important;
+  box-shadow: 0 0 20px rgba(99,102,241,0.25) !important;
+  border-radius: 10px !important;
+}
+.btn-primary:hover { background: linear-gradient(135deg, #6366f1, #8b5cf6) !important; }
+
+/* ═══ HERO TYPO UPGRADE ═══════════════════════════════════════ */
+.lp-hero-title {
+  font-size: 5rem !important; letter-spacing: -0.05em !important;
+  line-height: 1.0 !important;
+}
+.lp-hero-eyebrow {
+  font-size: 0.72rem !important; letter-spacing: 0.06em !important;
+}
+@media (max-width: 768px) {
+  .lp-hero-title { font-size: 2.8rem !important; }
+}
+
+/* ═══ SECTION UPGRADES ═══════════════════════════════════════ */
+.lp-section-title { font-size: 2.6rem !important; letter-spacing: -0.04em !important; }
+.lp-feat-card { border-radius: 16px !important; padding: 1.8rem !important; }
+.lp-features-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 1.2rem !important; }
+.lp-score-cats { grid-template-columns: repeat(4, 1fr) !important; }
+.lp-score-cat {
+  border-radius: 12px !important; padding: 1.6rem 1.2rem !important;
+  border: 1px solid rgba(255,255,255,0.05) !important;
+}
+.lp-score-cat:hover {
+  background: rgba(99,102,241,0.06) !important;
+  border-color: rgba(99,102,241,0.2) !important;
+}
+.lp-score-cat-name { font-size: 0.82rem !important; font-weight: 600 !important; }
+
+/* ═══ PRICING UPGRADE ════════════════════════════════════════ */
+.lp-price-card { border-radius: 16px !important; }
+.lp-price-card.featured {
+  background: linear-gradient(145deg, #0e0e1a, #111122) !important;
+  box-shadow: 0 0 50px rgba(99,102,241,0.12), 0 0 0 1px rgba(99,102,241,0.3) !important;
+}
+
 </style>
 </head>
 <body>
@@ -1783,23 +1923,24 @@ nav{background:rgba(0,0,0,.96)!important;border-bottom:1px solid rgba(255,109,0,
 
 <!-- ═══ HERO ═══════════════════════════════════════════════════ -->
 <section id="hero" class="lp-hero">
-  <div class="lp-hero-glow"></div>
+  <canvas id="heroGLCanvas"></canvas>
   <div class="lp-container">
     <div class="lp-hero-eyebrow">
       <span class="lp-pulse-dot"></span>
-      Scanner actif · <span id="hlvCycle">847</span> cycles · Solana
+      Scanner actif · <span id="hlvCycle">847</span> cycles · Solana Mainnet
     </div>
     <h1 class="lp-hero-title">
-      Trouve le prochain<br>
-      <span class="lp-hero-grad">100x avant tout le monde.</span>
+      Détecte les<br>
+      <span class="lp-hero-grad">opportunités 100x</span><br>
+      avant tout le monde.
     </h1>
     <p class="lp-hero-sub">
-      Un algorithme qui tourne 24/7 — smart money Axiom, 15 filtres, scoring 150pts.<br>
-      Tu vois les tokens avant la masse. Tu décides en premier.
+      Algorithme propriétaire 24/7 — Smart Money Axiom, 15 signaux, scoring 150 pts.<br>
+      Les calls arrivent avant la foule. Tu entres au bon moment.
     </p>
     <div class="lp-hero-cta">
       <button class="lp-btn-primary" onclick="openCode()">Accès immédiat →</button>
-      <button class="lp-btn-ghost" onclick="document.getElementById('scanner').scrollIntoView({behavior:'smooth'})">Voir le scanner live</button>
+      <button class="lp-btn-ghost" onclick="document.getElementById('scanner').scrollIntoView({behavior:'smooth'})">Scanner live ↓</button>
     </div>
     <div class="lp-hero-stats">
       <div class="lp-hstat"><span class="lp-hstat-val green" id="heroStatWr">68%</span><span class="lp-hstat-lbl">Winrate</span></div>
@@ -1808,7 +1949,7 @@ nav{background:rgba(0,0,0,.96)!important;border-bottom:1px solid rgba(255,109,0,
       <div class="lp-hstat-sep"></div>
       <div class="lp-hstat"><span class="lp-hstat-val violet">45s</span><span class="lp-hstat-lbl">Cycle scan</span></div>
       <div class="lp-hstat-sep"></div>
-      <div class="lp-hstat"><span class="lp-hstat-val">150pts</span><span class="lp-hstat-lbl">Score max</span></div>
+      <div class="lp-hstat"><span class="lp-hstat-val">1 064</span><span class="lp-hstat-lbl">Wallets suivis</span></div>
     </div>
   </div>
 </section>
@@ -1816,32 +1957,40 @@ nav{background:rgba(0,0,0,.96)!important;border-bottom:1px solid rgba(255,109,0,
 <!-- ═══ FEATURES ════════════════════════════════════════════════ -->
 <section class="lp-features" id="features">
   <div class="lp-container">
-    <div class="lp-section-label">Ce qu'on a construit</div>
-    <h2 class="lp-section-title">Tout ce dont tu as besoin<br>pour trader les memes.</h2>
+    <div class="lp-section-label">Infrastructure</div>
+    <h2 class="lp-section-title">L'edge technique que<br>les autres n'ont pas.</h2>
     <div class="lp-features-grid">
       <div class="lp-feat-card accent-violet">
-        <div class="lp-feat-icon">⚡</div>
+        <div class="lp-feat-icon-wrap violet">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#a5b4fc" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+        </div>
         <div class="lp-feat-badge">CORE</div>
         <h3 class="lp-feat-name">SmartScan™</h3>
-        <p class="lp-feat-desc">L'algo tourne toutes les 45s. 12 sources DexScreener + Helius en parallèle. Score 150pts sur chaque token. Tu reçois les calls avant tout le monde.</p>
-        <div class="lp-feat-pills"><span>150pts scoring</span><span>15 filtres</span><span>45s cycle</span></div>
+        <p class="lp-feat-desc">Algo propre qui tourne toutes les 45s. 12 sources DexScreener + Helius en parallèle. Score 150 pts sur chaque token. Tu reçois les calls avant le marché.</p>
+        <div class="lp-feat-pills"><span>150 pts scoring</span><span>15 filtres</span><span>45s cycle</span></div>
       </div>
       <div class="lp-feat-card accent-green">
-        <div class="lp-feat-icon">🛡️</div>
+        <div class="lp-feat-icon-wrap green">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#00ff88" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        </div>
         <div class="lp-feat-badge">PROTECTION</div>
         <h3 class="lp-feat-name">Rug Snip™</h3>
         <p class="lp-feat-desc">Détection des rugs en temps réel. Staircase patterns, sell pressure massive, pump & dump — alertes avant que ça crash. Score danger 0-12.</p>
         <div class="lp-feat-pills"><span>Temps réel</span><span>Score danger</span><span>Pump.fun</span></div>
       </div>
       <div class="lp-feat-card accent-gold">
-        <div class="lp-feat-icon">🤖</div>
+        <div class="lp-feat-icon-wrap gold">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+        </div>
         <div class="lp-feat-badge">SIMULATION</div>
         <h3 class="lp-feat-name">Paper Bot</h3>
         <p class="lp-feat-desc">Simule des trades automatiques sur chaque call. Capital fictif, ROI réel. Mesure la performance de l'algo sans risquer un seul SOL.</p>
         <div class="lp-feat-pills"><span>Auto-trading</span><span>PnL tracker</span><span>Equity curve</span></div>
       </div>
       <div class="lp-feat-card accent-blue">
-        <div class="lp-feat-icon">👁️</div>
+        <div class="lp-feat-icon-wrap blue">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        </div>
         <div class="lp-feat-badge">INTELLIGENCE</div>
         <h3 class="lp-feat-name">KOL Tracker</h3>
         <p class="lp-feat-desc">Track les tweets des influenceurs Solana en temps réel. Quand un KOL mentionne un token, tu es le premier informé. Alpha pur.</p>
@@ -1907,53 +2056,142 @@ nav{background:rgba(0,0,0,.96)!important;border-bottom:1px solid rgba(255,109,0,
 <section class="lp-pricing-preview" id="pricing-preview">
   <div class="lp-container">
     <div class="lp-section-label" style="text-align:center">Accès</div>
-    <h2 class="lp-section-title" style="text-align:center">Choisis ton niveau.<br><span style="font-size:1.2rem;font-weight:500;color:var(--lp-muted)">Plus tu print, plus ça vaut.</span></h2>
+    <h2 class="lp-section-title" style="text-align:center">Simple. Transparent.<br><span style="font-size:1.1rem;font-weight:500;color:var(--lp-muted)">Pas de frais cachés.</span></h2>
     <div class="lp-pricing-grid">
       <div class="lp-price-card lp-price-base">
-        <div class="lp-price-tier">BASE 🌿</div>
-        <div class="lp-price-tagline">pour commencer à print</div>
+        <div class="lp-price-tier">STARTER</div>
+        <div class="lp-price-tagline">Pour tester l'algo sans risque</div>
         <div class="lp-price-val">$19<span class="lp-price-period">/mois</span></div>
+        <div class="lp-price-trend">
+          <div class="lp-price-trend-bars">
+            <span style="height:4px"></span><span style="height:6px"></span><span style="height:8px"></span><span style="height:7px"></span><span style="height:10px"></span><span style="height:9px"></span><span style="height:12px"></span><span style="height:11px"></span>
+          </div>
+          +124 utilisateurs ce mois
+        </div>
         <ul class="lp-price-list">
           <li>✓ Algo Tracker (top 5)</li>
           <li>✓ Scoring BUY/AVOID</li>
           <li>✓ Refresh 60s</li>
-          <li class="dim">✗ Rug Sniping</li>
-          <li class="dim">✗ Dev Token Tracker</li>
-          <li class="dim">✗ Wallet &amp; Whales</li>
+          <li class="dim">— Rug Sniping</li>
+          <li class="dim">— Dev Token Tracker</li>
+          <li class="dim">— Wallet &amp; Whales</li>
         </ul>
         <button class="lp-price-btn outline" onclick="openCode()">Commencer</button>
       </div>
       <div class="lp-price-card featured">
         <div class="lp-price-badge-top">⭐ POPULAIRE</div>
-        <div class="lp-price-tier">ALPHA ⚡</div>
-        <div class="lp-price-tagline">tu vois ce que les autres voient pas</div>
+        <div class="lp-price-tier">ALPHA</div>
+        <div class="lp-price-tagline">L'edge que les autres n'ont pas</div>
         <div class="lp-price-val">$49<span class="lp-price-period">/mois</span></div>
+        <div class="lp-price-trend">
+          <div class="lp-price-trend-bars">
+            <span style="height:4px"></span><span style="height:8px"></span><span style="height:12px"></span><span style="height:10px"></span><span style="height:14px"></span><span style="height:12px"></span><span style="height:16px"></span><span style="height:16px"></span>
+          </div>
+          +387 utilisateurs ce mois
+        </div>
         <ul class="lp-price-list">
           <li>✓ Algo Tracker illimité</li>
           <li>✓ Scoring complet + debug</li>
           <li>✓ Refresh 30s</li>
-          <li>✓ 🛡️ Rug Sniping</li>
-          <li>✓ 👥 Dev Token Tracker</li>
-          <li class="dim">✗ Wallet &amp; Whales</li>
+          <li>✓ Rug Sniping</li>
+          <li>✓ Dev Token Tracker</li>
+          <li class="dim">— Wallet &amp; Whales</li>
         </ul>
         <button class="lp-price-btn primary" onclick="openCode()">Prendre ALPHA</button>
       </div>
       <div class="lp-price-card lp-price-dubai">
-        <div class="lp-price-badge-top dubai-badge">🚀 FULL SEND</div>
-        <div class="lp-price-tier">DUBAI MODE AE</div>
-        <div class="lp-price-tagline">full send, no limits, ngmi les autres</div>
-        <div class="lp-price-val">$99<span class="lp-price-period">/mois</span></div>
+        <div class="lp-price-badge-top dubai-badge">PRO</div>
+        <div class="lp-price-tier">ELITE</div>
+        <div class="lp-price-tagline">Accès complet, zéro limite</div>
+        <div class="lp-price-val" style="color:#f59e0b">$99<span class="lp-price-period" style="color:var(--lp-muted)">/mois</span></div>
+        <div class="lp-price-trend" style="color:#f59e0b">
+          <div class="lp-price-trend-bars">
+            <span style="height:4px"></span><span style="height:9px"></span><span style="height:7px"></span><span style="height:12px"></span><span style="height:10px"></span><span style="height:14px"></span><span style="height:16px"></span><span style="height:16px"></span>
+          </div>
+          +89 utilisateurs ce mois
+        </div>
         <ul class="lp-price-list">
           <li>✓ Tout ALPHA inclus</li>
-          <li>✓ 🐋 Wallet &amp; Whales</li>
+          <li>✓ Wallet &amp; Whales</li>
           <li>✓ KOL Tracker complet</li>
           <li>✓ Alertes prioritaires</li>
           <li>✓ Refresh 15s</li>
-          <li>✓ Support Discord VIP</li>
+          <li>✓ Support Discord prioritaire</li>
         </ul>
-        <button class="lp-price-btn dubai" onclick="openCode()">DUBAI MODE 🚀</button>
+        <button class="lp-price-btn dubai" onclick="openCode()">Accès ELITE</button>
       </div>
     </div>
+  </div>
+</section>
+
+<!-- ═══ COMPARAISON ══════════════════════════════════════════════ -->
+<section class="lp-comparison">
+  <div class="lp-container">
+    <div class="lp-section-label" style="text-align:center">Comparaison</div>
+    <h2 class="lp-section-title" style="text-align:center">Pourquoi MemeScanner<br>domine les alternatives.</h2>
+    <div style="overflow-x:auto;margin-top:2.5rem;">
+      <table class="lp-cmp-table">
+        <thead>
+          <tr class="lp-cmp-header-row">
+            <th style="text-align:left;width:35%">Fonctionnalité</th>
+            <th class="ours">MemeScanner</th>
+            <th>StalkFun</th>
+            <th>Outils génériques</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="feature-name">Scoring algorithmique 150pts</td>
+            <td class="ours"><span class="lp-cmp-yes">✓</span></td>
+            <td><span class="lp-cmp-no">✗</span></td>
+            <td><span class="lp-cmp-no">✗</span></td>
+          </tr>
+          <tr>
+            <td class="feature-name">Détection Smart Money Axiom</td>
+            <td class="ours"><span class="lp-cmp-yes">✓</span> <span style="font-size:0.7rem;color:#a5b4fc">1 064 wallets</span></td>
+            <td><span class="lp-cmp-partial">Partiel</span></td>
+            <td><span class="lp-cmp-no">✗</span></td>
+          </tr>
+          <tr>
+            <td class="feature-name">Rug detection temps réel</td>
+            <td class="ours"><span class="lp-cmp-yes">✓</span> <span style="font-size:0.7rem;color:#a5b4fc">Score 0-12</span></td>
+            <td><span class="lp-cmp-no">✗</span></td>
+            <td><span class="lp-cmp-partial">Basique</span></td>
+          </tr>
+          <tr>
+            <td class="feature-name">Paper Bot (simulation trades)</td>
+            <td class="ours"><span class="lp-cmp-yes">✓</span></td>
+            <td><span class="lp-cmp-no">✗</span></td>
+            <td><span class="lp-cmp-no">✗</span></td>
+          </tr>
+          <tr>
+            <td class="feature-name">KOL Tracker integré</td>
+            <td class="ours"><span class="lp-cmp-yes">✓</span></td>
+            <td><span class="lp-cmp-no">✗</span></td>
+            <td><span class="lp-cmp-partial">Externe</span></td>
+          </tr>
+          <tr>
+            <td class="feature-name">Refresh cycle</td>
+            <td class="ours"><span style="color:#00ff88;font-weight:700;font-size:0.9rem">15–45s</span></td>
+            <td><span style="color:rgba(255,255,255,0.5)">60–120s</span></td>
+            <td><span style="color:rgba(255,255,255,0.3)">Manual</span></td>
+          </tr>
+          <tr>
+            <td class="feature-name">Données on-chain Helius</td>
+            <td class="ours"><span class="lp-cmp-yes">✓</span></td>
+            <td><span class="lp-cmp-no">✗</span></td>
+            <td><span class="lp-cmp-partial">Limité</span></td>
+          </tr>
+          <tr>
+            <td class="feature-name">Interface tout-en-un</td>
+            <td class="ours"><span class="lp-cmp-yes">✓</span></td>
+            <td><span class="lp-cmp-partial">Partiel</span></td>
+            <td><span class="lp-cmp-no">✗</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="text-align:center;color:var(--lp-muted);font-size:0.78rem;margin-top:1.5rem;font-family:var(--font-mono)">Comparaison basée sur les fonctionnalités publiques documentées — Avril 2026</p>
   </div>
 </section>
 
@@ -9107,6 +9345,107 @@ window.addEventListener('DOMContentLoaded',()=>{
     <p>© 2025 MemeScanner · Tous droits réservés</p>
   </div>
 </footer>
+
+<!-- ═══ MASCOT SOLANA COIN ═══════════════════════════════════════ -->
+<div id="solMascot" onclick="document.getElementById('scanner').scrollIntoView({behavior:'smooth'})" title="Scanner live" style="position:fixed;bottom:24px;right:24px;z-index:900;cursor:pointer;width:52px;height:52px;animation:mascot-float 3s ease-in-out infinite;filter:drop-shadow(0 6px 20px rgba(153,69,255,0.5));transition:transform 0.2s;" onmouseover="document.getElementById('solTip').style.opacity=1" onmouseout="document.getElementById('solTip').style.opacity=0">
+  <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" width="52" height="52">
+    <defs>
+      <radialGradient id="solBg" cx="35%" cy="35%">
+        <stop offset="0%" stop-color="#a855f7"/>
+        <stop offset="100%" stop-color="#6d28d9"/>
+      </radialGradient>
+    </defs>
+    <circle cx="50" cy="50" r="48" fill="url(#solBg)" stroke="#c084fc" stroke-width="2"/>
+    <circle cx="50" cy="50" r="42" fill="#4c1d95" opacity="0.4"/>
+    <path d="M28 38h38l-6 8H22z" fill="#c084fc" opacity="0.9"/>
+    <path d="M22 50h38l6 8H28z" fill="#a78bfa"/>
+    <path d="M28 62h38l-6 8H22z" fill="#c084fc" opacity="0.9"/>
+    <circle cx="40" cy="30" r="5" fill="#f5f3ff"/>
+    <circle cx="60" cy="30" r="5" fill="#f5f3ff"/>
+    <circle cx="41" cy="29" r="2.5" fill="#1e1b4b"/>
+    <circle cx="61" cy="29" r="2.5" fill="#1e1b4b"/>
+    <circle cx="42" cy="28" r="1" fill="white"/>
+    <circle cx="62" cy="28" r="1" fill="white"/>
+    <path d="M42 78 Q50 84 58 78" stroke="#c084fc" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    <line x1="40" y1="8" x2="35" y2="2" stroke="#a78bfa" stroke-width="2" stroke-linecap="round"/>
+    <circle cx="34" cy="1.5" r="2.5" fill="#ffd700"/>
+    <line x1="60" y1="8" x2="65" y2="2" stroke="#a78bfa" stroke-width="2" stroke-linecap="round"/>
+    <circle cx="66" cy="1.5" r="2.5" fill="#ffd700"/>
+  </svg>
+</div>
+<div id="solTip" style="position:fixed;bottom:88px;right:16px;z-index:900;background:rgba(10,5,25,0.96);border:1px solid rgba(99,102,241,0.35);border-radius:10px;padding:6px 12px;font-size:0.72rem;color:#a5b4fc;font-family:'Space Mono',monospace;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity 0.3s;">Scanner live ↓</div>
+
+<!-- ═══ WEBGL HERO SHADER ════════════════════════════════════════ -->
+<script>
+(function() {
+  function initHeroShader() {
+    const canvas = document.getElementById('heroGLCanvas');
+    if (!canvas) return;
+    const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+    if (!gl) return;
+
+    const vs = gl.createShader(gl.VERTEX_SHADER);
+    gl.shaderSource(vs, 'attribute vec3 p;void main(){gl_Position=vec4(p,1.);}');
+    gl.compileShader(vs);
+
+    const fs = gl.createShader(gl.FRAGMENT_SHADER);
+    gl.shaderSource(fs, `
+      precision highp float;
+      uniform vec2 res; uniform float t;
+      void main(){
+        vec2 p=(gl_FragCoord.xy*2.-res)/min(res.x,res.y);
+        float d=length(p)*0.07;
+        float r=0.035/abs(p.y+sin((p.x*(1.+d)+t)*1.1)*0.3);
+        float g=0.03/abs(p.y+sin((p.x+t)*1.1)*0.3);
+        float b=0.045/abs(p.y+sin((p.x*(1.-d)+t)*1.1)*0.3);
+        gl_FragColor=vec4(r*0.5,g*0.4,b*1.2,1.);
+      }
+    `);
+    gl.compileShader(fs);
+
+    const prog = gl.createProgram();
+    gl.attachShader(prog, vs); gl.attachShader(prog, fs);
+    gl.linkProgram(prog); gl.useProgram(prog);
+
+    const buf = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1,0,1,-1,0,-1,1,0,1,-1,0,-1,1,0,1,1,0]), gl.STATIC_DRAW);
+    const loc = gl.getAttribLocation(prog, 'p');
+    gl.enableVertexAttribArray(loc);
+    gl.vertexAttribPointer(loc, 3, gl.FLOAT, false, 0, 0);
+
+    const resU = gl.getUniformLocation(prog, 'res');
+    const tU = gl.getUniformLocation(prog, 't');
+
+    let time = 0;
+    function resize() {
+      const hero = document.getElementById('hero');
+      if (!hero) return;
+      canvas.width = hero.offsetWidth; canvas.height = hero.offsetHeight;
+      gl.viewport(0,0,canvas.width,canvas.height);
+      gl.uniform2f(resU, canvas.width, canvas.height);
+    }
+
+    function tick() {
+      time += 0.006;
+      gl.uniform1f(tU, time);
+      gl.drawArrays(gl.TRIANGLES, 0, 6);
+      requestAnimationFrame(tick);
+    }
+
+    resize();
+    window.addEventListener('resize', resize);
+    tick();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initHeroShader);
+  } else {
+    setTimeout(initHeroShader, 100);
+  }
+})();
+</script>
+
 </body>
 </html>
 
