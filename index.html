@@ -1953,6 +1953,147 @@ nav.scrolled { box-shadow: 0 1px 40px rgba(0,0,0,0.6) !important; }
 .pt-badge { background: rgba(99,102,241,0.12) !important; color: #a5b4fc !important; border-color: rgba(99,102,241,0.2) !important; }
 .pt-config-details { border-color: rgba(255,255,255,0.05) !important; border-radius: 12px !important; }
 .pt-config-summary { font-family: 'Inter', sans-serif !important; font-size: 0.75rem !important; color: rgba(255,255,255,0.35) !important; }
+
+/* ═══ PAPER BOT — SaaS Hero Header (bot((paper.txt) ══════════════ */
+.pt-saas-header {
+  margin-bottom: 18px;
+  padding: 18px 20px 16px;
+  background: linear-gradient(135deg, rgba(99,102,241,0.07) 0%, rgba(139,92,246,0.04) 100%);
+  border: 1px solid rgba(99,102,241,0.14);
+  border-radius: 16px;
+  position: relative; overflow: hidden;
+}
+.pt-saas-header::before {
+  content: '';
+  position: absolute; top: -40px; right: -40px;
+  width: 150px; height: 150px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(99,102,241,0.08) 0%, transparent 70%);
+  pointer-events: none;
+}
+.pt-announce-badge {
+  display: inline-flex; align-items: center; gap: 0.4rem;
+  background: rgba(99,102,241,0.1); border: 1px solid rgba(99,102,241,0.22);
+  color: #a5b4fc; font-size: 0.67rem; font-weight: 600;
+  padding: 0.28rem 0.75rem; border-radius: 30px;
+  margin-bottom: 10px; letter-spacing: 0.05em;
+  font-family: 'Space Mono', monospace;
+}
+.pt-announce-dot {
+  width: 5px; height: 5px; border-radius: 50%;
+  background: #00ff88; animation: lp-pulse 1.5s infinite; flex-shrink: 0;
+}
+.pt-hero-title {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 1.45rem; font-weight: 800;
+  letter-spacing: -0.03em; line-height: 1.15;
+  background: linear-gradient(135deg, #fff 20%, rgba(255,255,255,0.55));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  margin-bottom: 3px;
+}
+.pt-hero-sub {
+  font-size: 0.72rem; color: rgba(255,255,255,0.32);
+  font-family: 'Inter', sans-serif; line-height: 1.5;
+}
+.pt-saas-title-row {
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
+}
+
+/* ═══ PAPER BOT — Stats with Sparklines (bot---stats.txt) ════════ */
+.pt-stats2 {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 8px; margin-bottom: 14px;
+}
+@media (max-width: 700px) { .pt-stats2 { grid-template-columns: repeat(2,1fr); } }
+.pt-stat2 {
+  background: rgba(255,255,255,0.025);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 12px; padding: 10px 12px;
+  display: flex; align-items: flex-start; gap: 9px;
+  transition: border-color 0.2s, background 0.2s;
+  position: relative; overflow: hidden;
+}
+.pt-stat2:hover { border-color: rgba(99,102,241,0.2); background: rgba(99,102,241,0.04); }
+.pt-stat2.green { border-color: rgba(0,255,136,0.13); }
+.pt-stat2.green:hover { border-color: rgba(0,255,136,0.25); }
+.pt-stat2.gold { border-color: rgba(245,158,11,0.15); }
+.pt-stat2.gold:hover { border-color: rgba(245,158,11,0.28); }
+.pt-stat2-icon {
+  width: 28px; height: 28px; border-radius: 8px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(99,102,241,0.1); margin-top: 1px;
+}
+.pt-stat2.green .pt-stat2-icon { background: rgba(0,255,136,0.1); }
+.pt-stat2.gold .pt-stat2-icon { background: rgba(245,158,11,0.1); }
+.pt-stat2-content { flex: 1; min-width: 0; }
+.pt-stat2-lbl {
+  font-size: 0.6rem; color: rgba(255,255,255,0.28);
+  text-transform: uppercase; letter-spacing: 0.09em;
+  font-family: 'Space Mono', monospace; margin-bottom: 2px;
+}
+.pt-stat2-val {
+  font-size: 1.05rem; font-weight: 900;
+  font-family: 'Space Mono', monospace; color: #fff; line-height: 1.1;
+}
+.pt-stat2.green .pt-stat2-val { color: #00ff88; }
+.pt-stat2.gold .pt-stat2-val { color: #f59e0b; }
+.pt-stat2-spark {
+  align-self: flex-end; flex-shrink: 0;
+  opacity: 0.8; overflow: visible;
+}
+
+/* ═══ PAPER BOT — Live Trades Monitor (bot---stats.txt) ══════════ */
+.pt-monitor-wrap {
+  background: rgba(0,0,0,0.3);
+  border: 1px solid rgba(255,255,255,0.05);
+  border-radius: 12px; overflow: hidden; margin-bottom: 12px;
+}
+.pt-monitor-hdr {
+  padding: 7px 12px; border-bottom: 1px solid rgba(255,255,255,0.04);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.pt-monitor-hdr-title {
+  font-size: 0.62rem; font-weight: 700; color: rgba(255,255,255,0.25);
+  text-transform: uppercase; letter-spacing: 0.1em;
+  font-family: 'Space Mono', monospace;
+  display: flex; align-items: center; gap: 6px;
+}
+.pt-monitor-live-dot {
+  width: 5px; height: 5px; border-radius: 50%;
+  background: #00ff88; animation: lp-pulse 1.5s infinite;
+}
+.pt-monitor-rows { padding: 4px 8px 6px; }
+.pt-monitor-row {
+  display: flex; align-items: center; gap: 8px;
+  padding: 5px 4px; border-radius: 7px; transition: background 0.15s;
+}
+.pt-monitor-row:hover { background: rgba(99,102,241,0.05); }
+.pt-monitor-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+.pt-monitor-sym {
+  font-family: 'Space Mono', monospace; font-size: 0.72rem;
+  font-weight: 700; color: #fff; min-width: 64px;
+}
+.pt-monitor-pnl {
+  font-family: 'Space Mono', monospace; font-size: 0.72rem;
+  font-weight: 700; margin-left: auto;
+}
+.pt-monitor-pnl.pos { color: #00ff88; }
+.pt-monitor-pnl.neg { color: #f87171; }
+.pt-monitor-pnl.neu { color: #f59e0b; }
+.pt-monitor-spark { flex-shrink: 0; opacity: 0.75; }
+.pt-monitor-empty {
+  text-align: center; padding: 12px;
+  font-size: 0.7rem; color: rgba(255,255,255,0.2);
+  font-family: 'Space Mono', monospace;
+}
+
+/* Section titles sans emojis */
+.pt-section-title2 {
+  font-size: 0.65rem; font-weight: 700; color: rgba(255,255,255,0.25);
+  text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px;
+  display: flex; align-items: center; gap: 7px;
+  font-family: 'Space Mono', monospace;
+}
+.pt-section-title2 .pt-badge { margin-left: 2px; }
 .pt-config-summary:hover { color: #fff !important; }
 .pt-inp:focus { border-color: rgba(99,102,241,0.4) !important; box-shadow: 0 0 0 2px rgba(99,102,241,0.07) !important; }
 .pt-trade-row:hover { border-color: rgba(99,102,241,0.15) !important; background: rgba(99,102,241,0.03) !important; }
@@ -2517,48 +2658,88 @@ nav.scrolled { box-shadow: 0 1px 40px rgba(0,0,0,0.6) !important; }
 <div id="panelPaperBot" style="display:none">
   <div class="pt-wrap">
 
-    <!-- HEADER + TOGGLE -->
-    <div class="pt-header">
-      <div>
-        <div class="pt-title" style="display:flex;align-items:center;gap:.55rem;">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#a5b4fc" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
-          Paper Trading Bot
-        </div>
-        <div class="pt-sub">Simulation automatique sur chaque call — capital fictif</div>
+    <!-- SAAS HERO HEADER (inspiré bot((paper.txt) -->
+    <div class="pt-saas-header">
+      <div class="pt-announce-badge">
+        <span class="pt-announce-dot"></span>
+        Simulation active · aucun SOL au risque
+        <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14m-7-7 7 7-7 7"/></svg>
       </div>
-      <div style="display:flex;align-items:center;gap:10px;">
-        <span style="font-size:11px;color:var(--muted);" id="ptStatusText">Désactivé</span>
-        <div class="pt-toggle" id="ptToggle" onclick="ptToggleBot()">
-          <div class="pt-toggle-knob" id="ptToggleKnob"></div>
+      <div class="pt-saas-title-row">
+        <div>
+          <div class="pt-hero-title">Paper Trading Bot</div>
+          <div class="pt-hero-sub">Trades simulés sur chaque call · ROI en temps réel · 0 risque</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;">
+          <span style="font-size:10px;color:rgba(255,255,255,.3);font-family:'Space Mono',monospace;" id="ptStatusText">OFF</span>
+          <div class="pt-toggle" id="ptToggle" onclick="ptToggleBot()">
+            <div class="pt-toggle-knob" id="ptToggleKnob"></div>
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- STATS GLOBALES -->
-    <div class="pt-stats" id="ptStats">
-      <div class="pt-stat">
-        <div class="pt-stat-val" id="ptCapital">$0</div>
-        <div class="pt-stat-lbl">Capital actuel</div>
+    <!-- STATS AVEC SPARKLINES (inspiré bot---stats.txt) -->
+    <div class="pt-stats2" id="ptStats">
+      <div class="pt-stat2">
+        <div class="pt-stat2-icon">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#a5b4fc" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
+        </div>
+        <div class="pt-stat2-content">
+          <div class="pt-stat2-lbl">Capital</div>
+          <div class="pt-stat2-val" id="ptCapital">$0</div>
+        </div>
+        <svg class="pt-stat2-spark" id="ptSparkCapital" width="56" height="22"></svg>
       </div>
-      <div class="pt-stat green">
-        <div class="pt-stat-val" id="ptRoi">+0%</div>
-        <div class="pt-stat-lbl">ROI total</div>
+      <div class="pt-stat2 green">
+        <div class="pt-stat2-icon">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#00ff88" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
+        </div>
+        <div class="pt-stat2-content">
+          <div class="pt-stat2-lbl">ROI total</div>
+          <div class="pt-stat2-val" id="ptRoi">+0%</div>
+        </div>
+        <svg class="pt-stat2-spark" id="ptSparkRoi" width="56" height="22"></svg>
       </div>
-      <div class="pt-stat">
-        <div class="pt-stat-val" id="ptWinrate">—</div>
-        <div class="pt-stat-lbl">Winrate</div>
+      <div class="pt-stat2">
+        <div class="pt-stat2-icon">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#a5b4fc" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 11 3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+        </div>
+        <div class="pt-stat2-content">
+          <div class="pt-stat2-lbl">Winrate</div>
+          <div class="pt-stat2-val" id="ptWinrate">—</div>
+        </div>
+        <svg class="pt-stat2-spark" id="ptSparkWinrate" width="56" height="22"></svg>
       </div>
-      <div class="pt-stat">
-        <div class="pt-stat-val" id="ptTrades">0</div>
-        <div class="pt-stat-lbl">Trades fermés</div>
+      <div class="pt-stat2">
+        <div class="pt-stat2-icon">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#a5b4fc" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+        </div>
+        <div class="pt-stat2-content">
+          <div class="pt-stat2-lbl">Trades fermés</div>
+          <div class="pt-stat2-val" id="ptTrades">0</div>
+        </div>
+        <svg class="pt-stat2-spark" id="ptSparkTrades" width="56" height="22"></svg>
       </div>
-      <div class="pt-stat gold">
-        <div class="pt-stat-val" id="ptBestTrade">—</div>
-        <div class="pt-stat-lbl">Meilleur trade</div>
+      <div class="pt-stat2 gold">
+        <div class="pt-stat2-icon">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        </div>
+        <div class="pt-stat2-content">
+          <div class="pt-stat2-lbl">Meilleur trade</div>
+          <div class="pt-stat2-val" id="ptBestTrade">—</div>
+        </div>
+        <svg class="pt-stat2-spark" id="ptSparkBest" width="56" height="22"></svg>
       </div>
-      <div class="pt-stat">
-        <div class="pt-stat-val" id="ptOpenTrades">0</div>
-        <div class="pt-stat-lbl">Positions ouvertes</div>
+      <div class="pt-stat2">
+        <div class="pt-stat2-icon">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#a5b4fc" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        </div>
+        <div class="pt-stat2-content">
+          <div class="pt-stat2-lbl">Positions</div>
+          <div class="pt-stat2-val" id="ptOpenTrades">0</div>
+        </div>
+        <svg class="pt-stat2-spark" id="ptSparkOpen" width="56" height="22"></svg>
       </div>
     </div>
 
@@ -2566,6 +2747,19 @@ nav.scrolled { box-shadow: 0 1px 40px rgba(0,0,0,0.6) !important; }
     <div class="pt-equity-wrap">
       <div class="pt-equity-label">COURBE D'ÉQUITÉ</div>
       <svg id="ptEquitySvg" class="pt-equity-svg" viewBox="0 0 600 80" preserveAspectRatio="none"></svg>
+    </div>
+
+    <!-- LIVE TRADES MONITOR -->
+    <div class="pt-monitor-wrap">
+      <div class="pt-monitor-hdr">
+        <span class="pt-monitor-hdr-title">
+          <span class="pt-monitor-live-dot"></span>
+          DERNIERS TRADES
+        </span>
+      </div>
+      <div class="pt-monitor-rows" id="ptMonitorRows">
+        <div class="pt-monitor-empty">Aucun trade fermé</div>
+      </div>
     </div>
 
     <!-- CONFIG -->
@@ -2622,20 +2816,20 @@ nav.scrolled { box-shadow: 0 1px 40px rgba(0,0,0,0.6) !important; }
         </div>
       </div>
       <div style="display:flex;gap:8px;margin-top:10px;">
-        <button class="pt-btn" onclick="ptSaveConfig()">💾 Sauvegarder</button>
+        <button class="pt-btn" onclick="ptSaveConfig()"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:5px"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>Sauvegarder</button>
         <button class="pt-btn secondary" onclick="ptResetAll()" style="color:#f87171;border-color:rgba(239,68,68,.25);">Reset</button>
       </div>
     </details>
 
     <!-- POSITIONS OUVERTES -->
     <div class="pt-section">
-      <div class="pt-section-title">📂 Positions ouvertes <span id="ptOpenBadge" class="pt-badge"></span></div>
+      <div class="pt-section-title"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px;opacity:.6"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>Positions ouvertes <span id="ptOpenBadge" class="pt-badge"></span></div>
       <div id="ptOpenTable"><div class="pt-empty">Aucune position ouverte</div></div>
     </div>
 
     <!-- HISTORIQUE FERMÉS -->
     <div class="pt-section">
-      <div class="pt-section-title">📊 Historique des trades <span id="ptClosedBadge" class="pt-badge"></span></div>
+      <div class="pt-section-title"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px;opacity:.6"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>Historique des trades <span id="ptClosedBadge" class="pt-badge"></span></div>
       <div id="ptClosedTable"><div class="pt-empty">Aucun trade fermé pour l'instant</div></div>
     </div>
 
@@ -5637,6 +5831,50 @@ function ptCalcStats(){
     realizedPnl, unrealizedPnl, totalPnl, roi, currentCapital, best };
 }
 
+// ── Sparkline data store ──
+const PT_SPARK_MAX = 20;
+const ptSparkData = { capital:[], roi:[], winrate:[], trades:[], best:[], open:[] };
+
+function ptDrawSparkline(id, data, color) {
+  const svg = document.getElementById(id);
+  if (!svg || data.length < 2) { if(svg) svg.innerHTML=''; return; }
+  const W=56, H=22, pad=2;
+  const vals = data.slice(-PT_SPARK_MAX);
+  const min=Math.min(...vals), max=Math.max(...vals), range=max-min||1;
+  const sx = i => pad + (i/(vals.length-1))*(W-2*pad);
+  const sy = v => H-pad-((v-min)/range)*(H-2*pad);
+  const pts = vals.map((v,i)=>`${sx(i).toFixed(1)},${sy(v).toFixed(1)}`);
+  const pathD = pts.map((p,i)=>(i===0?'M':'L')+p).join(' ');
+  const areaD = `M${sx(0)},${H} ${pts.map(p=>'L'+p).join(' ')} L${sx(vals.length-1)},${H} Z`;
+  const mean = vals.reduce((a,b)=>a+b,0)/vals.length;
+  const isSpike = vals[vals.length-1] > mean + range*0.55;
+  const uid = id+'_g';
+  svg.innerHTML = `<defs><linearGradient id="${uid}" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="${color}" stop-opacity=".28"/>
+    <stop offset="100%" stop-color="${color}" stop-opacity="0"/>
+  </linearGradient></defs>
+  <path d="${areaD}" fill="url(#${uid})"/>
+  <path d="${pathD}" fill="none" stroke="${color}" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+  ${isSpike?`<circle cx="${sx(vals.length-1).toFixed(1)}" cy="${sy(vals[vals.length-1]).toFixed(1)}" r="2.2" fill="${color}"/>`:''}`;
+}
+
+function ptUpdateSparklines() {
+  const stats = ptCalcStats();
+  const push = (arr,val) => { arr.push(val); if(arr.length>PT_SPARK_MAX) arr.shift(); };
+  push(ptSparkData.capital, stats.currentCapital);
+  push(ptSparkData.roi, stats.roi);
+  push(ptSparkData.winrate, stats.wr??0);
+  push(ptSparkData.trades, stats.closed);
+  push(ptSparkData.best, stats.best?.totalPnlUsd||0);
+  push(ptSparkData.open, stats.open);
+  ptDrawSparkline('ptSparkCapital', ptSparkData.capital, '#a5b4fc');
+  ptDrawSparkline('ptSparkRoi', ptSparkData.roi, stats.roi>=0?'#00ff88':'#f87171');
+  ptDrawSparkline('ptSparkWinrate', ptSparkData.winrate, '#a5b4fc');
+  ptDrawSparkline('ptSparkTrades', ptSparkData.trades, '#a5b4fc');
+  ptDrawSparkline('ptSparkBest', ptSparkData.best, '#f59e0b');
+  ptDrawSparkline('ptSparkOpen', ptSparkData.open, '#a5b4fc');
+}
+
 // ── Equity SVG ──
 function ptRenderEquity(){
   const svg = document.getElementById('ptEquitySvg');
@@ -5760,6 +5998,32 @@ function ptRender(){
       }).join('');
     }
   }
+
+  // ── LIVE MONITOR (derniers trades fermés) ──
+  const monitorRows = document.getElementById('ptMonitorRows');
+  if(monitorRows) {
+    const lastTrades = trades.filter(t=>t.status==='closed').slice(0,6);
+    if(!lastTrades.length) {
+      monitorRows.innerHTML='<div class="pt-monitor-empty">Aucun trade fermé</div>';
+    } else {
+      monitorRows.innerHTML = lastTrades.map(t=>{
+        const pnl=t.totalPnlUsd||0;
+        const pnlCls=pnl>0?'pos':pnl<0?'neg':'neu';
+        const sign=pnl>=0?'+':'';
+        const dotColor=pnl>0?'#00ff88':pnl<0?'#f87171':'#f59e0b';
+        const ath=t.athX?`${t.athX.toFixed(1)}x`:'—';
+        return `<div class="pt-monitor-row">
+          <span class="pt-monitor-dot" style="background:${dotColor}"></span>
+          <span class="pt-monitor-sym">${t.symbol}</span>
+          <span style="font-size:9px;color:rgba(255,255,255,.25);font-family:'Space Mono',monospace;min-width:28px">ATH ${ath}</span>
+          <span class="pt-monitor-pnl ${pnlCls}" style="font-family:'Space Mono',monospace;font-size:11px;font-weight:700;flex:1">${sign}$${Math.abs(pnl).toFixed(1)}</span>
+          <span style="font-size:9px;color:rgba(255,255,255,.2);font-family:'Space Mono',monospace">${t.exitTime?new Date(t.exitTime).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}):'—'}</span>
+        </div>`;
+      }).join('');
+    }
+  }
+
+  ptUpdateSparklines();
 }
 
 // ============================================================
