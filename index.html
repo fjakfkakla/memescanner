@@ -2219,8 +2219,6 @@ nav.scrolled { box-shadow: 0 1px 40px rgba(0,0,0,0.6) !important; }
     <a href="#">Discord</a>
   </div>
   <button class="lang-switch" onclick="toggleLang()">🇫🇷 FR</button>
-  <button class="nav-btn btn-outline" onclick="openCode()">Se connecter</button>
-  <button class="nav-btn btn-primary" onclick="openCode()">Accès VIP →</button>
   <button class="nav-btn btn-outline" onclick="openAdmin()" id="adminBtn">⚙ Admin</button>
   <button id="notifBtn" onclick="handleNotifBtn()" title="Activer les alertes calls" style="background:transparent;border:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.35);padding:.4rem .75rem;border-radius:8px;cursor:pointer;font-size:.85rem;transition:.2s;font-family:'Space Mono',monospace;">🔔</button>
   <div id="streakBadge" style="display:flex;align-items:center;gap:4px;background:linear-gradient(135deg,rgba(255,170,0,.15),rgba(255,107,53,.1));border:1px solid rgba(255,170,0,.25);border-radius:10px;padding:5px 12px;cursor:default;" title="Jours de connexion consécutifs">
@@ -2229,7 +2227,7 @@ nav.scrolled { box-shadow: 0 1px 40px rgba(0,0,0,0.6) !important; }
   </div>
 </nav>
 
-<div id="landing-wrap">
+<div id="landing-wrap" style="display:none">
 
 <!-- ═══ HERO ═══════════════════════════════════════════════════ -->
 <section id="hero" class="lp-hero">
@@ -2563,7 +2561,6 @@ nav.scrolled { box-shadow: 0 1px 40px rgba(0,0,0,0.6) !important; }
       <button class="s-tab" id="tabHistory" onclick="switchTab('history')">Historique <span id="histCount" class="hist-count"></span></button>
       <button class="s-tab" id="tabDebugCA" onclick="switchTab('debugca')" style="display:none">Debug CA</button>
       <button class="s-tab" id="tabPaperBot" onclick="switchTab('paperbot')">Paper Bot <span id="ptOpenCount" class="hist-count"></span></button>
-      <button class="s-tab" id="tabGems" onclick="switchTab('gems')">Gems <span id="gemCountBadge" class="gem-count"></span></button>
     </div>
     <div style="display:flex;gap:.4rem;padding:.3rem 0;">
       <button class="btn-reset" id="btnResetLive" onclick="resetLive()" style="display:none">Vider Live</button>
@@ -2965,26 +2962,6 @@ nav.scrolled { box-shadow: 0 1px 40px rgba(0,0,0,0.6) !important; }
   </div>
 </div>
 
-<!-- PANEL GEMS -->
-<div id="panelGems" style="display:none">
-  <div class="gem-gallery-wrap">
-    <div class="gem-gallery-filters">
-      <span style="font-family:'Space Mono',monospace;font-size:9px;color:rgba(255,255,255,.25);margin-right:4px;">FILTRE:</span>
-      <button class="gem-filter-btn active" onclick="gemSetFilter('all',this)">Tous</button>
-      <button class="gem-filter-btn" onclick="gemSetFilter('r-ultra',this)" style="color:#ffd700;border-color:rgba(255,215,0,.3);">ULTRA</button>
-      <button class="gem-filter-btn" onclick="gemSetFilter('r-mythic',this)" style="color:#cc44ff;border-color:rgba(180,50,255,.3);">MYTHIC</button>
-      <button class="gem-filter-btn" onclick="gemSetFilter('r-legendary',this)" style="color:#ffc800;border-color:rgba(255,200,0,.3);">LEGENDARY</button>
-      <button class="gem-filter-btn" onclick="gemSetFilter('r-epic',this)" style="color:#00ff88;border-color:rgba(0,255,100,.3);">EPIC</button>
-      <button class="gem-filter-btn" onclick="gemSetFilter('r-rare',this)">RARE</button>
-      <button class="gem-filter-btn" onclick="gemSetFilter('r-common',this)">COMMON</button>
-      <button class="gem-filter-btn" onclick="gemSetFilter('r-pending',this)">EN COURS</button>
-      <span style="margin-left:auto;font-family:'Space Mono',monospace;font-size:8px;color:rgba(255,255,255,.2)" id="gemStatsLine"></span>
-    </div>
-    <div class="gem-gallery" id="gemGallery">
-      <div class="gem-empty">Aucune gem pour l'instant — les calls génèrent automatiquement des cartes</div>
-    </div>
-  </div>
-</div>
 
 </div>
 </section>
@@ -3118,17 +3095,7 @@ nav.scrolled { box-shadow: 0 1px 40px rgba(0,0,0,0.6) !important; }
   </div>
 </footer>
 
-<!-- CODE MODAL -->
-<div class="modal-overlay" id="codeModal">
-  <div class="modal-box">
-    <button class="modal-close" onclick="closeCode()">✕</button>
-    <div class="modal-title">🔐 Code d'accès</div>
-    <div class="modal-sub" id="cm-sub">Entre ton code pour accéder au scanner.</div>
-    <input type="text" class="code-input" id="codeInput" placeholder="XXXX-XXXX-XXXX" maxlength="19" oninput="formatCode(this)" onkeydown="if(event.key==='Enter')submitCode()">
-    <div class="code-err" id="codeErr" style="display:none"></div>
-    <button class="code-submit" onclick="submitCode()">Accéder →</button>
-  </div>
-</div>
+<!-- codeModal supprimé -->
 
 <!-- ADMIN OVERLAY -->
 <div class="admin-overlay" id="adminOverlay">
@@ -3718,7 +3685,7 @@ const SOL_CA_RE      = /\b[1-9A-HJ-NP-Za-km-z]{43,44}\b/g;
 const NITTER_HOSTS   = ['https://nitter.poast.org','https://nitter.privacydev.net','https://nitter.cz'];
 const CORS_PROXY     = 'https://corsproxy.io/?';
 
-let isUnlocked = false;
+let isUnlocked = true; // accès libre — système de codes supprimé
 let isAdminMode = false;
 let debugModeOn = false;
 let lastScored = [];
@@ -4936,9 +4903,7 @@ async function saveCodesFB(codes){try{localStorage.setItem(CODE_KEY,JSON.stringi
 function loadCodes(){try{const c=JSON.parse(localStorage.getItem(CODE_KEY));if(c?.length)return c;}catch(e){}return getDefaultCodes();}
 function saveCodes(c){localStorage.setItem(CODE_KEY,JSON.stringify(c));fetch(`${FB_URL}/codes.json`,{method:'PUT',body:JSON.stringify(c)}).catch(()=>{});}
 function getDefaultCodes(){return[{code:'CODE-DEMO-1234',plan:'alpha',used:false},{code:'BASE-TEST-0001',plan:'base',used:false},{code:'DUBA-MODE-9999',plan:'dubai',used:false}];}
-function checkSession(){try{const s=JSON.parse(localStorage.getItem(SESSION_KEY));if(s&&s.expires>Date.now()){isUnlocked=true;onUnlock(s.plan);}}catch(e){}}
-// Auto-déconnexion à expiration de session
-setInterval(()=>{if(!isUnlocked)return;try{const s=JSON.parse(localStorage.getItem(SESSION_KEY));if(!s||s.expires<=Date.now()){isUnlocked=false;localStorage.removeItem(SESSION_KEY);location.reload();}}catch(e){}},30000);
+function checkSession(){ onUnlock('free'); } // accès direct
 async function submitCode(){
   const val=document.getElementById('codeInput').value.trim().toUpperCase();
   const err=document.getElementById('codeErr');
@@ -6550,165 +6515,6 @@ function rtResetAll(){
   rtRender();
 }
 
-// ============================================================
-// 💎 GEM CARDS COLLECTION
-// ============================================================
-const GEM_LS = 'gemCards_v1';
-let _gemFilter = 'all';
-
-function gemLoad(){ try{ return JSON.parse(localStorage.getItem(GEM_LS)||'[]'); }catch(e){ return []; } }
-function gemSave(arr){ try{ localStorage.setItem(GEM_LS, JSON.stringify(arr)); }catch(e){} }
-
-function gemRarityFromX(x){
-  if(!x || x < 1.5)  return 'r-pending';
-  if(x < 2)          return 'r-common';
-  if(x < 3.5)        return 'r-rare';
-  if(x < 6)          return 'r-epic';
-  if(x < 12)         return 'r-legendary';
-  if(x < 25)         return 'r-mythic';
-  return 'r-ultra';
-}
-function gemRarityLabel(r){
-  return {
-    'r-pending':'EN COURS','r-common':'COMMON','r-rare':'RARE',
-    'r-epic':'EPIC','r-legendary':'LEGENDARY','r-mythic':'MYTHIC','r-ultra':'ULTRA'
-  }[r] || r;
-}
-
-// Crée une gem à chaque nouveau call
-function gemOnCall(token){
-  const gems = gemLoad();
-  if(gems.find(g => g.addr === token.addr)) return; // déjà une carte
-  const gem = {
-    id:        'gem_' + Date.now(),
-    addr:      token.addr,
-    symbol:    (token.symbol||'?').toUpperCase(),
-    score:     token.score || 0,
-    axiom:     token.debug?.axiomCount || 0,
-    entryMcap: token.mcap || 0,
-    athMcap:   token.mcap || 0,
-    athX:      1.0,
-    rarity:    'r-pending',
-    callTime:  Date.now(),
-    pairUrl:   token.pairUrl || '',
-  };
-  gems.unshift(gem);
-  gemSave(gems);
-  gemUpdateCountBadge();
-}
-
-// Mise à jour ATH d'une gem — peut upgrader la rareté
-function gemOnAthUpdate(addr, newMcap){
-  const gems = gemLoad();
-  const g = gems.find(x => x.addr === addr);
-  if(!g || !newMcap || newMcap <= g.athMcap) return;
-  const oldRarity = g.rarity;
-  g.athMcap = newMcap;
-  g.athX    = g.entryMcap > 0 ? newMcap / g.entryMcap : 1;
-  g.rarity  = gemRarityFromX(g.athX);
-  gemSave(gems);
-  // Animation upgrade si nouvelle rareté
-  if(g.rarity !== oldRarity && g.rarity !== 'r-pending'){
-    gemShowUpgradeToast(g);
-    if(currentTab === 'gems') gemRender();
-  }
-  gemUpdateCountBadge();
-}
-
-function gemShowUpgradeToast(g){
-  const labels = {'r-rare':'RARE 🔵','r-epic':'EPIC 💚','r-legendary':'LEGENDARY ⭐','r-mythic':'MYTHIC 💜','r-ultra':'ULTRA 👑'};
-  const lbl = labels[g.rarity];
-  if(lbl) showToast(`💎 $${g.symbol} upgradé → ${lbl} (${g.athX.toFixed(1)}x)`, 'call');
-}
-
-function gemUpdateCountBadge(){
-  const gems = gemLoad();
-  const el = document.getElementById('gemCountBadge');
-  if(el) el.textContent = gems.length || '';
-}
-
-function gemSetFilter(f, btn){
-  _gemFilter = f;
-  document.querySelectorAll('.gem-filter-btn').forEach(b => b.classList.remove('active'));
-  if(btn) btn.classList.add('active');
-  gemRender();
-}
-
-function gemRender(){
-  const gallery = document.getElementById('gemGallery');
-  if(!gallery) return;
-  let gems = gemLoad();
-  if(_gemFilter !== 'all') gems = gems.filter(g => g.rarity === _gemFilter);
-  const statsEl = document.getElementById('gemStatsLine');
-  if(statsEl){
-    const all = gemLoad();
-    const best = all.reduce((a,b)=>b.athX>a.athX?b:a, {athX:0});
-    statsEl.textContent = `${all.length} cartes · meilleur: ${best.athX>0?best.athX.toFixed(1)+'x':'—'}`;
-  }
-  if(!gems.length){
-    gallery.innerHTML = '<div class="gem-empty">Aucune gem dans cette catégorie</div>';
-    return;
-  }
-  gallery.innerHTML = gems.map(g => gemCardHTML(g)).join('');
-}
-
-function gemCardHTML(g){
-  const rarity  = g.rarity || 'r-pending';
-  const label   = gemRarityLabel(rarity);
-  const xDisp   = g.athX >= 1.5 ? g.athX.toFixed(1) + 'x' : (g.athX > 0 ? g.athX.toFixed(2)+'x' : '—');
-  const mcapIn  = '$' + fmtNum(g.entryMcap);
-  const mcapAth = g.athMcap > g.entryMcap ? '$' + fmtNum(g.athMcap) : '…';
-  const date    = new Date(g.callTime).toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
-  const axiomTxt= g.axiom > 0 ? `${g.axiom} axiom` : '';
-  // Candle bars for rare+
-  let candleHTML = '';
-  if(['r-epic','r-legendary','r-mythic','r-ultra'].includes(rarity)){
-    const bars = Array.from({length:14},()=>Math.floor(6+Math.random()*34));
-    const col = rarity==='r-legendary'?'#ffc800':rarity==='r-mythic'?'#b432ff':rarity==='r-ultra'?'#ffd700':'#00ff88';
-    candleHTML = `<div class="gem-candles">${bars.map(h=>`<div class="gem-candle" style="height:${h}px;background:${col}"></div>`).join('')}</div>`;
-  }
-  return `<div class="gem-card-wrap" onclick="gemOpenDetail('${g.id}')">
-    <div class="gem-card ${rarity}">
-      <div class="gem-bg-sym">$${g.symbol}</div>
-      ${candleHTML}
-      <div class="gem-holo"></div>
-      <button class="gem-share-btn" onclick="event.stopPropagation();gemShare('${g.id}')">↗ SHARE</button>
-      <div class="gem-inner">
-        <span class="gem-rarity-badge">${label}</span>
-        <div style="margin-top:auto">
-          <div class="gem-sym">$${g.symbol}</div>
-          <div class="gem-mult">${xDisp}</div>
-          <div class="gem-stats-row">
-            <span class="gem-stat-chip">${mcapIn} → ${mcapAth}</span>
-            ${axiomTxt ? `<span class="gem-stat-chip">${axiomTxt}</span>` : ''}
-            <span class="gem-stat-chip">${g.score}pts</span>
-          </div>
-          <div class="gem-watermark">MEMESCANNER · ${date}</div>
-        </div>
-      </div>
-    </div>
-  </div>`;
-}
-
-function gemOpenDetail(id){
-  const gems = gemLoad();
-  const g = gems.find(x => x.id === id);
-  if(!g) return;
-  const xStr = g.athX >= 1.5 ? g.athX.toFixed(2)+'x ATH' : 'En cours...';
-  const info = `$${g.symbol} — ${xStr}\nScore: ${g.score}pts${g.axiom?' · '+g.axiom+' Axiom':''}\nEntrée: $${fmtNum(g.entryMcap)} → ATH: $${fmtNum(g.athMcap)}\nCallé le ${new Date(g.callTime).toLocaleString('fr-FR')}`;
-  if(g.pairUrl) window.open(g.pairUrl, '_blank');
-  else alert(info);
-}
-
-function gemShare(id){
-  const gems = gemLoad();
-  const g = gems.find(x => x.id === id);
-  if(!g) return;
-  const xStr = g.athX >= 1.5 ? g.athX.toFixed(1)+'x' : 'en cours';
-  const text = `💎 $${g.symbol} ${xStr} ATH sur @MemeScanner\nScore ${g.score}pts${g.axiom?' · '+g.axiom+' Axiom wallets':''}\nEntrée $${fmtNum(g.entryMcap)} → $${fmtNum(g.athMcap)}\n\n🔥 ${gemRarityLabel(g.rarity)} CARD`;
-  if(navigator.clipboard){ navigator.clipboard.writeText(text); showToast('📋 Texte copié — colle sur Twitter !', 'call'); }
-  else prompt('Copie ce texte :', text);
-}
 
 // ============================================================
 // 📦 DAILY ALPHA BOX
@@ -7232,7 +7038,6 @@ async function saveCall(addr,callMcap,callTime,symbol='',score=0,pairAddress='')
 async function updateAth(addr,currentMcap){
   try{const all=JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}');if(all[addr]&&currentMcap>(all[addr].athMcap||0)){all[addr].athMcap=currentMcap;localStorage.setItem(STORAGE_KEY,JSON.stringify(all));}}catch(e){}
   try{const key=addr.replace(/[.#$\/\[\]]/g,'_');const ex=await fetch(`${FB_URL}/calls/${key}.json`).then(r=>r.json()).catch(()=>null);if(ex&&currentMcap>(ex.athMcap||0))await fetch(`${FB_URL}/calls/${key}.json`,{method:'PATCH',body:JSON.stringify({athMcap:currentMcap})});}catch(e){}
-  gemOnAthUpdate(addr, currentMcap);
 }
 async function getCallData(addr){
   try{
@@ -7433,7 +7238,6 @@ function onNewCall(token) {
   ptOpenTrade(token);
   if(typeof rtBuyToken === 'function') rtBuyToken(token);
   sendCallNotification(token);
-  gemOnCall(token);
 }
 
 function sendCallNotification(token){
@@ -7495,17 +7299,14 @@ function switchTab(tab){
   document.getElementById('panelHistory').style.display=tab==='history'?'block':'none';
   document.getElementById('panelDebugCA').style.display=tab==='debugca'?'block':'none';
   document.getElementById('panelPaperBot').style.display=tab==='paperbot'?'block':'none';
-  document.getElementById('panelGems').style.display=tab==='gems'?'block':'none';
   document.getElementById('tabLive').classList.toggle('active',tab==='live');
   document.getElementById('tabHistory').classList.toggle('active',tab==='history');
   document.getElementById('tabDebugCA').classList.toggle('active',tab==='debugca');
   document.getElementById('tabPaperBot').classList.toggle('active',tab==='paperbot');
-  document.getElementById('tabGems').classList.toggle('active',tab==='gems');
   document.getElementById('btnResetLive').style.display=tab==='live'?'inline-block':'none';
   document.getElementById('btnResetHistory').style.display=tab==='history'?'inline-block':'none';
   if(tab==='history')renderHistory(true);
   if(tab==='paperbot')ptRender();
-  if(tab==='gems')gemRender();
 }
 
 // ============================================================
@@ -10024,7 +9825,6 @@ window.addEventListener('DOMContentLoaded',()=>{
   try{
     checkSession();loadReviews();
     initDailyBox();
-    gemUpdateCountBadge();
     fetchKolMentions();
     setInterval(fetchKolMentions, KOL_CACHE_TTL);
 
@@ -10043,12 +9843,6 @@ window.addEventListener('DOMContentLoaded',()=>{
         lastActiveTime = Date.now();
       }
     });
-    if(!isUnlocked){
-      document.getElementById('loadingEl').style.display='none';
-      document.getElementById('scannerContent').innerHTML=`<div class="empty-state"><div class="empty-icon">🔐</div><div class="empty-title">Accès réservé aux membres</div><div class="empty-sub" style="margin-top:1rem"><button onclick="openCode()" style="background:var(--green);color:#000;border:none;padding:.6rem 1.5rem;border-radius:8px;font-weight:700;cursor:pointer;font-family:var(--font);font-size:.88rem">Entrer mon code d'accès</button></div></div>`;
-      document.getElementById('rsTokenContent').innerHTML=`<div class="rs-empty" style="padding:3rem 1rem"><div style="font-size:2rem;margin-bottom:.8rem">🔐</div><div style="font-family:var(--font-head);font-size:1rem;font-weight:700;color:rgba(255,100,120,.8);margin-bottom:.5rem">Accès réservé aux membres</div><div style="font-size:.75rem;color:rgba(255,100,120,.4);margin-bottom:1.2rem">Entre ton code pour accéder au RUG SNIP</div><button onclick="openCode()" style="background:rgba(255,40,80,.15);border:1px solid rgba(255,40,80,.4);color:#ff4466;padding:.5rem 1.4rem;border-radius:6px;font-family:var(--font);font-size:.8rem;font-weight:700;cursor:pointer;">Entrer mon code →</button></div>`;
-    }
-    document.getElementById('codeModal').addEventListener('click',e=>{if(e.target.id==='codeModal')closeCode();});
     document.getElementById('adminOverlay').addEventListener('click',e=>{if(e.target.id==='adminOverlay')closeAdmin();});
     document.getElementById('debugOverlay').addEventListener('click',e=>{if(e.target.id==='debugOverlay')closeDebug();});
   }catch(err){console.error('Erreur init:',err);document.body.style.cssText='background:#050508;color:#ff4466;padding:2rem;font-family:monospace';document.body.innerHTML='<h2>⚠️ Erreur init</h2><p>'+err.message+'</p>';}
