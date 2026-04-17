@@ -7449,8 +7449,9 @@ async function renderHistory(force=false){
     const callMcap=v.callMcap||0;
     const nowMcap=live?.now||0;
     const athEst=live?.athEst||0;
-    // ATH >= callMcap toujours (Bug A fix)
-    let bestKnown=Math.max(nowMcap, athEst, v.athMcap||0, callMcap);
+    // ATH >= callMcap toujours — athEst retiré : priceChange.h24 ne connaît pas le callTime
+    // et inclut les pumps PRÉ-call → résultats gonflés. fetchRealAth (filtré par callTime) s'en charge.
+    let bestKnown=Math.max(nowMcap, v.athMcap||0, callMcap);
 
     if(bestKnown>0&&bestKnown>(v.athMcap||0)){
       v.athMcap=bestKnown;
@@ -8224,8 +8225,8 @@ async function renderTokenTable(tokens){
     // nowMcap = prix live (DexScreener) ou fallback sur mcap du scan
     const liveEntry=livePriceMap[t.addr]||{now:0,athEst:0};
     const nowMcap=liveEntry.now||t.mcap||0;
-    // ATH >= callMcap toujours (Bug A fix) + estimation priceChange
-    let athMcap=Math.max(callData?.athMcap||0, callMcap, nowMcap, liveEntry.athEst||0);
+    // ATH >= callMcap toujours — athEst retiré (priceChange ignore le callTime)
+    let athMcap=Math.max(callData?.athMcap||0, callMcap, nowMcap);
     if(athMcap>(callData?.athMcap||0))updateAth(t.addr,athMcap).catch(()=>{});
     t._athMcap=athMcap; // stocké pour refreshLiveMcap
     // Fetch ATH réel via candles GeckoTerminal (fire-and-forget, cache 10min)
@@ -9618,8 +9619,8 @@ async function refreshLiveMcap() {
         nowVal.textContent = `$${fmtNum(newMcap)}`;
         nowVal.style.color = newMcap > callMcap ? '#44ff88' : newMcap < callMcap * 0.7 ? '#ff5577' : '#ffcc44';
       }
-      // ATH — meilleur entre live, estimation priceChange et ATH connu
-      const bestAth = Math.max(newMcap, entry?.athEst || 0, t._athMcap || 0);
+      // ATH — meilleur entre live et ATH connu (athEst retiré : ignore callTime)
+      const bestAth = Math.max(newMcap, t._athMcap || 0);
       if (bestAth > (t._athMcap || 0)) {
         t._athMcap = bestAth;
         updateAth(addr, bestAth).catch(()=>{});
