@@ -1807,6 +1807,175 @@ nav.scrolled { box-shadow: 0 1px 40px rgba(0,0,0,0.6) !important; }
   box-shadow: 0 0 50px rgba(99,102,241,0.12), 0 0 0 1px rgba(99,102,241,0.3) !important;
 }
 
+/* ═══ APP DIVIDER — PREMIUM ══════════════════════════════════════ */
+.app-divider {
+  background: linear-gradient(180deg, #060610 0%, #08080f 100%) !important;
+  padding: 5rem 2rem !important;
+  border-top: 1px solid rgba(99,102,241,0.12) !important;
+  position: relative; overflow: hidden;
+}
+.app-divider::before {
+  content: '';
+  position: absolute; top: 50%; left: 50%;
+  transform: translate(-50%,-50%);
+  width: 700px; height: 220px;
+  background: radial-gradient(ellipse, rgba(99,102,241,0.07) 0%, transparent 70%);
+  pointer-events: none;
+}
+.app-divider-title { font-size: 2.4rem !important; letter-spacing: -0.04em !important; }
+.app-divider-sub { font-size: 0.92rem !important; color: rgba(255,255,255,0.28) !important; }
+
+/* ═══ SCANNER SECTION — PREMIUM ══════════════════════════════════ */
+.scanner-section {
+  background: rgba(8,8,16,0.98) !important;
+  border: 1px solid rgba(255,255,255,0.06) !important;
+  border-radius: 20px !important;
+  padding: 1.8rem !important;
+}
+.scanner-header {
+  padding-bottom: 1.1rem !important;
+  border-bottom: 1px solid rgba(255,255,255,0.05) !important;
+  margin-bottom: 1.1rem !important;
+}
+.scanner-title {
+  font-size: 1rem !important;
+  font-weight: 700 !important;
+  letter-spacing: 0em !important;
+  color: #e8e8f0 !important;
+}
+.status-dot {
+  width: 8px !important; height: 8px !important;
+  box-shadow: 0 0 0 3px rgba(0,255,136,0.15), 0 0 10px rgba(0,255,136,0.5) !important;
+}
+/* Tabs */
+.s-tab {
+  font-size: 0.8rem !important;
+  font-weight: 500 !important;
+  padding: 0.55rem 1rem !important;
+  letter-spacing: 0.01em !important;
+  color: rgba(255,255,255,0.35) !important;
+}
+.s-tab.active {
+  color: #a5b4fc !important;
+  border-bottom-color: #6366f1 !important;
+  background: rgba(99,102,241,0.06) !important;
+}
+.s-tab:hover:not(.active) {
+  color: rgba(255,255,255,0.65) !important;
+  background: rgba(255,255,255,0.03) !important;
+}
+/* Buttons */
+.scan-btn-green {
+  background: linear-gradient(135deg, #5b52f0, #7c3aed) !important;
+  box-shadow: 0 2px 14px rgba(99,102,241,0.25) !important;
+}
+.scan-btn-green:hover {
+  box-shadow: 0 4px 22px rgba(99,102,241,0.4) !important;
+}
+.scan-btn-outline { border-color: rgba(255,255,255,0.08) !important; }
+.scan-btn-outline:hover { border-color: rgba(99,102,241,0.35) !important; color: #a5b4fc !important; }
+.btn-reset {
+  background: transparent !important;
+  border: 1px solid rgba(255,255,255,0.07) !important;
+  color: rgba(255,255,255,0.3) !important;
+  font-size: 0.72rem !important;
+  border-radius: 7px !important;
+}
+.btn-reset:hover { border-color: rgba(239,68,68,0.3) !important; color: #f87171 !important; }
+/* Loading */
+.spinner {
+  border-color: rgba(99,102,241,0.12) !important;
+  border-top-color: #6366f1 !important;
+  border-right-color: rgba(99,102,241,0.35) !important;
+  filter: drop-shadow(0 0 8px rgba(99,102,241,0.3)) !important;
+}
+/* History banner */
+#histWinrateBanner {
+  background: rgba(99,102,241,0.04) !important;
+  border-color: rgba(99,102,241,0.12) !important;
+  border-radius: 14px !important;
+}
+.wr-btn { font-size: 0.75rem !important; }
+.wr-btn.active {
+  border-color: rgba(99,102,241,0.4) !important;
+  background: rgba(99,102,241,0.1) !important;
+  color: #a5b4fc !important;
+}
+.wr-btn:hover { border-color: rgba(99,102,241,0.3) !important; color: #a5b4fc !important; }
+/* Hist buttons */
+#histSortBtn {
+  background: rgba(99,102,241,0.08) !important;
+  border-color: rgba(99,102,241,0.2) !important;
+  color: #a5b4fc !important;
+}
+.hist-dex-btn { background: rgba(99,102,241,0.08) !important; border-color: rgba(99,102,241,0.2) !important; color: #a5b4fc !important; }
+.hist-dex-btn:hover { background: rgba(99,102,241,0.15) !important; }
+#backtestPanel { border-color: rgba(99,102,241,0.15) !important; background: rgba(99,102,241,0.02) !important; }
+/* Empty state */
+.hist-empty-icon { font-size: 1.8rem !important; opacity: 0.4 !important; }
+/* Token table */
+.token-table th { font-size: 0.72rem !important; letter-spacing: 0.08em !important; }
+.token-table tr:hover td { background: rgba(99,102,241,0.04) !important; }
+
+/* ═══ PAPER BOT — PREMIUM ════════════════════════════════════════ */
+.pt-header {
+  padding-bottom: 12px !important;
+  border-bottom: 1px solid rgba(255,255,255,0.05) !important;
+  margin-bottom: 16px !important;
+}
+.pt-title {
+  font-family: 'Space Grotesk', sans-serif !important;
+  font-size: 0.95rem !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.01em !important;
+}
+.pt-sub { font-family: 'Inter', sans-serif !important; font-size: 0.72rem !important; color: rgba(255,255,255,0.3) !important; }
+.pt-stat {
+  background: rgba(255,255,255,0.025) !important;
+  border: 1px solid rgba(255,255,255,0.07) !important;
+  border-radius: 12px !important;
+  padding: 12px 8px !important;
+}
+.pt-stat.green { border-color: rgba(0,255,136,0.15) !important; }
+.pt-stat.gold { border-color: rgba(245,158,11,0.18) !important; background: rgba(245,158,11,0.025) !important; }
+.pt-stat-val { font-size: 14px !important; }
+.pt-stat-lbl { font-size: 8px !important; letter-spacing: 0.08em !important; }
+.pt-equity-wrap {
+  border-color: rgba(99,102,241,0.15) !important;
+  border-radius: 12px !important;
+  background: rgba(99,102,241,0.02) !important;
+}
+.pt-equity-label { color: rgba(99,102,241,0.45) !important; }
+.pt-toggle.on { background: rgba(99,102,241,0.25) !important; border-color: rgba(99,102,241,0.45) !important; }
+.pt-toggle.on .pt-toggle-knob { background: #6366f1 !important; }
+.pt-btn { background: linear-gradient(135deg, #5b52f0, #7c3aed) !important; box-shadow: 0 2px 12px rgba(99,102,241,0.2) !important; }
+.pt-btn:hover { box-shadow: 0 4px 18px rgba(99,102,241,0.35) !important; }
+.pt-badge { background: rgba(99,102,241,0.12) !important; color: #a5b4fc !important; border-color: rgba(99,102,241,0.2) !important; }
+.pt-config-details { border-color: rgba(255,255,255,0.05) !important; border-radius: 12px !important; }
+.pt-config-summary { font-family: 'Inter', sans-serif !important; font-size: 0.75rem !important; color: rgba(255,255,255,0.35) !important; }
+.pt-config-summary:hover { color: #fff !important; }
+.pt-inp:focus { border-color: rgba(99,102,241,0.4) !important; box-shadow: 0 0 0 2px rgba(99,102,241,0.07) !important; }
+.pt-trade-row:hover { border-color: rgba(99,102,241,0.15) !important; background: rgba(99,102,241,0.03) !important; }
+.pt-open-table tr:hover td { background: rgba(99,102,241,0.03) !important; }
+.pt-section-title { color: rgba(255,255,255,0.3) !important; font-family: 'Inter', sans-serif !important; font-size: 0.7rem !important; }
+/* Score badge */
+.score-solid { background: rgba(99,102,241,0.1) !important; color: #a5b4fc !important; border-color: rgba(99,102,241,0.2) !important; }
+/* App pricing cards */
+.plan-card.featured { border-color: rgba(99,102,241,0.35) !important; background: linear-gradient(160deg,rgba(99,102,241,0.06),var(--card)) !important; }
+.badge-pop { background: linear-gradient(135deg,#5b52f0,#7c3aed) !important; }
+.plan-btn-green { background: linear-gradient(135deg,#5b52f0,#7c3aed) !important; box-shadow: 0 2px 16px rgba(99,102,241,0.25) !important; }
+.plan-btn-green:hover { box-shadow: 0 4px 24px rgba(99,102,241,0.4) !important; }
+
+/* ═══ SCORING SECTION — SVG ICONS ════════════════════════════════ */
+.lp-score-cat-icon {
+  width: 44px !important; height: 44px !important;
+  border-radius: 12px !important;
+  display: flex !important; align-items: center !important; justify-content: center !important;
+  margin: 0 auto 0.9rem !important;
+  font-size: 0 !important; /* hide emojis */
+}
+.lp-score-cat-icon svg { width: 20px; height: 20px; display: block; }
+
 </style>
 </head>
 <body>
@@ -2040,14 +2209,14 @@ nav.scrolled { box-shadow: 0 1px 40px rgba(0,0,0,0.6) !important; }
     <div class="lp-section-label" style="text-align:center">Le moteur</div>
     <h2 class="lp-section-title" style="text-align:center">Un algorithme de scoring qui<br>ne laisse rien au hasard.</h2>
     <div class="lp-score-cats">
-      <div class="lp-score-cat"><div class="lp-score-cat-icon" style="background:rgba(99,102,241,0.15);color:#a5b4fc">👛</div><div class="lp-score-cat-name">Wallet Analysis</div></div>
-      <div class="lp-score-cat"><div class="lp-score-cat-icon" style="background:rgba(0,255,136,0.1);color:#00ff88">📣</div><div class="lp-score-cat-name">Social</div></div>
-      <div class="lp-score-cat"><div class="lp-score-cat-icon" style="background:rgba(0,255,136,0.1);color:#00ff88">👥</div><div class="lp-score-cat-name">Holders</div></div>
-      <div class="lp-score-cat"><div class="lp-score-cat-icon" style="background:rgba(245,158,11,0.12);color:#f59e0b">📊</div><div class="lp-score-cat-name">Platform &amp; Mcap</div></div>
-      <div class="lp-score-cat"><div class="lp-score-cat-icon" style="background:rgba(245,158,11,0.12);color:#f59e0b">⏱</div><div class="lp-score-cat-name">Âge</div></div>
-      <div class="lp-score-cat"><div class="lp-score-cat-icon" style="background:rgba(139,92,246,0.15);color:#c4b5fd">🤖</div><div class="lp-score-cat-name">IA Analysis</div></div>
-      <div class="lp-score-cat"><div class="lp-score-cat-icon" style="background:rgba(59,130,246,0.12);color:#60a5fa">🔷</div><div class="lp-score-cat-name">Platform Score</div></div>
-      <div class="lp-score-cat"><div class="lp-score-cat-icon" style="background:rgba(239,68,68,0.1);color:#f87171">🎯</div><div class="lp-score-cat-name">KOL Analysis</div></div>
+      <div class="lp-score-cat"><div class="lp-score-cat-icon" style="background:rgba(99,102,241,0.15)"><svg viewBox="0 0 24 24" fill="none" stroke="#a5b4fc" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg></div><div class="lp-score-cat-name">Wallet Analysis</div></div>
+      <div class="lp-score-cat"><div class="lp-score-cat-icon" style="background:rgba(0,255,136,0.1)"><svg viewBox="0 0 24 24" fill="none" stroke="#00ff88" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div><div class="lp-score-cat-name">Social</div></div>
+      <div class="lp-score-cat"><div class="lp-score-cat-icon" style="background:rgba(0,255,136,0.1)"><svg viewBox="0 0 24 24" fill="none" stroke="#00ff88" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div><div class="lp-score-cat-name">Holders</div></div>
+      <div class="lp-score-cat"><div class="lp-score-cat-icon" style="background:rgba(245,158,11,0.12)"><svg viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></div><div class="lp-score-cat-name">Platform &amp; Mcap</div></div>
+      <div class="lp-score-cat"><div class="lp-score-cat-icon" style="background:rgba(245,158,11,0.12)"><svg viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><div class="lp-score-cat-name">Âge du token</div></div>
+      <div class="lp-score-cat"><div class="lp-score-cat-icon" style="background:rgba(139,92,246,0.15)"><svg viewBox="0 0 24 24" fill="none" stroke="#c4b5fd" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div><div class="lp-score-cat-name">Score Algo</div></div>
+      <div class="lp-score-cat"><div class="lp-score-cat-icon" style="background:rgba(59,130,246,0.12)"><svg viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg></div><div class="lp-score-cat-name">Platform Score</div></div>
+      <div class="lp-score-cat"><div class="lp-score-cat-icon" style="background:rgba(239,68,68,0.1)"><svg viewBox="0 0 24 24" fill="none" stroke="#f87171" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></div><div class="lp-score-cat-name">KOL Analysis</div></div>
     </div>
   </div>
 </section>
@@ -2228,25 +2397,36 @@ nav.scrolled { box-shadow: 0 1px 40px rgba(0,0,0,0.6) !important; }
   <div class="scanner-header">
     <div style="display:flex;align-items:center;gap:.8rem">
       <div class="status-dot" id="scanDot"></div>
-      <div class="scanner-title">🧠 AI Scanner Live</div>
+      <div class="scanner-title" style="display:flex;align-items:center;gap:.55rem;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#a5b4fc" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/><path d="M11 8v6M8 11h6"/></svg>
+        Scanner Live
+      </div>
     </div>
     <div class="scanner-controls">
-      <span style="font-size:.75rem;color:var(--muted);font-family:var(--font-mono)" id="lastUpdate"></span>
-      <button class="scan-btn scan-btn-outline" onclick="toggleDebugMode()" id="debugToggleBtn" style="display:none">🟠 Debug OFF</button>
-      <button class="scan-btn scan-btn-green" onclick="fetchTokens()">↻ Refresh</button>
+      <span style="font-size:.72rem;color:rgba(255,255,255,.25);font-family:var(--font-mono)" id="lastUpdate"></span>
+      <button class="scan-btn scan-btn-outline" onclick="toggleDebugMode()" id="debugToggleBtn" style="display:none;font-size:.75rem">Debug</button>
+      <button class="scan-btn scan-btn-green" onclick="fetchTokens()" style="display:flex;align-items:center;gap:.4rem;font-size:.82rem">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
+        Refresh
+      </button>
     </div>
   </div>
   <div class="scanner-tabs" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;">
     <div style="display:flex;">
-      <button class="s-tab active" id="tabLive" onclick="switchTab('live')">📡 Live <span id="liveCount" class="hist-count"></span></button>
-      <button class="s-tab" id="tabHistory" onclick="switchTab('history')">📋 Historique <span id="histCount" class="hist-count"></span></button>
-      <button class="s-tab" id="tabDebugCA" onclick="switchTab('debugca')" style="display:none">🔬 Debug CA</button>
-      <button class="s-tab" id="tabPaperBot" onclick="switchTab('paperbot')">🤖 Paper Bot <span id="ptOpenCount" class="hist-count"></span></button>
-      <button class="s-tab" id="tabGems" onclick="switchTab('gems')">💎 Gems <span id="gemCountBadge" class="gem-count"></span></button>
+      <button class="s-tab active" id="tabLive" onclick="switchTab('live')">
+        <span style="display:inline-flex;align-items:center;gap:.35rem;">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" opacity=".7"><circle cx="12" cy="12" r="10"/></svg>
+          Live <span id="liveCount" class="hist-count"></span>
+        </span>
+      </button>
+      <button class="s-tab" id="tabHistory" onclick="switchTab('history')">Historique <span id="histCount" class="hist-count"></span></button>
+      <button class="s-tab" id="tabDebugCA" onclick="switchTab('debugca')" style="display:none">Debug CA</button>
+      <button class="s-tab" id="tabPaperBot" onclick="switchTab('paperbot')">Paper Bot <span id="ptOpenCount" class="hist-count"></span></button>
+      <button class="s-tab" id="tabGems" onclick="switchTab('gems')">Gems <span id="gemCountBadge" class="gem-count"></span></button>
     </div>
     <div style="display:flex;gap:.4rem;padding:.3rem 0;">
-      <button class="btn-reset" id="btnResetLive" onclick="resetLive()" style="display:none">🗑 Vider Live</button>
-      <button class="btn-reset" id="btnResetHistory" onclick="resetHistory()" style="display:none">🗑 Vider Historique</button>
+      <button class="btn-reset" id="btnResetLive" onclick="resetLive()" style="display:none">Vider Live</button>
+      <button class="btn-reset" id="btnResetHistory" onclick="resetHistory()" style="display:none">Vider Historique</button>
     </div>
   </div>
   <div id="panelLive">
@@ -2302,20 +2482,20 @@ nav.scrolled { box-shadow: 0 1px 40px rgba(0,0,0,0.6) !important; }
             <span id="histSortIcon">↕</span> <span id="histSortLabel">Trier</span>
           </button>
           <div id="histSortMenu" style="display:none;position:absolute;right:0;top:calc(100% + 4px);background:var(--card);border:1px solid var(--border);border-radius:8px;min-width:200px;z-index:100;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.5);">
-            <div onclick="setHistSort('recent')" class="rug-sort-opt" id="hsort-recent" style="color:var(--muted);">🕐 Plus récent d'abord</div>
-            <div onclick="setHistSort('old')" class="rug-sort-opt" id="hsort-old" style="color:var(--muted);">⏳ Plus vieux d'abord</div>
-            <div onclick="setHistSort('xbest')" class="rug-sort-opt" id="hsort-xbest" style="color:var(--muted);">🏆 Meilleur × ATH d'abord</div>
+            <div onclick="setHistSort('recent')" class="rug-sort-opt" id="hsort-recent" style="color:var(--muted);">Récent d'abord</div>
+            <div onclick="setHistSort('old')" class="rug-sort-opt" id="hsort-old" style="color:var(--muted);">Plus ancien d'abord</div>
+            <div onclick="setHistSort('xbest')" class="rug-sort-opt" id="hsort-xbest" style="color:var(--muted);">Meilleur × ATH</div>
           </div>
         </div>
-        <button class="scan-btn scan-btn-outline" onclick="toggleBacktest()" style="font-size:.72rem">📊 Backtest</button>
-        <button class="btn-reset" onclick="resetHistory()">🗑 Tout supprimer</button>
+        <button class="scan-btn scan-btn-outline" onclick="toggleBacktest()" style="font-size:.72rem">Backtest</button>
+        <button class="btn-reset" onclick="resetHistory()">Vider</button>
         <button class="scan-btn scan-btn-outline" onclick="renderHistory(true)" style="font-size:.72rem">↻ Refresh</button>
       </div>
     </div>
     <!-- BACKTEST PANEL -->
     <div id="backtestPanel" style="display:none;margin-bottom:1rem;background:rgba(97,86,217,.04);border:1px solid rgba(97,86,217,.18);border-radius:12px;overflow:hidden;">
       <div style="padding:.6rem 1rem;border-bottom:1px solid rgba(97,86,217,.12);display:flex;align-items:center;justify-content:space-between;">
-        <span style="font-size:.72rem;font-weight:700;color:var(--purple2);letter-spacing:.04em;">📊 BACKTESTING — Winrate par tranche de score</span>
+        <span style="font-size:.72rem;font-weight:700;color:#a5b4fc;letter-spacing:.04em;">BACKTESTING — Winrate par tranche de score</span>
         <span style="font-size:.65rem;color:var(--muted)">Basé sur l'historique local</span>
       </div>
       <div id="backtestContent" style="padding:.75rem 1rem;"></div>
@@ -2340,8 +2520,11 @@ nav.scrolled { box-shadow: 0 1px 40px rgba(0,0,0,0.6) !important; }
     <!-- HEADER + TOGGLE -->
     <div class="pt-header">
       <div>
-        <div class="pt-title">🤖 Paper Trading Bot</div>
-        <div class="pt-sub">Simule des trades sur chaque call — 0 argent réel</div>
+        <div class="pt-title" style="display:flex;align-items:center;gap:.55rem;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#a5b4fc" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+          Paper Trading Bot
+        </div>
+        <div class="pt-sub">Simulation automatique sur chaque call — capital fictif</div>
       </div>
       <div style="display:flex;align-items:center;gap:10px;">
         <span style="font-size:11px;color:var(--muted);" id="ptStatusText">Désactivé</span>
@@ -2387,7 +2570,7 @@ nav.scrolled { box-shadow: 0 1px 40px rgba(0,0,0,0.6) !important; }
 
     <!-- CONFIG -->
     <details class="pt-config-details">
-      <summary class="pt-config-summary">⚙️ Configuration</summary>
+      <summary class="pt-config-summary" style="display:flex;align-items:center;gap:.5rem;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg> Configuration</summary>
       <div class="pt-config-grid">
         <div class="pt-config-item">
           <label>Capital total ($)</label>
@@ -2440,7 +2623,7 @@ nav.scrolled { box-shadow: 0 1px 40px rgba(0,0,0,0.6) !important; }
       </div>
       <div style="display:flex;gap:8px;margin-top:10px;">
         <button class="pt-btn" onclick="ptSaveConfig()">💾 Sauvegarder</button>
-        <button class="pt-btn secondary" onclick="ptResetAll()" style="color:#ff4466;border-color:rgba(255,68,102,.3);">🗑 Reset tout</button>
+        <button class="pt-btn secondary" onclick="ptResetAll()" style="color:#f87171;border-color:rgba(239,68,68,.25);">Reset</button>
       </div>
     </details>
 
