@@ -6580,7 +6580,7 @@ async function renderHistory(force=false){
         const c24=p.priceChange?.h24||0;
         const c6=p.priceChange?.h6||0;
         const c1=p.priceChange?.h1||0;
-        const MAX_MULT=50;
+        const MAX_MULT=500;
         let athEst=now;
         // Seuil abaissé à -3% : capture les dips récents même faibles
         // Plafond anti-MEV : max now * MAX_MULT
@@ -6601,8 +6601,8 @@ async function renderHistory(force=false){
     const live=liveMap[addr];
     const callMcap=v.callMcap||0;
     const nowMcap=live?.now||0;
-    // ATH = max entre stocké et prix live actuel uniquement — pas d'estimation pre-call via priceChange
-    let bestKnown=Math.max(nowMcap,v.athMcap||0);
+    const athEst=live?.athEst||0;
+    let bestKnown=Math.max(nowMcap, athEst, v.athMcap||0);
 
     if(bestKnown>0&&bestKnown>(v.athMcap||0)){
       v.athMcap=bestKnown;
@@ -7354,7 +7354,14 @@ async function renderTokenTable(tokens){
         if(!best[a]||(p.volume?.h24||0)>(best[a].volume?.h24||0))best[a]=p;
       });
       Object.entries(best).forEach(([a,p])=>{
-        livePriceMap[a]=p.marketCap||p.fdv||0;
+        const mcap=p.marketCap||p.fdv||0;
+        if(!mcap){livePriceMap[a]={now:0,athEst:0};return;}
+        const c24=p.priceChange?.h24||0,c6=p.priceChange?.h6||0,c1=p.priceChange?.h1||0;
+        let athEst=mcap; const cap=mcap*500;
+        if(c24<-3){const e=mcap/Math.max(0.001,1+c24/100);if(e<cap)athEst=Math.max(athEst,e);}
+        if(c6 <-3){const e=mcap/Math.max(0.001,1+c6/100); if(e<cap)athEst=Math.max(athEst,e);}
+        if(c1 <-3){const e=mcap/Math.max(0.001,1+c1/100); if(e<cap)athEst=Math.max(athEst,e);}
+        livePriceMap[a]={now:mcap,athEst:Math.round(athEst)};
       });
     }catch(e){}
   }
@@ -7367,9 +7374,9 @@ async function renderTokenTable(tokens){
     const callMcap=callData?.callMcap||t._callMcap||t.mcap;
     const callTime=t._callTime||callData?.callTime||Date.now();
     // nowMcap = prix live (DexScreener) ou fallback sur mcap du scan
-    const nowMcap=livePriceMap[t.addr]||t.mcap||0;
-    // ATH = max entre ATH stocké et prix live actuel uniquement (pas d'estimation pre-call via priceChange)
-    let athMcap=Math.max(callData?.athMcap||callMcap, nowMcap);
+    const liveEntry=livePriceMap[t.addr]||{now:0,athEst:0};
+    const nowMcap=liveEntry.now||t.mcap||0;
+    let athMcap=Math.max(callData?.athMcap||callMcap, nowMcap, liveEntry.athEst||0);
     if(athMcap>(callData?.athMcap||0))updateAth(t.addr,athMcap).catch(()=>{});
     t._athMcap=athMcap; // stocké pour refreshLiveMcap
 
@@ -8717,7 +8724,15 @@ async function refreshLiveMcap() {
     const data = await fetch(url, { signal: AbortSignal.timeout(6000) }).then(r => r.json());
     const pairMap = {};
     for (const p of (data?.pairs || [])) {
-      if (p?.pairAddress) pairMap[p.pairAddress] = p.marketCap || p.fdv || 0;
+      if (!p?.pairAddress) continue;
+      const mcap = p.marketCap || p.fdv || 0;
+      if (!mcap) continue;
+      const c24=p.priceChange?.h24||0,c6=p.priceChange?.h6||0,c1=p.priceChange?.h1||0;
+      let athEst=mcap; const cap=mcap*500;
+      if(c24<-3){const e=mcap/Math.max(0.001,1+c24/100);if(e<cap)athEst=Math.max(athEst,e);}
+      if(c6 <-3){const e=mcap/Math.max(0.001,1+c6/100); if(e<cap)athEst=Math.max(athEst,e);}
+      if(c1 <-3){const e=mcap/Math.max(0.001,1+c1/100); if(e<cap)athEst=Math.max(athEst,e);}
+      pairMap[p.pairAddress] = { now: mcap, athEst: Math.round(athEst) };
     }
     // Mise à jour DOM ciblée — NOW + ATH + xATH
     document.querySelectorAll('[data-live-addr]').forEach(cell => {
@@ -8726,7 +8741,8 @@ async function refreshLiveMcap() {
       const t = lastScored.find(x => x.addr === addr);
       if (!t) return;
       const pairAddr = t.raw?.pairAddress || '';
-      const newMcap = pairMap[pairAddr] || t.mcap || 0;
+      const entry = pairMap[pairAddr];
+      const newMcap = entry?.now || t.mcap || 0;
       if (newMcap <= 0) return;
       t.mcap = newMcap;
       // NOW
@@ -8735,16 +8751,17 @@ async function refreshLiveMcap() {
         nowVal.textContent = `$${fmtNum(newMcap)}`;
         nowVal.style.color = newMcap > callMcap ? '#44ff88' : newMcap < callMcap * 0.7 ? '#ff5577' : '#ffcc44';
       }
-      // ATH — mise à jour si newMcap > ATH actuel
-      if (newMcap > (t._athMcap || 0)) {
-        t._athMcap = newMcap;
-        updateAth(addr, newMcap).catch(()=>{});
+      // ATH — meilleur entre live, estimation priceChange et ATH connu
+      const bestAth = Math.max(newMcap, entry?.athEst || 0, t._athMcap || 0);
+      if (bestAth > (t._athMcap || 0)) {
+        t._athMcap = bestAth;
+        updateAth(addr, bestAth).catch(()=>{});
         const athCell = document.querySelector(`[data-live-ath="${addr}"] .live-ath-val`);
-        if (athCell) athCell.textContent = `$${fmtNum(newMcap)}`;
+        if (athCell) athCell.textContent = `$${fmtNum(bestAth)}`;
         // xATH
         const xAthCell = document.querySelector(`[data-live-xath="${addr}"] .live-xath-val`);
         if (xAthCell && callMcap > 0) {
-          const xAth = newMcap / callMcap;
+          const xAth = bestAth / callMcap;
           xAthCell.textContent = `${xAth.toFixed(2)}x`;
           xAthCell.style.color = xAth >= 3 ? '#00ff88' : xAth >= 2 ? '#88ff44' : xAth >= 1.5 ? '#ffcc44' : '#ff8866';
         }
