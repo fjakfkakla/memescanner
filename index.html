@@ -2122,38 +2122,6 @@ nav.scrolled { box-shadow: 0 1px 40px rgba(0,0,0,0.6) !important; }
 <body>
 
 <!-- ===== BOOT SCREEN ===== -->
-<div id="bootScreen">
-  <div class="boot-scanlines"></div>
-  <div class="boot-grid-bg"></div>
-  <div class="boot-corner tl"></div>
-  <div class="boot-corner tr"></div>
-  <div class="boot-corner bl"></div>
-  <div class="boot-corner br"></div>
-  <div class="boot-logo">MEME<span>SCANNER</span></div>
-  <div class="boot-version">SOLANA ALPHA &nbsp;·&nbsp; v11.0</div>
-  <div class="boot-terminal" id="bootTerminal"></div>
-  <div class="boot-bar-wrap"><div class="boot-bar-fill" id="bootBar"></div></div>
-  <div class="boot-pct" id="bootPct">0%</div>
-</div>
-
-<!-- DAILY ALPHA BOX -->
-<div id="dailyBoxOverlay" class="hidden">
-  <div class="dbox-title">◈ DAILY ALPHA BOX</div>
-  <div class="dbox-day" id="dboxDayLabel">Jour #1 · Streak 🔥1</div>
-  <div class="dbox-box" id="dboxBox" onclick="openDailyBox()">
-    <div class="dbox-box-glow"></div>
-    <div class="dbox-box-inner">📦</div>
-  </div>
-  <div class="dbox-reward" id="dboxReward">
-    <div class="dbox-reward-icon" id="dboxRewardIcon">🎁</div>
-    <div class="dbox-reward-rarity common" id="dboxRewardRarity">COMMON</div>
-    <div class="dbox-reward-title" id="dboxRewardTitle">Récompense</div>
-    <div class="dbox-reward-desc" id="dboxRewardDesc">Description de la récompense</div>
-    <button class="dbox-collect-btn" onclick="closeDailyBox()">COLLECTER →</button>
-  </div>
-  <div class="dbox-hint" id="dboxHint">Clique pour ouvrir ta boîte du jour</div>
-  <div class="dbox-skip" onclick="closeDailyBox()">passer</div>
-</div>
 
 <!-- TICKER STRIP (hidden in light theme) -->
 <div id="tickerStrip" style="display:none;background:#000;border-bottom:1px solid rgba(255,109,0,.25);padding:0;height:28px;overflow:hidden;position:relative;z-index:200;">
@@ -3439,62 +3407,8 @@ nav.scrolled { box-shadow: 0 1px 40px rgba(0,0,0,0.6) !important; }
 </div>
 
 <script>
-// ===== BOOT SCREEN =====
-(function(){
-  // Une seule fois par session
-  if(sessionStorage.getItem('booted')){
-    document.getElementById('bootScreen').classList.add('done');
-    return;
-  }
-  const lines = [
-    {text:'> Initializing MemeScanner v11...', cls:'dim', delay:0},
-    {text:'> Connecting to Solana RPC... <em>[OK]</em>', cls:'ok', delay:350},
-    {text:'> Loading Axiom wallet feeds... <em>[OK]</em>', cls:'ok', delay:700},
-    {text:'> Calibrating scoring engine... <em>[OK]</em>', cls:'ok', delay:1050},
-    {text:'> Hard filters x15 loaded... <em>[OK]</em>', cls:'ok', delay:1350},
-    {text:'◈ ALL SYSTEMS NOMINAL', cls:'hi', delay:1650},
-  ];
-  const terminal = document.getElementById('bootTerminal');
-  const bar = document.getElementById('bootBar');
-  const pct = document.getElementById('bootPct');
-  lines.forEach((l,i)=>{
-    setTimeout(()=>{
-      const span = document.createElement('span');
-      span.className = 'boot-line ' + l.cls;
-      span.innerHTML = l.text + (i===lines.length-1 ? ' <span class="boot-cursor"></span>' : '');
-      terminal.appendChild(span);
-      requestAnimationFrame(()=>requestAnimationFrame(()=>span.classList.add('show')));
-      const p = Math.round((i+1)/lines.length*100);
-      bar.style.width = p + '%';
-      pct.textContent = p + '%';
-    }, l.delay);
-  });
-  setTimeout(()=>{
-    sessionStorage.setItem('booted','1');
-    document.getElementById('bootScreen').classList.add('done');
-    // Animate hero stats counters
-    animateHeroCounters();
-  }, 2200);
-})();
-
-function animateHeroCounters(){
-  // Cycle counter
-  const cyc=document.getElementById('hlvCycleN'),cyc2=document.getElementById('hlvCycle');
-  if(cyc){let n=0;const iv=setInterval(()=>{n+=Math.floor(Math.random()*30+10);if(n>=847){n=847;clearInterval(iv);}cyc.textContent=n;if(cyc2)cyc2.textContent=n;},40);}
-  // Live clock
-  function updateClock(){
-    const el=document.getElementById('hlvTime');
-    if(el){const d=new Date();el.textContent=d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});}
-  }
-  updateClock(); setInterval(updateClock,1000);
-  // Scan status
-  const ss=document.getElementById('heroScanStatus');
-  if(ss){const states=['SCANNING...','ANALYSING...','FILTERING...','SCORING...'];let i=0;setInterval(()=>{i=(i+1)%states.length;ss.textContent=states[i];},2800);}
-  // Start live hero panel
-  initHeroLive();
-  // Notifs browser: demande permission dès que l'utilisateur interagit
-  document.addEventListener('click', ()=>askNotifPermission(), {once:true});
-}
+// Boot screen supprimé — demander permission notifs au premier clic
+document.addEventListener('click', ()=>{ if(typeof askNotifPermission==='function') askNotifPermission(); }, {once:true});
 
 // ===== HERO LIVE SCANNER =====
 const HLV_POOL = [
@@ -6516,34 +6430,6 @@ function rtResetAll(){
 }
 
 
-// ============================================================
-// 📦 DAILY ALPHA BOX
-// ============================================================
-const DBOX_LS = 'dailyBox_v1';
-
-const DBOX_REWARDS = [
-  // Common
-  { rarity:'common', icon:'🔍', title:'Signal Scan', desc:'Le scanner a analysé plus de 1000 tokens aujourd\'hui. Continue à surveiller les calls live.', weight:30 },
-  { rarity:'common', icon:'📊', title:'Stats Degen', desc:'Ton algo a filtré 95% de rugs aujourd\'hui. Les filtres tiennent bon.', weight:25 },
-  { rarity:'common', icon:'⚡', title:'Speed Boost', desc:'Scan cycle réduit à 30s pour les 24 prochaines heures. Alpha plus vite.', weight:20 },
-  // Rare
-  { rarity:'rare', icon:'🧠', title:'Pattern Intel', desc:'Top pattern du moment: tokens avec buyRatio > 0.72 et 2+ Axiom wallets pumpent 3x+ dans 80% des cas.', weight:15 },
-  { rarity:'rare', icon:'🐋', title:'Whale Alert', desc:'3 wallets Axiom trackés ont accumulé en silence sur les dernières 6h. Surveille les tokens avec 3+ axiom.', weight:12 },
-  { rarity:'rare', icon:'💡', title:'Alpha Tip', desc:'Les tokens callés entre 22h-2h ont un winrate 40% plus élevé — le marché dort, les gems bougent.', weight:10 },
-  // Epic
-  { rarity:'epic', icon:'🎯', title:'Score Secret', desc:'Révélation: les tokens avec score > 105 ET mcap < $8K ont un ATH moyen de 5.8x. C\'est ton sweet spot.', weight:8 },
-  { rarity:'epic', icon:'🔮', title:'Meta Shift', desc:'Nouveau meta détecté: les tokens avec "AI" dans le nom ont un pump initial de 2.3x en moyenne cette semaine.', weight:6 },
-  // Legendary
-  { rarity:'legendary', icon:'👑', title:'JACKPOT ALPHA', desc:'Top call secret du jour débloqué. Regarde les tokens avec 3+ Axiom wallets ET buyRatio > 0.8 — historique: 7.2x ATH moyen.', weight:3 },
-  { rarity:'legendary', icon:'🌙', title:'MOON INTEL', desc:'Pattern ultra-rare détecté: staircase sur 5m + 3 Axiom = 12x ATH dans 4 cas sur 5 ce mois-ci.', weight:2 },
-];
-
-function dboxPickReward(){
-  const total = DBOX_REWARDS.reduce((s,r)=>s+r.weight, 0);
-  let rand = Math.random() * total;
-  for(const r of DBOX_REWARDS){ rand -= r.weight; if(rand <= 0) return r; }
-  return DBOX_REWARDS[0];
-}
 
 // ============================================================
 // KOL TWITTER TRACKER
@@ -6595,62 +6481,7 @@ async function fetchKolMentions(){
   console.log(`[KOL] done — ${fetched} handles, ${Object.keys(mentions).length} CAs trouvés`);
 }
 
-function initDailyBox(){
-  const data = JSON.parse(localStorage.getItem(DBOX_LS) || '{}');
-  const today = new Date().toISOString().slice(0,10);
-  if(data.lastOpened === today) return; // déjà ouvert aujourd'hui
-  // Afficher la boîte après 3s (laisse le site charger)
-  setTimeout(()=>{
-    const streak = JSON.parse(localStorage.getItem('loginStreak')||'{}');
-    const dayNum = (data.totalBoxes || 0) + 1;
-    const streakN = streak.streak || 1;
-    const label = document.getElementById('dboxDayLabel');
-    if(label) label.textContent = `Boîte #${dayNum} · Streak 🔥${streakN}`;
-    document.getElementById('dailyBoxOverlay')?.classList.remove('hidden');
-  }, 3000);
-}
-
-function openDailyBox(){
-  const box = document.getElementById('dboxBox');
-  const hint = document.getElementById('dboxHint');
-  const reward = dboxPickReward();
-  if(box.classList.contains('opening')) return;
-  box.classList.add('opening');
-  if(hint) hint.style.display = 'none';
-  // Confettis si epic+
-  if(['epic','legendary'].includes(reward.rarity)) launchConfetti(reward.rarity==='legendary'?80:40);
-  setTimeout(()=>{
-    box.style.display = 'none';
-    // Afficher récompense
-    document.getElementById('dboxRewardIcon').textContent  = reward.icon;
-    document.getElementById('dboxRewardTitle').textContent = reward.title;
-    document.getElementById('dboxRewardDesc').textContent  = reward.desc;
-    const rarEl = document.getElementById('dboxRewardRarity');
-    rarEl.textContent = reward.rarity.toUpperCase();
-    rarEl.className = `dbox-reward-rarity ${reward.rarity}`;
-    const rev = document.getElementById('dboxReward');
-    rev.classList.add('show');
-    // Sauvegarder
-    const today = new Date().toISOString().slice(0,10);
-    const data = JSON.parse(localStorage.getItem(DBOX_LS)||'{}');
-    data.lastOpened = today;
-    data.totalBoxes = (data.totalBoxes||0) + 1;
-    if(!data.history) data.history = [];
-    data.history.unshift({date:today, reward:reward.title, rarity:reward.rarity});
-    localStorage.setItem(DBOX_LS, JSON.stringify(data));
-  }, 800);
-}
-
-function closeDailyBox(){
-  document.getElementById('dailyBoxOverlay')?.classList.add('hidden');
-  // Reset pour prochaine ouverture
-  const box = document.getElementById('dboxBox');
-  if(box){ box.classList.remove('opening'); box.style.display=''; }
-  const rev = document.getElementById('dboxReward');
-  if(rev) rev.classList.remove('show');
-  const hint = document.getElementById('dboxHint');
-  if(hint) hint.style.display = '';
-}
+function initDailyBox(){} // supprimé
 
 function initNightly() {
   nightlyKeyStatusUpdate();
