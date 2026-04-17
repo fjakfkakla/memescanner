@@ -6302,62 +6302,43 @@ function switchTab(tab){
 // RENDER HISTORY
 // ============================================================
 // ══════════════════════════════════════════════════════════
-// VRAI ATH via DexScreener candles (même source que GMGN/Axiom)
-// Endpoint non documenté mais public — retourne les bougies OHLCV
-// ATH = max(high) de toutes les bougies depuis la création
+// VRAI ATH via GeckoTerminal OHLCV (candles 5min, 24h)
+// max(high) des bougies depuis callTime × ratio mcap/prix = athMcap réel
+// Cache 10min pour éviter les appels répétés
 // ══════════════════════════════════════════════════════════
-const athCandleCache = {}; // addr → {athMcap, ts}
+const athCandleCache = {}; // pairAddress → {athMcap, ts}
 
-async function fetchRealAth(pairAddress, tokenAddr) {
-  if (!pairAddress && !tokenAddr) return 0;
-  const cacheKey = tokenAddr || pairAddress;
+async function fetchRealAth(pairAddress, callMcap, callTime, nowMcap) {
+  if (!pairAddress || !nowMcap) return callMcap || 0;
   const now = Date.now();
-  if (athCandleCache[cacheKey] && now - athCandleCache[cacheKey].ts < 600000) {
-    return athCandleCache[cacheKey].athMcap;
-  }
+  const cached = athCandleCache[pairAddress];
+  if (cached && now - cached.ts < 600000) return cached.athMcap;
 
-  // Fetch la paire pour avoir mcap + priceChange sur toutes les périodes
-  // api.dexscreener.com = pas de CORS, public
   try {
-    const endpoint = pairAddress
-      ? `https://api.dexscreener.com/latest/dex/pairs/solana/${pairAddress}`
-      : `https://api.dexscreener.com/latest/dex/tokens/${tokenAddr}`;
-    const dex = await fetch(endpoint, { signal: AbortSignal.timeout(7000) }).then(r => r.json());
-    const pairsArr = dex.pairs
-      ? (Array.isArray(dex.pairs) ? dex.pairs : [dex.pairs])
-      : (dex.pair ? [dex.pair] : []);
-    const best = pairsArr
-      .filter(p => p?.chainId === 'solana')
-      .sort((a,b) => (b.volume?.h24||0) - (a.volume?.h24||0))[0];
-    if (!best) return 0;
+    // GeckoTerminal OHLCV — candles 5min sur 24h, prix en USD pour le token base
+    const r = await fetch(
+      `https://api.geckoterminal.com/api/v2/networks/solana/pools/${pairAddress}/ohlcv/minute?aggregate=5&limit=288&currency=usd&token=base`,
+      { signal: AbortSignal.timeout(8000) }
+    ).then(r => r.json());
+    const ohlcv = r?.data?.attributes?.ohlcv_list; // [[ts, open, high, low, close, vol], ...]
+    if (!ohlcv?.length) return callMcap || 0;
 
-    const mcap = best.marketCap || best.fdv || 0;
-    if (!mcap) return 0;
+    // Filtrer les bougies depuis le call
+    const callSec = Math.floor((callTime || 0) / 1000);
+    const relevant = callSec > 0 ? ohlcv.filter(c => c[0] >= callSec) : ohlcv;
+    if (!relevant.length) return callMcap || 0;
 
-    // Reconstruire l'ATH depuis les priceChange
-    // priceChange.hX = variation depuis il y a X heures
-    // Si négatif : mcap était plus haut → ATH = mcap / (1 + c/100)
-    const c24 = best.priceChange?.h24 || 0;
-    const c6  = best.priceChange?.h6  || 0;
-    const c1  = best.priceChange?.h1  || 0;
+    const maxHigh = Math.max(...relevant.map(c => c[2]));
+    const lastClose = ohlcv[ohlcv.length - 1][4];
+    if (!maxHigh || !lastClose) return callMcap || 0;
 
-    let athEst = mcap;
-    // Formule inverse : si c=-91.7% → mcap/(1-0.917) = mcap/0.083 = ATH
-    // Plafond : 200x mcap pour éviter les spikes MEV aberrants
-    // Plafond anti-spike : max 30x le mcap actuel
-    // Un vrai ATH > 30x le prix actuel dans les 24h est extrêmement rare
-    const cap = mcap * 30;
-    if (c24 < -5) { const e = mcap / Math.max(0.001, 1 + c24/100); if(e < cap) athEst = Math.max(athEst, e); }
-    if (c6  < -5) { const e = mcap / Math.max(0.001, 1 + c6/100);  if(e < cap) athEst = Math.max(athEst, e); }
-    if (c1  < -5) { const e = mcap / Math.max(0.001, 1 + c1/100);  if(e < cap) athEst = Math.max(athEst, e); }
-    if (c24 > 0)  athEst = Math.max(athEst, mcap); // en hausse = now est potentiellement l'ATH
-
-    const athMcap = Math.round(athEst);
-    console.log(`[ATH] ${tokenAddr?.slice(0,8)||pairAddress?.slice(0,8)} mcap=$${fmtNum(mcap)} c24=${c24}% → ATH=$${fmtNum(athMcap)}`);
-    athCandleCache[cacheKey] = { athMcap, ts: now };
+    // athMcap = maxHigh / lastClose * nowMcap
+    // (ratio prix → mcap, supply supposée constante)
+    const athMcap = Math.max(Math.round(maxHigh / lastClose * nowMcap), callMcap || 0);
+    athCandleCache[pairAddress] = { athMcap, ts: now };
     return athMcap;
   } catch(e) {
-    return 0;
+    return callMcap || 0;
   }
 }
 
@@ -6602,7 +6583,8 @@ async function renderHistory(force=false){
     const callMcap=v.callMcap||0;
     const nowMcap=live?.now||0;
     const athEst=live?.athEst||0;
-    let bestKnown=Math.max(nowMcap, athEst, v.athMcap||0);
+    // ATH >= callMcap toujours (Bug A fix)
+    let bestKnown=Math.max(nowMcap, athEst, v.athMcap||0, callMcap);
 
     if(bestKnown>0&&bestKnown>(v.athMcap||0)){
       v.athMcap=bestKnown;
@@ -7376,9 +7358,28 @@ async function renderTokenTable(tokens){
     // nowMcap = prix live (DexScreener) ou fallback sur mcap du scan
     const liveEntry=livePriceMap[t.addr]||{now:0,athEst:0};
     const nowMcap=liveEntry.now||t.mcap||0;
-    let athMcap=Math.max(callData?.athMcap||callMcap, nowMcap, liveEntry.athEst||0);
+    // ATH >= callMcap toujours (Bug A fix) + estimation priceChange
+    let athMcap=Math.max(callData?.athMcap||0, callMcap, nowMcap, liveEntry.athEst||0);
     if(athMcap>(callData?.athMcap||0))updateAth(t.addr,athMcap).catch(()=>{});
     t._athMcap=athMcap; // stocké pour refreshLiveMcap
+    // Fetch ATH réel via candles GeckoTerminal (fire-and-forget, cache 10min)
+    const _pa=t.raw?.pairAddress;
+    if(_pa && nowMcap>0){
+      fetchRealAth(_pa, callMcap, callTime, nowMcap).then(realAth=>{
+        if(realAth>(t._athMcap||0)){
+          t._athMcap=realAth;
+          updateAth(t.addr,realAth).catch(()=>{});
+          const athEl=document.querySelector(`[data-live-ath="${t.addr}"] .live-ath-val`);
+          if(athEl)athEl.textContent=`$${fmtNum(realAth)}`;
+          const xAthEl=document.querySelector(`[data-live-xath="${t.addr}"] .live-xath-val`);
+          if(xAthEl&&callMcap>0){
+            const xAth=realAth/callMcap;
+            xAthEl.textContent=`${xAth.toFixed(2)}x`;
+            xAthEl.style.color=xAth>=3?'#00ff88':xAth>=2?'#88ff44':xAth>=1.5?'#ffcc44':'#ff8866';
+          }
+        }
+      }).catch(()=>{});
+    }
 
     // ── DIP TRACKER : suivi peak depuis le call ──────────────────
     const _dtNow = nowMcap || t.mcap || 0;
