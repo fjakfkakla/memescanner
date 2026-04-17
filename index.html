@@ -7195,11 +7195,12 @@ async function fetchRealAth(pairAddress, callMcap, callTime, nowMcap, tokenAddr)
     if (!relevant.length) return callMcap || 0;
 
     const maxHigh = Math.max(...relevant.map(c => c[2]));
-    const lastClose = ohlcv[ohlcv.length - 1][4];
-    if (!maxHigh || !lastClose) return callMcap || 0;
+    // Ancrer sur callMcap + prix de la 1ère bougie après le call (stable, indépendant du prix live)
+    const firstOpen = relevant[0][1] || relevant[0][4]; // open ou close de la 1ère bougie >= callTime
+    if (!maxHigh || !firstOpen) return callMcap || 0;
 
-    // athMcap = maxHigh / lastClose × nowMcap (ratio prix → mcap, supply constante)
-    const athMcap = Math.max(Math.round(maxHigh / lastClose * nowMcap), callMcap || 0);
+    // athMcap = (maxHigh / firstOpen) × callMcap — anchored, not skewed by live price drift
+    const athMcap = Math.max(Math.round(maxHigh / firstOpen * (callMcap || 0)), callMcap || 0);
     athCandleCache[cacheKey] = { athMcap, ts: now };
     return athMcap;
   } catch(e) {
