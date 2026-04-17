@@ -6885,9 +6885,9 @@ async function saveCall(addr,callMcap,callTime,symbol='',score=0,pairAddress='')
   try{const key=addr.replace(/[.#$\/\[\]]/g,'_');const ex=await fetch(`${FB_URL}/calls/${key}.json`).then(r=>r.json()).catch(()=>null);if(!ex)await fetch(`${FB_URL}/calls/${key}.json`,{method:'PUT',body:JSON.stringify(entry)});}catch(e){}
   return saved;
 }
-async function updateAth(addr,currentMcap){
-  try{const all=JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}');if(all[addr]&&currentMcap>(all[addr].athMcap||0)){all[addr].athMcap=currentMcap;localStorage.setItem(STORAGE_KEY,JSON.stringify(all));}}catch(e){}
-  try{const key=addr.replace(/[.#$\/\[\]]/g,'_');const ex=await fetch(`${FB_URL}/calls/${key}.json`).then(r=>r.json()).catch(()=>null);if(ex&&currentMcap>(ex.athMcap||0))await fetch(`${FB_URL}/calls/${key}.json`,{method:'PATCH',body:JSON.stringify({athMcap:currentMcap})});}catch(e){}
+async function updateAth(addr,currentMcap,force=false){
+  try{const all=JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}');if(all[addr]&&(force||currentMcap>(all[addr].athMcap||0))){all[addr].athMcap=currentMcap;localStorage.setItem(STORAGE_KEY,JSON.stringify(all));}}catch(e){}
+  try{const key=addr.replace(/[.#$\/\[\]]/g,'_');const ex=await fetch(`${FB_URL}/calls/${key}.json`).then(r=>r.json()).catch(()=>null);if(ex&&(force||currentMcap>(ex.athMcap||0)))await fetch(`${FB_URL}/calls/${key}.json`,{method:'PATCH',body:JSON.stringify({athMcap:currentMcap})});}catch(e){}
 }
 async function getCallData(addr){
   try{
@@ -7163,11 +7163,23 @@ function switchTab(tab){
 // RENDER HISTORY
 // ============================================================
 // ══════════════════════════════════════════════════════════
-// VRAI ATH via GeckoTerminal OHLCV (candles 5min, 24h)
-// max(high) des bougies depuis callTime × ratio mcap/prix = athMcap réel
-// Cache 10min pour éviter les appels répétés
+// VRAI ATH via candles multi-sources (GeckoTerminal + Birdeye)
+// Filtré par callTime, ancré sur callMcap → indépendant du prix live
+// Cache 10min. Prend le MAX des deux sources (cross-validation).
 // ══════════════════════════════════════════════════════════
-const athCandleCache = {}; // pairAddress → {athMcap, ts}
+const athCandleCache = {}; // tokenAddr → {athMcap, ts}
+
+// Calcule athMcap depuis un tableau OHLCV [ts,open,high,low,close,vol]
+function calcAthFromOhlcv(ohlcv, callMcap, callTime, tsInSeconds=true) {
+  if (!ohlcv?.length || !callMcap) return callMcap || 0;
+  const callSec = tsInSeconds ? Math.floor((callTime||0)/1000) : (callTime||0);
+  const relevant = callSec > 0 ? ohlcv.filter(c => c[0] >= callSec) : ohlcv;
+  if (!relevant.length) return callMcap;
+  const maxHigh  = Math.max(...relevant.map(c => c[2]));
+  const firstOpen = relevant[0][1] || relevant[0][4];
+  if (!maxHigh || !firstOpen) return callMcap;
+  return Math.max(Math.round(maxHigh / firstOpen * callMcap), callMcap);
+}
 
 async function fetchRealAth(pairAddress, callMcap, callTime, nowMcap, tokenAddr) {
   if (!nowMcap) return callMcap || 0;
@@ -7177,49 +7189,61 @@ async function fetchRealAth(pairAddress, callMcap, callTime, nowMcap, tokenAddr)
   const cached = athCandleCache[cacheKey];
   if (cached && now - cached.ts < 600000) return cached.athMcap;
 
-  // Récupère les candles OHLCV GeckoTerminal pour un pool donné
-  async function getOhlcv(poolAddr) {
+  // ── Source 1 : GeckoTerminal OHLCV 5min ──────────────────
+  async function getGeckoOhlcv(poolAddr) {
     try {
       const r = await fetch(
         `https://api.geckoterminal.com/api/v2/networks/solana/pools/${poolAddr}/ohlcv/minute?aggregate=5&limit=288&currency=usd&token=base`,
-        { signal: AbortSignal.timeout(7000) }
+        { signal: AbortSignal.timeout(6000) }
       ).then(r => r.json());
       return r?.data?.attributes?.ohlcv_list || null;
     } catch(e) { return null; }
   }
 
+  // ── Source 2 : Birdeye price history (public, sans clé) ──
+  async function getBirdeyeAth() {
+    if (!tokenAddr) return callMcap;
+    try {
+      const timeFrom = Math.floor((callTime||0)/1000);
+      const timeTo   = Math.floor(Date.now()/1000);
+      const r = await fetch(
+        `https://public-api.birdeye.so/defi/history_price?address=${tokenAddr}&address_type=token&type=5m&time_from=${timeFrom}&time_to=${timeTo}`,
+        { headers:{'x-chain':'solana'}, signal: AbortSignal.timeout(6000) }
+      ).then(r => r.json());
+      const items = r?.data?.items;
+      if (!items?.length) return callMcap;
+      // items = [{unixTime, value (price USD)}]
+      const maxPrice  = Math.max(...items.map(i => i.value||0));
+      const firstPrice = items[0]?.value;
+      if (!maxPrice || !firstPrice) return callMcap;
+      return Math.max(Math.round(maxPrice / firstPrice * callMcap), callMcap);
+    } catch(e) { return callMcap; }
+  }
+
   try {
-    let ohlcv = null;
+    // Fetch les deux sources en parallèle
+    let geckoOhlcv = null;
+    const [birdeyeAth] = await Promise.all([
+      getBirdeyeAth(),
+      // GeckoTerminal : essai direct pairAddress puis fallback token
+      (async () => {
+        if (pairAddress) geckoOhlcv = await getGeckoOhlcv(pairAddress);
+        if (!geckoOhlcv?.length && tokenAddr) {
+          const poolsRes = await fetch(
+            `https://api.geckoterminal.com/api/v2/networks/solana/tokens/${tokenAddr}/pools?page=1`,
+            { signal: AbortSignal.timeout(6000) }
+          ).then(r => r.json()).catch(() => null);
+          const best = (poolsRes?.data||[])
+            .sort((a,b) => (b?.attributes?.volume_usd?.h24||0) - (a?.attributes?.volume_usd?.h24||0))[0];
+          if (best?.attributes?.address) geckoOhlcv = await getGeckoOhlcv(best.attributes.address);
+        }
+      })()
+    ]);
 
-    // 1. Essai direct avec le pairAddress DexScreener
-    if (pairAddress) ohlcv = await getOhlcv(pairAddress);
+    const geckoAth = calcAthFromOhlcv(geckoOhlcv, callMcap, callTime, true);
 
-    // 2. Fallback : chercher le pool via l'adresse du token (Pump.fun migré → Raydium)
-    if (!ohlcv?.length && tokenAddr) {
-      const poolsRes = await fetch(
-        `https://api.geckoterminal.com/api/v2/networks/solana/tokens/${tokenAddr}/pools?page=1`,
-        { signal: AbortSignal.timeout(7000) }
-      ).then(r => r.json()).catch(() => null);
-      const pools = poolsRes?.data || [];
-      const best = pools
-        .sort((a,b) => (b?.attributes?.volume_usd?.h24||0) - (a?.attributes?.volume_usd?.h24||0))[0];
-      if (best?.attributes?.address) ohlcv = await getOhlcv(best.attributes.address);
-    }
-
-    if (!ohlcv?.length) return callMcap || 0;
-
-    // Filtrer les bougies depuis le call (callTime en ms → secondes UTC)
-    const callSec = Math.floor((callTime || 0) / 1000);
-    const relevant = callSec > 0 ? ohlcv.filter(c => c[0] >= callSec) : ohlcv;
-    if (!relevant.length) return callMcap || 0;
-
-    const maxHigh = Math.max(...relevant.map(c => c[2]));
-    // Ancrer sur callMcap + prix de la 1ère bougie après le call (stable, indépendant du prix live)
-    const firstOpen = relevant[0][1] || relevant[0][4]; // open ou close de la 1ère bougie >= callTime
-    if (!maxHigh || !firstOpen) return callMcap || 0;
-
-    // athMcap = (maxHigh / firstOpen) × callMcap — anchored, not skewed by live price drift
-    const athMcap = Math.max(Math.round(maxHigh / firstOpen * (callMcap || 0)), callMcap || 0);
+    // Prend le MAX des deux sources — si l'une rate l'autre compense
+    const athMcap = Math.max(geckoAth, birdeyeAth, callMcap);
     athCandleCache[cacheKey] = { athMcap, ts: now };
     return athMcap;
   } catch(e) {
@@ -8244,18 +8268,18 @@ async function renderTokenTable(tokens){
     // nowMcap = prix live (DexScreener) ou fallback sur mcap du scan
     const liveEntry=livePriceMap[t.addr]||{now:0,athEst:0};
     const nowMcap=liveEntry.now||t.mcap||0;
-    // ATH >= callMcap toujours — athEst retiré (priceChange ignore le callTime)
-    let athMcap=Math.max(callData?.athMcap||0, callMcap, nowMcap);
-    if(athMcap>(callData?.athMcap||0))updateAth(t.addr,athMcap).catch(()=>{});
+    // ATH initial = seulement live + callMcap — Firebase ignoré (peut être corrompu)
+    // fetchRealAth (candles callTime-filtré) + live tracking reconstruisent la vraie valeur
+    let athMcap=Math.max(callMcap, nowMcap);
     t._athMcap=athMcap; // stocké pour refreshLiveMcap
     // Fetch ATH réel via candles GeckoTerminal (fire-and-forget, cache 10min)
     const _pa=t.raw?.pairAddress;
     if(_pa && nowMcap>0){
       fetchRealAth(_pa, callMcap, callTime, nowMcap, t.addr).then(realAth=>{
-        // fetchRealAth est autoritaire : il filtre par callTime → toujours écraser
+        // fetchRealAth est autoritaire : force=true pour écraser les valeurs corrompues Firebase
         if(realAth > 0){
           t._athMcap = realAth;
-          updateAth(t.addr, realAth).catch(()=>{});
+          updateAth(t.addr, realAth, true).catch(()=>{});
           const athEl=document.querySelector(`[data-live-ath="${t.addr}"] .live-ath-val`);
           if(athEl)athEl.textContent=`$${fmtNum(realAth)}`;
           const xAthEl=document.querySelector(`[data-live-xath="${t.addr}"] .live-xath-val`);
