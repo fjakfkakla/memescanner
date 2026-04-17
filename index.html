@@ -6308,22 +6308,46 @@ function switchTab(tab){
 // ══════════════════════════════════════════════════════════
 const athCandleCache = {}; // pairAddress → {athMcap, ts}
 
-async function fetchRealAth(pairAddress, callMcap, callTime, nowMcap) {
-  if (!pairAddress || !nowMcap) return callMcap || 0;
+async function fetchRealAth(pairAddress, callMcap, callTime, nowMcap, tokenAddr) {
+  if (!nowMcap) return callMcap || 0;
+  const cacheKey = tokenAddr || pairAddress;
+  if (!cacheKey) return callMcap || 0;
   const now = Date.now();
-  const cached = athCandleCache[pairAddress];
+  const cached = athCandleCache[cacheKey];
   if (cached && now - cached.ts < 600000) return cached.athMcap;
 
+  // Récupère les candles OHLCV GeckoTerminal pour un pool donné
+  async function getOhlcv(poolAddr) {
+    try {
+      const r = await fetch(
+        `https://api.geckoterminal.com/api/v2/networks/solana/pools/${poolAddr}/ohlcv/minute?aggregate=5&limit=288&currency=usd&token=base`,
+        { signal: AbortSignal.timeout(7000) }
+      ).then(r => r.json());
+      return r?.data?.attributes?.ohlcv_list || null;
+    } catch(e) { return null; }
+  }
+
   try {
-    // GeckoTerminal OHLCV — candles 5min sur 24h, prix en USD pour le token base
-    const r = await fetch(
-      `https://api.geckoterminal.com/api/v2/networks/solana/pools/${pairAddress}/ohlcv/minute?aggregate=5&limit=288&currency=usd&token=base`,
-      { signal: AbortSignal.timeout(8000) }
-    ).then(r => r.json());
-    const ohlcv = r?.data?.attributes?.ohlcv_list; // [[ts, open, high, low, close, vol], ...]
+    let ohlcv = null;
+
+    // 1. Essai direct avec le pairAddress DexScreener
+    if (pairAddress) ohlcv = await getOhlcv(pairAddress);
+
+    // 2. Fallback : chercher le pool via l'adresse du token (Pump.fun migré → Raydium)
+    if (!ohlcv?.length && tokenAddr) {
+      const poolsRes = await fetch(
+        `https://api.geckoterminal.com/api/v2/networks/solana/tokens/${tokenAddr}/pools?page=1`,
+        { signal: AbortSignal.timeout(7000) }
+      ).then(r => r.json()).catch(() => null);
+      const pools = poolsRes?.data || [];
+      const best = pools
+        .sort((a,b) => (b?.attributes?.volume_usd?.h24||0) - (a?.attributes?.volume_usd?.h24||0))[0];
+      if (best?.attributes?.address) ohlcv = await getOhlcv(best.attributes.address);
+    }
+
     if (!ohlcv?.length) return callMcap || 0;
 
-    // Filtrer les bougies depuis le call
+    // Filtrer les bougies depuis le call (callTime en ms → secondes UTC)
     const callSec = Math.floor((callTime || 0) / 1000);
     const relevant = callSec > 0 ? ohlcv.filter(c => c[0] >= callSec) : ohlcv;
     if (!relevant.length) return callMcap || 0;
@@ -6332,10 +6356,9 @@ async function fetchRealAth(pairAddress, callMcap, callTime, nowMcap) {
     const lastClose = ohlcv[ohlcv.length - 1][4];
     if (!maxHigh || !lastClose) return callMcap || 0;
 
-    // athMcap = maxHigh / lastClose * nowMcap
-    // (ratio prix → mcap, supply supposée constante)
+    // athMcap = maxHigh / lastClose × nowMcap (ratio prix → mcap, supply constante)
     const athMcap = Math.max(Math.round(maxHigh / lastClose * nowMcap), callMcap || 0);
-    athCandleCache[pairAddress] = { athMcap, ts: now };
+    athCandleCache[cacheKey] = { athMcap, ts: now };
     return athMcap;
   } catch(e) {
     return callMcap || 0;
@@ -7365,7 +7388,7 @@ async function renderTokenTable(tokens){
     // Fetch ATH réel via candles GeckoTerminal (fire-and-forget, cache 10min)
     const _pa=t.raw?.pairAddress;
     if(_pa && nowMcap>0){
-      fetchRealAth(_pa, callMcap, callTime, nowMcap).then(realAth=>{
+      fetchRealAth(_pa, callMcap, callTime, nowMcap, t.addr).then(realAth=>{
         if(realAth>(t._athMcap||0)){
           t._athMcap=realAth;
           updateAth(t.addr,realAth).catch(()=>{});
