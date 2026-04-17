@@ -4248,12 +4248,12 @@ function swCacheSave(addr, entry) {
 const swCache = swCacheLoad();
 const scoreHistory = {}; // addr → {maxAxiom, maxSocial, maxHolder}
 
-// Migration one-shot : reset athMcap corrompu par ancien calcul priceChange
+// Migration v1 (legacy)
 (function migrateAth(){
   if(localStorage.getItem('ath_migration_v1')) return;
   try{
     const all=JSON.parse(localStorage.getItem('ms_calls_v1')||'{}');
-    const cutoff=Date.now()-3*3600000; // dernières 3h seulement
+    const cutoff=Date.now()-3*3600000;
     let changed=false;
     Object.values(all).forEach(c=>{
       if(c&&c.callTime>=cutoff&&c.athMcap&&c.callMcap&&c.athMcap>c.callMcap){
@@ -4263,6 +4263,25 @@ const scoreHistory = {}; // addr → {maxAxiom, maxSocial, maxHolder}
     if(changed) localStorage.setItem('ms_calls_v1',JSON.stringify(all));
   }catch(e){}
   localStorage.setItem('ath_migration_v1','1');
+})();
+
+// Migration v2 : reset TOUS les athMcap corrompus par athEst (priceChange)
+// Un athMcap corrompu = valeur gonflée par priceChange.h24 sans tenir compte du callTime
+(function migrateAthV2(){
+  if(localStorage.getItem('ath_migration_v2')) return;
+  try{
+    const all=JSON.parse(localStorage.getItem('ms_calls_v1')||'{}');
+    let changed=false;
+    Object.values(all).forEach(c=>{
+      // Reset tout athMcap stocké : sera recalculé proprement par fetchRealAth + live tracking
+      if(c && c.callMcap){
+        c.athMcap = c.callMcap;
+        changed = true;
+      }
+    });
+    if(changed) localStorage.setItem('ms_calls_v1',JSON.stringify(all));
+  }catch(e){}
+  localStorage.setItem('ath_migration_v2','1');
 })();
 
 // Helper : fetch avec retry automatique sur 429
@@ -8233,9 +8252,10 @@ async function renderTokenTable(tokens){
     const _pa=t.raw?.pairAddress;
     if(_pa && nowMcap>0){
       fetchRealAth(_pa, callMcap, callTime, nowMcap, t.addr).then(realAth=>{
-        if(realAth>(t._athMcap||0)){
-          t._athMcap=realAth;
-          updateAth(t.addr,realAth).catch(()=>{});
+        // fetchRealAth est autoritaire : il filtre par callTime → toujours écraser
+        if(realAth > 0){
+          t._athMcap = realAth;
+          updateAth(t.addr, realAth).catch(()=>{});
           const athEl=document.querySelector(`[data-live-ath="${t.addr}"] .live-ath-val`);
           if(athEl)athEl.textContent=`$${fmtNum(realAth)}`;
           const xAthEl=document.querySelector(`[data-live-xath="${t.addr}"] .live-xath-val`);
