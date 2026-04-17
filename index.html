@@ -2654,9 +2654,17 @@ nav.scrolled { box-shadow: 0 1px 40px rgba(0,0,0,0.6) !important; }
   </div>
 </div>
 
-<!-- ── PAPER BOT ── -->
+<!-- ── PAPER BOT / REAL BOT ── -->
 <div id="panelPaperBot" style="display:none">
   <div class="pt-wrap">
+    <!-- Sub-tabs Paper / Réel -->
+    <div style="display:flex;gap:6px;margin-bottom:16px;">
+      <button id="botSubTabPaper" onclick="botSwitchSub('paper')" style="flex:1;padding:8px 0;border-radius:8px;border:1px solid var(--primary-border);background:var(--primary);color:#fff;font-size:12px;font-weight:700;cursor:pointer;transition:.15s">Paper (simulation)</button>
+      <button id="botSubTabReal" onclick="botSwitchSub('real')" style="flex:1;padding:8px 0;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:12px;font-weight:700;cursor:pointer;transition:.15s">Réel (vrais trades)</button>
+    </div>
+
+    <!-- PANEL PAPER -->
+    <div id="botPanelPaper">
 
     <!-- SAAS HERO HEADER (inspiré bot((paper.txt) -->
     <div class="pt-saas-header">
@@ -2833,8 +2841,106 @@ nav.scrolled { box-shadow: 0 1px 40px rgba(0,0,0,0.6) !important; }
       <div id="ptClosedTable"><div class="pt-empty">Aucun trade fermé pour l'instant</div></div>
     </div>
 
-  </div>
-</div>
+    </div><!-- /botPanelPaper -->
+
+    <!-- PANEL RÉEL -->
+    <div id="botPanelReal" style="display:none">
+
+      <!-- Header Real Bot -->
+      <div class="pt-saas-header" style="background:linear-gradient(135deg,#1a0a0a 0%,#2d1010 50%,#1a0a14 100%);">
+        <div class="pt-announce-badge" style="background:rgba(239,68,68,.12);border-color:rgba(239,68,68,.25);color:#f87171;">
+          <span class="pt-announce-dot" style="background:#ef4444;box-shadow:0 0 6px #ef4444;"></span>
+          Argent réel · Jupiter DEX · Solana mainnet
+        </div>
+        <div class="pt-saas-title-row">
+          <div>
+            <div class="pt-hero-title">Real Trading Bot</div>
+            <div class="pt-hero-sub">Swaps automatiques via Jupiter · Clé privée locale · 100% non-custodial</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span id="rtStatusText" style="font-size:10px;color:rgba(255,255,255,.3);font-family:'Space Mono',monospace;">OFF</span>
+            <div class="pt-toggle" id="rtToggle" onclick="rtToggleBot()" style="border-color:rgba(239,68,68,.4);">
+              <div class="pt-toggle-knob"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Warning -->
+      <div style="background:rgba(239,68,68,.07);border:1px solid rgba(239,68,68,.2);border-radius:8px;padding:10px 14px;font-size:11px;color:#f87171;margin-bottom:14px;line-height:1.5;">
+        <b>Attention :</b> Ce bot exécute de vrais trades avec votre SOL. La clé privée est stockée uniquement dans votre navigateur (localStorage). Ne jamais utiliser un wallet avec plus de fonds que vous n'êtes prêt à perdre.
+      </div>
+
+      <!-- Stats -->
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px;">
+        <div style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;">
+          <div style="font-size:10px;color:var(--muted);margin-bottom:3px;">P&L Total</div>
+          <div style="font-size:16px;font-weight:700;" id="rtPnl">0 SOL</div>
+        </div>
+        <div style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;">
+          <div style="font-size:10px;color:var(--muted);margin-bottom:3px;">Winrate</div>
+          <div style="font-size:16px;font-weight:700;" id="rtWinrate">—</div>
+        </div>
+        <div style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;">
+          <div style="font-size:10px;color:var(--muted);margin-bottom:3px;">Positions</div>
+          <div style="font-size:16px;font-weight:700;" id="rtOpenCount">0</div>
+        </div>
+      </div>
+
+      <!-- Positions + history -->
+      <div id="rtPositions"></div>
+
+      <!-- Config -->
+      <details class="pt-config-details" style="margin-top:14px;">
+        <summary class="pt-config-summary" style="display:flex;align-items:center;gap:.5rem;">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
+          Configuration Real Bot
+        </summary>
+        <div style="background:rgba(239,68,68,.04);border:1px solid rgba(239,68,68,.12);border-radius:8px;padding:12px;margin-top:8px;">
+          <div class="pt-config-grid">
+            <div class="pt-config-item" style="grid-column:1/-1;">
+              <label>Clé privée (JSON array — export Phantom/Solflare)</label>
+              <input type="password" id="rtCfgKey" placeholder='[1,2,3,...,64] ou laisser vide pour conserver' class="pt-inp" style="font-family:'Space Mono',monospace;font-size:10px;">
+              <div id="rtWalletInfo" style="font-size:10px;color:#00ff88;margin-top:4px;font-family:'Space Mono',monospace;"></div>
+            </div>
+            <div class="pt-config-item" style="grid-column:1/-1;">
+              <label>RPC Solana (Helius recommandé)</label>
+              <input type="text" id="rtCfgRpc" placeholder="https://mainnet.helius-rpc.com/?api-key=VOTRE_CLE" class="pt-inp" style="font-size:11px;">
+            </div>
+            <div class="pt-config-item">
+              <label>Taille position (SOL)</label>
+              <input type="number" id="rtCfgSize" value="0.05" min="0.01" step="0.01" class="pt-inp">
+            </div>
+            <div class="pt-config-item">
+              <label>Slippage (%)</label>
+              <input type="number" id="rtCfgSlip" value="1.5" min="0.5" max="10" step="0.1" class="pt-inp">
+            </div>
+            <div class="pt-config-item">
+              <label>SL (%)</label>
+              <input type="number" id="rtCfgSl" value="20" min="5" max="50" class="pt-inp">
+            </div>
+            <div class="pt-config-item">
+              <label>Score min</label>
+              <input type="number" id="rtCfgScore" value="0" min="0" max="140" class="pt-inp">
+            </div>
+            <div class="pt-config-item"><label>TP1 (×)</label><input type="number" id="rtCfgTp1" value="1.3" min="1.05" step="0.05" class="pt-inp"></div>
+            <div class="pt-config-item"><label>TP2 (×)</label><input type="number" id="rtCfgTp2" value="1.5" step="0.1" class="pt-inp"></div>
+            <div class="pt-config-item"><label>TP3 (×)</label><input type="number" id="rtCfgTp3" value="2.0" step="0.1" class="pt-inp"></div>
+            <div class="pt-config-item"><label>TP4 (×)</label><input type="number" id="rtCfgTp4" value="3.0" step="0.5" class="pt-inp"></div>
+            <div class="pt-config-item"><label>TP5 (×)</label><input type="number" id="rtCfgTp5" value="5.0" step="1" class="pt-inp"></div>
+            <div class="pt-config-item"><label>TP6 (×)</label><input type="number" id="rtCfgTp6" value="10.0" step="1" class="pt-inp"></div>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:10px;">
+            <button class="pt-btn" onclick="rtSaveConfig()">Sauvegarder</button>
+            <button class="pt-btn secondary" onclick="rtResetAll()" style="color:#f87171;border-color:rgba(239,68,68,.25);">Reset tout</button>
+          </div>
+        </div>
+      </details>
+
+    </div><!-- /botPanelReal -->
+
+  </div><!-- /pt-wrap -->
+</div><!-- /panelPaperBot -->
 
 <!-- PT DETAIL MODAL -->
 <div class="pt-detail-overlay" id="ptDetailOverlay" onclick="if(event.target===this)ptCloseDetail()">
@@ -4855,9 +4961,11 @@ async function submitCode(){
 function onUnlock(plan){
   loadReviews();fetchTokens();
   fetchRugs().then(()=>{if(rugPriceTimer)clearTimeout(rugPriceTimer);rugPriceTimer=setTimeout(refreshRugPrices,3000);});
-  // Vérifier les positions paper bot toutes les 7s (indépendant du cycle scanner)
+  // Vérifier les positions paper bot toutes les 3s (indépendant du cycle scanner)
   // → attrape les pumps rapides entre deux cycles de 15s
-  setInterval(()=>{ if(ptTrades().some(t=>t.status==='open')) ptCheckPositions(); }, 7000);
+  setInterval(()=>{ if(ptTrades().some(t=>t.status==='open')) ptCheckPositions(); }, 3000);
+  // Vérifier les positions real bot toutes les 7s (moins fréquent car appels RPC réels)
+  setInterval(()=>{ if(typeof rtCheckPositions==='function' && rtTrades().some(t=>t.status==='open')) rtCheckPositions(); }, 7000);
 }
 function formatCode(input){let v=input.value.replace(/[^A-Za-z0-9]/g,'').toUpperCase();let out='';for(let i=0;i<v.length&&i<12;i++){if(i>0&&i%4===0)out+='-';out+=v[i];}input.value=out;}
 
@@ -5529,7 +5637,9 @@ async function ptOpenTrade(token){
   if(trades.some(t => t.addr === token.addr && t.status === 'open')) return;
 
   // Utiliser le callMcap du serveur (déjà frais au moment du call backend)
-  const entryMcap = token._callMcap || token.mcap || 0;
+  // Slippage achat simulé : +1% (représente impact de prix + frais DEX réels)
+  const rawEntryMcap = token._callMcap || token.mcap || 0;
+  const entryMcap = rawEntryMcap * 1.01;
 
   const trade = {
     id:             'pt_' + Date.now(),
@@ -5551,6 +5661,7 @@ async function ptOpenTrade(token){
     exitTime:       null,
     exitReason:     null,
     pairUrl:        token.pairUrl || '',
+    pairAddr:       token.raw?.pairAddress || '',  // pour lookups GeckoTerminal directs
   };
   trades.unshift(trade);
   ptSaveTrades(trades);
@@ -5566,7 +5677,7 @@ async function ptCheckPositions(){
   if(!open.length) return;
 
   // Fetch mcap actuel
-  const addrs = [...new Set(open.map(t=>t.addr))].slice(0,20);
+  const addrs = [...new Set(open.map(t=>t.addr))].slice(0,30);
   let priceMap = {};
   // 1. Utiliser lastScored en priorité (déjà frais, 0 appel API)
   if(typeof lastScored !== 'undefined'){
@@ -5581,6 +5692,17 @@ async function ptCheckPositions(){
       (res.pairs||[]).forEach(p=>{ const a=p.baseToken?.address; if(!a)return; if(!best[a]||(p.volume?.h24||0)>(best[a].volume?.h24||0))best[a]=p; });
       Object.entries(best).forEach(([a,p])=>{ priceMap[a]=p.marketCap||p.fdv||0; });
     }catch(e){}
+  }
+  // 3. GeckoTerminal via pairAddr stocké — plus précis que fdv pour les jeunes tokens
+  const stillMissing = open.filter(t=>!priceMap[t.addr] && t.pairAddr);
+  if(stillMissing.length){
+    await Promise.allSettled(stillMissing.map(async t=>{
+      try{
+        const r = await fetch(`https://api.geckoterminal.com/api/v2/networks/solana/pools/${t.pairAddr}`,{signal:AbortSignal.timeout(5000)}).then(r=>r.json());
+        const mc = parseFloat(r?.data?.attributes?.market_cap_usd || r?.data?.attributes?.fdv_usd || 0);
+        if(mc>0) priceMap[t.addr]=mc;
+      }catch(e){}
+    }));
   }
 
   let changed = false;
@@ -5614,7 +5736,9 @@ async function ptCheckPositions(){
     const doSell = (reason, fracOfRemain) => {
       const realFrac = t.remainFraction * fracOfRemain;
       if(realFrac < 0.001) return;
-      const pnlUsd = t.posSize * realFrac * (xNow - 1);
+      // Slippage vente simulé : -1.5% (impact de prix + frais swap réels)
+      const xEffective = xNow * 0.985;
+      const pnlUsd = t.posSize * realFrac * (xEffective - 1);
       t.sells.push({ reason, xAt:xNow, fraction:realFrac, pnlUsd, time:now });
       t.remainFraction = Math.max(0, t.remainFraction - realFrac);
       t.totalPnlUsd = (t.totalPnlUsd||0) + pnlUsd;
@@ -6024,6 +6148,406 @@ function ptRender(){
   }
 
   ptUpdateSparklines();
+}
+
+// ─────────────────────────────────────────────────────────────
+// SUB-TABS : Paper / Réel
+// ─────────────────────────────────────────────────────────────
+function botSwitchSub(sub){
+  const isPaper = sub === 'paper';
+  document.getElementById('botPanelPaper').style.display = isPaper ? '' : 'none';
+  document.getElementById('botPanelReal').style.display  = isPaper ? 'none' : '';
+  const btnP = document.getElementById('botSubTabPaper');
+  const btnR = document.getElementById('botSubTabReal');
+  if(btnP){ btnP.style.background = isPaper ? 'var(--primary)' : 'transparent'; btnP.style.color = isPaper ? '#fff' : 'var(--muted)'; btnP.style.borderColor = isPaper ? 'var(--primary-border)' : 'var(--border)'; }
+  if(btnR){ btnR.style.background = isPaper ? 'transparent' : '#dc2626'; btnR.style.color = isPaper ? 'var(--muted)' : '#fff'; btnR.style.borderColor = isPaper ? 'var(--border)' : 'rgba(239,68,68,.4)'; }
+  if(!isPaper) rtRender();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// 🔴 REAL TRADING BOT — Jupiter DEX · Solana mainnet
+// ═══════════════════════════════════════════════════════════════
+const RT_LS     = 'realTrades_v1';
+const RT_CFG_LS = 'realConfig_v1';
+const SOL_MINT  = 'So11111111111111111111111111111111111111112';
+const LAMPORTS_PER_SOL = 1_000_000_000;
+
+const RT_CFG_DEFAULT = {
+  enabled:false, rpc:'https://api.mainnet-beta.solana.com',
+  posSize:0.05, slipBps:150, minScore:0, sl:20,
+  tp1:1.3, tp2:1.5, tp3:2.0, tp4:3.0, tp5:5.0, tp6:10.0
+};
+
+function rtConfig(){ try{ return {...RT_CFG_DEFAULT,...JSON.parse(localStorage.getItem(RT_CFG_LS)||'{}')}; }catch(e){ return {...RT_CFG_DEFAULT}; } }
+function rtTrades(){ try{ return JSON.parse(localStorage.getItem(RT_LS)||'[]'); }catch(e){ return []; } }
+function rtSaveTrades(arr){ try{ localStorage.setItem(RT_LS, JSON.stringify(arr)); }catch(e){} }
+function rtGetPrivKey(){ return localStorage.getItem('rt_privkey')||''; }
+function rtSavePrivKey(k){ if(k) localStorage.setItem('rt_privkey',k); else localStorage.removeItem('rt_privkey'); }
+
+function rtGetKeypair(){
+  const raw = rtGetPrivKey();
+  if(!raw || !window.solanaWeb3) return null;
+  try{
+    const parsed = JSON.parse(raw);
+    const arr = Array.isArray(parsed) ? parsed : Object.values(parsed);
+    if(arr.length !== 64) return null;
+    return window.solanaWeb3.Keypair.fromSecretKey(Uint8Array.from(arr));
+  }catch(e){ return null; }
+}
+
+// SOL price cache (pour affichage USD)
+let _rtSolPrice = {p:150, ts:0};
+async function rtGetSolPrice(){
+  if(Date.now()-_rtSolPrice.ts < 60000 && _rtSolPrice.p>0) return _rtSolPrice.p;
+  try{
+    const d = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd',{signal:AbortSignal.timeout(5000)}).then(r=>r.json());
+    _rtSolPrice = {p: d.solana?.usd||150, ts:Date.now()};
+    return _rtSolPrice.p;
+  }catch(e){ return _rtSolPrice.p||150; }
+}
+
+// Désérialise une transaction Jupiter (versioned ou legacy)
+function _rtDeserializeTx(base64){
+  const bytes = Uint8Array.from(atob(base64).split('').map(c=>c.charCodeAt(0)));
+  try{ return window.solanaWeb3.VersionedTransaction.deserialize(bytes); }
+  catch(e){ return window.solanaWeb3.Transaction.from(bytes); }
+}
+function _rtSignTx(tx, keypair){
+  if(tx.sign) tx.sign([keypair]);       // VersionedTransaction
+  else        tx.sign(keypair);         // Legacy Transaction
+  return tx;
+}
+
+// ── Achat via Jupiter ──
+async function rtBuyToken(token){
+  const cfg = rtConfig();
+  if(!cfg.enabled) return;
+  if((token.score||0) < cfg.minScore) return;
+  const trades = rtTrades();
+  if(trades.some(t=>t.addr===token.addr && t.status==='open')) return;
+
+  const keypair = rtGetKeypair();
+  if(!keypair){ showToast('Real Bot: clé privée manquante ou invalide',''); return; }
+  if(!window.solanaWeb3){ showToast('Real Bot: solana/web3.js non chargé',''); return; }
+
+  const lamports = Math.floor(cfg.posSize * LAMPORTS_PER_SOL);
+  const sym = (token.symbol||'?').toUpperCase();
+
+  try{
+    showToast(`Real Bot: achat ${sym} en cours…`,'call');
+
+    // 1. Quote Jupiter
+    const quote = await fetch(
+      `https://quote-api.jup.ag/v6/quote?inputMint=${SOL_MINT}&outputMint=${token.addr}&amount=${lamports}&slippageBps=${cfg.slipBps}&onlyDirectRoutes=false`,
+      {signal:AbortSignal.timeout(10000)}
+    ).then(r=>r.json());
+    if(!quote.outAmount) throw new Error('Pas de route Jupiter pour '+sym);
+
+    // 2. Swap transaction
+    const swapData = await fetch('https://quote-api.jup.ag/v6/swap',{
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        quoteResponse: quote,
+        userPublicKey: keypair.publicKey.toBase58(),
+        wrapAndUnwrapSol: true,
+        dynamicComputeUnitLimit: true,
+        prioritizationFeeLamports: 'auto'
+      }),
+      signal:AbortSignal.timeout(10000)
+    }).then(r=>r.json());
+    if(!swapData.swapTransaction) throw new Error('Swap tx manquant');
+
+    // 3. Signer + envoyer
+    const connection = new window.solanaWeb3.Connection(cfg.rpc,'confirmed');
+    const tx = _rtSignTx(_rtDeserializeTx(swapData.swapTransaction), keypair);
+    const sig = await connection.sendRawTransaction(tx.serialize(),{skipPreflight:false,maxRetries:3});
+    await connection.confirmTransaction(sig,'confirmed');
+
+    // 4. Enregistrer le trade
+    const trade = {
+      id:'rt_'+Date.now(), addr:token.addr, symbol:sym,
+      score:token.score||0,
+      entryMcap: token._callMcap || token.mcap || 0,
+      entryTime:Date.now(), posSize:cfg.posSize,
+      status:'open', athX:1.0, remainFraction:1.0,
+      sells:[], totalPnlSol:0,
+      tokensBought: parseInt(quote.outAmount),
+      tokenDecimals: quote.outputDecimals || 6,
+      pairAddr: token.raw?.pairAddress || '',
+      pairUrl: token.pairUrl || '',
+      buySig: sig,
+    };
+    trades.unshift(trade);
+    rtSaveTrades(trades);
+    showToast(`✅ Real Bot: ACHAT ${sym} · ${sig.slice(0,8)}…`,'call');
+    rtRender();
+
+  }catch(err){
+    showToast(`Real Bot ERREUR achat ${sym}: ${err.message}`,'');
+    console.error('[RealBot buy]',err);
+  }
+}
+
+// ── Vente partielle via Jupiter ──
+async function rtSellFraction(trade, fracOfRemain, reason, curMcap){
+  const cfg = rtConfig();
+  const keypair = rtGetKeypair();
+  if(!keypair || !window.solanaWeb3) return;
+
+  const trades = rtTrades();
+  const t = trades.find(x=>x.id===trade.id);
+  if(!t || t.status!=='open') return;
+
+  const realFrac = t.remainFraction * fracOfRemain;
+  if(realFrac < 0.001) return;
+
+  const connection = new window.solanaWeb3.Connection(cfg.rpc,'confirmed');
+
+  try{
+    // Solde réel du token on-chain (plus précis que l'estimation)
+    let tokenAmount = Math.floor((t.tokensBought||0) * realFrac);
+    try{
+      const accs = await connection.getTokenAccountsByOwner(
+        keypair.publicKey,
+        {mint: new window.solanaWeb3.PublicKey(t.addr)}
+      );
+      if(accs.value.length>0){
+        const bal = await connection.getTokenAccountBalance(accs.value[0].pubkey);
+        tokenAmount = Math.floor(parseInt(bal.value.amount) * fracOfRemain);
+      }
+    }catch(e){}
+
+    if(tokenAmount < 1){ showToast(`Real Bot: solde insuffisant pour vente ${t.symbol}`,''); return; }
+
+    // Quote token → SOL
+    const quote = await fetch(
+      `https://quote-api.jup.ag/v6/quote?inputMint=${t.addr}&outputMint=${SOL_MINT}&amount=${tokenAmount}&slippageBps=${cfg.slipBps}`,
+      {signal:AbortSignal.timeout(10000)}
+    ).then(r=>r.json());
+    if(!quote.outAmount) throw new Error('Pas de route vente');
+
+    const outSol = parseInt(quote.outAmount) / LAMPORTS_PER_SOL;
+
+    const swapData = await fetch('https://quote-api.jup.ag/v6/swap',{
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        quoteResponse: quote,
+        userPublicKey: keypair.publicKey.toBase58(),
+        wrapAndUnwrapSol: true,
+        dynamicComputeUnitLimit: true,
+        prioritizationFeeLamports: 'auto'
+      }),
+      signal:AbortSignal.timeout(10000)
+    }).then(r=>r.json());
+    if(!swapData.swapTransaction) throw new Error('Swap tx vente manquant');
+
+    const tx = _rtSignTx(_rtDeserializeTx(swapData.swapTransaction), keypair);
+    const sig = await connection.sendRawTransaction(tx.serialize(),{skipPreflight:false,maxRetries:3});
+    await connection.confirmTransaction(sig,'confirmed');
+
+    // Calcul PnL réel
+    const investedSol = t.posSize * realFrac;
+    const pnlSol = outSol - investedSol;
+    const xNow = curMcap && t.entryMcap ? curMcap/t.entryMcap : 1;
+
+    t.sells.push({reason, xAt:xNow, fraction:realFrac, pnlSol, sig, time:Date.now()});
+    t.remainFraction = Math.max(0, t.remainFraction - realFrac);
+    t.totalPnlSol = (t.totalPnlSol||0) + pnlSol;
+    t.currentX = xNow;
+    if(xNow > (t.athX||1)) t.athX = xNow;
+
+    if(t.remainFraction <= 0.001){
+      t.status='closed'; t.exitReason=reason; t.exitMcap=curMcap; t.exitTime=Date.now();
+    }
+    rtSaveTrades(trades);
+
+    const solP = await rtGetSolPrice();
+    const pnlUsd = pnlSol * solP;
+    const sign = pnlUsd>=0?'+':'';
+    showToast(`✅ Real ${t.symbol} ${reason} @${xNow.toFixed(2)}x — ${sign}$${pnlUsd.toFixed(1)}`,'call');
+    rtRender();
+
+  }catch(err){
+    showToast(`Real Bot ERREUR vente ${trade.symbol}: ${err.message}`,'');
+    console.error('[RealBot sell]',err);
+  }
+}
+
+// ── Vérifier les positions (cycle 7s) ──
+async function rtCheckPositions(){
+  const cfg = rtConfig();
+  if(!cfg.enabled) return;
+  const trades = rtTrades();
+  const open = trades.filter(t=>t.status==='open');
+  if(!open.length) return;
+
+  // Fetch prix courant (même logique que paper bot)
+  const addrs = [...new Set(open.map(t=>t.addr))].slice(0,20);
+  let priceMap = {};
+  if(typeof lastScored!=='undefined') lastScored.forEach(ls=>{ if(ls.mcap>0) priceMap[ls.addr]=ls.mcap; });
+  const missing = addrs.filter(a=>!priceMap[a]);
+  if(missing.length){
+    try{
+      const res = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${missing.join(',')}`,{signal:AbortSignal.timeout(6000)}).then(r=>r.json());
+      const best={};
+      (res.pairs||[]).forEach(p=>{ const a=p.baseToken?.address; if(!a)return; if(!best[a]||(p.volume?.h24||0)>(best[a].volume?.h24||0))best[a]=p; });
+      Object.entries(best).forEach(([a,p])=>{ priceMap[a]=p.marketCap||p.fdv||0; });
+    }catch(e){}
+  }
+
+  const TP_LEVELS=[
+    {n:1,mult:'tp1',frac:0.30},{n:2,mult:'tp2',frac:0.30},{n:3,mult:'tp3',frac:0.20},
+    {n:4,mult:'tp4',frac:0.60},{n:5,mult:'tp5',frac:0.25},{n:6,mult:'tp6',frac:1.00},
+  ];
+
+  for(const t of open){
+    const curMcap = priceMap[t.addr]||0;
+    if(!curMcap||!t.entryMcap) continue;
+    const xNow = curMcap/t.entryMcap;
+    t.currentX = xNow;
+    if(xNow>(t.athX||1)) t.athX=xNow;
+
+    if(xNow <= (1-cfg.sl/100)){
+      await rtSellFraction(t,1.0,'SL',curMcap); continue;
+    }
+    for(const tp of TP_LEVELS){
+      if(!t.sells.some(s=>s.reason===`TP${tp.n}`) && xNow>=cfg[tp.mult] && t.remainFraction>0.001){
+        await rtSellFraction(t,tp.frac,`TP${tp.n}`,curMcap);
+      }
+    }
+  }
+}
+
+// ── Render UI Real Bot ──
+async function rtRender(){
+  const container = document.getElementById('rtPositions');
+  if(!container) return;
+
+  const cfg = rtConfig();
+  const trades = rtTrades();
+  const keypair = rtGetKeypair();
+  const pubkey = keypair ? keypair.publicKey.toBase58() : null;
+  const open = trades.filter(t=>t.status==='open');
+  const closed = trades.filter(t=>t.status==='closed');
+  const totalPnlSol = trades.reduce((s,t)=>s+(t.totalPnlSol||0),0);
+  const wins = closed.filter(t=>(t.totalPnlSol||0)>0).length;
+  const wr = closed.length ? Math.round(wins/closed.length*100) : 0;
+  const solP = await rtGetSolPrice();
+
+  // Stats
+  const pnlEl = document.getElementById('rtPnl');
+  const wrEl  = document.getElementById('rtWinrate');
+  const ocEl  = document.getElementById('rtOpenCount');
+  if(pnlEl){ pnlEl.textContent=(totalPnlSol>=0?'+':'')+totalPnlSol.toFixed(4)+' SOL'; pnlEl.style.color=totalPnlSol>=0?'#00ff88':'#f87171'; }
+  if(wrEl)  wrEl.textContent = `${wr}% (${wins}/${closed.length})`;
+  if(ocEl)  ocEl.textContent = open.length;
+
+  // Wallet info
+  const wInfo = document.getElementById('rtWalletInfo');
+  if(wInfo) wInfo.textContent = pubkey ? `Wallet: ${pubkey.slice(0,8)}...${pubkey.slice(-8)}` : 'Aucune clé configurée';
+
+  // Positions
+  let html = '';
+  if(open.length){
+    html += `<div style="font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.08em;margin-bottom:8px;">POSITIONS OUVERTES (${open.length})</div>`;
+    html += open.map(t=>{
+      const x = t.currentX||1;
+      const pnlSol = t.posSize*(x-1)*t.remainFraction;
+      const pnlUsd = pnlSol*solP;
+      return `<div style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:6px;display:flex;align-items:center;justify-content:space-between;">
+        <div>
+          <div style="font-weight:700;font-size:13px;">$${t.symbol} <span style="font-size:10px;color:var(--muted);">${t.score}pts</span></div>
+          <div style="font-size:10px;color:var(--muted);">${t.posSize} SOL · reste ${Math.round(t.remainFraction*100)}% · ATH ${(t.athX||1).toFixed(2)}x</div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:15px;font-weight:700;color:${x>=1?'#00ff88':'#f87171'}">${x.toFixed(2)}x</div>
+          <div style="font-size:10px;color:${pnlUsd>=0?'#00ff88':'#f87171'}">${pnlUsd>=0?'+':''}$${pnlUsd.toFixed(1)}</div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  if(closed.length){
+    html += `<div style="font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.08em;margin:14px 0 8px;">HISTORIQUE (${closed.length})</div>`;
+    html += closed.slice(0,30).map(t=>{
+      const pnl=t.totalPnlSol||0;
+      const pnlUsd=pnl*solP;
+      const exitX = t.sells[t.sells.length-1]?.xAt||1;
+      return `<div style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:8px 12px;margin-bottom:4px;display:flex;align-items:center;justify-content:space-between;">
+        <div>
+          <span style="font-weight:700;font-size:12px;">$${t.symbol}</span>
+          <span style="font-size:10px;color:var(--muted);margin-left:8px;">${t.exitReason||'?'} @${exitX.toFixed(2)}x</span>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:12px;font-weight:700;color:${pnl>=0?'#00ff88':'#f87171'}">${pnl>=0?'+':''}${pnl.toFixed(4)} SOL</div>
+          <div style="font-size:10px;color:var(--muted)">${pnlUsd>=0?'+':''}$${pnlUsd.toFixed(1)}</div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  if(!open.length && !closed.length){
+    html = `<div class="pt-empty" style="margin-top:20px;">Bot désactivé ou aucun trade — activez le bot et attendez un call</div>`;
+  }
+
+  container.innerHTML = html;
+  const tog=document.getElementById('rtToggle'), st=document.getElementById('rtStatusText');
+  if(tog) tog.classList.toggle('on',cfg.enabled);
+  if(st)  st.textContent = cfg.enabled ? '✅ Actif' : 'Désactivé';
+}
+
+// ── Toggle ──
+function rtToggleBot(){
+  const cfg = rtConfig();
+  if(!cfg.enabled && !rtGetPrivKey()){
+    showToast('Real Bot: configurez votre clé privée en premier',''); return;
+  }
+  if(!window.solanaWeb3){
+    showToast('Real Bot: solana/web3.js en cours de chargement…',''); return;
+  }
+  cfg.enabled = !cfg.enabled;
+  localStorage.setItem(RT_CFG_LS, JSON.stringify(cfg));
+  showToast(cfg.enabled ? '🔴 Real Bot ON — trades réels activés' : '⏸ Real Bot OFF','call');
+  rtRender();
+}
+
+// ── Sauvegarder config ──
+function rtSaveConfig(){
+  const g = id=>document.getElementById(id)?.value||'';
+  const f = id=>parseFloat(g(id))||0;
+  const privKey = g('rtCfgKey').trim();
+  if(privKey){
+    // Valider le format JSON avant de sauvegarder
+    try{
+      const arr = JSON.parse(privKey);
+      if(!Array.isArray(arr)||arr.length!==64) throw new Error('Doit être un tableau de 64 nombres');
+      rtSavePrivKey(privKey);
+    }catch(e){ showToast('Clé invalide: '+e.message,''); return; }
+  }
+  const cfg = {
+    enabled: rtConfig().enabled,
+    rpc: g('rtCfgRpc')||'https://api.mainnet-beta.solana.com',
+    posSize: f('rtCfgSize')||0.05,
+    slipBps: Math.round((f('rtCfgSlip')||1.5)*100),
+    sl: f('rtCfgSl')||20,
+    minScore: f('rtCfgScore')||0,
+    tp1:f('rtCfgTp1')||1.3, tp2:f('rtCfgTp2')||1.5,
+    tp3:f('rtCfgTp3')||2.0, tp4:f('rtCfgTp4')||3.0,
+    tp5:f('rtCfgTp5')||5.0, tp6:f('rtCfgTp6')||10.0,
+  };
+  localStorage.setItem(RT_CFG_LS, JSON.stringify(cfg));
+  showToast('💾 Config Real Bot sauvegardée','call');
+  rtRender();
+}
+
+// ── Reset ──
+function rtResetAll(){
+  if(!confirm('Supprimer TOUS les trades réels et la configuration ?')) return;
+  localStorage.removeItem(RT_LS);
+  localStorage.removeItem(RT_CFG_LS);
+  localStorage.removeItem('rt_privkey');
+  showToast('Real Bot réinitialisé','');
+  rtRender();
 }
 
 // ============================================================
@@ -6907,6 +7431,7 @@ function onNewCall(token) {
   playSound('newcall');
   showToast(`🚀 NEW CALL: $${token.symbol} — Score ${token.score} — $${fmtNum(token.mcap)}`, 'call');
   ptOpenTrade(token);
+  if(typeof rtBuyToken === 'function') rtBuyToken(token);
   sendCallNotification(token);
   gemOnCall(token);
 }
@@ -9892,6 +10417,9 @@ window.addEventListener('DOMContentLoaded',()=>{
   }
 })();
 </script>
+
+<!-- Solana web3.js — chargé en différé, utilisé uniquement par le Real Bot -->
+<script src="https://cdn.jsdelivr.net/npm/@solana/web3.js@1.98.0/lib/index.iife.min.js" defer></script>
 
 </body>
 </html>
