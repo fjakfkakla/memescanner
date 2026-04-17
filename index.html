@@ -2181,6 +2181,11 @@ nav.scrolled { box-shadow: 0 1px 40px rgba(0,0,0,0.6) !important; }
       <div class="logo-tagline">Analyse. Comprends. Décide.</div>
     </div>
   </a>
+  <div class="nav-links">
+    <a href="#features">Features</a>
+    <a href="#pricing-preview">Pricing</a>
+    <a href="#">Discord</a>
+  </div>
   <button class="lang-switch" onclick="toggleLang()">🇫🇷 FR</button>
   <button class="nav-btn btn-outline" onclick="openAdmin()" id="adminBtn">⚙ Admin</button>
   <button id="notifBtn" onclick="handleNotifBtn()" title="Activer les alertes calls" style="background:transparent;border:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.35);padding:.4rem .75rem;border-radius:8px;cursor:pointer;font-size:.85rem;transition:.2s;font-family:'Space Mono',monospace;">🔔</button>
@@ -2190,7 +2195,7 @@ nav.scrolled { box-shadow: 0 1px 40px rgba(0,0,0,0.6) !important; }
   </div>
 </nav>
 
-<div id="landing-wrap" style="display:none">
+<div id="landing-wrap">
 
 <!-- ═══ HERO ═══════════════════════════════════════════════════ -->
 <section id="hero" class="lp-hero">
@@ -2489,7 +2494,10 @@ nav.scrolled { box-shadow: 0 1px 40px rgba(0,0,0,0.6) !important; }
 
 </div><!-- end #landing-wrap -->
 
-<div id="app-top"></div>
+<div class="app-divider" id="app-top">
+  <div class="app-divider-title">Scanner Live</div>
+  <div class="app-divider-sub">L'algorithme tourne en continu — voici les résultats en temps réel.</div>
+</div>
 
 <section id="scanner">
 <div class="scanner-section">
