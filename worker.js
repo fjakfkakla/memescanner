@@ -546,10 +546,9 @@ export async function runScanCycle() {
         batch.map(async p => {
           const addr     = p.baseToken.address;
           const pairAddr = p.pairAddress || null;
-          const gmgnWData = gmgnWalletMap.get(addr) || null;
           const [sec, wData] = await Promise.allSettled([
             checkTokenSecurity(addr, pairAddr),
-            gmgnWData ? Promise.resolve(gmgnWData) : checkAxiomWallets(addr, pairAddr),
+            checkAxiomWallets(addr, pairAddr),
           ]);
           return {
             p,
