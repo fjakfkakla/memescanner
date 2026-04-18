@@ -173,7 +173,11 @@ app.get('/api/kline/:addr', async (req, res) => {
       signal: AbortSignal.timeout(8000),
     });
     const json = await r.json();
-    if (json.code !== 0) return res.status(400).json({ ok: false, error: json.message || 'GMGN error' });
+    if (json.code !== 0) {
+      console.warn(`[GMGN kline] code=${json.code} msg=${json.message} addr=${addr}`);
+      return res.status(400).json({ ok: false, error: json.message || 'GMGN error', code: json.code });
+    }
+    console.log(`[GMGN kline] ${addr.slice(0,8)} → ${JSON.stringify(json.data)?.slice(0,120)}`);
     res.json({ ok: true, data: json.data });
   } catch (e) {
     res.status(500).json({ ok: false, error: e.message });
