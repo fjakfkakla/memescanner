@@ -7200,50 +7200,21 @@ async function fetchRealAth(pairAddress, callMcap, callTime, nowMcap, tokenAddr)
     } catch(e) { return null; }
   }
 
-  // ── Source 2 : Birdeye price history (public, sans clé) ──
-  async function getBirdeyeAth() {
-    if (!tokenAddr) return callMcap;
-    try {
-      const timeFrom = Math.floor((callTime||0)/1000);
-      const timeTo   = Math.floor(Date.now()/1000);
-      const r = await fetch(
-        `https://public-api.birdeye.so/defi/history_price?address=${tokenAddr}&address_type=token&type=5m&time_from=${timeFrom}&time_to=${timeTo}`,
-        { headers:{'x-chain':'solana'}, signal: AbortSignal.timeout(6000) }
-      ).then(r => r.json());
-      const items = r?.data?.items;
-      if (!items?.length) return callMcap;
-      // items = [{unixTime, value (price USD)}]
-      const maxPrice  = Math.max(...items.map(i => i.value||0));
-      const firstPrice = items[0]?.value;
-      if (!maxPrice || !firstPrice) return callMcap;
-      return Math.max(Math.round(maxPrice / firstPrice * callMcap), callMcap);
-    } catch(e) { return callMcap; }
-  }
-
   try {
-    // Fetch les deux sources en parallèle
+    // GeckoTerminal : essai direct pairAddress puis fallback token
     let geckoOhlcv = null;
-    const [birdeyeAth] = await Promise.all([
-      getBirdeyeAth(),
-      // GeckoTerminal : essai direct pairAddress puis fallback token
-      (async () => {
-        if (pairAddress) geckoOhlcv = await getGeckoOhlcv(pairAddress);
-        if (!geckoOhlcv?.length && tokenAddr) {
-          const poolsRes = await fetch(
-            `https://api.geckoterminal.com/api/v2/networks/solana/tokens/${tokenAddr}/pools?page=1`,
-            { signal: AbortSignal.timeout(6000) }
-          ).then(r => r.json()).catch(() => null);
-          const best = (poolsRes?.data||[])
-            .sort((a,b) => (b?.attributes?.volume_usd?.h24||0) - (a?.attributes?.volume_usd?.h24||0))[0];
-          if (best?.attributes?.address) geckoOhlcv = await getGeckoOhlcv(best.attributes.address);
-        }
-      })()
-    ]);
+    if (pairAddress) geckoOhlcv = await getGeckoOhlcv(pairAddress);
+    if (!geckoOhlcv?.length && tokenAddr) {
+      const poolsRes = await fetch(
+        `https://api.geckoterminal.com/api/v2/networks/solana/tokens/${tokenAddr}/pools?page=1`,
+        { signal: AbortSignal.timeout(6000) }
+      ).then(r => r.json()).catch(() => null);
+      const best = (poolsRes?.data||[])
+        .sort((a,b) => (b?.attributes?.volume_usd?.h24||0) - (a?.attributes?.volume_usd?.h24||0))[0];
+      if (best?.attributes?.address) geckoOhlcv = await getGeckoOhlcv(best.attributes.address);
+    }
 
-    const geckoAth = calcAthFromOhlcv(geckoOhlcv, callMcap, callTime, true);
-
-    // Prend le MAX des deux sources — si l'une rate l'autre compense
-    const athMcap = Math.max(geckoAth, birdeyeAth, callMcap);
+    const athMcap = calcAthFromOhlcv(geckoOhlcv, callMcap, callTime, true);
     athCandleCache[cacheKey] = { athMcap, ts: now };
     return athMcap;
   } catch(e) {
