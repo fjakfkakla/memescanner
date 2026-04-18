@@ -680,12 +680,27 @@ export async function runScanCycle() {
       if (!calledTokens.has(token.addr)) {
         calledTokens.set(token.addr, now);
         try {
-          // 1. Sauvegarder + notifier Discord immédiatement avec le mcap du scan
+          // 1. Fetch mcap frais avant Discord (timeout 3s — fallback sur mcap scan si raté)
+          let callMcap = token.mcap;
+          try {
+            const freshData = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${token.addr}`,
+              { signal: AbortSignal.timeout(3000) }).then(r => r.json());
+            const freshPair = (freshData.pairs || []).find(p => p.chainId === 'solana');
+            const fm = freshPair?.marketCap || freshPair?.fdv || 0;
+            if (fm > 0) callMcap = fm;
+          } catch(e) { /* utilise mcap scan */ }
+
+          // Mettre à jour liveTokens avec le vrai callMcap
+          const liveEntry = liveTokens.get(token.addr);
+          if (liveEntry) liveEntry.callMcap = callMcap;
+
+          // 2. Sauvegarder + notifier Discord avec le vrai callMcap
           await saveCall({
             addr:       token.addr,
             symbol:     token.symbol,
             score:      token.score,
-            mcap:       token.mcap,
+            mcap:       callMcap,
+            callMcap:   callMcap,
             liq:        token.liq,
             rugRisk:    token.rugRisk,
             socials:    token.socials,
@@ -695,20 +710,9 @@ export async function runScanCycle() {
             security:   token.raw?.security || null,
             calledAt:   now,
           });
-          console.log(`[Worker] CALL: ${token.symbol} score=${token.score} mcap=$${token.mcap}`);
-          // Discord en premier — pas de fetch mcap frais qui bloque
+          token.mcap = callMcap;
+          console.log(`[Worker] CALL: ${token.symbol} score=${token.score} mcap=$${callMcap}`);
           await sendDiscordCall(token);
-
-          // 2. Mcap frais en arrière-plan (ne bloque plus le Discord)
-          fetch(`https://api.dexscreener.com/latest/dex/tokens/${token.addr}`,
-            { signal: AbortSignal.timeout(5000) })
-            .then(r => r.json())
-            .then(freshData => {
-              const freshPair = (freshData.pairs || []).find(p => p.chainId === 'solana');
-              const freshMcap = freshPair?.marketCap || freshPair?.fdv || 0;
-              if (freshMcap > 0) saveCall({ addr: token.addr, mcap: freshMcap, callMcap: freshMcap }).catch(() => {});
-            })
-            .catch(() => {});
         } catch (e) {
           console.warn('[Worker] saveCall error:', e.message);
         }
