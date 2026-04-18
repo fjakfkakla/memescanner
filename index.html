@@ -7360,7 +7360,7 @@ function updateWrStats(calls){
 }
 
 // ── Tri historique ─────────────────────────────────────────
-let currentHistSort='recent';
+let currentHistSort=localStorage.getItem('histSort')||'recent';
 function toggleHistSort(){
   const menu=document.getElementById('histSortMenu');
   menu.style.display=menu.style.display==='none'?'block':'none';
@@ -7372,6 +7372,7 @@ function toggleHistSort(){
 }
 function setHistSort(mode){
   currentHistSort=mode;
+  localStorage.setItem('histSort',mode);
   document.getElementById('histSortMenu').style.display='none';
   const labels={recent:'🕐 Récent',old:'⏳ Vieux',xbest:'🏆 Meilleur ×'};
   document.getElementById('histSortLabel').textContent=labels[mode];
@@ -7379,6 +7380,14 @@ function setHistSort(mode){
   const el=document.getElementById('hsort-'+mode);if(el)el.classList.add('active');
   renderHistory();
 }
+// Restaurer le label au chargement
+(function(){
+  const labels={recent:'🕐 Récent',old:'⏳ Vieux',xbest:'🏆 Meilleur ×'};
+  const lbl=document.getElementById('histSortLabel');
+  if(lbl)lbl.textContent=labels[currentHistSort]||'Trier';
+  const el=document.getElementById('hsort-'+currentHistSort);
+  if(el)el.classList.add('active');
+})();
 
 function toggleBacktest(){
   const panel = document.getElementById('backtestPanel');
