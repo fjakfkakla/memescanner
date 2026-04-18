@@ -3369,6 +3369,10 @@ nav.scrolled { box-shadow: 0 1px 40px rgba(0,0,0,0.6) !important; }
           <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px;">Bitquery — deployer history (GraphQL) <a href="https://bitquery.io" target="_blank" style="color:var(--purple2);font-size:10px;">bitquery.io →</a></label>
           <input class="admin-inp" type="password" id="adminBitqueryKey" placeholder="Clé Bitquery gratuite (10k pts/mois)..." style="width:100%;box-sizing:border-box;">
         </div>
+        <div style="margin-bottom:12px;">
+          <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px;">Defined.fi — ATH all-time précis (OHLCV depuis lancement) <a href="https://www.defined.fi/account/api" target="_blank" style="color:var(--purple2);font-size:10px;">defined.fi →</a></label>
+          <input class="admin-inp" type="password" id="adminDefinedKey" placeholder="Clé Defined.fi gratuite..." style="width:100%;box-sizing:border-box;">
+        </div>
         <button class="btn-admin" onclick="saveApiKeys()">SAUVEGARDER LES CLÉS</button>
         <div class="admin-msg ok" id="apiKeyOkMsg" style="margin-top:8px;"></div>
       </div>
@@ -3586,6 +3590,7 @@ const HELIUS_RPC = `https://mainnet.helius-rpc.com/?api-key=${HELIUS_KEY}`;
 const PUBLIC_RPC = 'https://api.mainnet-beta.solana.com'; // RPC gratuit pour appels standard (getAccountInfo, getSignaturesForAddress, etc.)
 const getShyftKey    = () => localStorage.getItem('ms_shyft_key')    || '';
 const getBitqueryKey = () => localStorage.getItem('ms_bitquery_key') || '';
+const getDefinedKey  = () => localStorage.getItem('ms_defined_key')  || '';
 const deployerCache  = {}; // addr → { ts, count } — cache 24h deployer history
 const FB_URL = 'https://memescanner-calls-default-rtdb.firebaseio.com';
 const BACKEND_URL = 'https://memescanner-production-342a.up.railway.app';
@@ -4971,9 +4976,10 @@ function checkPw(){
       document.getElementById('adminContent').style.display='block';
       isAdminMode=true;
       // Pré-remplir les champs clés API
-      const _sk=localStorage.getItem('ms_shyft_key')||''; const _bk=localStorage.getItem('ms_bitquery_key')||'';
+      const _sk=localStorage.getItem('ms_shyft_key')||''; const _bk=localStorage.getItem('ms_bitquery_key')||''; const _dk=localStorage.getItem('ms_defined_key')||'';
       if(_sk){const el=document.getElementById('adminShyftKey');if(el)el.value=_sk;}
       if(_bk){const el=document.getElementById('adminBitqueryKey');if(el)el.value=_bk;}
+      if(_dk){const el=document.getElementById('adminDefinedKey');if(el)el.value=_dk;}
       loadCodesFromFB().then(fbCodes=>{if(!fbCodes||fbCodes.length===0){const local=loadCodes();if(local.length>0){saveCodesFB(local);}}});
       renderCodes();document.getElementById('debugToggleBtn').style.display='inline-block';
       document.getElementById('tabDebugCA').style.display='inline-block';
@@ -4986,8 +4992,10 @@ function changePw(){const m=document.getElementById('pwOkMsg');m.textContent='Ch
 function saveApiKeys(){
   const sk=(document.getElementById('adminShyftKey')?.value||'').trim();
   const bk=(document.getElementById('adminBitqueryKey')?.value||'').trim();
+  const dk=(document.getElementById('adminDefinedKey')?.value||'').trim();
   if(sk) localStorage.setItem('ms_shyft_key',sk);
   if(bk) localStorage.setItem('ms_bitquery_key',bk);
+  if(dk) localStorage.setItem('ms_defined_key',dk);
   const m=document.getElementById('apiKeyOkMsg');
   if(m){m.textContent='Clés sauvegardées ✓';m.style.display='block';setTimeout(()=>{m.textContent='';m.style.display='none';},2500);}
 }
@@ -7266,13 +7274,12 @@ const athCandleCache = {}; // tokenAddr → {athMcap, ts}
 
 // Calcule athMcap depuis OHLCV [ts,open,high,low,close,vol]
 // safeHigh = min(high, close×3) pour filtrer les wicks MEV
-function calcAthFromOhlcv(ohlcv, callMcap, callTime, tsMs=false) {
+function calcAthFromOhlcv(ohlcv, callMcap, callTime, tsMs=false, mevMult=5) {
   if (!ohlcv?.length || !callMcap) return callMcap || 0;
   const callRef = tsMs ? (callTime||0) : Math.floor((callTime||0)/1000);
   const relevant = callRef > 0 ? ohlcv.filter(c => c[0] >= callRef) : ohlcv;
   if (!relevant.length) return callMcap;
-  // 5x : assez large pour les vrais pumps rapides (high/close ≈ 3-5x), assez strict pour les wicks MEV (ratio 50-100x)
-  const maxSafeHigh = Math.max(...relevant.map(c => c[4] > 0 ? Math.min(c[2], c[4] * 5) : c[2]));
+  const maxSafeHigh = Math.max(...relevant.map(c => c[4] > 0 ? Math.min(c[2], c[4] * mevMult) : c[2]));
   const firstOpen   = relevant[0][1] || relevant[0][4];
   if (!maxSafeHigh || !firstOpen) return callMcap;
   return Math.max(Math.round(maxSafeHigh / firstOpen * callMcap), callMcap);
@@ -7285,43 +7292,79 @@ async function fetchRealAth(pairAddress, callMcap, callTime, nowMcap, tokenAddr)
   const cached = athCandleCache[cacheKey];
   if (cached && now - cached.ts < 600000) return cached.athMcap;
 
-  // ── Source 1 : DexScreener chart OHLCV (même data que leur chart) ──
-  async function getDexOhlcv() {
+  // ── Source 1 : DexScreener 5-min (précision fine, ~24h) ──
+  async function getDex5() {
     try {
-      const r = await fetch(
-        `https://io.dexscreener.com/dex/chart/amm/v3/chains/solana/pairs/${pairAddress}?res=5&cb=1`,
-        { signal: AbortSignal.timeout(6000) }
-      ).then(r => r.json());
-      // Format DexScreener : { bars: [{t, o, h, l, c, v}] }
-      const bars = r?.bars;
-      if (!bars?.length) return null;
-      // Convertir en [ts_ms, open, high, low, close, vol]
-      return bars.map(b => [b.t, b.o, b.h, b.l, b.c, b.v||0]);
-    } catch(e) { return null; }
+      const r = await fetch(`https://io.dexscreener.com/dex/chart/amm/v3/chains/solana/pairs/${pairAddress}?res=5&cb=1`,{signal:AbortSignal.timeout(6000)}).then(r=>r.json());
+      const bars = r?.bars; if(!bars?.length) return null;
+      return bars.map(b=>[b.t,b.o,b.h,b.l,b.c,b.v||0]);
+    } catch(e){return null;}
   }
 
-  // ── Source 2 : GeckoTerminal (fallback) ──────────────────
-  async function getGeckoOhlcv() {
+  // ── Source 2 : DexScreener hourly (~30 jours) ──
+  async function getDexH() {
     try {
-      const r = await fetch(
-        `https://api.geckoterminal.com/api/v2/networks/solana/pools/${pairAddress}/ohlcv/minute?aggregate=5&limit=288&currency=usd&token=base`,
-        { signal: AbortSignal.timeout(6000) }
-      ).then(r => r.json());
-      return r?.data?.attributes?.ohlcv_list || null; // ts en secondes
-    } catch(e) { return null; }
+      const r = await fetch(`https://io.dexscreener.com/dex/chart/amm/v3/chains/solana/pairs/${pairAddress}?res=60&cb=1`,{signal:AbortSignal.timeout(6000)}).then(r=>r.json());
+      const bars = r?.bars; if(!bars?.length) return null;
+      return bars.map(b=>[b.t,b.o,b.h,b.l,b.c,b.v||0]);
+    } catch(e){return null;}
+  }
+
+  // ── Source 3 : GeckoTerminal 5-min fallback ──
+  async function getGecko5() {
+    try {
+      const r = await fetch(`https://api.geckoterminal.com/api/v2/networks/solana/pools/${pairAddress}/ohlcv/minute?aggregate=5&limit=288&currency=usd&token=base`,{signal:AbortSignal.timeout(6000)}).then(r=>r.json());
+      return r?.data?.attributes?.ohlcv_list||null;
+    } catch(e){return null;}
+  }
+
+  // ── Source 4 : GeckoTerminal hourly (30 jours, gratuit) ──
+  async function getGeckoH() {
+    try {
+      const r = await fetch(`https://api.geckoterminal.com/api/v2/networks/solana/pools/${pairAddress}/ohlcv/hour?aggregate=1&limit=720&currency=usd&token=base`,{signal:AbortSignal.timeout(6000)}).then(r=>r.json());
+      return r?.data?.attributes?.ohlcv_list||null;
+    } catch(e){return null;}
+  }
+
+  // ── Source 5 : Defined.fi GraphQL (all-time depuis lancement, avec clé) ──
+  async function getDefinedFi() {
+    const dk = getDefinedKey(); if(!dk) return null;
+    try {
+      const from = Math.floor((callTime||0)/1000);
+      const to   = Math.floor(Date.now()/1000);
+      const q = `{getBars(symbol:"${pairAddress}:1399811149",from:${from},to:${to},resolution:"60"){o h c t}}`;
+      const r = await fetch('https://graph.defined.fi/graphql',{
+        method:'POST', headers:{'Content-Type':'application/json','Authorization':dk},
+        body:JSON.stringify({query:q}), signal:AbortSignal.timeout(8000)
+      }).then(r=>r.json());
+      const b = r?.data?.getBars;
+      if(!b?.h?.length) return null;
+      // Convertir en [ts, open, high, low, close]
+      return b.t.map((t,i)=>[t, b.o[i], b.h[i], b.h[i], b.c[i]]);
+    } catch(e){return null;}
   }
 
   try {
-    // Essai DexScreener en premier
-    let ohlcv = await getDexOhlcv();
-    let tsMs = true; // DexScreener timestamps en ms
+    // Tout en parallèle — zero latence ajoutée
+    const [r1,r2,r3,r4,r5] = await Promise.allSettled([getDex5(),getDexH(),getGecko5(),getGeckoH(),getDefinedFi()]);
+    const dex5   = r1.status==='fulfilled'?r1.value:null;
+    const dexH   = r2.status==='fulfilled'?r2.value:null;
+    const gecko5 = r3.status==='fulfilled'?r3.value:null;
+    const geckoH = r4.status==='fulfilled'?r4.value:null;
+    const defFi  = r5.status==='fulfilled'?r5.value:null;
 
-    if (!ohlcv?.length) {
-      ohlcv = await getGeckoOhlcv();
-      tsMs = false; // GeckoTerminal timestamps en secondes
-    }
+    // 5-min : DexScreener (ms) ou GeckoTerminal (sec) — mevMult=5
+    const ohlcv5 = dex5||gecko5;
+    const ath5   = ohlcv5?.length ? calcAthFromOhlcv(ohlcv5, callMcap, callTime, !!dex5, 5)  : callMcap;
 
-    const athMcap = calcAthFromOhlcv(ohlcv, callMcap, callTime, tsMs);
+    // Hourly : DexScreener (ms) ou GeckoTerminal (sec) — mevMult=20 (wicks rares sur 1h)
+    const ohlcvH = dexH||geckoH;
+    const athH   = ohlcvH?.length ? calcAthFromOhlcv(ohlcvH, callMcap, callTime, !!dexH, 20) : callMcap;
+
+    // Defined.fi : all-time, ts secondes, pas de MEV sur candles historiques
+    const athDef = defFi?.length  ? calcAthFromOhlcv(defFi,  callMcap, callTime, false, 100) : callMcap;
+
+    const athMcap = Math.max(ath5, athH, athDef);
     athCandleCache[cacheKey] = { athMcap, ts: now };
     return athMcap;
   } catch(e) {
