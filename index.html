@@ -7170,17 +7170,19 @@ function switchTab(tab){
 const athCandleCache = {}; // tokenAddr → {athMcap, ts}
 
 // Calcule athMcap depuis un tableau OHLCV [ts,open,high,low,close,vol]
-// Utilise les CLOSES (pas les highs) : résistant aux wicks MEV/sandwich
+// High filtré anti-MEV : high plafonné à 3× close de la même bougie.
+// Vrai pump 5min : high/close ≈ 1.0–1.5 → passe.
+// Wick MEV : high/close = 50–100× → plafonné à close×3.
 function calcAthFromOhlcv(ohlcv, callMcap, callTime, tsInSeconds=true) {
   if (!ohlcv?.length || !callMcap) return callMcap || 0;
   const callSec = tsInSeconds ? Math.floor((callTime||0)/1000) : (callTime||0);
   const relevant = callSec > 0 ? ohlcv.filter(c => c[0] >= callSec) : ohlcv;
   if (!relevant.length) return callMcap;
-  // close[4] = prix de clôture de chaque bougie — immunisé contre les spikes MEV intra-bougie
-  const maxClose  = Math.max(...relevant.map(c => c[4]));
-  const firstOpen = relevant[0][1] || relevant[0][4];
-  if (!maxClose || !firstOpen) return callMcap;
-  return Math.max(Math.round(maxClose / firstOpen * callMcap), callMcap);
+  // safeHigh = min(high, close×3) — élimine les spikes MEV sans tronquer les vrais pumps
+  const maxSafeHigh = Math.max(...relevant.map(c => c[4] > 0 ? Math.min(c[2], c[4] * 3) : c[2]));
+  const firstOpen   = relevant[0][1] || relevant[0][4];
+  if (!maxSafeHigh || !firstOpen) return callMcap;
+  return Math.max(Math.round(maxSafeHigh / firstOpen * callMcap), callMcap);
 }
 
 async function fetchRealAth(pairAddress, callMcap, callTime, nowMcap, tokenAddr) {
