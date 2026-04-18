@@ -3,6 +3,7 @@ import { WALLET_TRACKER, AXIOM_WALLETS } from './axiomWallets.js';
 import { scoreTokenV2, hardFilterV2 } from './scorer.js';
 import { saveCall, getCallByAddr } from './firebase.js';
 import { checkSmartFilters } from './aiEngine.js';
+import { gmgnFetchTrenches, gmgnToWalletData } from './gmgn.js';
 
 const HELIUS_KEY  = process.env.HELIUS_KEY;
 const HELIUS_RPC  = `https://mainnet.helius-rpc.com/?api-key=${HELIUS_KEY}`;
@@ -461,7 +462,40 @@ export async function runScanCycle() {
     const allPairs = dexResult.pairs;
     const paidTokens = dexResult.paidTokens;
 
-    // 1b. Découverte Helius : tokens achetés par les top Axiom wallets
+    // 1b. Découverte GMGN trenches (renowned≥1 + smart_degen≥1)
+    // Construit aussi une Map addr→wData pour éviter les appels Helius sur ces tokens
+    const gmgnWalletMap = new Map(); // addr → wData synthétique depuis GMGN
+    try {
+      const gmgnTokens = await gmgnFetchTrenches();
+      const existingAddrs = new Set(allPairs.map(p => p.baseToken?.address).filter(Boolean));
+      const newGmgnAddrs = [];
+      for (const t of gmgnTokens) {
+        const addr = t.address || t.token_address;
+        if (!addr) continue;
+        gmgnWalletMap.set(addr, gmgnToWalletData(t));
+        if (!existingAddrs.has(addr)) newGmgnAddrs.push(addr);
+      }
+      if (newGmgnAddrs.length > 0) {
+        for (let i = 0; i < newGmgnAddrs.length; i += 30) {
+          const batch = newGmgnAddrs.slice(i, i + 30).join(',');
+          try {
+            const resp = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${batch}`,
+              { signal: AbortSignal.timeout(10000) });
+            const data = await resp.json();
+            const newPairs = (data.pairs || []).filter(p => p.chainId === 'solana' && p.baseToken?.address);
+            for (const p of newPairs) {
+              if (!existingAddrs.has(p.baseToken.address)) {
+                allPairs.push(p);
+                existingAddrs.add(p.baseToken.address);
+              }
+            }
+            if (newPairs.length > 0) console.log(`[GMGN] +${newPairs.length} paires GMGN ajoutées`);
+          } catch (e) {}
+        }
+      }
+    } catch (e) { console.warn('[GMGN] Discovery error:', e.message); }
+
+    // 1c. Découverte Helius : tokens achetés par les top Axiom wallets
     try {
       const axiomTokens = await discoverTokensFromAxiom();
       // Filtrer les tokens déjà dans allPairs
@@ -487,7 +521,7 @@ export async function runScanCycle() {
         }
       }
     } catch (e) { console.warn('[Discovery] Error:', e.message); }
-    console.log(`[Worker] ${allPairs.length} paires collectées`);
+    console.log(`[Worker] ${allPairs.length} paires collectées (gmgn: ${gmgnWalletMap.size})`);
 
     // 2. Pré-filtre rapide
     const preFiltered = allPairs.filter(p => {
@@ -503,6 +537,8 @@ export async function runScanCycle() {
     console.log(`[Worker] ${preFiltered.length} après pré-filtre`);
 
     // 3. Vérifications Helius en batch de 3 (rate limiting)
+    // Si le token est déjà dans gmgnWalletMap (renowned≥1 + smart_degen≥1),
+    // on skip checkAxiomWallets → économie Helius
     const parallelResults = [];
     for (let i = 0; i < preFiltered.length; i += 3) {
       const batch = preFiltered.slice(i, i + 3);
@@ -510,9 +546,10 @@ export async function runScanCycle() {
         batch.map(async p => {
           const addr     = p.baseToken.address;
           const pairAddr = p.pairAddress || null;
+          const gmgnWData = gmgnWalletMap.get(addr) || null;
           const [sec, wData] = await Promise.allSettled([
             checkTokenSecurity(addr, pairAddr),
-            checkAxiomWallets(addr, pairAddr),
+            gmgnWData ? Promise.resolve(gmgnWData) : checkAxiomWallets(addr, pairAddr),
           ]);
           return {
             p,
@@ -599,7 +636,8 @@ export async function runScanCycle() {
     }
 
     finalScored.sort((a, b) => b.score - a.score);
-    console.log(`[Worker] ${finalScored.length} calls | helius today: ${heliusCalls.today} | rejected:`, JSON.stringify(rejected));
+    const gmgnHits = [...gmgnWalletMap.keys()].filter(a => preFiltered.some(p => p.baseToken?.address === a)).length;
+    console.log(`[Worker] ${finalScored.length} calls | helius today: ${heliusCalls.today} | gmgn hits: ${gmgnHits} | rejected:`, JSON.stringify(rejected));
 
     // 5. Save calls + update liveTokens
     const now = Date.now();
