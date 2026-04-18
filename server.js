@@ -3,6 +3,7 @@ import cors    from 'cors';
 import { getCalls, getHistory } from './firebase.js';
 import { runScanCycle, getLiveTokens, checkTokenSecurityExport, checkAxiomWalletsExport, getHeliusStats } from './worker.js';
 import { trackOutcomes, autoAdjust, loadWeights, getAIPanel, getWinrateStats, deepAnalyze, buildSmartFilters, loadSmartFilters, checkSmartFilters, smartFilters } from './aiEngine.js';
+import { startPaperTrader, getPaperConfig, setPaperConfig, getPaperTrades, getPaperEquity, closePaperTrade, resetPaperBot } from './paperTrader.js';
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
@@ -150,6 +151,46 @@ app.get('/debug/:addr', async (req, res) => {
   }
 });
 
+// ── PAPER BOT API ────────────────────────────────────────────────
+
+app.get('/paper/config', async (_req, res) => {
+  try { res.json({ ok: true, config: await getPaperConfig() }); }
+  catch (e) { res.status(500).json({ ok: false, error: e.message }); }
+});
+
+app.post('/paper/config', async (req, res) => {
+  try {
+    const { config } = req.body || {};
+    if (!config) return res.status(400).json({ ok: false, error: 'config manquant' });
+    await setPaperConfig(config);
+    res.json({ ok: true });
+  } catch (e) { res.status(500).json({ ok: false, error: e.message }); }
+});
+
+app.get('/paper/trades', async (_req, res) => {
+  try { res.json({ ok: true, data: await getPaperTrades() }); }
+  catch (e) { res.status(500).json({ ok: false, error: e.message }); }
+});
+
+app.get('/paper/equity', async (_req, res) => {
+  try { res.json({ ok: true, data: await getPaperEquity() }); }
+  catch (e) { res.status(500).json({ ok: false, error: e.message }); }
+});
+
+app.post('/paper/close', async (req, res) => {
+  try {
+    const { addr } = req.body || {};
+    if (!addr) return res.status(400).json({ ok: false, error: 'addr manquant' });
+    const ok = await closePaperTrade(addr);
+    res.json({ ok });
+  } catch (e) { res.status(500).json({ ok: false, error: e.message }); }
+});
+
+app.post('/paper/reset', async (_req, res) => {
+  try { await resetPaperBot(); res.json({ ok: true }); }
+  catch (e) { res.status(500).json({ ok: false, error: e.message }); }
+});
+
 // ── DÉMARRAGE ────────────────────────────────────────────────────
 app.listen(PORT, () => {
   console.log(`[Server] Écoute sur port ${PORT}`);
@@ -157,6 +198,9 @@ app.listen(PORT, () => {
   // Charger les poids IA + smart filters depuis Firebase
   loadWeights();
   loadSmartFilters();
+
+  // Paper bot — tourne en continu côté serveur (indépendant du navigateur)
+  startPaperTrader();
 
   // Premier cycle immédiat
   runScanCycle();

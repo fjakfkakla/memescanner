@@ -4957,8 +4957,9 @@ function onUnlock(plan){
   // Vérifier les positions paper bot toutes les 3s (indépendant du cycle scanner)
   // → attrape les pumps rapides entre deux cycles de 15s
   setInterval(()=>{ if(ptTrades().some(t=>t.status==='open')) ptCheckPositions(); }, 3000);
-  // Vérifier les positions real bot toutes les 7s (moins fréquent car appels RPC réels)
-  setInterval(()=>{ if(typeof rtCheckPositions==='function' && rtTrades().some(t=>t.status==='open')) rtCheckPositions(); }, 7000);
+  // Paper bot positions gérées côté serveur Railway — polling UI toutes les 7s
+  setInterval(async ()=>{ await ptLoadFromServer(); if(currentTab==='paperbot') ptRender(); const cnt=document.getElementById('ptOpenCount'); if(cnt){ const n=_ptTradesCache.filter(t=>t.status==='open').length; cnt.textContent=n?`(${n})`:''; } }, 7000);
+  ptLoadFromServer().then(()=>{ ptRender(); });
 }
 function formatCode(input){let v=input.value.replace(/[^A-Za-z0-9]/g,'').toUpperCase();let out='';for(let i=0;i<v.length&&i<12;i++){if(i>0&&i%4===0)out+='-';out+=v[i];}input.value=out;}
 
@@ -5564,48 +5565,48 @@ async function runHourlyHeatmap(useCustom=false) {
 // ═══════════════════════════════════════════════════════════════
 // 🤖 PAPER TRADING BOT
 // ═══════════════════════════════════════════════════════════════
-const PT_LS       = 'paperTrades_v3';
-const PT_CFG_LS   = 'paperConfig_v3';
-const PT_EQUITY_LS= 'paperEquity_v3';
-
 const PT_CFG_DEFAULT = {
   enabled:true, capital:400, posSize:50,
   tp1:1.3, tp2:1.5, tp3:2.0, tp4:3.0, tp5:5.0, tp6:10.0, tp7:15.0, tp8:20.0,
-  sl:20,   // seul SL : -20% → sell tout
-  minScore:0  // entre sur tous les calls
+  sl:20, minScore:0
 };
 
-function ptConfig()  { try{ return {...PT_CFG_DEFAULT,...JSON.parse(localStorage.getItem(PT_CFG_LS)||'{}')}; }catch(e){ return {...PT_CFG_DEFAULT}; } }
-function ptTrades()  { try{ return JSON.parse(localStorage.getItem(PT_LS)||'[]'); }catch(e){ return []; } }
-function ptSaveTrades(arr){ try{ localStorage.setItem(PT_LS, JSON.stringify(arr)); }catch(e){} }
-function ptEquity()  { try{ return JSON.parse(localStorage.getItem(PT_EQUITY_LS)||'[]'); }catch(e){ return []; } }
-function ptSaveEquity(arr){ try{ localStorage.setItem(PT_EQUITY_LS, JSON.stringify(arr.slice(-200))); }catch(e){} }
+// Cache mémoire — rechargé depuis le serveur toutes les 7s
+let _ptTradesCache = [];
+let _ptEquityCache = [];
+let _ptConfigCache = {...PT_CFG_DEFAULT};
 
-// ── Sync positions depuis les calls live déjà connus (chargement page / activation bot) ──
-// Ouvre les positions pour les calls récents (<30min) pas encore en portefeuille
-function ptSyncFromLive(){
-  const cfg = ptConfig();
-  if(!cfg.enabled) return;
-  if(typeof lastScored === 'undefined' || !lastScored.length) return;
-  const now = Date.now();
-  const MAX_AGE = 4 * 60 * 60 * 1000; // 4 heures
-  let opened = 0;
-  for(const token of lastScored){
-    const age = now - (token._callTime || 0);
-    if(age > MAX_AGE) continue;          // trop vieux → skip
-    ptOpenTrade(token);                  // ptOpenTrade vérifie déjà les doublons
-    opened++;
-  }
-  if(opened > 0){ ptRender(); showToast(`🤖 Paper Bot — ${opened} position(s) synchro depuis les calls live`, 'call'); }
+async function ptLoadFromServer(){
+  try{
+    const [tRes, cRes, eRes] = await Promise.all([
+      fetch(`${BACKEND_URL}/paper/trades`,{signal:AbortSignal.timeout(8000)}).then(r=>r.json()),
+      fetch(`${BACKEND_URL}/paper/config`,{signal:AbortSignal.timeout(5000)}).then(r=>r.json()),
+      fetch(`${BACKEND_URL}/paper/equity`,{signal:AbortSignal.timeout(5000)}).then(r=>r.json()),
+    ]);
+    if(tRes.ok) _ptTradesCache = tRes.data || [];
+    if(cRes.ok) _ptConfigCache = {...PT_CFG_DEFAULT, ...cRes.config};
+    if(eRes.ok) _ptEquityCache = (eRes.data || []).sort((a,b)=>a.ts-b.ts);
+  }catch(e){ console.warn('[PaperBot] loadFromServer error:', e.message); }
 }
 
+function ptConfig()  { return {...PT_CFG_DEFAULT, ..._ptConfigCache}; }
+function ptTrades()  { return _ptTradesCache; }
+function ptEquity()  { return _ptEquityCache; }
+function ptSaveTrades(arr){ /* géré côté serveur */ }
+function ptSaveEquity(arr){ /* géré côté serveur */ }
+
+// Sync gérée automatiquement par le serveur — stub frontend
+function ptSyncFromLive(){ /* géré côté serveur Railway */ }
+
 // ── Toggle ──
-function ptToggleBot(){
+async function ptToggleBot(){
   const cfg = ptConfig(); cfg.enabled = !cfg.enabled;
-  localStorage.setItem(PT_CFG_LS, JSON.stringify(cfg));
+  try{
+    await fetch(`${BACKEND_URL}/paper/config`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({config:cfg}),signal:AbortSignal.timeout(5000)});
+    _ptConfigCache = cfg;
+  }catch(e){ showToast('Erreur serveur: '+e.message,''); return; }
   ptUpdateToggleUI(cfg.enabled);
-  showToast(cfg.enabled ? '🤖 Paper Bot ON — trade sur chaque call' : '⏸ Paper Bot OFF', 'call');
-  if(cfg.enabled) setTimeout(ptSyncFromLive, 200); // synchro immédiate sur les calls déjà live
+  showToast(cfg.enabled ? '🤖 Paper Bot ON (serveur)' : '⏸ Paper Bot OFF', 'call');
 }
 function ptUpdateToggleUI(on){
   const tog=document.getElementById('ptToggle'), st=document.getElementById('ptStatusText');
@@ -5614,184 +5615,31 @@ function ptUpdateToggleUI(on){
 }
 
 // ── Save config ──
-function ptSaveConfig(){
+async function ptSaveConfig(){
   const v = id => parseFloat(document.getElementById(id)?.value||0);
   const cfg = {
     enabled:  ptConfig().enabled,
     capital:  v('ptCfgCapital')||400,
     posSize:  v('ptCfgSize')||50,
-    tp1:      v('ptCfgTp1')||1.3,
-    tp2:      v('ptCfgTp2')||1.5,
-    tp3:      v('ptCfgTp3')||2.0,
-    tp4:      v('ptCfgTp4')||3.0,
-    tp5:      v('ptCfgTp5')||5.0,
-    tp6:      v('ptCfgTp6')||10.0,
-    tp7:      v('ptCfgTp7')||15.0,
-    tp8:      v('ptCfgTp8')||20.0,
-    sl:       v('ptCfgSl')||20,
-    minScore: v('ptCfgScore')||0,
+    tp1:v('ptCfgTp1')||1.3, tp2:v('ptCfgTp2')||1.5, tp3:v('ptCfgTp3')||2.0,
+    tp4:v('ptCfgTp4')||3.0, tp5:v('ptCfgTp5')||5.0, tp6:v('ptCfgTp6')||10.0,
+    tp7:v('ptCfgTp7')||15.0, tp8:v('ptCfgTp8')||20.0,
+    sl:v('ptCfgSl')||20, minScore:v('ptCfgScore')||0,
   };
-  localStorage.setItem(PT_CFG_LS, JSON.stringify(cfg));
-  showToast('💾 Config Paper Bot sauvegardée', 'call');
-  ptRender();
+  try{
+    await fetch(`${BACKEND_URL}/paper/config`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({config:cfg}),signal:AbortSignal.timeout(5000)});
+    _ptConfigCache = cfg;
+    showToast('💾 Config Paper Bot sauvegardée (serveur)','call');
+    ptRender();
+  }catch(e){ showToast('Erreur sauvegarde: '+e.message,''); }
 }
 
-// ── Ouvrir un trade ──
-async function ptOpenTrade(token){
-  const cfg = ptConfig();
-  if(!cfg.enabled) return;
-  if((token.score||0) < cfg.minScore) return;
-  const trades = ptTrades();
-  if(trades.some(t => t.addr === token.addr && t.status === 'open')) return;
+// Trades ouverts par le serveur — stub frontend
+async function ptOpenTrade(token){ /* géré côté serveur Railway */ }
 
-  // Utiliser le callMcap du serveur (déjà frais au moment du call backend)
-  // Slippage achat simulé : +1% (représente impact de prix + frais DEX réels)
-  const rawEntryMcap = token._callMcap || token.mcap || 0;
-  const entryMcap = rawEntryMcap * 1.01;
-
-  const trade = {
-    id:             'pt_' + Date.now(),
-    addr:           token.addr,
-    symbol:         (token.symbol||'?').toUpperCase(),
-    score:          token.score || 0,
-    axiom:          token.debug?.axiomCount || 0,
-    entryMcap,
-    entryTime:      Date.now(),
-    posSize:        cfg.posSize,
-    status:         'open',
-    // Trailing ATH tracking
-    athX:           1.0,           // highest multiple reached
-    remainFraction: 1.0,           // fraction of position still open
-    sells:          [],            // [{reason, xAt, fraction, pnlUsd, time}]
-    totalPnlUsd:    0,
-    // Final exit
-    exitMcap:       null,
-    exitTime:       null,
-    exitReason:     null,
-    pairUrl:        token.pairUrl || '',
-    pairAddr:       token.raw?.pairAddress || '',  // pour lookups GeckoTerminal directs
-  };
-  trades.unshift(trade);
-  ptSaveTrades(trades);
-  const cnt = document.getElementById('ptOpenCount');
-  if(cnt) cnt.textContent = '(' + trades.filter(t=>t.status==='open').length + ')';
-}
-
-// ── Vérifier positions (chaque cycle scanner) ──
-async function ptCheckPositions(){
-  const cfg = ptConfig();
-  const trades = ptTrades();
-  const open = trades.filter(t => t.status === 'open');
-  if(!open.length) return;
-
-  // Fetch mcap actuel
-  const addrs = [...new Set(open.map(t=>t.addr))].slice(0,30);
-  let priceMap = {};
-  // 1. Utiliser lastScored en priorité (déjà frais, 0 appel API)
-  if(typeof lastScored !== 'undefined'){
-    lastScored.forEach(ls=>{ if(ls.mcap>0) priceMap[ls.addr]=ls.mcap; });
-  }
-  // 2. Compléter avec DexScreener pour les tokens pas dans lastScored
-  const missing = addrs.filter(a=>!priceMap[a]);
-  if(missing.length){
-    try{
-      const res = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${missing.join(',')}`,{signal:AbortSignal.timeout(6000)}).then(r=>r.json());
-      const best = {};
-      (res.pairs||[]).forEach(p=>{ const a=p.baseToken?.address; if(!a)return; if(!best[a]||(p.volume?.h24||0)>(best[a].volume?.h24||0))best[a]=p; });
-      Object.entries(best).forEach(([a,p])=>{ priceMap[a]=p.marketCap||p.fdv||0; });
-    }catch(e){}
-  }
-  // 3. GeckoTerminal via pairAddr stocké — plus précis que fdv pour les jeunes tokens
-  const stillMissing = open.filter(t=>!priceMap[t.addr] && t.pairAddr);
-  if(stillMissing.length){
-    await Promise.allSettled(stillMissing.map(async t=>{
-      try{
-        const r = await fetch(`https://api.geckoterminal.com/api/v2/networks/solana/pools/${t.pairAddr}`,{signal:AbortSignal.timeout(5000)}).then(r=>r.json());
-        const mc = parseFloat(r?.data?.attributes?.market_cap_usd || r?.data?.attributes?.fdv_usd || 0);
-        if(mc>0) priceMap[t.addr]=mc;
-      }catch(e){}
-    }));
-  }
-
-  let changed = false;
-  const now = Date.now();
-
-  // Définition des 8 TPs : [mult, fraction_du_reste_à_vendre]
-  const TP_LEVELS = [
-    {n:1, mult:'tp1', frac:0.30},
-    {n:2, mult:'tp2', frac:0.30},
-    {n:3, mult:'tp3', frac:0.20},
-    {n:4, mult:'tp4', frac:0.60},
-    {n:5, mult:'tp5', frac:0.25},
-    {n:6, mult:'tp6', frac:0.50},
-    {n:7, mult:'tp7', frac:0.50},
-    {n:8, mult:'tp8', frac:1.00},
-  ];
-
-  for(const t of open){
-    const curMcap = priceMap[t.addr] || 0;
-    if(!curMcap || !t.entryMcap) continue;
-    const xNow = curMcap / t.entryMcap;
-
-    // Migrate old trades
-    if(t.sells===undefined){ t.sells=[]; t.athX=1; t.remainFraction=1; t.totalPnlUsd=0; }
-
-    if(xNow > t.athX) { t.athX = xNow; changed = true; }
-    if(Math.abs(xNow - (t.currentX||1)) > 0.005) changed = true; // save si X change de >0.5%
-    t.currentX = xNow;
-
-    // doSell : fraction = % du reste encore en position
-    const doSell = (reason, fracOfRemain) => {
-      const realFrac = t.remainFraction * fracOfRemain;
-      if(realFrac < 0.001) return;
-      // Slippage vente simulé : -1.5% (impact de prix + frais swap réels)
-      const xEffective = xNow * 0.985;
-      const pnlUsd = t.posSize * realFrac * (xEffective - 1);
-      t.sells.push({ reason, xAt:xNow, fraction:realFrac, pnlUsd, time:now });
-      t.remainFraction = Math.max(0, t.remainFraction - realFrac);
-      t.totalPnlUsd = (t.totalPnlUsd||0) + pnlUsd;
-      changed = true;
-      const sign = pnlUsd >= 0 ? '+' : '';
-      showToast(`🤖 ${t.symbol} ${reason} @${xNow.toFixed(2)}x — ${sign}$${pnlUsd.toFixed(1)}`, pnlUsd>=0?'call':'');
-    };
-
-    // ── SL unique : -20% → sell tout ──
-    if(xNow <= (1 - cfg.sl/100)){
-      doSell('SL', 1.0);
-      t.status = 'closed'; t.exitReason = 'SL'; t.exitMcap = curMcap; t.exitTime = now;
-      ptRecordEquity(t, cfg);
-      continue;
-    }
-
-    // ── TPs séquentiels (chaque % = fraction du RESTE) ──
-    for(const tp of TP_LEVELS){
-      if(!t.sells.some(s=>s.reason===`TP${tp.n}`) && xNow >= cfg[tp.mult] && t.remainFraction > 0.001){
-        doSell(`TP${tp.n}`, tp.frac);
-      }
-    }
-
-    // Si tout vendu via TPs, fermer
-    if(t.remainFraction <= 0.001 && t.status === 'open'){
-      t.status = 'closed'; t.exitReason = t.sells[t.sells.length-1]?.reason||'DONE';
-      t.exitMcap = curMcap; t.exitTime = now;
-      ptRecordEquity(t, cfg);
-    }
-  }
-
-  if(changed){
-    ptSaveTrades(trades);
-    if(currentTab==='paperbot') ptRender();
-    const cnt = document.getElementById('ptOpenCount');
-    if(cnt){ const n=trades.filter(t=>t.status==='open').length; cnt.textContent=n?`(${n})`:''; }
-  }
-}
-
-function ptRecordEquity(trade, cfg){
-  const eq = ptEquity();
-  const last = eq.length ? eq[eq.length-1].val : cfg.capital;
-  eq.push({ ts: trade.exitTime, val: Math.round((last + (trade.totalPnlUsd||0))*100)/100 });
-  ptSaveEquity(eq);
-}
+// Positions gérées par le serveur — stubs frontend
+async function ptCheckPositions(){ /* géré côté serveur Railway */ }
+function ptRecordEquity(trade, cfg){ /* géré côté serveur Railway */ }
 
 // ── Detail modal (commun open + closed) ──
 let _ptDetailId = null, _ptDetailTimer = null;
@@ -5925,21 +5773,24 @@ function ptRefreshDetail(){
 }
 
 // ── Fermeture manuelle ──
-function ptCloseManual(id){
-  const trades = ptTrades();
-  const t = trades.find(x=>x.id===id);
+async function ptCloseManual(id){
+  const t = _ptTradesCache.find(x=>x.id===id);
   if(!t||t.status!=='open') return;
-  t.status='closed'; t.exitTime=Date.now(); t.exitReason='MANUAL';
-  if(!t.sells) t.sells=[];
-  ptSaveTrades(trades);
-  ptRender();
+  try{
+    await fetch(`${BACKEND_URL}/paper/close`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({addr:t.addr}),signal:AbortSignal.timeout(5000)});
+    await ptLoadFromServer();
+    ptRender();
+  }catch(e){ showToast('Erreur fermeture: '+e.message,''); }
 }
 
 // ── Reset ──
-function ptResetAll(){
-  if(!confirm('Supprimer tous les trades paper ?')) return;
-  localStorage.removeItem(PT_LS); localStorage.removeItem(PT_EQUITY_LS);
-  ptRender(); showToast('🗑 Paper Bot réinitialisé','');
+async function ptResetAll(){
+  if(!confirm('Supprimer tous les trades paper (serveur) ?')) return;
+  try{
+    await fetch(`${BACKEND_URL}/paper/reset`,{method:'POST',signal:AbortSignal.timeout(5000)});
+    _ptTradesCache=[]; _ptEquityCache=[];
+    ptRender(); showToast('🗑 Paper Bot réinitialisé','');
+  }catch(e){ showToast('Erreur reset: '+e.message,''); }
 }
 
 // ── Stats ──
