@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MemeScanner — Scoring Engine v2 (État Actuel)</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Space+Mono:wght@400;700&display=swap');
+:root{--bg:#0a0612;--bg2:#120e1f;--card:#1a1230;--border:#2a1f42;--green:#00ff88;--gold:#ffd700;--red:#ff4466;--blue:#4488ff;--purple:#6156d9;--cyan:#00e5ff;--text:#eeeef6;--muted:#8a82b0;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;line-height:1.6;min-height:100vh;}
+.container{max-width:1100px;margin:0 auto;padding:2rem 1.5rem 4rem;}
+
+.hero{text-align:center;padding:3rem 0 2rem;position:relative;}
+.hero::after{content:'';position:absolute;bottom:0;left:10%;right:10%;height:1px;background:linear-gradient(90deg,transparent,var(--purple),transparent);}
+.hero h1{font-size:2.8rem;font-weight:900;background:linear-gradient(135deg,var(--green),var(--cyan),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:.5rem;letter-spacing:-1px;}
+.hero .sub{color:var(--muted);font-size:1rem;font-weight:500;}
+.hero .version{display:inline-block;margin-top:.8rem;padding:.35rem 1rem;border-radius:20px;background:rgba(97,86,217,.12);border:1px solid rgba(97,86,217,.25);color:var(--purple);font-size:.75rem;font-weight:700;letter-spacing:.05em;}
+.hero .badge-refonte{display:inline-block;margin-left:.5rem;margin-top:.8rem;padding:.35rem 1rem;border-radius:20px;background:rgba(255,215,0,.1);border:1px solid rgba(255,215,0,.25);color:var(--gold);font-size:.75rem;font-weight:700;letter-spacing:.05em;}
+
+.section{margin-top:2.5rem;}
+.section-title{display:flex;align-items:center;gap:.6rem;font-size:1.4rem;font-weight:800;margin-bottom:1.2rem;padding-bottom:.6rem;border-bottom:2px solid rgba(97,86,217,.2);}
+.section-title .icon{font-size:1.6rem;}
+.section-title .tag{font-size:.65rem;padding:.2rem .6rem;border-radius:10px;font-weight:700;letter-spacing:.05em;margin-left:auto;}
+.tag-pts{background:rgba(0,255,136,.1);color:var(--green);border:1px solid rgba(0,255,136,.2);}
+.tag-filter{background:rgba(255,68,102,.1);color:var(--red);border:1px solid rgba(255,68,102,.2);}
+.tag-ai{background:rgba(97,86,217,.1);color:var(--purple);border:1px solid rgba(97,86,217,.2);}
+.tag-warn{background:rgba(255,215,0,.1);color:var(--gold);border:1px solid rgba(255,215,0,.2);}
+
+.score-table{width:100%;border-collapse:separate;border-spacing:0;border-radius:12px;overflow:hidden;border:1px solid var(--border);margin-bottom:1rem;}
+.score-table thead{background:rgba(97,86,217,.08);}
+.score-table th{text-align:left;padding:.7rem 1rem;font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);border-bottom:1px solid var(--border);}
+.score-table td{padding:.6rem 1rem;border-bottom:1px solid rgba(255,255,255,.03);font-size:.88rem;}
+.score-table tr:last-child td{border-bottom:none;}
+.score-table tr:hover td{background:rgba(97,86,217,.04);}
+.pts{font-weight:800;font-family:'Space Mono',monospace;font-size:.85rem;}
+.pts-green{color:var(--green);}
+.pts-red{color:var(--red);}
+.pts-gold{color:var(--gold);}
+.pts-blue{color:var(--blue);}
+.pts-muted{color:var(--muted);}
+
+.cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:1rem;margin-bottom:1rem;}
+.info-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:1.2rem 1.4rem;position:relative;overflow:hidden;}
+.info-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;}
+.info-card.card-green::before{background:linear-gradient(90deg,var(--green),var(--cyan));}
+.info-card.card-red::before{background:linear-gradient(90deg,var(--red),#ff8844);}
+.info-card.card-gold::before{background:linear-gradient(90deg,var(--gold),#ff8800);}
+.info-card.card-purple::before{background:linear-gradient(90deg,var(--purple),#9966ff);}
+.info-card.card-blue::before{background:linear-gradient(90deg,var(--blue),var(--cyan));}
+.info-card.card-cyan::before{background:linear-gradient(90deg,var(--cyan),var(--blue));}
+.info-card h3{font-size:1rem;font-weight:700;margin-bottom:.5rem;display:flex;align-items:center;gap:.4rem;}
+.info-card p{font-size:.82rem;color:var(--muted);line-height:1.5;}
+.info-card .val{font-size:1.5rem;font-weight:900;font-family:'Space Mono',monospace;margin:.3rem 0;}
+
+.pipeline{display:flex;flex-direction:column;gap:0;margin:1rem 0;}
+.pipe-step{display:flex;align-items:stretch;gap:0;}
+.pipe-num{width:48px;min-height:60px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:1.1rem;color:var(--purple);background:rgba(97,86,217,.06);border:1px solid rgba(97,86,217,.15);border-right:none;border-radius:10px 0 0 10px;font-family:'Space Mono',monospace;}
+.pipe-content{flex:1;padding:.8rem 1.2rem;background:var(--card);border:1px solid var(--border);border-radius:0 10px 10px 0;}
+.pipe-content h4{font-size:.9rem;font-weight:700;margin-bottom:.2rem;}
+.pipe-content p{font-size:.78rem;color:var(--muted);}
+.pipe-connector{width:48px;display:flex;justify-content:center;padding:2px 0;}
+.pipe-connector::after{content:'';display:block;width:2px;height:100%;min-height:16px;background:rgba(97,86,217,.2);}
+.pipe-reject{color:var(--red);font-weight:700;font-size:.75rem;margin-top:.15rem;}
+.pipe-ok{color:var(--green);font-weight:700;font-size:.75rem;margin-top:.15rem;}
+
+.note{padding:.8rem 1.2rem;border-radius:10px;font-size:.82rem;margin:1rem 0;display:flex;gap:.6rem;align-items:flex-start;}
+.note-info{background:rgba(68,136,255,.06);border:1px solid rgba(68,136,255,.15);color:rgba(180,200,255,.9);}
+.note-warn{background:rgba(255,170,0,.06);border:1px solid rgba(255,170,0,.15);color:rgba(255,220,150,.9);}
+.note-red{background:rgba(255,68,102,.06);border:1px solid rgba(255,68,102,.15);color:rgba(255,180,180,.9);}
+.note-icon{font-size:1.1rem;flex-shrink:0;margin-top:1px;}
+
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:1rem;}
+.label-sweet{display:inline-block;padding:.1rem .5rem;border-radius:6px;font-size:.7rem;font-weight:700;background:rgba(255,215,0,.1);color:var(--gold);border:1px solid rgba(255,215,0,.2);margin-left:.4rem;}
+
+.recap-table{width:100%;border-collapse:separate;border-spacing:0;border-radius:14px;overflow:hidden;border:1px solid var(--border);}
+.recap-table thead{background:rgba(97,86,217,.1);}
+.recap-table th{padding:.8rem 1.2rem;font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);border-bottom:1px solid var(--border);}
+.recap-table td{padding:.75rem 1.2rem;border-bottom:1px solid rgba(255,255,255,.04);font-size:.88rem;}
+.recap-table tr:last-child td{border-bottom:none;}
+.recap-table .total-row td{background:rgba(97,86,217,.06);font-weight:800;font-size:.95rem;border-top:2px solid rgba(97,86,217,.3);}
+
+.divider{height:1px;background:linear-gradient(90deg,transparent,var(--border),transparent);margin:2rem 0;}
+
+@media(max-width:700px){
+  .container{padding:1rem;}
+  .hero h1{font-size:1.8rem;}
+  .cards-grid{grid-template-columns:1fr;}
+  .two-col{grid-template-columns:1fr;}
+  .score-table{font-size:.8rem;}
+  .score-table th,.score-table td{padding:.5rem .6rem;}
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+<!-- HEADER -->
+<div class="hero">
+  <h1>🔬 MemeScanner</h1>
+  <div class="sub">Scoring Engine — État Actuel (avant refonte)</div>
+  <div class="version">v2 · 18 Avril 2026</div>
+  <div class="badge-refonte">⚡ REFONTE EN COURS</div>
+</div>
+
+<!-- OVERVIEW -->
+<div class="section">
+  <div class="section-title">
+    <span class="icon">📊</span> Vue d'ensemble
+    <span class="tag tag-pts">170 PTS MAX</span>
+  </div>
+  <div class="cards-grid">
+    <div class="info-card card-green">
+      <h3>🎯 Seuil de call</h3>
+      <div class="val pts-green">≥ 80 pts</div>
+      <p>Un token doit atteindre 80 pts minimum après tous les filtres pour être callé et envoyé sur Discord.</p>
+    </div>
+    <div class="info-card card-red">
+      <h3>🛡️ Hard Filters</h3>
+      <div class="val pts-red">8 filtres</div>
+      <p>Vérifications séquentielles obligatoires. Un seul échec = rejet immédiat, quel que soit le score.</p>
+    </div>
+    <div class="info-card card-purple">
+      <h3>🤖 IA Adaptative</h3>
+      <div class="val" style="color:var(--purple)">Auto-learn</div>
+      <p>Smart Filters — analyse les calls passés, applique pénalités sur les patterns perdants. Rebuild auto toutes les 12h.</p>
+    </div>
+    <div class="info-card card-gold">
+      <h3>👛 Wallet Tracker Required</h3>
+      <div class="val pts-gold">KOL + Trader</div>
+      <p>1 KOL ET 1 gros trader parmi les 1064 wallets trackés sont obligatoires — sinon score = 0.</p>
+    </div>
+    <div class="info-card card-blue">
+      <h3>⏱️ Fenêtre de détection</h3>
+      <div class="val pts-blue">30 min max</div>
+      <p>Un token est ignoré dès qu'il a plus de 30 minutes. La fenêtre de scan réelle est &lt; 15 min pour scorer correctement.</p>
+    </div>
+    <div class="info-card card-cyan">
+      <h3>📡 Sources de données</h3>
+      <div class="val" style="color:var(--cyan)">DEX + Helius</div>
+      <p>12 endpoints DexScreener en parallèle + Helius RPC (security, wallets, socials). Discovery Axiom toutes les 5 min.</p>
+    </div>
+  </div>
+</div>
+
+<!-- PIPELINE -->
+<div class="section">
+  <div class="section-title">
+    <span class="icon">⚙️</span> Pipeline de filtrage
+    <span class="tag tag-filter">SÉQUENTIEL · ~45s/cycle</span>
+  </div>
+  <div class="pipeline">
+    <div class="pipe-step">
+      <div class="pipe-num">1</div>
+      <div class="pipe-content">
+        <h4>📡 Collecte DexScreener — 12 endpoints en parallèle</h4>
+        <p>Profiles/boosts + 8 search queries (pumpfun, pumpswap, bonk solana…) + Discovery Axiom wallets via Helius</p>
+      </div>
+    </div>
+    <div class="pipe-connector"></div>
+    <div class="pipe-step">
+      <div class="pipe-num">2</div>
+      <div class="pipe-content">
+        <h4>🔒 hardFilterV2 — Mcap & Age <code style="font-size:.75rem;color:var(--muted)">scorer.js:3</code></h4>
+        <p>Mcap &gt; $3K · Age &lt; 30 min · Déduplication par adresse token (garde la première paire trouvée)</p>
+        <div class="pipe-reject">❌ Rejet si mcap &lt; $3K ou age &gt; 30 min</div>
+      </div>
+    </div>
+    <div class="pipe-connector"></div>
+    <div class="pipe-step">
+      <div class="pipe-num">3</div>
+      <div class="pipe-content">
+        <h4>🔍 Pré-filtre worker <code style="font-size:.75rem;color:var(--muted)">worker.js:493</code></h4>
+        <p>Mcap $5K–$200K · Adresse valide (≥ 32 chars) · Top 25 tokens gardés par pré-score sans Helius</p>
+        <div class="pipe-reject">❌ Rejet si mcap hors range ou adresse invalide</div>
+      </div>
+    </div>
+    <div class="pipe-connector"></div>
+    <div class="pipe-step">
+      <div class="pipe-num">4</div>
+      <div class="pipe-content">
+        <h4>🔬 Helius checks — batch de 3 en parallèle <code style="font-size:.75rem;color:var(--muted)">worker.js:506</code></h4>
+        <p><b>checkTokenSecurity()</b> → mint/freeze authority, top holders (wallets [2..11]), socials metadata<br>
+           <b>checkAxiomWallets()</b> → signatures pairAddr + tokenAddr + getTokenAccounts → match vs 1064 wallets</p>
+        <div class="pipe-reject">❌ Rejet si mint≠null · freeze≠null · top1 &gt; 20% · top5 &gt; 55%</div>
+      </div>
+    </div>
+    <div class="pipe-connector"></div>
+    <div class="pipe-step">
+      <div class="pipe-num">5</div>
+      <div class="pipe-content">
+        <h4>📊 scoreTokenV2() — 7 composantes <code style="font-size:.75rem;color:var(--muted)">scorer.js:82</code></h4>
+        <p>Wallets · Social · Holders · Dex Paid · Mcap · Age · Pattern → Score 0–170 pts</p>
+        <div class="pipe-reject">❌ Score = 0 si kolCount &lt; 1 OU traderCount &lt; 1 (hard filter interne)</div>
+      </div>
+    </div>
+    <div class="pipe-connector"></div>
+    <div class="pipe-step">
+      <div class="pipe-num">6</div>
+      <div class="pipe-content">
+        <h4>🔐 Hard filters post-score <code style="font-size:.75rem;color:var(--muted)">worker.js:562</code></h4>
+        <p>Axiom obligatoire · Platform whitelist · Mcap &gt; $13K</p>
+        <div class="pipe-reject">❌ no_axiom · platform · mcap&lt;13K</div>
+      </div>
+    </div>
+    <div class="pipe-connector"></div>
+    <div class="pipe-step">
+      <div class="pipe-num">7</div>
+      <div class="pipe-content">
+        <h4>🤖 Smart Filters IA <code style="font-size:.75rem;color:var(--muted)">aiEngine.js</code></h4>
+        <p>Pénalités adaptatives sur les patterns historiquement perdants. Rebuild toutes les 12h.</p>
+        <div class="pipe-reject">❌ Rejet ou pénalité si pattern à &gt; 90% de loss rate</div>
+      </div>
+    </div>
+    <div class="pipe-connector"></div>
+    <div class="pipe-step">
+      <div class="pipe-num">8</div>
+      <div class="pipe-content">
+        <h4>✅ Score ≥ 80 → CALL</h4>
+        <p>saveCall() Firebase + sendDiscordCall() + callMcap = prix frais au moment de l'envoi</p>
+        <div class="pipe-ok">✅ Sauvegardé Firebase · Discord webhook · Affiché sur le site en temps réel</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SCORING : WALLETS -->
+<div class="section">
+  <div class="section-title">
+    <span class="icon">👛</span> 1 · Wallet Tracker
+    <span class="tag tag-pts">PAS DE MAX</span>
+  </div>
+  <p style="color:var(--muted);font-size:.85rem;margin-bottom:.8rem;">1064 wallets KOL hardcodés. Détectés via signatures pairAddr + tokenAddr + getTokenAccounts Helius.</p>
+  <div class="note note-red"><span class="note-icon">🚨</span> <b>HARD FILTER INTERNE :</b> si kolCount &lt; 1 OU traderCount &lt; 1 → score = 0 et token rejeté. Il faut obligatoirement au moins 1 KOL <b>ET</b> 1 gros trader.</div>
+  <div class="two-col" style="margin-top:.8rem;">
+    <table class="score-table">
+      <thead><tr><th>Catégorie</th><th>Pts/wallet</th></tr></thead>
+      <tbody>
+        <tr><td>🏆 DEV</td><td><span class="pts pts-green">+5</span></td></tr>
+        <tr><td>⭐ KOL</td><td><span class="pts pts-green">+4</span></td></tr>
+        <tr><td>💼 Gros trader</td><td><span class="pts pts-blue">+3</span></td></tr>
+        <tr><td>🌾 Farmer</td><td><span class="pts pts-red">-3</span></td></tr>
+      </tbody>
+    </table>
+    <table class="score-table">
+      <thead><tr><th>Règle</th><th>Détail</th></tr></thead>
+      <tbody>
+        <tr><td>Cap max</td><td><span class="pts pts-muted">aucun</span></td></tr>
+        <tr><td>Sticky count</td><td>Ne baisse <b>jamais</b></td></tr>
+        <tr><td>TTL cache (count=0)</td><td>60 secondes</td></tr>
+        <tr><td>TTL cache (count&gt;0)</td><td>30 minutes</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- SCORING : SOCIAL -->
+<div class="section">
+  <div class="section-title">
+    <span class="icon">📣</span> 2 · Social
+    <span class="tag tag-pts">PAS DE MAX</span>
+  </div>
+  <p style="color:var(--muted);font-size:.85rem;margin-bottom:.8rem;">Sources : Helius getAsset metadata (json_uri fallback) + DexScreener info.socials + info.websites.</p>
+  <table class="score-table">
+    <thead><tr><th>Critère</th><th>Condition</th><th>Points</th></tr></thead>
+    <tbody>
+      <tr><td>🐦 Twitter/X</td><td>Âge ≤ 1 min</td><td><span class="pts pts-green">+15</span></td></tr>
+      <tr><td>🐦 Twitter/X</td><td>Âge &lt; 1h</td><td><span class="pts pts-blue">+5</span></td></tr>
+      <tr><td>🐦 Twitter/X</td><td>Âge ≥ 1h</td><td><span class="pts pts-muted">+2</span></td></tr>
+      <tr><td>💬 Telegram OU 🌍 Website</td><td>Présent</td><td><span class="pts pts-blue">+10</span></td></tr>
+      <tr><td>🔥 Combo</td><td>Twitter + (Telegram ou Website)</td><td><span class="pts pts-green">+8</span></td></tr>
+      <tr><td>💻 GitHub / 🖼️ Image DexScreener</td><td>Présent</td><td><span class="pts pts-blue">+8</span></td></tr>
+    </tbody>
+  </table>
+  <div class="note note-warn"><span class="note-icon">⚠️</span> <b>Fallback (aucun social détecté) :</b> âge &lt; 5min + buys ≥ 5 → +8 · holders ≥ 300 → +10 · holders ≥ 150 → +5</div>
+  <div class="note note-info"><span class="note-icon">ℹ️</span> Score social <b>sticky</b> — ne baisse jamais entre les cycles de scan.</div>
+</div>
+
+<!-- SCORING : HOLDERS -->
+<div class="section">
+  <div class="section-title">
+    <span class="icon">👥</span> 3 · Holders
+    <span class="tag tag-pts">MAX ~25 PTS</span>
+  </div>
+  <p style="color:var(--muted);font-size:.85rem;margin-bottom:.8rem;">Helius getTokenLargestAccounts · Exclut le #1 holder (LP / bonding curve) · Analyse wallets [2..11].</p>
+  <div class="two-col">
+    <table class="score-table">
+      <thead><tr><th>Top 10 holders %</th><th>Points</th></tr></thead>
+      <tbody>
+        <tr><td>≤ 20% (excellent)</td><td><span class="pts pts-green">+15</span></td></tr>
+        <tr><td>≤ 35% (bien)</td><td><span class="pts pts-blue">+10</span></td></tr>
+        <tr><td>≤ 50% (limite)</td><td><span class="pts pts-muted">+2</span></td></tr>
+        <tr><td>&gt; 50%</td><td><span class="pts pts-muted">0</span></td></tr>
+      </tbody>
+    </table>
+    <table class="score-table">
+      <thead><tr><th>Bonus Pro Traders</th><th>Condition</th><th>Pts</th></tr></thead>
+      <tbody>
+        <tr><td>+10</td><td>KOL≥1 OU trader≥2</td><td><span class="pts pts-green">✓</span></td></tr>
+        <tr><td>+10</td><td>txns≥100 + top10≤60%</td><td><span class="pts pts-green">✓</span></td></tr>
+        <tr><td>+10</td><td>txns≥50 + top10≤30%</td><td><span class="pts pts-green">✓</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- SCORING : DEX PAID -->
+<div class="section">
+  <div class="section-title">
+    <span class="icon">💰</span> 4 · Dex Paid
+    <span class="tag tag-pts">MAX 15 PTS</span>
+  </div>
+  <table class="score-table">
+    <thead><tr><th>Critère</th><th>Points</th></tr></thead>
+    <tbody>
+      <tr><td>Token dans /token-profiles ou /token-boosts DexScreener</td><td><span class="pts pts-gold">+15</span></td></tr>
+      <tr><td>info.imageUrl OU profile.icon OU profile.header présent</td><td><span class="pts pts-gold">+15</span></td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- SCORING : MCAP -->
+<div class="section">
+  <div class="section-title">
+    <span class="icon">📈</span> 5 · Mcap
+    <span class="tag tag-pts">MAX 20 PTS</span>
+  </div>
+  <table class="score-table">
+    <thead><tr><th>Range mcap</th><th>Points</th></tr></thead>
+    <tbody>
+      <tr><td>$15K – $20K <span class="label-sweet">★ SWEET SPOT</span></td><td><span class="pts pts-green">+20</span></td></tr>
+      <tr><td>$20K – $60K</td><td><span class="pts pts-blue">+15</span></td></tr>
+      <tr><td>$60K – $120K</td><td><span class="pts pts-muted">+10</span></td></tr>
+      <tr><td>&gt; $150K</td><td><span class="pts pts-red">-5</span></td></tr>
+      <tr><td>&lt; $15K</td><td><span class="pts pts-muted">0</span></td></tr>
+    </tbody>
+  </table>
+  <div class="note note-info"><span class="note-icon">ℹ️</span> Hard filter post-score : mcap &lt; $13K → rejet direct (indépendant du score).</div>
+</div>
+
+<!-- SCORING : AGE -->
+<div class="section">
+  <div class="section-title">
+    <span class="icon">⏱️</span> 6 · Age
+    <span class="tag tag-pts">MAX 20 PTS</span>
+  </div>
+  <table class="score-table">
+    <thead><tr><th>Âge de la paire</th><th>Points</th></tr></thead>
+    <tbody>
+      <tr><td>0.5 – 2 min <span class="label-sweet">★ SWEET SPOT</span></td><td><span class="pts pts-green">+20</span></td></tr>
+      <tr><td>2 – 5 min</td><td><span class="pts pts-blue">+10</span></td></tr>
+      <tr><td>5 – 15 min</td><td><span class="pts pts-muted">+5</span></td></tr>
+      <tr><td>&gt; 15 min</td><td><span class="pts pts-muted">0</span></td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- SCORING : PATTERN -->
+<div class="section">
+  <div class="section-title">
+    <span class="icon">🕯️</span> 7 · Pattern Price
+    <span class="tag tag-pts">MAX 45 PTS</span>
+  </div>
+  <p style="color:var(--muted);font-size:.85rem;margin-bottom:.8rem;">Sources : priceChange.m1/m5/h1/h6 · txns.m5/h1 · volume.m5/h1/h6 · liquidity.usd</p>
+
+  <p style="font-weight:700;margin:.8rem 0 .4rem;font-size:.85rem;">Patterns de base</p>
+  <table class="score-table">
+    <thead><tr><th>Pattern</th><th>Condition</th><th>Pts</th></tr></thead>
+    <tbody>
+      <tr><td>📶 Staircase</td><td>c1h&gt;35% + 0&lt;c5m&lt;20% + c1h&gt;c5m×3</td><td><span class="pts pts-green">+15</span></td></tr>
+      <tr><td>🔁 Multi-pumps</td><td>c1h&gt;35% + c6h&gt;55%</td><td><span class="pts pts-green">+10</span></td></tr>
+      <tr><td>📉 Correction saine</td><td>c1h entre -20% et -5%</td><td><span class="pts pts-blue">+10</span></td></tr>
+      <tr><td>💪 c6h fort</td><td>c6h &gt; 75%</td><td><span class="pts pts-blue">+5</span></td></tr>
+      <tr><td>🔒 Consolidation</td><td>|c5m| &lt; 7% + c1h &gt; 22%</td><td><span class="pts pts-blue">+8</span></td></tr>
+      <tr><td>✅ Pas de dump</td><td>c5m &gt; -25% + m1 &gt; -16%</td><td><span class="pts pts-muted">+5</span></td></tr>
+      <tr><td>📊 Vol organique</td><td>buysM5 &gt; sellsM5 × 1.55</td><td><span class="pts pts-blue">+7</span></td></tr>
+    </tbody>
+  </table>
+
+  <p style="font-weight:700;margin:.8rem 0 .4rem;font-size:.85rem;">Indicateurs avancés</p>
+  <table class="score-table">
+    <thead><tr><th>Indicateur</th><th>Condition</th><th>Pts</th></tr></thead>
+    <tbody>
+      <tr><td>🎯 Buy ratio fort</td><td>buyRatioM5 ≥ 0.58</td><td><span class="pts pts-blue">+5</span></td></tr>
+      <tr><td>📊 Vol/Mcap sain</td><td>volMcapH1 entre 1 et 7</td><td><span class="pts pts-blue">+5</span></td></tr>
+      <tr><td>🐋 Smart money</td><td>avgTxSize ≥ $80</td><td><span class="pts pts-blue">+5</span></td></tr>
+      <tr><td>💧 Liquidité migrée</td><td>liq &gt; $5K</td><td><span class="pts pts-blue">+5</span></td></tr>
+    </tbody>
+  </table>
+
+  <p style="font-weight:700;margin:.8rem 0 .4rem;font-size:.85rem;">Bonus early token (&lt; 5 min)</p>
+  <table class="score-table">
+    <thead><tr><th>Condition</th><th>Pts</th></tr></thead>
+    <tbody>
+      <tr><td>buysM5 ≥ 8 + buyRatio ≥ 0.6</td><td><span class="pts pts-green">+12</span></td></tr>
+      <tr><td>buysM5 ≥ 5 + buyRatio ≥ 0.55</td><td><span class="pts pts-green">+8</span></td></tr>
+      <tr><td>buysM5 ≥ 3</td><td><span class="pts pts-blue">+4</span></td></tr>
+      <tr><td>c5m entre 5% et 50%</td><td><span class="pts pts-green">+8</span></td></tr>
+      <tr><td>sellsM5 ≤ 1 + buysM5 ≥ 3</td><td><span class="pts pts-blue">+5</span></td></tr>
+    </tbody>
+  </table>
+
+  <p style="font-weight:700;margin:.8rem 0 .4rem;font-size:.85rem;">Bonus token 5–10 min</p>
+  <table class="score-table">
+    <thead><tr><th>Condition</th><th>Pts</th></tr></thead>
+    <tbody>
+      <tr><td>buysM5 ≥ 5 + buyRatio ≥ 0.58</td><td><span class="pts pts-blue">+8</span></td></tr>
+      <tr><td>c5m &gt; 0 + c5m &lt; 30% + buys &gt; sells</td><td><span class="pts pts-muted">+5</span></td></tr>
+    </tbody>
+  </table>
+
+  <p style="font-weight:700;margin:.8rem 0 .4rem;font-size:.85rem;">⚠️ Pénalités anti-rug</p>
+  <table class="score-table">
+    <thead><tr><th>Pattern</th><th>Condition</th><th>Pts</th></tr></thead>
+    <tbody>
+      <tr><td>🚨 Pump &amp; dump</td><td>c1h&gt;90% + c5m&lt;-28%</td><td><span class="pts pts-red">-18</span></td></tr>
+      <tr><td>⚠️ Déjà pompé</td><td>c6h&gt;140% + c1h&lt;20%</td><td><span class="pts pts-red">-15</span></td></tr>
+      <tr><td>🔴 Sell pressure</td><td>sellsM5 &gt; buysM5×1.7 + c1h&gt;30%</td><td><span class="pts pts-red">-12</span></td></tr>
+      <tr><td>📉 Dump rapide</td><td>c1h&gt;60% + c5m&lt;-20%</td><td><span class="pts pts-red">-10</span></td></tr>
+      <tr><td>🤖 Bots dominants</td><td>avgTxSize &lt; $40 + txH1 &gt; 100</td><td><span class="pts pts-red">-5</span></td></tr>
+      <tr><td>⚡ Vol manipulation</td><td>volMcapH1 &gt; 12</td><td><span class="pts pts-red">-8</span></td></tr>
+      <tr><td>📉 Buy ratio faible</td><td>buyRatioM5 &lt; 0.45</td><td><span class="pts pts-red">-5</span></td></tr>
+      <tr><td>💥 Crash brutal</td><td>c5m &lt; -35%</td><td><span class="pts pts-red">-8</span></td></tr>
+    </tbody>
+  </table>
+  <div class="note note-info"><span class="note-icon">ℹ️</span> Pattern score cappé entre 0 et 45 pts.</div>
+</div>
+
+<!-- RÉCAP -->
+<div class="section">
+  <div class="section-title">
+    <span class="icon">📋</span> Récapitulatif
+  </div>
+  <table class="recap-table">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Composante</th>
+        <th>Max</th>
+        <th>Obligatoire</th>
+        <th>Source</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>1</td><td>👛 Axiom Wallets</td><td><span class="pts pts-green">35</span></td><td>✅ KOL≥1 ET Trader≥1</td><td>Helius RPC</td></tr>
+      <tr><td>2</td><td>📣 Social</td><td><span class="pts pts-blue">~26</span></td><td>—</td><td>Helius + DexScreener</td></tr>
+      <tr><td>3</td><td>👥 Holders</td><td><span class="pts pts-blue">~25</span></td><td>—</td><td>Helius RPC</td></tr>
+      <tr><td>4</td><td>💰 Dex Paid</td><td><span class="pts pts-gold">15</span></td><td>—</td><td>DexScreener profiles</td></tr>
+      <tr><td>5</td><td>📈 Mcap</td><td><span class="pts pts-blue">20</span></td><td>sweet spot 15-20K</td><td>DexScreener</td></tr>
+      <tr><td>6</td><td>⏱️ Age</td><td><span class="pts pts-blue">20</span></td><td>sweet spot 0.5-2min</td><td>pairCreatedAt</td></tr>
+      <tr><td>7</td><td>🕯️ Pattern</td><td><span class="pts pts-green">45</span></td><td>—</td><td>DexScreener OHLCV</td></tr>
+      <tr class="total-row">
+        <td colspan="2">TOTAL</td>
+        <td><span class="pts pts-green">~170</span></td>
+        <td colspan="2">Seuil call = <span class="pts pts-gold">80 pts</span></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- RÈGLES ABSOLUES -->
+<div class="section">
+  <div class="section-title">
+    <span class="icon">🔒</span> Règles absolues — NE PAS MODIFIER
+    <span class="tag tag-warn">CRITIQUE</span>
+  </div>
+  <div class="cards-grid">
+    <div class="info-card card-red">
+      <h3>🚫 Sticky system</h3>
+      <p>Les scores Axiom et Social ne baissent <b>jamais</b> entre les cycles. Toute modification casse la logique de détection progressive.</p>
+    </div>
+    <div class="info-card card-red">
+      <h3>🚫 ATH = OHLCV réels</h3>
+      <p>L'ATH doit être calculé via candles GeckoTerminal uniquement. Jamais via priceChange (estimation incorrecte).</p>
+    </div>
+    <div class="info-card card-red">
+      <h3>🚫 Filtre MEV wicks</h3>
+      <p>Ne jamais descendre sous 5× close pour le filtre anti-MEV sur les highs de candles.</p>
+    </div>
+    <div class="info-card card-gold">
+      <h3>⚡ Push direct main</h3>
+      <p>Toujours <code>git push origin HEAD:main</code> directement. Jamais de PR / merge request.</p>
+    </div>
+    <div class="info-card card-gold">
+      <h3>🔄 Sync backend/</h3>
+      <p>Toujours synchro le dossier <code>backend/</code> ET la racine après chaque modif. Risque de divergence sinon.</p>
+    </div>
+  </div>
+</div>
+
+<!-- FEATURES REPORTÉES -->
+<div class="section">
+  <div class="section-title">
+    <span class="icon">🚧</span> Features reportées
+    <span class="tag tag-ai">À IMPLÉMENTER</span>
+  </div>
+  <table class="score-table">
+    <thead><tr><th>Feature</th><th>Signal</th><th>Impact estimé</th></tr></thead>
+    <tbody>
+      <tr><td>🕵️ Deployer history</td><td>Serial deployer = rug signal fort</td><td><span class="pts pts-red">pénalité -10 à -25</span></td></tr>
+      <tr><td>🎯 Bundle detection</td><td>Achats coordonnés dans les premiers blocs</td><td><span class="pts pts-red">pénalité ou rejet</span></td></tr>
+      <tr><td>📊 Score trend</td><td>Suivi du momentum score sur N cycles</td><td><span class="pts pts-green">bonus dynamique</span></td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="divider"></div>
+<p style="text-align:center;color:var(--muted);font-size:.75rem;padding-bottom:1rem;">MemeScanner · Scoring Engine v2 · Généré le 18 Avril 2026 · Fichier de référence avant refonte</p>
+
+</div>
+</body>
+</html>

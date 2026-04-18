@@ -114,8 +114,7 @@ export function scoreTokenV2(p, walletData = { count: 0, byGroup: { KOL: 0, 'gro
   const devCount    = byGroup['DEV']          || 0;
   const farmerCount = byGroup['farmer']       || 0;
   const axiomCount  = walletData.count        || 0;
-  let traderScore = farmerCount * (-2) + traderCount * 3 + kolCount * 4 + devCount * 5;
-  traderScore = Math.min(35, traderScore);
+  let traderScore = farmerCount * (-3) + traderCount * 3 + kolCount * 4 + devCount * 5;
   score += traderScore;
 
   // HARD FILTER — 1 KOL + 1 gros trader obligatoires
@@ -147,13 +146,13 @@ export function scoreTokenV2(p, walletData = { count: 0, byGroup: { KOL: 0, 'gro
   let socialScore = 0;
   // Twitter: dans la minute +10, dans l'heure +5, sinon +2
   if (gotX) {
-    if (ageMin <= 1) socialScore += 10;
+    if (ageMin <= 1) socialScore += 15;
     else if (ageH < 1) socialScore += 5;
     else socialScore += 2;
   }
-  if (gotTG || gotWEB) socialScore += 8;
+  if (gotTG || gotWEB) socialScore += 10;
   if (gotX && (gotTG || gotWEB)) socialScore += 8;
-  if (gotGH || hasCashback) socialScore += 5;
+  if (gotGH || hasCashback) socialScore += 8;
   if (socialScore === 0) {
     if      (ageMin < 5 && buys1 >= 5)  socialScore += 8;
     else if (holderCount >= 300)         socialScore += 10;
