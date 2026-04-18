@@ -7163,22 +7163,20 @@ function switchTab(tab){
 // RENDER HISTORY
 // ============================================================
 // ══════════════════════════════════════════════════════════
-// VRAI ATH via candles multi-sources (GeckoTerminal + Birdeye)
-// Filtré par callTime, ancré sur callMcap → indépendant du prix live
-// Cache 10min. Prend le MAX des deux sources (cross-validation).
+// VRAI ATH via DexScreener OHLCV (même source que leurs charts)
+// Filtré par callTime, ancré sur callMcap.
+// Fallback : GeckoTerminal si DexScreener ne répond pas.
+// Cache 10min.
 // ══════════════════════════════════════════════════════════
 const athCandleCache = {}; // tokenAddr → {athMcap, ts}
 
-// Calcule athMcap depuis un tableau OHLCV [ts,open,high,low,close,vol]
-// High filtré anti-MEV : high plafonné à 3× close de la même bougie.
-// Vrai pump 5min : high/close ≈ 1.0–1.5 → passe.
-// Wick MEV : high/close = 50–100× → plafonné à close×3.
-function calcAthFromOhlcv(ohlcv, callMcap, callTime, tsInSeconds=true) {
+// Calcule athMcap depuis OHLCV [ts,open,high,low,close,vol]
+// safeHigh = min(high, close×3) pour filtrer les wicks MEV
+function calcAthFromOhlcv(ohlcv, callMcap, callTime, tsMs=false) {
   if (!ohlcv?.length || !callMcap) return callMcap || 0;
-  const callSec = tsInSeconds ? Math.floor((callTime||0)/1000) : (callTime||0);
-  const relevant = callSec > 0 ? ohlcv.filter(c => c[0] >= callSec) : ohlcv;
+  const callRef = tsMs ? (callTime||0) : Math.floor((callTime||0)/1000);
+  const relevant = callRef > 0 ? ohlcv.filter(c => c[0] >= callRef) : ohlcv;
   if (!relevant.length) return callMcap;
-  // safeHigh = min(high, close×3) — élimine les spikes MEV sans tronquer les vrais pumps
   const maxSafeHigh = Math.max(...relevant.map(c => c[4] > 0 ? Math.min(c[2], c[4] * 3) : c[2]));
   const firstOpen   = relevant[0][1] || relevant[0][4];
   if (!maxSafeHigh || !firstOpen) return callMcap;
@@ -7186,39 +7184,49 @@ function calcAthFromOhlcv(ohlcv, callMcap, callTime, tsInSeconds=true) {
 }
 
 async function fetchRealAth(pairAddress, callMcap, callTime, nowMcap, tokenAddr) {
-  if (!nowMcap) return callMcap || 0;
+  if (!nowMcap || !pairAddress) return callMcap || 0;
   const cacheKey = tokenAddr || pairAddress;
-  if (!cacheKey) return callMcap || 0;
   const now = Date.now();
   const cached = athCandleCache[cacheKey];
   if (cached && now - cached.ts < 600000) return cached.athMcap;
 
-  // ── Source 1 : GeckoTerminal OHLCV 5min ──────────────────
-  async function getGeckoOhlcv(poolAddr) {
+  // ── Source 1 : DexScreener chart OHLCV (même data que leur chart) ──
+  async function getDexOhlcv() {
     try {
       const r = await fetch(
-        `https://api.geckoterminal.com/api/v2/networks/solana/pools/${poolAddr}/ohlcv/minute?aggregate=5&limit=288&currency=usd&token=base`,
+        `https://io.dexscreener.com/dex/chart/amm/v3/chains/solana/pairs/${pairAddress}?res=5&cb=1`,
         { signal: AbortSignal.timeout(6000) }
       ).then(r => r.json());
-      return r?.data?.attributes?.ohlcv_list || null;
+      // Format DexScreener : { bars: [{t, o, h, l, c, v}] }
+      const bars = r?.bars;
+      if (!bars?.length) return null;
+      // Convertir en [ts_ms, open, high, low, close, vol]
+      return bars.map(b => [b.t, b.o, b.h, b.l, b.c, b.v||0]);
+    } catch(e) { return null; }
+  }
+
+  // ── Source 2 : GeckoTerminal (fallback) ──────────────────
+  async function getGeckoOhlcv() {
+    try {
+      const r = await fetch(
+        `https://api.geckoterminal.com/api/v2/networks/solana/pools/${pairAddress}/ohlcv/minute?aggregate=5&limit=288&currency=usd&token=base`,
+        { signal: AbortSignal.timeout(6000) }
+      ).then(r => r.json());
+      return r?.data?.attributes?.ohlcv_list || null; // ts en secondes
     } catch(e) { return null; }
   }
 
   try {
-    // GeckoTerminal : essai direct pairAddress puis fallback token
-    let geckoOhlcv = null;
-    if (pairAddress) geckoOhlcv = await getGeckoOhlcv(pairAddress);
-    if (!geckoOhlcv?.length && tokenAddr) {
-      const poolsRes = await fetch(
-        `https://api.geckoterminal.com/api/v2/networks/solana/tokens/${tokenAddr}/pools?page=1`,
-        { signal: AbortSignal.timeout(6000) }
-      ).then(r => r.json()).catch(() => null);
-      const best = (poolsRes?.data||[])
-        .sort((a,b) => (b?.attributes?.volume_usd?.h24||0) - (a?.attributes?.volume_usd?.h24||0))[0];
-      if (best?.attributes?.address) geckoOhlcv = await getGeckoOhlcv(best.attributes.address);
+    // Essai DexScreener en premier
+    let ohlcv = await getDexOhlcv();
+    let tsMs = true; // DexScreener timestamps en ms
+
+    if (!ohlcv?.length) {
+      ohlcv = await getGeckoOhlcv();
+      tsMs = false; // GeckoTerminal timestamps en secondes
     }
 
-    const athMcap = calcAthFromOhlcv(geckoOhlcv, callMcap, callTime, true);
+    const athMcap = calcAthFromOhlcv(ohlcv, callMcap, callTime, tsMs);
     athCandleCache[cacheKey] = { athMcap, ts: now };
     return athMcap;
   } catch(e) {
