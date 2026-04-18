@@ -1,5 +1,7 @@
 import express from 'express';
 import cors    from 'cors';
+import { randomUUID } from 'crypto';
+import fetch from 'node-fetch';
 import { getCalls, getHistory } from './firebase.js';
 import { runScanCycle, getLiveTokens, checkTokenSecurityExport, checkAxiomWalletsExport, getHeliusStats } from './worker.js';
 import { trackOutcomes, autoAdjust, loadWeights, getAIPanel, getWinrateStats, deepAnalyze, buildSmartFilters, loadSmartFilters, checkSmartFilters, smartFilters } from './aiEngine.js';
@@ -146,6 +148,33 @@ app.get('/debug/:addr', async (req, res) => {
       checkAxiomWalletsExport(addr, pairAddr, true),
     ]);
     res.json({ ok: true, addr, sec, wData });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+// ── GMGN KLINE PROXY ─────────────────────────────────────────────
+// Frontend ne peut pas appeler GMGN directement (clé API côté serveur)
+app.get('/api/kline/:addr', async (req, res) => {
+  const { addr } = req.params;
+  const resolution = req.query.res || '1m';
+  const GMGN_API_KEY = process.env.GMGN_API_KEY;
+  if (!GMGN_API_KEY) return res.status(503).json({ ok: false, error: 'GMGN_API_KEY non configurée' });
+  if (!addr || addr.length < 32) return res.status(400).json({ ok: false, error: 'adresse invalide' });
+
+  const timestamp = Math.floor(Date.now() / 1000);
+  const client_id = randomUUID();
+  const params = new URLSearchParams({ chain: 'sol', address: addr, resolution, timestamp, client_id });
+  const url = `https://openapi.gmgn.ai/v1/market/token_kline?${params}`;
+
+  try {
+    const r = await fetch(url, {
+      headers: { 'X-APIKEY': GMGN_API_KEY, 'Content-Type': 'application/json' },
+      signal: AbortSignal.timeout(8000),
+    });
+    const json = await r.json();
+    if (json.code !== 0) return res.status(400).json({ ok: false, error: json.message || 'GMGN error' });
+    res.json({ ok: true, data: json.data });
   } catch (e) {
     res.status(500).json({ ok: false, error: e.message });
   }

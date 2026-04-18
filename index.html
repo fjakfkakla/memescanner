@@ -7213,84 +7213,31 @@ function calcAthFromOhlcv(ohlcv, callMcap, callTime, tsMs=false, mevMult=5) {
 }
 
 async function fetchRealAth(pairAddress, callMcap, callTime, nowMcap, tokenAddr) {
-  if (!nowMcap || !pairAddress) return callMcap || 0;
+  if (!callMcap) return 0;
   const cacheKey = tokenAddr || pairAddress;
   const now = Date.now();
   const cached = athCandleCache[cacheKey];
   if (cached && now - cached.ts < 600000) return cached.athMcap;
 
-  // ── Source 1 : DexScreener 5-min (précision fine, ~24h) ──
-  async function getDex5() {
-    try {
-      const r = await fetch(`https://io.dexscreener.com/dex/chart/amm/v3/chains/solana/pairs/${pairAddress}?res=5&cb=1`,{signal:AbortSignal.timeout(6000)}).then(r=>r.json());
-      const bars = r?.bars; if(!bars?.length) return null;
-      return bars.map(b=>[b.t,b.o,b.h,b.l,b.c,b.v||0]);
-    } catch(e){return null;}
-  }
-
-  // ── Source 2 : DexScreener hourly (~30 jours) ──
-  async function getDexH() {
-    try {
-      const r = await fetch(`https://io.dexscreener.com/dex/chart/amm/v3/chains/solana/pairs/${pairAddress}?res=60&cb=1`,{signal:AbortSignal.timeout(6000)}).then(r=>r.json());
-      const bars = r?.bars; if(!bars?.length) return null;
-      return bars.map(b=>[b.t,b.o,b.h,b.l,b.c,b.v||0]);
-    } catch(e){return null;}
-  }
-
-  // ── Source 3 : GeckoTerminal 5-min fallback ──
-  async function getGecko5() {
-    try {
-      const r = await fetch(`https://api.geckoterminal.com/api/v2/networks/solana/pools/${pairAddress}/ohlcv/minute?aggregate=5&limit=288&currency=usd&token=base`,{signal:AbortSignal.timeout(6000)}).then(r=>r.json());
-      return r?.data?.attributes?.ohlcv_list||null;
-    } catch(e){return null;}
-  }
-
-  // ── Source 4 : GeckoTerminal hourly (30 jours, gratuit) ──
-  async function getGeckoH() {
-    try {
-      const r = await fetch(`https://api.geckoterminal.com/api/v2/networks/solana/pools/${pairAddress}/ohlcv/hour?aggregate=1&limit=720&currency=usd&token=base`,{signal:AbortSignal.timeout(6000)}).then(r=>r.json());
-      return r?.data?.attributes?.ohlcv_list||null;
-    } catch(e){return null;}
-  }
-
-  // ── Source 5 : Defined.fi GraphQL (all-time depuis lancement, avec clé) ──
-  async function getDefinedFi() {
-    const dk = getDefinedKey(); if(!dk) return null;
-    try {
-      const from = Math.floor((callTime||0)/1000);
-      const to   = Math.floor(Date.now()/1000);
-      const q = `{getBars(symbol:"${pairAddress}:1399811149",from:${from},to:${to},resolution:"60"){o h c t}}`;
-      const _opts={method:'POST',headers:{'Content-Type':'application/json','Authorization':dk},body:JSON.stringify({query:q}),signal:AbortSignal.timeout(8000)};
-      let r = await fetch('https://graph.codex.io/graphql',_opts).then(r=>r.json()).catch(()=>null);
-      if(!r?.data) r = await fetch('https://graph.defined.fi/graphql',{..._opts,signal:AbortSignal.timeout(8000)}).then(r=>r.json()).catch(()=>null);
-      const b = r?.data?.getBars;
-      if(!b?.h?.length) return null;
-      // Convertir en [ts, open, high, low, close]
-      return b.t.map((t,i)=>[t, b.o[i], b.h[i], b.h[i], b.c[i]]);
-    } catch(e){return null;}
-  }
+  const addr = tokenAddr || pairAddress;
+  if (!addr || addr.length < 32) return callMcap;
 
   try {
-    // Tout en parallèle — zero latence ajoutée
-    const [r1,r2,r3,r4,r5] = await Promise.allSettled([getDex5(),getDexH(),getGecko5(),getGeckoH(),getDefinedFi()]);
-    const dex5   = r1.status==='fulfilled'?r1.value:null;
-    const dexH   = r2.status==='fulfilled'?r2.value:null;
-    const gecko5 = r3.status==='fulfilled'?r3.value:null;
-    const geckoH = r4.status==='fulfilled'?r4.value:null;
-    const defFi  = r5.status==='fulfilled'?r5.value:null;
+    const r = await fetch(`${API}/api/kline/${addr}?res=1m`, { signal: AbortSignal.timeout(10000) }).then(r => r.json());
+    if (!r.ok || !r.data) throw new Error('no data');
 
-    // 5-min : DexScreener (ms) ou GeckoTerminal (sec) — mevMult=5
-    const ohlcv5 = dex5||gecko5;
-    const ath5   = ohlcv5?.length ? calcAthFromOhlcv(ohlcv5, callMcap, callTime, !!dex5, 5)  : callMcap;
+    // GMGN kline — format possible : array ou { list: [...] } ou { bars: [...] }
+    const raw = Array.isArray(r.data) ? r.data : (r.data.list || r.data.bars || r.data.ohlcv || []);
+    if (!raw.length) return callMcap;
 
-    // Hourly : DexScreener (ms) ou GeckoTerminal (sec) — mevMult=20 (wicks rares sur 1h)
-    const ohlcvH = dexH||geckoH;
-    const athH   = ohlcvH?.length ? calcAthFromOhlcv(ohlcvH, callMcap, callTime, !!dexH, 20) : callMcap;
+    // Normaliser en [ts, open, high, low, close, vol] — ts en secondes
+    const ohlcv = raw.map(b => Array.isArray(b)
+      ? b
+      : [b.t ?? b.timestamp ?? b.ts, b.o ?? b.open, b.h ?? b.high, b.l ?? b.low, b.c ?? b.close, b.v ?? b.volume ?? 0]
+    );
 
-    // Defined.fi : all-time, ts secondes, pas de MEV sur candles historiques
-    const athDef = defFi?.length  ? calcAthFromOhlcv(defFi,  callMcap, callTime, false, 100) : callMcap;
-
-    const athMcap = Math.max(ath5, athH, athDef);
+    // GMGN filtre déjà les wicks MEV — on utilise mevMult=10 juste pour les extrêmes
+    const athMcap = calcAthFromOhlcv(ohlcv, callMcap, callTime, false, 10);
     athCandleCache[cacheKey] = { athMcap, ts: now };
     return athMcap;
   } catch(e) {
