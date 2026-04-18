@@ -3631,7 +3631,8 @@ const NITTER_HOSTS   = ['https://nitter.poast.org','https://nitter.privacydev.ne
 const CORS_PROXY     = 'https://corsproxy.io/?';
 
 let isUnlocked = true; // accès libre — système de codes supprimé
-let isAdminMode = false;
+const _adminExpiry = parseInt(localStorage.getItem('ms_admin_expiry')||'0');
+let isAdminMode = _adminExpiry > Date.now(); // session admin persistée 24h
 let debugModeOn = false;
 let lastScored = [];
 let refreshTimer = null;
@@ -4967,7 +4968,19 @@ function formatCode(input){let v=input.value.replace(/[^A-Za-z0-9]/g,'').toUpper
 // ============================================================
 function openCode(){document.getElementById('codeModal').classList.add('open');setTimeout(()=>document.getElementById('codeInput').focus(),100);}
 function closeCode(){document.getElementById('codeModal').classList.remove('open');document.getElementById('codeErr').style.display='none';document.getElementById('codeInput').classList.remove('err');}
-function openAdmin(){document.getElementById('adminOverlay').classList.add('open');document.getElementById('adminPwScreen').style.display='block';document.getElementById('adminContent').style.display='none';document.getElementById('pwErr').style.display='none';setTimeout(()=>document.getElementById('adminPwInp').focus(),80);}
+function openAdmin(){
+  document.getElementById('adminOverlay').classList.add('open');
+  if(isAdminMode){
+    // Session admin encore valide — bypass login
+    document.getElementById('adminPwScreen').style.display='none';
+    document.getElementById('adminContent').style.display='block';
+  } else {
+    document.getElementById('adminPwScreen').style.display='block';
+    document.getElementById('adminContent').style.display='none';
+    document.getElementById('pwErr').style.display='none';
+    setTimeout(()=>document.getElementById('adminPwInp').focus(),80);
+  }
+}
 function closeAdmin(){document.getElementById('adminOverlay').classList.remove('open');document.getElementById('adminPwInp').value='';}
 function closeDebug(){document.getElementById('debugOverlay').classList.remove('open');}
 function checkPw(){
@@ -4983,6 +4996,7 @@ function checkPw(){
       document.getElementById('adminPwScreen').style.display='none';
       document.getElementById('adminContent').style.display='block';
       isAdminMode=true;
+      localStorage.setItem('ms_admin_expiry', Date.now() + 24*3600*1000);
       // Pré-remplir les champs clés API
       const _sk=localStorage.getItem('ms_shyft_key')||''; const _bk=localStorage.getItem('ms_bitquery_key')||''; const _dk=localStorage.getItem('ms_defined_key')||'';
       if(_sk){const el=document.getElementById('adminShyftKey');if(el)el.value=_sk;}
@@ -7378,7 +7392,7 @@ function setHistSort(mode){
   document.getElementById('histSortLabel').textContent=labels[mode];
   document.querySelectorAll('#histSortMenu .rug-sort-opt').forEach(el=>el.classList.remove('active'));
   const el=document.getElementById('hsort-'+mode);if(el)el.classList.add('active');
-  renderHistory();
+  renderHistory(true); // force=true — bypass throttle 60s
 }
 // Restaurer le label au chargement
 (function(){
