@@ -7213,7 +7213,7 @@ async function fetchRealAth(pairAddress, callMcap, callTime, nowMcap, tokenAddr)
   if (!addr || addr.length < 32) return callMcap;
 
   try {
-    const r = await fetch(`${API}/api/kline/${addr}?res=1m`, { signal: AbortSignal.timeout(10000) }).then(r => r.json());
+    const r = await fetch(`${BACKEND_URL}/api/kline/${addr}?res=1m`, { signal: AbortSignal.timeout(10000) }).then(r => r.json());
     if (!r.ok || !r.data) throw new Error('no data');
 
     // GMGN kline — format possible : array ou { list: [...] } ou { bars: [...] }
