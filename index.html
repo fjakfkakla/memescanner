@@ -7177,7 +7177,8 @@ function calcAthFromOhlcv(ohlcv, callMcap, callTime, tsMs=false) {
   const callRef = tsMs ? (callTime||0) : Math.floor((callTime||0)/1000);
   const relevant = callRef > 0 ? ohlcv.filter(c => c[0] >= callRef) : ohlcv;
   if (!relevant.length) return callMcap;
-  const maxSafeHigh = Math.max(...relevant.map(c => c[4] > 0 ? Math.min(c[2], c[4] * 3) : c[2]));
+  // 5x : assez large pour les vrais pumps rapides (high/close ≈ 3-5x), assez strict pour les wicks MEV (ratio 50-100x)
+  const maxSafeHigh = Math.max(...relevant.map(c => c[4] > 0 ? Math.min(c[2], c[4] * 5) : c[2]));
   const firstOpen   = relevant[0][1] || relevant[0][4];
   if (!maxSafeHigh || !firstOpen) return callMcap;
   return Math.max(Math.round(maxSafeHigh / firstOpen * callMcap), callMcap);
@@ -8259,10 +8260,10 @@ async function renderTokenTable(tokens){
     const _pa=t.raw?.pairAddress;
     if(_pa && nowMcap>0){
       fetchRealAth(_pa, callMcap, callTime, nowMcap, t.addr).then(realAth=>{
-        // fetchRealAth est autoritaire : force=true pour écraser les valeurs corrompues Firebase
-        if(realAth > 0){
+        // fetchRealAth : update seulement si la valeur candles est plus haute (ne jamais écraser vers le bas)
+        if(realAth > (t._athMcap || 0)){
           t._athMcap = realAth;
-          updateAth(t.addr, realAth, true).catch(()=>{});
+          updateAth(t.addr, realAth).catch(()=>{});
           const athEl=document.querySelector(`[data-live-ath="${t.addr}"] .live-ath-val`);
           if(athEl)athEl.textContent=`$${fmtNum(realAth)}`;
           const xAthEl=document.querySelector(`[data-live-xath="${t.addr}"] .live-xath-val`);
