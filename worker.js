@@ -668,7 +668,7 @@ export async function runScanCycle() {
             .then(freshData => {
               const freshPair = (freshData.pairs || []).find(p => p.chainId === 'solana');
               const freshMcap = freshPair?.marketCap || freshPair?.fdv || 0;
-              if (freshMcap > 0) saveCall({ addr: token.addr, mcap: freshMcap }).catch(() => {});
+              if (freshMcap > 0) saveCall({ addr: token.addr, mcap: freshMcap, callMcap: freshMcap }).catch(() => {});
             })
             .catch(() => {});
         } catch (e) {

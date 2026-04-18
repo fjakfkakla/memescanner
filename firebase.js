@@ -42,13 +42,16 @@ export async function saveCall(token) {
   const existing = (await ref.once('value')).val();
   if (existing) {
     // Mise à jour : garder calledAt et callMcap d'origine, update le reste
-    await ref.update({
-      score:    token.score,
-      mcap:     token.mcap,
-      liq:      token.liq,
-      debug:    token.debug,
+    const updates = {
+      score:      token.score,
+      mcap:       token.mcap,
+      liq:        token.liq,
+      debug:      token.debug,
       lastSeenAt: Date.now(),
-    });
+    };
+    // Permettre la correction du callMcap juste après le call (background fresh fetch)
+    if (token.callMcap !== undefined) updates.callMcap = token.callMcap;
+    await ref.update(updates);
     return key;
   }
   // Nouveau call
