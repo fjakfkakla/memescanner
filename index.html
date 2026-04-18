@@ -7333,10 +7333,9 @@ async function fetchRealAth(pairAddress, callMcap, callTime, nowMcap, tokenAddr)
       const from = Math.floor((callTime||0)/1000);
       const to   = Math.floor(Date.now()/1000);
       const q = `{getBars(symbol:"${pairAddress}:1399811149",from:${from},to:${to},resolution:"60"){o h c t}}`;
-      const r = await fetch('https://graph.defined.fi/graphql',{
-        method:'POST', headers:{'Content-Type':'application/json','Authorization':dk},
-        body:JSON.stringify({query:q}), signal:AbortSignal.timeout(8000)
-      }).then(r=>r.json());
+      const _opts={method:'POST',headers:{'Content-Type':'application/json','Authorization':dk},body:JSON.stringify({query:q}),signal:AbortSignal.timeout(8000)};
+      let r = await fetch('https://graph.codex.io/graphql',_opts).then(r=>r.json()).catch(()=>null);
+      if(!r?.data) r = await fetch('https://graph.defined.fi/graphql',{..._opts,signal:AbortSignal.timeout(8000)}).then(r=>r.json()).catch(()=>null);
       const b = r?.data?.getBars;
       if(!b?.h?.length) return null;
       // Convertir en [ts, open, high, low, close]
