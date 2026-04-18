@@ -6791,19 +6791,9 @@ async function adminRecalcAllAth(){
     await Promise.allSettled(batch.map(async c => {
       try {
         const addr = c.addr||c.address||'';
-        let pairAddr = c.pairAddress||'';
-        // Résoudre pairAddress via DexScreener si absent
-        if(!pairAddr){
-          try{
-            const dx=await fetch(`https://api.dexscreener.com/latest/dex/tokens/${addr}`,{signal:AbortSignal.timeout(6000)}).then(r=>r.json());
-            pairAddr=dx?.pairs?.[0]?.pairAddress||'';
-            // Sauvegarder pour ne plus avoir à le refaire
-            if(pairAddr) fetch(`${FB_URL}/calls/${c.key}.json`,{method:'PATCH',body:JSON.stringify({pairAddress:pairAddr})}).catch(()=>{});
-          }catch(e){}
-        }
-        if(!pairAddr){noPair++;return;}
+        if(!addr){noPair++;return;}
         delete athCandleCache[addr];
-        const realAth = await fetchRealAth(pairAddr, c.callMcap, c.callTime, c.callMcap, addr);
+        const realAth = await fetchRealAth(addr, c.callMcap, c.callTime, c.callMcap, addr);
         if(realAth > (c.athMcap||0)){
           await fetch(`${FB_URL}/calls/${c.key}.json`,{method:'PATCH',body:JSON.stringify({athMcap:realAth})});
           updated++;
