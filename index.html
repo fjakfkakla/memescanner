@@ -3085,6 +3085,14 @@ nav.scrolled { box-shadow: 0 1px 40px rgba(0,0,0,0.6) !important; }
       <div class="admin-title">ADMIN PANEL</div>
       <p class="admin-sub">Gestion des accès — MemeScanner</p>
 
+      <!-- RECALCUL ATH -->
+      <div class="admin-section">
+        <div class="admin-section-title">ATH — Recalcul forcé</div>
+        <p style="font-size:11px;color:var(--muted);margin:0 0 12px;">Force le recalcul de tous les ATH via GeckoTerminal hourly + DexScreener + Codex.io pour chaque call historique.</p>
+        <button class="btn-admin" onclick="adminRecalcAllAth()" id="btnRecalcAth">RECALCULER TOUS LES ATH</button>
+        <div id="recalcAthProgress" style="margin-top:10px;font-size:11px;color:var(--muted);font-family:'Space Mono',monospace;"></div>
+      </div>
+
       <!-- STATS -->
       <div class="admin-section">
         <div class="admin-section-title">Statistiques</div>
@@ -6893,6 +6901,49 @@ async function loadSmartFiltersUI(){
     const data=await resp.json();
     if(data.ok)renderSmartFilters(data);
   }catch(e){}
+}
+
+async function adminRecalcAllAth(){
+  const btn = document.getElementById('btnRecalcAth');
+  const prog = document.getElementById('recalcAthProgress');
+  if(btn) btn.disabled = true;
+  prog.textContent = 'Chargement des calls Firebase…';
+
+  let calls;
+  try {
+    const fb = await fetch(`${FB_URL}/calls.json`,{signal:AbortSignal.timeout(10000)}).then(r=>r.json());
+    calls = Object.entries(fb||{}).map(([k,v])=>({key:k,...v})).filter(c=>c.pairAddress&&c.callMcap&&c.callTime);
+  } catch(e) { prog.textContent = 'Erreur chargement Firebase: '+e.message; if(btn)btn.disabled=false; return; }
+
+  prog.textContent = `${calls.length} calls trouvés. Recalcul en cours…`;
+  let updated=0, skipped=0, i=0;
+
+  // Traitement par batch de 5 pour éviter de surcharger les APIs
+  for(let b=0; b<calls.length; b+=5){
+    const batch = calls.slice(b, b+5);
+    await Promise.allSettled(batch.map(async c => {
+      try {
+        // Vider le cache pour forcer un vrai recalcul
+        delete athCandleCache[c.addr||c.address||''];
+        const addr = c.addr||c.address||'';
+        const realAth = await fetchRealAth(c.pairAddress, c.callMcap, c.callTime, c.callMcap, addr);
+        if(realAth > (c.athMcap||0)){
+          const key = addr.replace(/[.#$\/\[\]]/g,'_');
+          await fetch(`${FB_URL}/calls/${key}.json`,{method:'PATCH',body:JSON.stringify({athMcap:realAth})});
+          updated++;
+        } else { skipped++; }
+      } catch(e){ skipped++; }
+    }));
+    i += batch.length;
+    prog.textContent = `Progression : ${i}/${calls.length} — ${updated} mis à jour, ${skipped} inchangés`;
+    await new Promise(r=>setTimeout(r,400)); // petit délai inter-batch
+  }
+
+  prog.innerHTML = `<span style="color:#00ff88">✓ Terminé — ${updated} ATH mis à jour sur ${calls.length} calls.</span>`;
+  if(btn){ btn.disabled=false; btn.textContent='RELANCER'; }
+  // Refresh UI
+  try{ renderHistory(); } catch(e){}
+  try{ updateWrStats(Object.values(JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}')));} catch(e){}
 }
 
 async function adminEditAth(key,addr,sym){
