@@ -6911,32 +6911,42 @@ async function adminRecalcAllAth(){
 
   let calls;
   try {
-    const fb = await fetch(`${FB_URL}/calls.json`,{signal:AbortSignal.timeout(10000)}).then(r=>r.json());
-    calls = Object.entries(fb||{}).map(([k,v])=>({key:k,...v})).filter(c=>c.pairAddress&&c.callMcap&&c.callTime);
+    const fb = await fetch(`${FB_URL}/calls.json`,{signal:AbortSignal.timeout(20000)}).then(r=>r.json());
+    // Inclure TOUS les calls avec au moins addr + callMcap — pairAddress sera résolu si absent
+    calls = Object.entries(fb||{}).map(([k,v])=>({key:k,...v}))
+      .filter(c=>(c.addr||c.address)&&c.callMcap&&c.callTime);
   } catch(e) { prog.textContent = 'Erreur chargement Firebase: '+e.message; if(btn)btn.disabled=false; return; }
 
   prog.textContent = `${calls.length} calls trouvés. Recalcul en cours…`;
-  let updated=0, skipped=0, i=0;
+  let updated=0, skipped=0, noPair=0, i=0;
 
-  // Traitement par batch de 5 pour éviter de surcharger les APIs
   for(let b=0; b<calls.length; b+=5){
     const batch = calls.slice(b, b+5);
     await Promise.allSettled(batch.map(async c => {
       try {
-        // Vider le cache pour forcer un vrai recalcul
-        delete athCandleCache[c.addr||c.address||''];
         const addr = c.addr||c.address||'';
-        const realAth = await fetchRealAth(c.pairAddress, c.callMcap, c.callTime, c.callMcap, addr);
+        let pairAddr = c.pairAddress||'';
+        // Résoudre pairAddress via DexScreener si absent
+        if(!pairAddr){
+          try{
+            const dx=await fetch(`https://api.dexscreener.com/latest/dex/tokens/${addr}`,{signal:AbortSignal.timeout(6000)}).then(r=>r.json());
+            pairAddr=dx?.pairs?.[0]?.pairAddress||'';
+            // Sauvegarder pour ne plus avoir à le refaire
+            if(pairAddr) fetch(`${FB_URL}/calls/${c.key}.json`,{method:'PATCH',body:JSON.stringify({pairAddress:pairAddr})}).catch(()=>{});
+          }catch(e){}
+        }
+        if(!pairAddr){noPair++;return;}
+        delete athCandleCache[addr];
+        const realAth = await fetchRealAth(pairAddr, c.callMcap, c.callTime, c.callMcap, addr);
         if(realAth > (c.athMcap||0)){
-          const key = addr.replace(/[.#$\/\[\]]/g,'_');
-          await fetch(`${FB_URL}/calls/${key}.json`,{method:'PATCH',body:JSON.stringify({athMcap:realAth})});
+          await fetch(`${FB_URL}/calls/${c.key}.json`,{method:'PATCH',body:JSON.stringify({athMcap:realAth})});
           updated++;
         } else { skipped++; }
       } catch(e){ skipped++; }
     }));
     i += batch.length;
-    prog.textContent = `Progression : ${i}/${calls.length} — ${updated} mis à jour, ${skipped} inchangés`;
-    await new Promise(r=>setTimeout(r,400)); // petit délai inter-batch
+    prog.textContent = `Progression : ${i}/${calls.length} — ${updated} mis à jour, ${skipped} inchangés, ${noPair} sans pair`;
+    await new Promise(r=>setTimeout(r,400));
   }
 
   prog.innerHTML = `<span style="color:#00ff88">✓ Terminé — ${updated} ATH mis à jour sur ${calls.length} calls.</span>`;
