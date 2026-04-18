@@ -125,7 +125,7 @@ async function discoverTokensFromAxiom() {
           trackHelius();
           const sigData = await sigResp.json();
           const sigs = (sigData?.result || [])
-            .filter(s => s?.signature && (!s.blockTime || (now/1000 - s.blockTime) < 600)) // dernières 10 min
+            .filter(s => s?.signature && (!s.blockTime || (now/1000 - s.blockTime) < 1800)) // dernières 30 min (was 10min)
             .map(s => s.signature);
 
           if (sigs.length === 0) { discoveryCache.set(wallet, { ts: now, tokens: [] }); return; }
@@ -328,15 +328,19 @@ async function checkTokenSecurity(tokenAddr, pairAddr = null) {
 async function checkAxiomWallets(tokenAddr, pairAddr = null, deep = false) {
   const cached = swCache.get(tokenAddr);
   if (cached) {
-    // 0-count entries expire après 90s (wallet pas encore arrivé → retenter vite)
+    // 0-count entries expire après 60s (wallet pas encore arrivé → retenter vite)
     // Entries avec wallets → 30min (données stables)
-    const ttl = (cached.result?.count || 0) === 0 ? 90000 : 1800000;
+    const ttl = (cached.result?.count || 0) === 0 ? 60000 : 1800000;
     if (Date.now() - cached.ts < ttl) return cached.result;
   }
-  if (!canCallHelius()) return { count: 0, wallets: [], clustered: false };
+  if (!canCallHelius()) {
+    // Helius bloqué → utiliser le cache même périmé plutôt que retourner 0
+    if (cached) return cached.result;
+    return { count: 0, wallets: [], clustered: false, byGroup: { KOL: 0, 'gros trader': 0, DEV: 0, farmer: 0 } };
+  }
 
   const sigAddr  = pairAddr || tokenAddr;
-  const sigLimit = deep ? 100 : 30; // Réduit: was 500/100, économise ~70% crédits Enhanced API
+  const sigLimit = deep ? 100 : 50; // 50 en normal (was 30), meilleure détection KOL wallets
 
   try {
     trackHelius(3); // 2x getSignaturesForAddress + getTokenAccounts
@@ -363,10 +367,10 @@ async function checkAxiomWallets(tokenAddr, pairAddr = null, deep = false) {
       if (r.status === 'fulfilled') {
         const sigs = r.value?.result || [];
         // Prendre les plus récentes uniquement (suffisant pour détecter Axiom wallets)
-        sigs.slice(0, deep ? 50 : 20).forEach(s => { if (s?.signature) sigSet.add(s.signature); });
+        sigs.slice(0, deep ? 50 : 35).forEach(s => { if (s?.signature) sigSet.add(s.signature); });
       }
     });
-    const sigList = [...sigSet].slice(0, deep ? 80 : 30); // Max 30 sigs en normal, 80 en deep
+    const sigList = [...sigSet].slice(0, deep ? 80 : 50); // Max 50 sigs en normal (was 30), 80 en deep
     const allOwners = new Set();
 
     if (sigList.length > 0) {

@@ -4,7 +4,7 @@ function hardFilterV2(p) {
   const ageH = (Date.now() - (p.pairCreatedAt || 0)) / 3600000;
   const mcap = p.marketCap || p.fdv || 0;
   if (mcap < 3000) return { pass: false, reason: `mcap $${mcap} < $3K` };
-  if (ageH > 0.33) return { pass: false, reason: `trop vieux ${(ageH*60).toFixed(0)}min` };
+  if (ageH > 0.5) return { pass: false, reason: `trop vieux ${(ageH*60).toFixed(0)}min` };
   return { pass: true, ageH };
 }
 
