@@ -1210,6 +1210,14 @@ footer{border-top:1px solid var(--border);}
 .sc-header{display:flex;align-items:center;justify-content:space-between;
   padding:.8rem 1rem .65rem;border-bottom:1px solid rgba(97,86,217,.08);
   background:rgba(0,0,0,.25);gap:.4rem;min-width:0;}
+/* Live card minimal */
+.sc-live-card{border-color:rgba(255,255,255,.07);box-shadow:0 2px 12px rgba(0,0,0,.35);}
+.sc-live-card::before{display:none;}
+.sc-live-card::after{display:none;}
+.sc-live-card:hover{transform:translateY(-2px);border-color:rgba(255,255,255,.14);box-shadow:0 6px 20px rgba(0,0,0,.4);}
+.sc-live-head{display:flex;align-items:center;justify-content:space-between;padding:.75rem 1rem .3rem;}
+.sc-live-ago{font-size:.65rem;color:rgba(255,255,255,.3);font-family:var(--font-mono);}
+.sc-live-time{font-size:.62rem;color:rgba(255,255,255,.2);padding:0 1rem .55rem;font-family:var(--font-mono);}
 .sc-sym{font-family:var(--font-head);font-size:1.1rem;font-weight:700;color:#fff;
   flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
   text-shadow:0 0 12px rgba(97,86,217,.3);}
@@ -8261,6 +8269,7 @@ async function renderTokenTable(tokens){
     const callData=await getCallData(t.addr);
     const callMcap=callData?.callMcap||t._callMcap||t.mcap;
     const callTime=t._callTime||callData?.callTime||Date.now();
+    if(Date.now()-callTime>10*60*1000)continue; // expire après 10 min
     // nowMcap = prix live (DexScreener) ou fallback sur mcap du scan
     const liveEntry=livePriceMap[t.addr]||{now:0,athEst:0};
     const nowMcap=liveEntry.now||t.mcap||0;
@@ -8395,50 +8404,34 @@ async function renderTokenTable(tokens){
       : t.pvp==='loser'
         ? `<span class="sc-pvp-badge pvp-l">⚔️ PVP LOSE</span>`
         : '';
-    cards.push(`<div class="sc-card ${pvpCls}">
-      <div class="sc-header">
-        <span style="font-size:1.2rem;flex-shrink:0">${scoreEmoji}</span>
+    cards.push(`<div class="sc-card sc-live-card">
+      <div class="sc-live-head">
         <span class="sc-sym">${t.symbol}</span>
-        <div style="display:flex;gap:.3rem;align-items:center;flex-shrink:0">
-          ${pvpBadge}${entryBadge}${kolBadge}${axiomBadge}${debugBtn}
-          <span class="sc-badge ${badgeCls}">${label.text} ${t.score}</span>
-        </div>
+        <span class="sc-live-ago">${timeAgo(callTime)}</span>
       </div>
-      <div class="sc-calltime">
-        <span style="opacity:.5">⏰</span>
-        <span>CALLED AT: ${callHeure}</span>
-        <span style="margin-left:auto;opacity:.5;font-size:.56rem">${timeAgo(callTime)} ago</span>
-      </div>
-      ${secHtml}
-      ${metricsHtml}
-      ${scoresHtml}
-      ${walletsHtml}
+      <div class="sc-live-time">${callHeure}</div>
       <div class="sc-stats">
         <div class="sc-stat">
-          <div class="sc-stat-lbl">📍 CALL</div>
+          <div class="sc-stat-lbl">CALL</div>
           <div class="sc-stat-val" style="color:#ffaa44">$${fmtNum(callMcap)}</div>
         </div>
         <div class="sc-stat" data-live-addr="${t.addr}" data-call-mcap="${callMcap}">
-          <div class="sc-stat-lbl">⏰ NOW</div>
+          <div class="sc-stat-lbl">NOW</div>
           <div class="sc-stat-val live-mcap-val" style="color:${nowColor}">$${fmtNum(nowMcap||t.mcap)}</div>
-          <div class="live-mult-val" style="font-size:.65rem;color:${nowMultColor};font-weight:700">×${nowMult.toFixed(2)}</div>
         </div>
         <div class="sc-stat" data-live-ath="${t.addr}" data-call-mcap2="${callMcap}">
-          <div class="sc-stat-lbl">🏆 ATH</div>
+          <div class="sc-stat-lbl">ATH</div>
           <div class="sc-stat-val live-ath-val" style="color:${athColor}">$${fmtNum(athMcap)}</div>
         </div>
         <div class="sc-stat gold" data-live-xath="${t.addr}">
-          <div class="sc-stat-lbl">🎯 × ATH</div>
-          <div class="sc-stat-val live-xath-val" style="color:${xColor};font-size:.82rem">${xAth.toFixed(2)}x</div>
+          <div class="sc-stat-lbl">× ATH</div>
+          <div class="sc-stat-val live-xath-val" style="color:${xColor}">${xAth.toFixed(2)}x</div>
         </div>
       </div>
       <div class="sc-footer">
-        <div style="display:flex;gap:.35rem;align-items:center;flex-wrap:wrap;flex:1;min-width:0">
-          <span class="sc-addr" data-addr="${t.addr}" onclick="copyHistCA(this)" title="Copier CA">${t.addr.slice(0,6)}...${t.addr.slice(-4)} 📋</span>
-          <span style="font-family:var(--font-mono);font-size:.56rem;color:rgba(0,255,136,.35)">${d.ageH?Math.round(d.ageH*60):0}min · $${fmtNum(t.liq)} liq</span>
-        </div>
-        <div style="display:flex;gap:.32rem;align-items:center;flex-shrink:0">
-          <button class="sc-btn-pnl" onclick="openScannerPnl('${t.addr}','${t.symbol}',${callMcap},${athMcap},${t.score})">📤 PnL</button>
+        <span class="sc-addr" data-addr="${t.addr}" onclick="copyHistCA(this)" title="Copier CA">${t.addr.slice(0,6)}...${t.addr.slice(-4)}</span>
+        <div style="display:flex;gap:.32rem;align-items:center">
+          <button class="sc-btn-pnl" onclick="openScannerPnl('${t.addr}','${t.symbol}',${callMcap},${athMcap},${t.score})">PnL</button>
           <a href="${t.pairUrl}" target="_blank" class="sc-btn-dex">DEX →</a>
         </div>
       </div>
