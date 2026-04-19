@@ -467,7 +467,9 @@ export async function runScanCycle() {
     const gmgnWalletMap = new Map(); // addr → wData synthétique depuis GMGN
     try {
       const gmgnTokens = await gmgnFetchTrenches();
-      if (gmgnTokens.length > 0) console.log('[GMGN] sample fields:', JSON.stringify(gmgnTokens[0], null, 2).slice(0, 2000));
+      console.log('[GMGN] tokens count:', gmgnTokens.length);
+      if (gmgnTokens.length > 0) console.log('[GMGN] sample fields:', JSON.stringify(gmgnTokens[0]).slice(0, 3000));
+      else console.log('[GMGN] key set?', !!process.env.GMGN_API_KEY);
       const existingAddrs = new Set(allPairs.map(p => p.baseToken?.address).filter(Boolean));
       const newGmgnAddrs = [];
       for (const t of gmgnTokens) {
