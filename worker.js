@@ -465,21 +465,26 @@ export async function runScanCycle() {
     // 1b. Découverte GMGN trenches (renowned≥1 + smart_degen≥1)
     // Construit aussi une Map addr→wData pour éviter les appels Helius sur ces tokens
     const gmgnWalletMap = new Map(); // addr → wData synthétique depuis GMGN
+    const gmgnRawMap   = new Map(); // addr → champs bruts GMGN pour analyse
     try {
       const gmgnTokens = await gmgnFetchTrenches();
-      console.log('[GMGN] tokens count:', gmgnTokens.length);
-      if (gmgnTokens.length > 0) {
-        const sample = JSON.stringify(gmgnTokens[0]);
-        const keys = Object.keys(gmgnTokens[0]).sort();
-        console.log('[GMGN] ALL KEYS:', keys.join(', '));
-        for(let i=0;i<sample.length;i+=1500) console.log('[GMGN] data chunk'+(i/1500|0)+':', sample.slice(i,i+1500));
-      }
       const existingAddrs = new Set(allPairs.map(p => p.baseToken?.address).filter(Boolean));
       const newGmgnAddrs = [];
       for (const t of gmgnTokens) {
         const addr = t.address || t.token_address;
         if (!addr) continue;
         gmgnWalletMap.set(addr, gmgnToWalletData(t));
+        gmgnRawMap.set(addr, {
+          net_buy_24h:          t.net_buy_24h          ?? null,
+          bundler_mhr:          t.bundler_mhr           ?? null,
+          fresh_wallet_rate:    t.fresh_wallet_rate     ?? null,
+          rat_trader_amount_rate: t.rat_trader_amount_rate ?? null,
+          bot_degen_rate:       t.bot_degen_rate        ?? null,
+          is_wash_trading:      t.is_wash_trading       ?? null,
+          creator_token_status: t.creator_token_status  ?? null,
+          bundler_trader_amount_rate: t.bundler_trader_amount_rate ?? null,
+          private_vault_hold_rate: t.private_vault_hold_rate ?? null,
+        });
         if (!existingAddrs.has(addr)) newGmgnAddrs.push(addr);
       }
       if (newGmgnAddrs.length > 0) {
@@ -714,6 +719,7 @@ export async function runScanCycle() {
             debug:      token.debug,
             walletData: token.walletData,
             security:   token.raw?.security || null,
+            gmgn:       gmgnRawMap.get(token.addr) || null,
             calledAt:   now,
           });
           token.mcap = callMcap;
