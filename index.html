@@ -7632,7 +7632,29 @@ async function debugCA(){
     const sec   = backendResp.sec || null;
     // Toujours re-checker wallets côté frontend : le backend retourne l'ancien format sans byGroup
     // checkAxiomWallets utilise WALLET_TRACKER local (groupes KOL/trader/DEV/farmer à jour)
-    const wData = await checkAxiomWallets(addr, pairAddr, true);
+    const wDataFresh = await checkAxiomWallets(addr, pairAddr, true);
+    // Récupère walletData sauvegardé au moment du call (sticky — évite de perdre les détections passées)
+    let wData = wDataFresh;
+    try {
+      const key = addr.replace(/[.#$\/\[\]]/g,'_');
+      const fbCall = await fetch(`${FB_URL}/calls/${key}.json`,{signal:AbortSignal.timeout(5000)}).then(r=>r.json()).catch(()=>null);
+      if(fbCall?.walletData){
+        const saved = fbCall.walletData;
+        const savedByGroup = saved.byGroup || {};
+        const freshByGroup = wDataFresh.byGroup || {};
+        wData = {
+          count: Math.max(wDataFresh.count||0, saved.count||0),
+          wallets: (saved.count||0) >= (wDataFresh.count||0) ? (saved.wallets||[]) : (wDataFresh.wallets||[]),
+          clustered: Math.max(wDataFresh.count||0, saved.count||0) >= 2,
+          byGroup: {
+            KOL:          Math.max(freshByGroup.KOL||0,          savedByGroup.KOL||0),
+            'gros trader':Math.max(freshByGroup['gros trader']||0, savedByGroup['gros trader']||0),
+            DEV:          Math.max(freshByGroup.DEV||0,           savedByGroup.DEV||0),
+            farmer:       Math.max(freshByGroup.farmer||0,        savedByGroup.farmer||0),
+          },
+        };
+      }
+    } catch(e) {}
 
     // 4. Score
     let score=0,traderScore=0,socialScore=0,holderScore=0,platformScore=0,mcapScore=0,ageScore=0,patternScore=0;
