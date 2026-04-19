@@ -416,6 +416,7 @@ export const WALLET_TRACKER = new Map([
   ["G8n4gBsc9Z4P1q5JFJQUfxZs58zD7kF1CqowcTft18RL", "farmer"],
   ["A9RTpxtwdvd8rHRCHfsgEHkQkWhBwLeJL3RYvBYozNKZ", "KOL"],
   ["FAUtLHoRj3oioWEHiwZzvTbQme39Hh4DpwPY3Zk2Eqe9", "KOL"],
+  ["Hw5UKBU5k3YudnGwaykj5E8cYUidNMPuEewRRar5Xoc7", "KOL"],
   ["7i4Nq5qhRZtyQ483y2C7w74GRnAaQcofzG4QTCXUEEH6", "DEV"],
   ["EYfdt8cNFyyTEJKp18dcoVbgUHDnM1SK3bT2uKj9XXHc", "DEV"],
   ["A2MwjTFz4jzT1mY4xrqkwm1vAbZDrqnA6QJoyTAU8Djw", "KOL"],
