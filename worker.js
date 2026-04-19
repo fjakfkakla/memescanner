@@ -468,8 +468,12 @@ export async function runScanCycle() {
     try {
       const gmgnTokens = await gmgnFetchTrenches();
       console.log('[GMGN] tokens count:', gmgnTokens.length);
-      if (gmgnTokens.length > 0) console.log('[GMGN] sample fields:', JSON.stringify(gmgnTokens[0]).slice(0, 3000));
-      else console.log('[GMGN] key set?', !!process.env.GMGN_API_KEY);
+      if (gmgnTokens.length > 0) {
+        const sample = JSON.stringify(gmgnTokens[0]);
+        const keys = Object.keys(gmgnTokens[0]).sort();
+        console.log('[GMGN] ALL KEYS:', keys.join(', '));
+        for(let i=0;i<sample.length;i+=1500) console.log('[GMGN] data chunk'+(i/1500|0)+':', sample.slice(i,i+1500));
+      }
       const existingAddrs = new Set(allPairs.map(p => p.baseToken?.address).filter(Boolean));
       const newGmgnAddrs = [];
       for (const t of gmgnTokens) {
