@@ -6,21 +6,37 @@ const DEFAULT_CFG = {
   enabled: true,
   capital: 400,
   posSize: 50,
-  tp1: 1.3, tp2: 1.5, tp3: 2.0, tp4: 3.0, tp5: 5.0, tp6: 10.0, tp7: 15.0, tp8: 20.0,
   sl: 20,
   minScore: 0,
+  tpLevels: [
+    { mult: 1.3,  frac: 30  },
+    { mult: 1.5,  frac: 30  },
+    { mult: 2.0,  frac: 20  },
+    { mult: 3.0,  frac: 60  },
+    { mult: 5.0,  frac: 25  },
+    { mult: 10.0, frac: 50  },
+    { mult: 15.0, frac: 50  },
+    { mult: 20.0, frac: 100 },
+  ],
 };
 
-const TP_LEVELS = [
-  { n: 1, key: 'tp1', frac: 0.30 },
-  { n: 2, key: 'tp2', frac: 0.30 },
-  { n: 3, key: 'tp3', frac: 0.20 },
-  { n: 4, key: 'tp4', frac: 0.60 },
-  { n: 5, key: 'tp5', frac: 0.25 },
-  { n: 6, key: 'tp6', frac: 0.50 },
-  { n: 7, key: 'tp7', frac: 0.50 },
-  { n: 8, key: 'tp8', frac: 1.00 },
-];
+// frac est stocké en % (0-100) dans la config, on divise par 100 pour calculer
+// Rétrocompatibilité avec l'ancien format tp1..tp8 (fracs fixes)
+const LEGACY_FRACS = [30, 30, 20, 60, 25, 50, 50, 100];
+
+function getTpLevels(cfg) {
+  if (cfg.tpLevels && Array.isArray(cfg.tpLevels) && cfg.tpLevels.length) {
+    return cfg.tpLevels.map(tp => ({
+      mult: tp.mult,
+      fracDecimal: tp.frac > 1 ? tp.frac / 100 : tp.frac,
+    }));
+  }
+  // Legacy tp1..tp8
+  return LEGACY_FRACS.map((frac, i) => {
+    const mult = cfg[`tp${i + 1}`];
+    return mult ? { mult, fracDecimal: frac / 100 } : null;
+  }).filter(Boolean);
+}
 
 function sanitizeAddr(addr) {
   return addr.replace(/[.#$\/\[\]]/g, '_');
@@ -184,10 +200,12 @@ async function checkPositions(cfg) {
       exitReason = 'SL';
     } else {
       // TPs séquentiels
-      for (const tp of TP_LEVELS) {
-        const reason = `TP${tp.n}`;
-        if (!hitReasons.includes(reason) && xNow >= cfg[tp.key] && remainFraction > 0.001) {
-          doSell(reason, tp.frac);
+      const levels = getTpLevels(cfg);
+      for (let i = 0; i < levels.length; i++) {
+        const tp = levels[i];
+        const reason = `TP${i + 1}`;
+        if (!hitReasons.includes(reason) && xNow >= tp.mult && remainFraction > 0.001) {
+          doSell(reason, tp.fracDecimal);
         }
       }
       if (remainFraction <= 0.001) {
