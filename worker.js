@@ -634,10 +634,28 @@ export async function runScanCycle() {
         // Marquer les tokens dex paid (profil ou boost payé sur DexScreener)
         const tokenAddr = p.baseToken?.address || '';
         if (paidTokens.has(tokenAddr)) p._isPaid = true;
-        // Aussi checker info.imageUrl et profile (indicateurs de profil payé)
         if (p.info?.imageUrl || p.profile?.icon || p.profile?.header) p._isPaid = true;
 
-        const scored = scoreTokenV2(p, wData);
+        // Merge GMGN + Helius wallet data — GMGN couvre les achats pump.fun pré-migration
+        // que Helius ne voit pas sur le pair pumpswap
+        const gmgnWD = gmgnWalletMap.get(tokenAddr);
+        let effectiveWData = wData;
+        if (gmgnWD && gmgnWD.count > (wData.count || 0)) {
+          effectiveWData = {
+            count:    gmgnWD.count,
+            byGroup:  {
+              KOL:           Math.max(wData.byGroup?.KOL           || 0, gmgnWD.byGroup?.KOL           || 0),
+              'gros trader': Math.max(wData.byGroup?.['gros trader']|| 0, gmgnWD.byGroup?.['gros trader']|| 0),
+              DEV:           Math.max(wData.byGroup?.DEV            || 0, gmgnWD.byGroup?.DEV            || 0),
+              farmer:        Math.max(wData.byGroup?.farmer         || 0, gmgnWD.byGroup?.farmer         || 0),
+            },
+            wallets:   wData.wallets || [],
+            clustered: wData.clustered || gmgnWD.clustered,
+            source:    'gmgn+helius',
+          };
+        }
+
+        const scored = scoreTokenV2(p, effectiveWData);
 
         // Sticky Axiom
         const hist      = scoreHistory.get(scored.addr) || {};
@@ -652,7 +670,7 @@ export async function runScanCycle() {
         // HARD FILTER 0 — Axiom obligatoire (bypass si DexScreener boost/paid)
         // Les tokens DS paid ont payé $100-500 → signal de commitment réel
         // Ils passent sans Axiom mais doivent encore scorer ≥80 + tous les autres filtres
-        if ((wData.count || 0) < 1 && !p._isPaid) { rejected['no_axiom'] = (rejected['no_axiom'] || 0) + 1; continue; }
+        if ((effectiveWData.count || 0) < 1 && !p._isPaid) { rejected['no_axiom'] = (rejected['no_axiom'] || 0) + 1; continue; }
 
         // HARD FILTER 1 — Platform Pump/Bonk/Raydium/Bags
         const dexId  = (p.dexId || '').toLowerCase();
