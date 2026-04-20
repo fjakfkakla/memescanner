@@ -841,8 +841,15 @@ function checkSmartFilters(tokenDebug) {
   const reasons = [];
   let totalPenalty = 0;
 
+  // Pour les tokens jeunes (<30min), c1h et c6h reflètent la même période de vie
+  // → skip c6h si abs(c6h - c1h) < 10 pour éviter la double pénalité
+  const c1h = tokenDebug.c1h || 0;
+  const c6h = tokenDebug.c6h || 0;
+  const skipC6h = Math.abs(c6h - c1h) < 10 && c6h !== 0;
+
   // ── Single rules → pénalité proportionnelle ──
   for (const rule of smartFilters.singleRules) {
+    if (rule.feature === 'c6h' && skipC6h) continue; // redondant avec c1h sur token jeune
     const val = tokenDebug[rule.feature];
     if (val === undefined || val === null || val === 0) continue;
 
