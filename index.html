@@ -3601,7 +3601,7 @@ window.addEventListener('unhandledrejection', function(e) { console.error('Promi
 // CONFIG
 // ============================================================
 // ADMIN_PW supprimé du frontend — vérification via backend Railway uniquement
-const HELIUS_KEY = 'df64cfbc-e1e4-4fdf-9ff3-a8fa9abd42d3'; // conservé pour debug CA local uniquement
+const HELIUS_KEY = 'a7e92893-13fe-44af-9a26-b8790a78ff4d'; // conservé pour debug CA local uniquement
 const HELIUS_RPC = `https://mainnet.helius-rpc.com/?api-key=${HELIUS_KEY}`;
 const PUBLIC_RPC = 'https://api.mainnet-beta.solana.com'; // RPC gratuit pour appels standard (getAccountInfo, getSignaturesForAddress, etc.)
 const getShyftKey    = () => localStorage.getItem('ms_shyft_key')    || '';
@@ -7819,12 +7819,20 @@ async function debugCA(){
     const sellsH1 = pairData?.txns?.h1?.sells || 0;
     const buyRatioM5 = buysM5 / ((buysM5+sellsM5)||1);
     const buyRatioH1d = buysH1 / ((buysH1+sellsH1)||1);
-    const twitterUrl = pairData?.info?.socials?.find(s=>s.type==='twitter')?.url || '';
-    const tgUrl      = pairData?.info?.socials?.find(s=>s.type==='telegram')?.url || '';
-    const webUrl     = pairData?.info?.websites?.[0]?.url || '';
+    // Socials : DexScreener en priorité, sinon Helius sec flags
+    const twitterUrl = pairData?.info?.socials?.find(s=>s.type==='twitter')?.url
+      || pairData?.baseToken?.info?.socials?.find(s=>s.type==='twitter')?.url || '';
+    const tgUrl = pairData?.info?.socials?.find(s=>s.type==='telegram')?.url
+      || pairData?.baseToken?.info?.socials?.find(s=>s.type==='telegram')?.url || '';
+    const webUrl = pairData?.info?.websites?.[0]?.url
+      || pairData?.baseToken?.info?.websites?.[0]?.url || '';
+    // Flags Helius (source de vérité pour le score)
+    const hasX   = sec?.hasTwitter  || dbHasX  || !!twitterUrl;
+    const hasTG  = sec?.hasTelegram || dbHasTG || !!tgUrl;
+    const hasWEB = sec?.hasWebsite  || dbHasWEB|| !!webUrl;
     const catDetails = {
       'Tracker':  `KOL:${wg['KOL']||0} Trader:${wg['gros trader']||0} DEV:${wg['DEV']||0} Farmer:${wg['farmer']||0}`,
-      'Social':   `${dbHasX?'𝕏 ':''}${dbHasTG?'TG ':''}${dbHasWEB?'WEB ':''} | Helius:${sec?'✅':'❌'}`,
+      'Social':   `${hasX?'𝕏 ':''}${hasTG?'TG ':''}${hasWEB?'WEB ':''} | Helius:${sec?'✅':'❌'}`,
       'Holders':  `top10=${dbTop10.toFixed(0)}% | ${dbHolderCount} comptes`,
       'Token':    `DEX paid: ${d.platformScore>0?'✅':'❌'}`,
       'Mcap':     `$${fmtNum(mcap)}`,
@@ -7836,7 +7844,7 @@ async function debugCA(){
         const addrs = wbg[g]||[];
         return `<b style="color:${groupColors[g]||'#fff'}">${groupEmojis[g]||''} ${g}: ${n}</b>${addrs.length?'<br>'+addrs.map(a=>`<span style="font-family:var(--font-mono);font-size:.58rem;opacity:.8;cursor:pointer" onclick="navigator.clipboard.writeText('${a}')" title="Copier">${a}</span>`).join('<br>'):''}`;
       }).join('<br><br>'),
-      'Social': `${twitterUrl?`<a href="${twitterUrl}" target="_blank" style="color:#1da1f2">𝕏 Twitter</a><br>`:''}${tgUrl?`<a href="${tgUrl}" target="_blank" style="color:#0088cc">✈ Telegram</a><br>`:''}${webUrl?`<a href="${webUrl}" target="_blank" style="color:#aaa">🌐 Website</a>`:''}${!twitterUrl&&!tgUrl&&!webUrl?'Aucun social détecté':''}`,
+      'Social': `${hasX?(twitterUrl?`<a href="${twitterUrl}" target="_blank" style="color:#1da1f2">𝕏 Twitter ↗</a>`:'𝕏 Twitter ✅ (URL non dispo)')+'<br>':''}${hasTG?(tgUrl?`<a href="${tgUrl}" target="_blank" style="color:#0088cc">✈ Telegram ↗</a>`:'✈ Telegram ✅ (URL non dispo)')+'<br>':''}${hasWEB?(webUrl?`<a href="${webUrl}" target="_blank" style="color:#aaa">🌐 Website ↗</a>`:'🌐 Website ✅ (URL non dispo)'):''}${!hasX&&!hasTG&&!hasWEB?'<span style="color:var(--red)">Aucun social détecté</span>':''}`,
       'Holders': `Top1: ${dbTop1.toFixed(1)}%<br>Top5: ${dbTop5.toFixed(1)}%<br>Top10: ${dbTop10.toFixed(1)}%<br>Comptes: ${dbHolderCount}`,
       'Token':   `DEX Paid: ${d.platformScore>0?'✅ oui':'❌ non'}<br>Platform score: +${d.platformScore||0}pts`,
       'Mcap':    `Mcap actuel: $${fmtNum(mcap)}<br>Liq: $${fmtNum(liq)}<br>Score mcap: +${d.mcapScore||0}pts`,
