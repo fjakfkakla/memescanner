@@ -475,15 +475,43 @@ export async function runScanCycle() {
         if (!addr) continue;
         gmgnWalletMap.set(addr, gmgnToWalletData(t));
         gmgnRawMap.set(addr, {
-          net_buy_24h:          t.net_buy_24h          ?? null,
-          bundler_mhr:          t.bundler_mhr           ?? null,
-          fresh_wallet_rate:    t.fresh_wallet_rate     ?? null,
-          rat_trader_amount_rate: t.rat_trader_amount_rate ?? null,
-          bot_degen_rate:       t.bot_degen_rate        ?? null,
-          is_wash_trading:      t.is_wash_trading       ?? null,
-          creator_token_status: t.creator_token_status  ?? null,
-          bundler_trader_amount_rate: t.bundler_trader_amount_rate ?? null,
-          private_vault_hold_rate: t.private_vault_hold_rate ?? null,
+          // Wallet signals
+          renowned_count:              t.renowned_count               ?? null,
+          smart_degen_count:           t.smart_degen_count            ?? null,
+          bot_degen_count:             t.bot_degen_count              ?? null,
+          bot_degen_rate:              t.bot_degen_rate               ?? null,
+          sniper_count:                t.sniper_count                 ?? null,
+          tg_call_count:               t.tg_call_count                ?? null,
+          visiting_count:              t.visiting_count               ?? null,
+          // Risk rates
+          rug_ratio:                   t.rug_ratio                    ?? null,
+          bundler_mhr:                 t.bundler_mhr                  ?? null,
+          bundler_trader_amount_rate:  t.bundler_trader_amount_rate   ?? null,
+          suspected_insider_hold_rate: t.suspected_insider_hold_rate  ?? null,
+          top_10_holder_rate:          t.top_10_holder_rate           ?? null,
+          top70_sniper_hold_rate:      t.top70_sniper_hold_rate       ?? null,
+          fresh_wallet_rate:           t.fresh_wallet_rate            ?? null,
+          rat_trader_amount_rate:      t.rat_trader_amount_rate       ?? null,
+          entrapment_ratio:            t.entrapment_ratio             ?? null,
+          dev_team_hold_rate:          t.dev_team_hold_rate           ?? null,
+          private_vault_hold_rate:     t.private_vault_hold_rate      ?? null,
+          // Market
+          net_buy_24h:                 t.net_buy_24h                  ?? null,
+          volume_24h:                  t.volume_24h                   ?? null,
+          holder_count:                t.holder_count                 ?? null,
+          // Creator / social
+          creator_created_count:       t.creator_created_count        ?? null,
+          creator_created_open_ratio:  t.creator_created_open_ratio   ?? null,
+          creator_token_status:        t.creator_token_status         ?? null,
+          twitter_rename_count:        t.twitter_rename_count         ?? null,
+          x_user_follower:             t.x_user_follower              ?? null,
+          // Flags
+          is_wash_trading:             t.is_wash_trading              ?? null,
+          cto_flag:                    t.cto_flag                     ?? null,
+          image_dup:                   t.image_dup                    ?? null,
+          has_at_least_one_social:     t.has_at_least_one_social      ?? null,
+          dexscr_ad:                   t.dexscr_ad                    ?? null,
+          complete_cost_time:          t.complete_cost_time           ?? null,
         });
         if (!existingAddrs.has(addr)) newGmgnAddrs.push(addr);
       }
