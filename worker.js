@@ -640,12 +640,13 @@ export async function runScanCycle() {
         // HARD FILTER 1 — Platform Pump/Bonk/Raydium/Bags
         const dexId  = (p.dexId || '').toLowerCase();
         const pairUrl = (p.url  || '').toLowerCase();
-        const isPump  = dexId.includes('pump') || pairUrl.includes('pump');
-        const isBonk  = dexId.includes('bonk') || dexId.includes('launchlab');
-        const isRay   = dexId.includes('raydium') || dexId.includes('cpmm') || dexId.includes('clmm');
+        const isPump     = dexId.includes('pump') || pairUrl.includes('pump');
+        const isBonk     = dexId.includes('bonk') || dexId.includes('launchlab');
+        const isRay      = dexId.includes('raydium') || dexId.includes('cpmm') || dexId.includes('clmm');
         const isPumpSwap = dexId.includes('pumpswap') || pairUrl.includes('pumpswap');
-        const isBags  = dexId.includes('bags');
-        if (!isPump && !isBonk && !isRay && !isPumpSwap && !isBags) { rejected['platform'] = (rejected['platform'] || 0) + 1; continue; }
+        const isBags     = dexId.includes('bags');
+        const isMeteora  = dexId.includes('meteora') || dexId.includes('dlmm');
+        if (!isPump && !isBonk && !isRay && !isPumpSwap && !isBags && !isMeteora) { rejected['platform'] = (rejected['platform'] || 0) + 1; continue; }
 
         // HARD FILTER 2 — Mcap min
         if (scored.mcap < 13000) { rejected['mcap<13K'] = (rejected['mcap<13K'] || 0) + 1; continue; }
