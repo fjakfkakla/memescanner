@@ -53,11 +53,11 @@ export async function gmgnFetchTrenches() {
       launchpad_platform: SOL_PLATFORMS,
       launchpad_platform_v2: true,
       quote_address_type: [4, 5, 3, 1, 13, 0],
-      limit: 150,
+      limit: 80,
       min_renowned_count:   minKol,
       min_smart_degen_count: minSd,
       max_marketcap: 200000,
-      max_created: "4h",
+      max_created: "45m",
     };
 
     const body = {
