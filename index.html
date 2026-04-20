@@ -1962,6 +1962,50 @@ nav.scrolled { box-shadow: 0 1px 40px rgba(0,0,0,0.6) !important; }
 .pt-config-details { border-color: rgba(255,255,255,0.05) !important; border-radius: 12px !important; }
 .pt-config-summary { font-family: 'Inter', sans-serif !important; font-size: 0.75rem !important; color: rgba(255,255,255,0.35) !important; }
 
+/* ═══ PAPER BOT — STRATEGY PANEL ═══════════════════════════════════ */
+.pt-strategy-panel{background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.07);border-radius:16px;padding:20px;margin-bottom:16px;}
+.pt-sp-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:18px;gap:10px;}
+.pt-sp-title{font-size:11px;font-weight:700;color:rgba(255,255,255,.7);letter-spacing:.08em;text-transform:uppercase;}
+.pt-sp-sub{font-size:11px;color:rgba(255,255,255,.25);margin-top:3px;}
+.pt-sp-hdr-btns{display:flex;gap:6px;align-items:center;flex-shrink:0;}
+.pt-sp-btn-save{padding:7px 16px;border-radius:9px;border:1px solid rgba(99,179,237,.3);background:rgba(99,179,237,.1);color:#63b3ed;font-size:11px;font-weight:700;cursor:pointer;transition:.15s;font-family:'Inter',sans-serif;}
+.pt-sp-btn-save:hover{background:rgba(99,179,237,.2);border-color:rgba(99,179,237,.5);}
+.pt-sp-btn-def{padding:7px 11px;border-radius:9px;border:1px solid rgba(255,255,255,.08);background:transparent;color:rgba(255,255,255,.25);font-size:11px;font-weight:600;cursor:pointer;transition:.15s;font-family:'Inter',sans-serif;}
+.pt-sp-btn-def:hover{color:rgba(255,255,255,.5);border-color:rgba(255,255,255,.15);}
+/* Base params */
+.pt-sp-params{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px;}
+.pt-sp-param{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:11px;padding:11px 13px;}
+.pt-sp-param-lbl{font-size:9px;font-weight:700;color:rgba(255,255,255,.3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:7px;}
+.pt-sp-param-inp{display:flex;align-items:center;gap:4px;}
+.pt-sp-pfx,.pt-sp-sfx{font-size:12px;color:rgba(255,255,255,.35);font-family:'Space Mono',monospace;flex-shrink:0;}
+.pt-sp-param-inp input{flex:1;min-width:0;background:transparent;border:none;color:#fff;font-size:15px;font-weight:700;font-family:'Space Mono',monospace;outline:none;width:100%;}
+.pt-sp-param-inp input::-webkit-inner-spin-button,.pt-sp-param-inp input::-webkit-outer-spin-button{-webkit-appearance:none;margin:0;}
+/* SL row */
+.pt-sp-sl-row{display:flex;align-items:center;gap:10px;padding:10px 14px;background:rgba(239,68,68,.05);border:1px solid rgba(239,68,68,.12);border-radius:11px;margin-bottom:16px;}
+.pt-sp-sl-badge{background:rgba(239,68,68,.15);color:#f87171;border:1px solid rgba(239,68,68,.3);border-radius:5px;font-size:9px;font-weight:800;padding:2px 7px;letter-spacing:.1em;flex-shrink:0;}
+.pt-sp-sl-text{font-size:12px;color:rgba(255,255,255,.4);}
+.pt-sp-sl-text b{color:#f87171;}
+/* TP section */
+.pt-sp-tp-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.pt-sp-tp-hdr-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:rgba(255,255,255,.4);}
+.pt-sp-tp-hint{font-size:10px;color:rgba(255,255,255,.18);font-style:italic;}
+/* TP rows */
+.pt-tp-row{display:flex;align-items:center;gap:7px;padding:8px 11px;border-radius:10px;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.05);margin-bottom:5px;transition:background .15s;}
+.pt-tp-row:hover{background:rgba(255,255,255,.04);}
+.pt-tp-badge{font-size:9px;font-weight:800;letter-spacing:.06em;padding:3px 7px;border-radius:5px;border:1px solid;flex-shrink:0;min-width:34px;text-align:center;}
+.pt-tp-lbl{font-size:10px;color:rgba(255,255,255,.22);flex-shrink:0;}
+.pt-tp-x,.pt-tp-pct{font-size:11px;color:rgba(255,255,255,.3);font-family:'Space Mono',monospace;flex-shrink:0;}
+.pt-tp-arrow{font-size:12px;color:rgba(255,255,255,.15);flex-shrink:0;padding:0 1px;}
+.pt-tp-mult,.pt-tp-frac{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.09);border-radius:8px;color:#fff;font-size:12px;font-weight:700;font-family:'Space Mono',monospace;padding:5px 8px;width:62px;text-align:center;outline:none;transition:border-color .15s,background .15s;}
+.pt-tp-mult:focus,.pt-tp-frac:focus{border-color:rgba(99,179,237,.4);background:rgba(99,179,237,.07);}
+.pt-tp-mult::-webkit-inner-spin-button,.pt-tp-mult::-webkit-outer-spin-button,.pt-tp-frac::-webkit-inner-spin-button,.pt-tp-frac::-webkit-outer-spin-button{-webkit-appearance:none;margin:0;}
+.pt-tp-remain{font-size:10px;color:rgba(255,255,255,.18);font-family:'Space Mono',monospace;flex:1;text-align:right;padding-right:4px;}
+.pt-tp-del{background:transparent;border:1px solid rgba(255,255,255,.07);color:rgba(255,255,255,.18);border-radius:6px;width:24px;height:24px;font-size:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.15s;flex-shrink:0;line-height:1;}
+.pt-tp-del:hover{background:rgba(239,68,68,.12);color:#f87171;border-color:rgba(239,68,68,.25);}
+.pt-sp-add-tp{width:100%;margin-top:8px;padding:9px;background:transparent;border:1px dashed rgba(255,255,255,.09);border-radius:10px;color:rgba(255,255,255,.25);font-size:11px;font-weight:600;cursor:pointer;transition:.15s;font-family:'Inter',sans-serif;}
+.pt-sp-add-tp:hover{border-color:rgba(99,179,237,.3);color:#63b3ed;background:rgba(99,179,237,.04);}
+.pt-sp-saved-toast{font-size:10px;color:#00cc66;opacity:0;transition:opacity .3s;padding:2px 6px;}
+
 /* ═══ PAPER BOT — SaaS Hero Header (bot((paper.txt) ══════════════ */
 .pt-saas-header {
   margin-bottom: 18px;
@@ -2743,64 +2787,61 @@ nav.scrolled { box-shadow: 0 1px 40px rgba(0,0,0,0.6) !important; }
       </div>
     </div>
 
-    <!-- CONFIG -->
-    <details class="pt-config-details">
-      <summary class="pt-config-summary" style="display:flex;align-items:center;gap:.5rem;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg> Configuration</summary>
-      <div class="pt-config-grid">
-        <div class="pt-config-item">
-          <label>Capital total ($)</label>
-          <input type="number" id="ptCfgCapital" value="400" min="10" class="pt-inp">
+    <!-- STRATÉGIE CONFIG -->
+    <div class="pt-strategy-panel">
+      <div class="pt-sp-header">
+        <div>
+          <div class="pt-sp-title">Stratégie</div>
+          <div class="pt-sp-sub">Configuration des niveaux de sortie</div>
         </div>
-        <div class="pt-config-item">
-          <label>Mise/trade ($)</label>
-          <input type="number" id="ptCfgSize" value="50" min="1" max="10000" class="pt-inp">
-        </div>
-        <div class="pt-config-item">
-          <label>TP1 (×) — 30% reste</label>
-          <input type="number" id="ptCfgTp1" value="1.3" min="1.05" step="0.05" class="pt-inp">
-        </div>
-        <div class="pt-config-item">
-          <label>TP2 (×) — 30% reste</label>
-          <input type="number" id="ptCfgTp2" value="1.5" min="1.1" step="0.1" class="pt-inp">
-        </div>
-        <div class="pt-config-item">
-          <label>TP3 (×) — 20% reste</label>
-          <input type="number" id="ptCfgTp3" value="2" min="1.5" step="0.1" class="pt-inp">
-        </div>
-        <div class="pt-config-item">
-          <label>TP4 (×) — 60% reste</label>
-          <input type="number" id="ptCfgTp4" value="3" min="2" step="0.5" class="pt-inp">
-        </div>
-        <div class="pt-config-item">
-          <label>TP5 (×) — 25% reste</label>
-          <input type="number" id="ptCfgTp5" value="5" min="3" step="1" class="pt-inp">
-        </div>
-        <div class="pt-config-item">
-          <label>TP6 (×) — 50% reste</label>
-          <input type="number" id="ptCfgTp6" value="10" min="5" step="1" class="pt-inp">
-        </div>
-        <div class="pt-config-item">
-          <label>TP7 (×) — 50% reste</label>
-          <input type="number" id="ptCfgTp7" value="15" min="8" step="1" class="pt-inp">
-        </div>
-        <div class="pt-config-item">
-          <label>TP8 (×) — 100% reste</label>
-          <input type="number" id="ptCfgTp8" value="20" min="10" step="1" class="pt-inp">
-        </div>
-        <div class="pt-config-item">
-          <label>SL (%) — sell tout</label>
-          <input type="number" id="ptCfgSl" value="20" min="5" max="50" class="pt-inp">
-        </div>
-        <div class="pt-config-item">
-          <label>Score min (0 = tous)</label>
-          <input type="number" id="ptCfgScore" value="0" min="0" max="140" class="pt-inp">
+        <div class="pt-sp-hdr-btns">
+          <span class="pt-sp-saved-toast" id="ptSavedToast">✓ Sauvegardé</span>
+          <button class="pt-sp-btn-def" onclick="ptResetConfig()">Défaut</button>
+          <button class="pt-sp-btn-save" onclick="ptSaveConfig()">Sauvegarder</button>
         </div>
       </div>
-      <div style="display:flex;gap:8px;margin-top:10px;">
-        <button class="pt-btn" onclick="ptSaveConfig()"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:5px"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>Sauvegarder</button>
-        <button class="pt-btn secondary" onclick="ptResetAll()" style="color:#f87171;border-color:rgba(239,68,68,.25);">Reset</button>
+
+      <!-- Params de base -->
+      <div class="pt-sp-params">
+        <div class="pt-sp-param">
+          <div class="pt-sp-param-lbl">Capital</div>
+          <div class="pt-sp-param-inp"><span class="pt-sp-pfx">$</span><input type="number" id="ptCfgCapital" value="400" min="10"></div>
+        </div>
+        <div class="pt-sp-param">
+          <div class="pt-sp-param-lbl">Mise / trade</div>
+          <div class="pt-sp-param-inp"><span class="pt-sp-pfx">$</span><input type="number" id="ptCfgSize" value="50" min="1" max="10000"></div>
+        </div>
+        <div class="pt-sp-param">
+          <div class="pt-sp-param-lbl">Stop Loss</div>
+          <div class="pt-sp-param-inp"><input type="number" id="ptCfgSl" value="20" min="1" max="99" oninput="ptUpdateTpInfo()"><span class="pt-sp-sfx">%</span></div>
+        </div>
+        <div class="pt-sp-param">
+          <div class="pt-sp-param-lbl">Score min</div>
+          <div class="pt-sp-param-inp"><input type="number" id="ptCfgScore" value="0" min="0" max="140"></div>
+        </div>
       </div>
-    </details>
+
+      <!-- SL visuel -->
+      <div class="pt-sp-sl-row">
+        <span class="pt-sp-sl-badge">SL</span>
+        <span class="pt-sp-sl-text">Si le token baisse de <b id="ptSlPct">20%</b> — vendre tout immédiatement</span>
+      </div>
+
+      <!-- TP header -->
+      <div class="pt-sp-tp-hdr">
+        <span class="pt-sp-tp-hdr-title">Take Profits</span>
+        <span class="pt-sp-tp-hint">% = fraction du solde restant vendue à ce palier</span>
+      </div>
+
+      <!-- TP rows (générées par ptRenderTpList) -->
+      <div id="ptTpList"></div>
+
+      <button class="pt-sp-add-tp" onclick="ptAddTpRow()">+ Ajouter un niveau</button>
+
+      <div style="display:flex;justify-content:flex-end;margin-top:12px;">
+        <button class="pt-btn secondary" onclick="ptResetAll()" style="color:#f87171;border-color:rgba(239,68,68,.2);font-size:10px;padding:6px 12px;">🗑 Reset trades</button>
+      </div>
+    </div>
 
     <!-- POSITIONS OUVERTES -->
     <div class="pt-section">
@@ -5607,10 +5648,17 @@ async function runHourlyHeatmap(useCustom=false) {
 // 🤖 PAPER TRADING BOT
 // ═══════════════════════════════════════════════════════════════
 const PT_CFG_DEFAULT = {
-  enabled:true, capital:400, posSize:50,
-  tp1:1.3, tp2:1.5, tp3:2.0, tp4:3.0, tp5:5.0, tp6:10.0, tp7:15.0, tp8:20.0,
-  sl:20, minScore:0
+  enabled:true, capital:400, posSize:50, sl:20, minScore:0,
+  tpLevels:[
+    {mult:1.3, frac:30},{mult:1.5, frac:30},{mult:2.0, frac:20},{mult:3.0, frac:60},
+    {mult:5.0, frac:25},{mult:10.0,frac:50},{mult:15.0,frac:50},{mult:20.0,frac:100},
+  ],
 };
+// Normalise les tpLevels (frac peut être 0-1 legacy ou 0-100)
+function ptNormTpLevels(levels){
+  if(!levels||!levels.length) return PT_CFG_DEFAULT.tpLevels;
+  return levels.map(tp=>({mult:tp.mult,frac:tp.frac>1?tp.frac:Math.round(tp.frac*100)}));
+}
 
 // Cache mémoire — rechargé depuis le serveur toutes les 7s
 let _ptTradesCache = [];
@@ -5635,6 +5683,83 @@ function ptTrades()  { return _ptTradesCache; }
 function ptEquity()  { return _ptEquityCache; }
 function ptSaveTrades(arr){ /* géré côté serveur */ }
 function ptSaveEquity(arr){ /* géré côté serveur */ }
+
+// ── TP Editor ──
+const TP_COLORS=[
+  '#6ee7b7','#34d399','#10b981','#06b6d4','#3b82f6','#8b5cf6','#ec4899','#f59e0b'
+];
+function ptTpRowHtml(tp, i, runningBefore){
+  const frac=Math.max(1,Math.min(100,parseFloat(tp.frac)||50));
+  const runningAfter=Math.round(runningBefore*(1-frac/100)*100);
+  const col=TP_COLORS[i%TP_COLORS.length];
+  return `<div class="pt-tp-row" data-idx="${i}">
+    <div class="pt-tp-badge" style="background:${col}18;color:${col};border-color:${col}40">TP${i+1}</div>
+    <span class="pt-tp-lbl">à</span>
+    <input type="number" class="pt-tp-mult" value="${tp.mult}" min="1.01" step="0.05" oninput="ptUpdateTpInfo()" onchange="ptUpdateTpInfo()">
+    <span class="pt-tp-x">×</span>
+    <span class="pt-tp-arrow">→</span>
+    <span class="pt-tp-lbl">vendre</span>
+    <input type="number" class="pt-tp-frac" value="${frac}" min="1" max="100" step="5" oninput="ptUpdateTpInfo()" onchange="ptUpdateTpInfo()">
+    <span class="pt-tp-pct">%</span>
+    <div class="pt-tp-remain" id="ptTpRem${i}">reste ~${runningAfter}%</div>
+    <button class="pt-tp-del" onclick="ptRemoveTpRow(${i})" title="Supprimer">✕</button>
+  </div>`;
+}
+function ptRenderTpList(levels){
+  const el=document.getElementById('ptTpList');
+  if(!el) return;
+  let running=1.0;
+  el.innerHTML=levels.map((tp,i)=>{
+    const html=ptTpRowHtml(tp,i,running);
+    running*=(1-(Math.max(1,Math.min(100,parseFloat(tp.frac)||50))/100));
+    return html;
+  }).join('');
+}
+function ptGetTpLevelsFromDom(){
+  return Array.from(document.querySelectorAll('#ptTpList .pt-tp-row')).map(row=>({
+    mult:parseFloat(row.querySelector('.pt-tp-mult')?.value)||2.0,
+    frac:parseFloat(row.querySelector('.pt-tp-frac')?.value)||50,
+  }));
+}
+function ptAddTpRow(){
+  const levels=ptGetTpLevelsFromDom();
+  const last=levels[levels.length-1];
+  const newMult=last?Math.round(last.mult*1.6*10)/10:2.0;
+  levels.push({mult:Math.min(newMult,100),frac:50});
+  ptRenderTpList(levels);
+}
+function ptRemoveTpRow(idx){
+  const levels=ptGetTpLevelsFromDom();
+  if(levels.length<=1) return;
+  levels.splice(idx,1);
+  ptRenderTpList(levels);
+}
+function ptUpdateTpInfo(){
+  let running=1.0;
+  document.querySelectorAll('#ptTpList .pt-tp-row').forEach((row,i)=>{
+    const frac=Math.max(1,Math.min(100,parseFloat(row.querySelector('.pt-tp-frac')?.value)||50));
+    running*=(1-frac/100);
+    const rem=row.querySelector('.pt-tp-remain');
+    if(rem) rem.textContent=`reste ~${Math.round(running*100)}%`;
+    const badge=row.querySelector('.pt-tp-badge');
+    if(badge) badge.textContent=`TP${i+1}`;
+    const del=row.querySelector('.pt-tp-del');
+    if(del) del.setAttribute('onclick',`ptRemoveTpRow(${i})`);
+    row.setAttribute('data-idx',i);
+  });
+  const slPctEl=document.getElementById('ptSlPct');
+  const slInp=document.getElementById('ptCfgSl');
+  if(slPctEl&&slInp) slPctEl.textContent=slInp.value+'%';
+}
+// Helper pour les modals (construit TP_LEVELS depuis cfg.tpLevels ou legacy)
+function ptGetTpLevelsFromCfg(cfg){
+  if(cfg.tpLevels&&cfg.tpLevels.length){
+    return cfg.tpLevels.map((tp,i)=>({n:i+1,mult:tp.mult,frac:tp.frac>1?tp.frac:Math.round(tp.frac*100)}));
+  }
+  // legacy
+  const fracs=[30,30,20,60,25,50,50,100];
+  return fracs.map((frac,i)=>({n:i+1,mult:cfg[`tp${i+1}`]||999,frac})).filter(tp=>tp.mult<999);
+}
 
 // Sync gérée automatiquement par le serveur — stub frontend
 function ptSyncFromLive(){ /* géré côté serveur Railway */ }
@@ -5662,17 +5787,28 @@ async function ptSaveConfig(){
     enabled:  ptConfig().enabled,
     capital:  v('ptCfgCapital')||400,
     posSize:  v('ptCfgSize')||50,
-    tp1:v('ptCfgTp1')||1.3, tp2:v('ptCfgTp2')||1.5, tp3:v('ptCfgTp3')||2.0,
-    tp4:v('ptCfgTp4')||3.0, tp5:v('ptCfgTp5')||5.0, tp6:v('ptCfgTp6')||10.0,
-    tp7:v('ptCfgTp7')||15.0, tp8:v('ptCfgTp8')||20.0,
-    sl:v('ptCfgSl')||20, minScore:v('ptCfgScore')||0,
+    sl:       v('ptCfgSl')||20,
+    minScore: v('ptCfgScore')||0,
+    tpLevels: ptGetTpLevelsFromDom(),
   };
   try{
     await fetch(`${BACKEND_URL}/paper/config`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({config:cfg}),signal:AbortSignal.timeout(5000)});
     _ptConfigCache = cfg;
-    showToast('💾 Config Paper Bot sauvegardée (serveur)','call');
+    // Flash saved toast
+    const t=document.getElementById('ptSavedToast');
+    if(t){t.style.opacity='1';setTimeout(()=>t.style.opacity='0',2000);}
     ptRender();
   }catch(e){ showToast('Erreur sauvegarde: '+e.message,''); }
+}
+
+// Réinitialise la config aux valeurs par défaut
+function ptResetConfig(){
+  _ptConfigCache = {...PT_CFG_DEFAULT, enabled: ptConfig().enabled};
+  ptRenderTpList(PT_CFG_DEFAULT.tpLevels);
+  const c=document.getElementById('ptCfgCapital'),s=document.getElementById('ptCfgSize'),sl=document.getElementById('ptCfgSl'),sc=document.getElementById('ptCfgScore');
+  if(c) c.value=400; if(s) s.value=50; if(sl) sl.value=20; if(sc) sc.value=0;
+  ptUpdateTpInfo();
+  showToast('Config réinitialisée aux valeurs par défaut','');
 }
 
 // Trades ouverts par le serveur — stub frontend
@@ -5692,11 +5828,7 @@ function ptOpenHistDetail(id){
   const pnl = t.totalPnlUsd||0;
   const pnlPct = t.posSize ? pnl/t.posSize*100 : 0;
   const dur = t.exitTime&&t.entryTime ? Math.round((t.exitTime-t.entryTime)/60000) : '?';
-  const TP_LEVELS = [
-    {n:1,mult:cfg.tp1,frac:30},{n:2,mult:cfg.tp2,frac:30},{n:3,mult:cfg.tp3,frac:20},
-    {n:4,mult:cfg.tp4,frac:60},{n:5,mult:cfg.tp5,frac:25},{n:6,mult:cfg.tp6,frac:50},
-    {n:7,mult:cfg.tp7,frac:50},{n:8,mult:cfg.tp8,frac:100}
-  ];
+  const TP_LEVELS = ptGetTpLevelsFromCfg(cfg);
   const hitTps = new Set((t.sells||[]).map(s=>s.reason));
   const overlay = document.getElementById('ptDetailOverlay');
 
@@ -5789,11 +5921,7 @@ function ptRefreshDetail(){
   document.getElementById('ptdSl').textContent    = '🛑 SL: $' + fmtNum(slMcap) + ' (-' + cfg.sl + '%)';
 
   // TPs
-  const TP_LEVELS = [
-    {n:1,mult:cfg.tp1,frac:30},{n:2,mult:cfg.tp2,frac:30},{n:3,mult:cfg.tp3,frac:20},
-    {n:4,mult:cfg.tp4,frac:60},{n:5,mult:cfg.tp5,frac:25},{n:6,mult:cfg.tp6,frac:50},
-    {n:7,mult:cfg.tp7,frac:50},{n:8,mult:cfg.tp8,frac:100}
-  ];
+  const TP_LEVELS = ptGetTpLevelsFromCfg(cfg);
   const hitTps = new Set((t.sells||[]).map(s=>s.reason));
   const nextTp = TP_LEVELS.find(tp=>!hitTps.has('TP'+tp.n));
   document.getElementById('ptdTpList').innerHTML = TP_LEVELS.map(tp=>{
@@ -5926,9 +6054,17 @@ function ptRender(){
   const cfg=ptConfig(), stats=ptCalcStats(), trades=ptTrades();
   ptUpdateToggleUI(cfg.enabled);
 
-  // Config inputs
-  const cfgMap={ptCfgCapital:'capital',ptCfgSize:'posSize',ptCfgTp1:'tp1',ptCfgTp2:'tp2',ptCfgTp3:'tp3',ptCfgTp4:'tp4',ptCfgTp5:'tp5',ptCfgTp6:'tp6',ptCfgTp7:'tp7',ptCfgTp8:'tp8',ptCfgSl:'sl',ptCfgScore:'minScore'};
+  // Config inputs de base
+  const cfgMap={ptCfgCapital:'capital',ptCfgSize:'posSize',ptCfgSl:'sl',ptCfgScore:'minScore'};
   Object.entries(cfgMap).forEach(([id,key])=>{ const el=document.getElementById(id); if(el) el.value=cfg[key]??el.value; });
+  // SL display
+  const slPctEl=document.getElementById('ptSlPct');
+  if(slPctEl) slPctEl.textContent=(cfg.sl||20)+'%';
+  // TP list — rendu uniquement si pas encore chargé (évite de reset pendant une édition)
+  if(!document.querySelector('#ptTpList .pt-tp-row')){
+    const levels=ptNormTpLevels(cfg.tpLevels);
+    ptRenderTpList(levels.length?levels:PT_CFG_DEFAULT.tpLevels);
+  }
 
   // Stats header
   const roiSign=stats.roi>=0?'+':'';
@@ -6295,10 +6431,8 @@ async function rtCheckPositions(){
     }catch(e){}
   }
 
-  const TP_LEVELS=[
-    {n:1,mult:'tp1',frac:0.30},{n:2,mult:'tp2',frac:0.30},{n:3,mult:'tp3',frac:0.20},
-    {n:4,mult:'tp4',frac:0.60},{n:5,mult:'tp5',frac:0.25},{n:6,mult:'tp6',frac:1.00},
-  ];
+  // TP levels depuis config (nouveau format tpLevels ou legacy tp1..tp8)
+  const _rtTpLevels = ptGetTpLevelsFromCfg(cfg).map((tp,i)=>({n:i+1,mult:tp.mult,frac:(tp.frac>1?tp.frac/100:tp.frac)}));
 
   for(const t of open){
     const curMcap = priceMap[t.addr]||0;
@@ -6310,8 +6444,8 @@ async function rtCheckPositions(){
     if(xNow <= (1-cfg.sl/100)){
       await rtSellFraction(t,1.0,'SL',curMcap); continue;
     }
-    for(const tp of TP_LEVELS){
-      if(!t.sells.some(s=>s.reason===`TP${tp.n}`) && xNow>=cfg[tp.mult] && t.remainFraction>0.001){
+    for(const tp of _rtTpLevels){
+      if(!t.sells.some(s=>s.reason===`TP${tp.n}`) && xNow>=tp.mult && t.remainFraction>0.001){
         await rtSellFraction(t,tp.frac,`TP${tp.n}`,curMcap);
       }
     }
