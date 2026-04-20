@@ -666,7 +666,10 @@ export async function runScanCycle() {
         if (!isPump && !isBonk && !isRay && !isPumpSwap && !isBags && !isMeteora) { rejected['platform'] = (rejected['platform'] || 0) + 1; continue; }
 
         // HARD FILTER 2 — Mcap min
-        if (scored.mcap < 13000) { rejected['mcap<13K'] = (rejected['mcap<13K'] || 0) + 1; continue; }
+        // Si KOL ≥1 détecté : entrée anticipée dès 5K (smart money tôt = signal fort)
+        const hasKol = (wData.byGroup?.KOL || 0) >= 1;
+        const mcapMin = hasKol ? 5000 : 13000;
+        if (scored.mcap < mcapMin) { rejected[`mcap<${mcapMin/1000}K`] = (rejected[`mcap<${mcapMin/1000}K`] || 0) + 1; continue; }
 
         // SMART FILTER IA — filtres adaptatifs appris des données
         const smartCheck = checkSmartFilters(scored.debug || {});
