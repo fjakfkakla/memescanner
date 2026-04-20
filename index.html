@@ -4388,6 +4388,10 @@ async function fetchRetry(url, options, retries = 2, delayMs = 800) {
   return fetch(url, options); // dernière tentative sans catch
 }
 
+// Map globale adresses détectées par token : addr → { KOL:[...], 'gros trader':[...], ... }
+// Séparée du cache pour survivre aux resets et éviter les pertes lors du merge sticky
+const _detectedWalletsByGroup = {};
+
 // -- AXIOM wallet tracker -- verifie si des wallets AXIOM sont top holders --
 async function checkAxiomWallets(tokenAddr, pairAddr = null, deep = false) {
   if (!tokenAddr) return { count: 0, byGroup: { KOL: 0, 'gros trader': 0, DEV: 0, farmer: 0 }, wallets: [], clustered: false };
@@ -4564,6 +4568,14 @@ async function checkAxiomWallets(tokenAddr, pairAddr = null, deep = false) {
       }
     });
     console.log('[TRACKER] Par groupe:', newByGroup, newWalletsByGroup);
+    // Accumuler dans la map globale (sticky, jamais perdre une adresse)
+    if (!_detectedWalletsByGroup[tokenAddr]) _detectedWalletsByGroup[tokenAddr] = { KOL:[], 'gros trader':[], DEV:[], farmer:[] };
+    for (const [g, addrs] of Object.entries(newWalletsByGroup)) {
+      for (const a of addrs) {
+        if (!_detectedWalletsByGroup[tokenAddr][g].includes(a))
+          _detectedWalletsByGroup[tokenAddr][g].push(a);
+      }
+    }
     // JAMAIS DIMINUER — sticky absolu, même après vente
     const prevResult  = swCache[tokenAddr]?.result;
     const prevCount   = prevResult?.count || 0;
@@ -7746,22 +7758,23 @@ async function debugCA(){
     const groupColors = { KOL:'#1da1f2', 'gros trader':'#00ff88', DEV:'#ff9900', farmer:'#aaa' };
     const groupEmojis = { KOL:'🐦', 'gros trader':'🐋', DEV:'🛠️', farmer:'🌾' };
     let walletRows = '';
-    const wbg = wData.walletsByGroup || {};
+    // Priorité : map globale (accumule toutes les détections, même après vente)
+    const wbg = _detectedWalletsByGroup[addr] || wData.walletsByGroup || {};
     if(wData.count > 0){
       walletRows = Object.entries(wg).filter(([,n])=>n>0).map(([g,n])=>{
         const addrs = wbg[g] || [];
         const id = `wgrp_${g.replace(/\s/g,'_')}`;
         const addrHtml = addrs.length ? addrs.map(a=>
-          `<div style="display:flex;align-items:center;gap:.4rem;padding:.15rem 0">
-            <span style="font-family:var(--font-mono);font-size:.62rem;color:rgba(255,255,255,.75);word-break:break-all">${a}</span>
-            <span onclick="navigator.clipboard.writeText('${a}')" title="Copier" style="cursor:pointer;opacity:.5;font-size:.7rem">📋</span>
+          `<div style="display:flex;align-items:center;gap:.3rem;padding:.15rem 0">
+            <span style="font-family:var(--font-mono);font-size:.6rem;color:rgba(255,255,255,.8);word-break:break-all;flex:1">${a}</span>
+            <span onclick="navigator.clipboard.writeText('${a}');this.textContent='✓';setTimeout(()=>this.textContent='📋',1000)" title="Copier" style="cursor:pointer;font-size:.7rem;flex-shrink:0">📋</span>
           </div>`
-        ).join('') : '<span style="color:var(--muted);font-size:.65rem">adresses non disponibles</span>';
+        ).join('') : `<span style="color:var(--muted);font-size:.65rem">Relancez l'analyse pour voir les adresses</span>`;
         return `<div style="margin-bottom:.35rem">
-          <div onclick="const el=document.getElementById('${id}');el.style.display=el.style.display==='none'?'block':'none'"
-               style="cursor:pointer;display:inline-flex;align-items:center;gap:.3rem;color:${groupColors[g]||'#fff'}">
+          <div onclick="const el=document.getElementById('${id}');el.style.display=el.style.display==='none'?'block':'none';this.querySelector('.arr').textContent=el.style.display==='none'?'▼':'▲'"
+               style="cursor:pointer;display:inline-flex;align-items:center;gap:.35rem;color:${groupColors[g]||'#fff'}">
             ${groupEmojis[g]||''} <b>${g}</b>: <b>${n}</b>
-            <span style="font-size:.6rem;opacity:.5">▼</span>
+            <span class="arr" style="font-size:.6rem;opacity:.5">▼</span>
           </div>
           <div id="${id}" style="display:none;margin-top:.3rem;padding:.4rem .6rem;background:rgba(0,0,0,.3);border-radius:6px;border-left:2px solid ${groupColors[g]||'#555'}">
             ${addrHtml}
@@ -7806,23 +7819,46 @@ async function debugCA(){
     const sellsH1 = pairData?.txns?.h1?.sells || 0;
     const buyRatioM5 = buysM5 / ((buysM5+sellsM5)||1);
     const buyRatioH1d = buysH1 / ((buysH1+sellsH1)||1);
+    const twitterUrl = pairData?.info?.socials?.find(s=>s.type==='twitter')?.url || '';
+    const tgUrl      = pairData?.info?.socials?.find(s=>s.type==='telegram')?.url || '';
+    const webUrl     = pairData?.info?.websites?.[0]?.url || '';
     const catDetails = {
-      '🎯 Tracker':  `KOL:${wg['KOL']||0} Trader:${wg['gros trader']||0} DEV:${wg['DEV']||0} Farmer:${wg['farmer']||0}`,
-      '🌐 Social':   `${dbHasX?'𝕏 ':''}${dbHasTG?'TG ':''}${dbHasWEB?'WEB ':''} | Helius:${sec?'✅':'❌'}`,
-      '👥 Holders':  `top10=${dbTop10.toFixed(0)}% | ${dbHolderCount} comptes`,
-      '🪙 Token':    `DEX paid: ${d.platformScore>0?'✅':'❌'}`,
-      '⭐ Mcap':     `$${fmtNum(mcap)}`,
-      '⏱ Age':       `${(ageH*60).toFixed(0)}min`,
-      '📈 Activité': `buysM5=${buysM5} sellsM5=${sellsM5} ratioM5=${(buyRatioM5*100).toFixed(0)}% | buysH1=${buysH1} ratioH1=${(buyRatioH1d*100).toFixed(0)}%`,
+      'Tracker':  `KOL:${wg['KOL']||0} Trader:${wg['gros trader']||0} DEV:${wg['DEV']||0} Farmer:${wg['farmer']||0}`,
+      'Social':   `${dbHasX?'𝕏 ':''}${dbHasTG?'TG ':''}${dbHasWEB?'WEB ':''} | Helius:${sec?'✅':'❌'}`,
+      'Holders':  `top10=${dbTop10.toFixed(0)}% | ${dbHolderCount} comptes`,
+      'Token':    `DEX paid: ${d.platformScore>0?'✅':'❌'}`,
+      'Mcap':     `$${fmtNum(mcap)}`,
+      'Age':      `${(ageH*60).toFixed(0)}min`,
+      'Activité': `buysM5=${buysM5} sellsM5=${sellsM5} ratioM5=${(buyRatioM5*100).toFixed(0)}% | buysH1=${buysH1} ratioH1=${(buyRatioH1d*100).toFixed(0)}%`,
+    };
+    const catExpanded = {
+      'Tracker': Object.entries(wg).filter(([,n])=>n>0).map(([g,n])=>{
+        const addrs = wbg[g]||[];
+        return `<b style="color:${groupColors[g]||'#fff'}">${groupEmojis[g]||''} ${g}: ${n}</b>${addrs.length?'<br>'+addrs.map(a=>`<span style="font-family:var(--font-mono);font-size:.58rem;opacity:.8;cursor:pointer" onclick="navigator.clipboard.writeText('${a}')" title="Copier">${a}</span>`).join('<br>'):''}`;
+      }).join('<br><br>'),
+      'Social': `${twitterUrl?`<a href="${twitterUrl}" target="_blank" style="color:#1da1f2">𝕏 Twitter</a><br>`:''}${tgUrl?`<a href="${tgUrl}" target="_blank" style="color:#0088cc">✈ Telegram</a><br>`:''}${webUrl?`<a href="${webUrl}" target="_blank" style="color:#aaa">🌐 Website</a>`:''}${!twitterUrl&&!tgUrl&&!webUrl?'Aucun social détecté':''}`,
+      'Holders': `Top1: ${dbTop1.toFixed(1)}%<br>Top5: ${dbTop5.toFixed(1)}%<br>Top10: ${dbTop10.toFixed(1)}%<br>Comptes: ${dbHolderCount}`,
+      'Token':   `DEX Paid: ${d.platformScore>0?'✅ oui':'❌ non'}<br>Platform score: +${d.platformScore||0}pts`,
+      'Mcap':    `Mcap actuel: $${fmtNum(mcap)}<br>Liq: $${fmtNum(liq)}<br>Score mcap: +${d.mcapScore||0}pts`,
+      'Age':     `Âge: ${(ageH*60).toFixed(0)}min (${ageH.toFixed(2)}h)<br>Score age: +${d.ageScore||0}pts`,
+      'Activité':`buysM5=${buysM5} | sellsM5=${sellsM5} | ratioM5=${(buyRatioM5*100).toFixed(0)}%<br>buysH1=${buysH1} | sellsH1=${sellsH1} | ratioH1=${(buyRatioH1d*100).toFixed(0)}%<br>buyRatio global: ${((d.buyRatio||0)*100).toFixed(0)}%<br>volAccel: ${(d.volAccel||0).toFixed(2)}x`,
     };
     const detailedBars = cats.map(c=>{
       const pct=Math.max(0,Math.min(100,(Math.max(0,c.val)/c.max)*100));
       const color=c.val<0?'var(--red)':c.val>c.max*.7?'var(--green)':'#ffaa00';
-      return `<div class="dca-cat-row">
-        <div style="min-width:90px;font-size:.72rem;color:rgba(255,255,255,.85)">${c.name}</div>
+      const catName = c.name.replace(/^[^ ]+ /,''); // enlève l'emoji pour la clé
+      const detail = catDetails[catName]||'';
+      const expanded = catExpanded[catName]||'';
+      const rowId = `catrow_${catName.replace(/\s/g,'_')}`;
+      return `<div class="dca-cat-row" style="cursor:${expanded?'pointer':'default'};flex-wrap:wrap"
+               onclick="${expanded?`const el=document.getElementById('${rowId}');el.style.display=el.style.display==='none'?'block':'none'`:''}">
+        <div style="min-width:90px;font-size:.72rem;color:rgba(255,255,255,.85);display:flex;align-items:center;gap:.3rem">
+          ${c.name}${expanded?`<span style="font-size:.55rem;opacity:.4">▼</span>`:''}
+        </div>
         <div class="dca-cat-bar"><div class="dca-cat-fill" style="width:${pct}%;background:${color}"></div></div>
         <div class="dca-cat-val" style="color:${color};min-width:34px">${c.val>=0?'+':''}${c.val}</div>
-        <div style="font-size:.6rem;color:var(--muted);margin-left:.4rem;flex:1">${catDetails[c.name]||''}</div>
+        <div style="font-size:.6rem;color:var(--muted);margin-left:.4rem;flex:1">${detail}</div>
+        ${expanded?`<div id="${rowId}" style="display:none;width:100%;padding:.4rem .6rem .2rem;font-size:.65rem;line-height:1.6;color:rgba(255,255,255,.75);background:rgba(0,0,0,.25);border-radius:6px;margin:.25rem 0 .1rem">${expanded}</div>`:''}
       </div>`;
     }).join('');
 
