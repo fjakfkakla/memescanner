@@ -341,7 +341,7 @@ async function checkAxiomWallets(tokenAddr, pairAddr = null, deep = false) {
   }
 
   const sigAddr  = pairAddr || tokenAddr;
-  const sigLimit = deep ? 200 : 100; // augmenté: KOL achètent tôt, ne pas les perdre si token actif
+  const sigLimit = deep ? 500 : 200; // 200 normal: couvre acheteurs ET vendeurs early
 
   try {
     trackHelius(3); // 2x getSignaturesForAddress + getTokenAccounts
@@ -368,10 +368,10 @@ async function checkAxiomWallets(tokenAddr, pairAddr = null, deep = false) {
       if (r.status === 'fulfilled') {
         const sigs = r.value?.result || [];
         // Prendre les plus récentes uniquement (suffisant pour détecter Axiom wallets)
-        sigs.slice(0, deep ? 100 : 70).forEach(s => { if (s?.signature) sigSet.add(s.signature); });
+        sigs.forEach(s => { if (s?.signature) sigSet.add(s.signature); }); // tout prendre
       }
     });
-    const sigList = [...sigSet].slice(0, deep ? 150 : 100);
+    const sigList = [...sigSet].slice(0, deep ? 400 : 200);
     const allOwners = new Set();
 
     if (sigList.length > 0) {
