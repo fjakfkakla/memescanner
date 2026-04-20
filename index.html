@@ -1978,7 +1978,9 @@ nav.scrolled { box-shadow: 0 1px 40px rgba(0,0,0,0.6) !important; }
 .pt-sp-param-lbl{font-size:9px;font-weight:700;color:rgba(255,255,255,.3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:7px;}
 .pt-sp-param-inp{display:flex;align-items:center;gap:4px;}
 .pt-sp-pfx,.pt-sp-sfx{font-size:12px;color:rgba(255,255,255,.35);font-family:'Space Mono',monospace;flex-shrink:0;}
-.pt-sp-param-inp input{flex:1;min-width:0;background:transparent;border:none;color:#fff;font-size:15px;font-weight:700;font-family:'Space Mono',monospace;outline:none;width:100%;}
+.pt-sp-param-inp{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:5px 9px;transition:border-color .15s;}
+.pt-sp-param-inp:focus-within{border-color:rgba(99,179,237,.4);background:rgba(99,179,237,.06);}
+.pt-sp-param-inp input{flex:1;min-width:0;background:transparent;border:none;color:#fff;font-size:14px;font-weight:700;font-family:'Space Mono',monospace;outline:none;width:60px;}
 .pt-sp-param-inp input::-webkit-inner-spin-button,.pt-sp-param-inp input::-webkit-outer-spin-button{-webkit-appearance:none;margin:0;}
 /* SL row */
 .pt-sp-sl-row{display:flex;align-items:center;gap:10px;padding:10px 14px;background:rgba(239,68,68,.05);border:1px solid rgba(239,68,68,.12);border-radius:11px;margin-bottom:16px;}
