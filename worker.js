@@ -634,8 +634,10 @@ export async function runScanCycle() {
 
         scoreHistory.set(scored.addr, { maxAxiom: Math.max(hist.maxAxiom || 0, scored.debug.axiomCount) });
 
-        // HARD FILTER 0 — Axiom obligatoire
-        if ((wData.count || 0) < 1) { rejected['no_axiom'] = (rejected['no_axiom'] || 0) + 1; continue; }
+        // HARD FILTER 0 — Axiom obligatoire (bypass si DexScreener boost/paid)
+        // Les tokens DS paid ont payé $100-500 → signal de commitment réel
+        // Ils passent sans Axiom mais doivent encore scorer ≥80 + tous les autres filtres
+        if ((wData.count || 0) < 1 && !p._isPaid) { rejected['no_axiom'] = (rejected['no_axiom'] || 0) + 1; continue; }
 
         // HARD FILTER 1 — Platform Pump/Bonk/Raydium/Bags
         const dexId  = (p.dexId || '').toLowerCase();
