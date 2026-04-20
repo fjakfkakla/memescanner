@@ -341,7 +341,7 @@ async function checkAxiomWallets(tokenAddr, pairAddr = null, deep = false) {
   }
 
   const sigAddr  = pairAddr || tokenAddr;
-  const sigLimit = deep ? 100 : 50; // 50 en normal (was 30), meilleure détection KOL wallets
+  const sigLimit = deep ? 200 : 100; // augmenté: KOL achètent tôt, ne pas les perdre si token actif
 
   try {
     trackHelius(3); // 2x getSignaturesForAddress + getTokenAccounts
@@ -368,10 +368,10 @@ async function checkAxiomWallets(tokenAddr, pairAddr = null, deep = false) {
       if (r.status === 'fulfilled') {
         const sigs = r.value?.result || [];
         // Prendre les plus récentes uniquement (suffisant pour détecter Axiom wallets)
-        sigs.slice(0, deep ? 50 : 35).forEach(s => { if (s?.signature) sigSet.add(s.signature); });
+        sigs.slice(0, deep ? 100 : 70).forEach(s => { if (s?.signature) sigSet.add(s.signature); });
       }
     });
-    const sigList = [...sigSet].slice(0, deep ? 80 : 50); // Max 50 sigs en normal (was 30), 80 en deep
+    const sigList = [...sigSet].slice(0, deep ? 150 : 100);
     const allOwners = new Set();
 
     if (sigList.length > 0) {
@@ -403,7 +403,11 @@ async function checkAxiomWallets(tokenAddr, pairAddr = null, deep = false) {
     }
 
     if (dasRes.status === 'fulfilled') {
-      (dasRes.value?.result?.token_accounts || []).forEach(a => { if (a.owner) allOwners.add(a.owner); });
+      // Helius DAS retourne result.items ou result.token_accounts selon la version
+      const dasAccounts = dasRes.value?.result?.token_accounts
+        || dasRes.value?.result?.items
+        || [];
+      dasAccounts.forEach(a => { if (a.owner) allOwners.add(a.owner); });
     }
 
     const KNOWN_PROGRAMS = new Set([
