@@ -4552,40 +4552,46 @@ async function checkAxiomWallets(tokenAddr, pairAddr = null, deep = false) {
     const matchingOwners = allOwnersList.filter(o => WALLET_TRACKER.has(o));
     console.log('[TRACKER] Matching wallets:', matchingOwners.length, matchingOwners);
     const newCount = matchingOwners.length;
-    const newWallets = matchingOwners.slice(0, 4).map(w => w.slice(0, 8) + '…');
-    // Calculer le breakdown par groupe
-    const newByGroup = { KOL: 0, 'gros trader': 0, DEV: 0, farmer: 0 };
+    const newWallets = matchingOwners.slice(0, 4).map(w => w.slice(0, 8) + '…'); // compat
+    // Breakdown par groupe + adresses complètes
+    const newByGroup        = { KOL: 0, 'gros trader': 0, DEV: 0, farmer: 0 };
+    const newWalletsByGroup = { KOL: [], 'gros trader': [], DEV: [], farmer: [] };
     matchingOwners.forEach(o => {
       const g = WALLET_TRACKER.get(o);
-      if (newByGroup[g] !== undefined) newByGroup[g]++;
+      if (newByGroup[g] !== undefined) {
+        newByGroup[g]++;
+        newWalletsByGroup[g].push(o);
+      }
     });
-    console.log('[TRACKER] Par groupe:', newByGroup);
-    // JAMAIS DIMINUER — garder le MAX historique absolu
-    // Un trader qui a vendu reste compté définitivement
-    const prevResult = swCache[tokenAddr]?.result;
-    const prevCount = prevResult?.count || 0;
-    const count = Math.max(newCount, prevCount);
-    // Merger byGroup : prendre le max par groupe
+    console.log('[TRACKER] Par groupe:', newByGroup, newWalletsByGroup);
+    // JAMAIS DIMINUER — sticky absolu, même après vente
+    const prevResult  = swCache[tokenAddr]?.result;
+    const prevCount   = prevResult?.count || 0;
     const prevByGroup = prevResult?.byGroup || { KOL: 0, 'gros trader': 0, DEV: 0, farmer: 0 };
+    const prevWBG     = prevResult?.walletsByGroup || { KOL: [], 'gros trader': [], DEV: [], farmer: [] };
+    const count = Math.max(newCount, prevCount);
     const byGroup = {
       KOL:          Math.max(newByGroup.KOL,          prevByGroup.KOL          || 0),
       'gros trader':Math.max(newByGroup['gros trader'],prevByGroup['gros trader']|| 0),
       DEV:          Math.max(newByGroup.DEV,           prevByGroup.DEV          || 0),
-      farmer:       Math.max(newByGroup.farmer,         prevByGroup.farmer       || 0),
+      farmer:       Math.max(newByGroup.farmer,        prevByGroup.farmer       || 0),
     };
-    const wallets = count > newCount && prevResult?.wallets?.length
-      ? prevResult.wallets
-      : newWallets;
-    const result = { count, byGroup, wallets, clustered: count >= 2 };
+    const walletsByGroup = {
+      KOL:          [...new Set([...newWalletsByGroup.KOL,          ...(prevWBG.KOL||[])])],
+      'gros trader':[...new Set([...newWalletsByGroup['gros trader'],...(prevWBG['gros trader']||[])])],
+      DEV:          [...new Set([...newWalletsByGroup.DEV,           ...(prevWBG.DEV||[])])],
+      farmer:       [...new Set([...newWalletsByGroup.farmer,        ...(prevWBG.farmer||[])])],
+    };
+    const wallets = count > newCount && prevResult?.wallets?.length ? prevResult.wallets : newWallets;
+    const result = { count, byGroup, wallets, walletsByGroup, clustered: count >= 2 };
     const cacheEntry = { ts: now, result, maxEver: count };
     swCache[tokenAddr] = cacheEntry;
-    // Persister en localStorage → survit aux rechargements de page (jamais diminuer)
     swCacheSave(tokenAddr, cacheEntry);
     return result;
 
   } catch(e) {
     console.warn('checkAxiomWallets error:', e.message);
-    return { count: 0, byGroup: { KOL: 0, 'gros trader': 0, DEV: 0, farmer: 0 }, wallets: [], clustered: false };
+    return { count: 0, byGroup: { KOL: 0, 'gros trader': 0, DEV: 0, farmer: 0 }, wallets: [], walletsByGroup: { KOL: [], 'gros trader': [], DEV: [], farmer: [] }, clustered: false };
   }
 }
 
@@ -7642,6 +7648,8 @@ async function debugCA(){
         const saved = fbCall.walletData;
         const savedByGroup = saved.byGroup || {};
         const freshByGroup = wDataFresh.byGroup || {};
+        const savedWBG = saved.walletsByGroup || { KOL:[], 'gros trader':[], DEV:[], farmer:[] };
+        const freshWBG = wDataFresh.walletsByGroup || { KOL:[], 'gros trader':[], DEV:[], farmer:[] };
         wData = {
           count: Math.max(wDataFresh.count||0, saved.count||0),
           wallets: (saved.count||0) >= (wDataFresh.count||0) ? (saved.wallets||[]) : (wDataFresh.wallets||[]),
@@ -7651,6 +7659,12 @@ async function debugCA(){
             'gros trader':Math.max(freshByGroup['gros trader']||0, savedByGroup['gros trader']||0),
             DEV:          Math.max(freshByGroup.DEV||0,           savedByGroup.DEV||0),
             farmer:       Math.max(freshByGroup.farmer||0,        savedByGroup.farmer||0),
+          },
+          walletsByGroup: {
+            KOL:          [...new Set([...(freshWBG.KOL||[]),          ...(savedWBG.KOL||[])])],
+            'gros trader':[...new Set([...(freshWBG['gros trader']||[]),...(savedWBG['gros trader']||[])])],
+            DEV:          [...new Set([...(freshWBG.DEV||[]),           ...(savedWBG.DEV||[])])],
+            farmer:       [...new Set([...(freshWBG.farmer||[]),        ...(savedWBG.farmer||[])])],
           },
         };
       }
@@ -7732,14 +7746,28 @@ async function debugCA(){
     const groupColors = { KOL:'#1da1f2', 'gros trader':'#00ff88', DEV:'#ff9900', farmer:'#aaa' };
     const groupEmojis = { KOL:'🐦', 'gros trader':'🐋', DEV:'🛠️', farmer:'🌾' };
     let walletRows = '';
+    const wbg = wData.walletsByGroup || {};
     if(wData.count > 0){
-      // Afficher le breakdown par groupe
-      walletRows = Object.entries(wg).filter(([,n])=>n>0).map(([g,n])=>
-        `<span style="margin-right:.6rem;color:${groupColors[g]||'#fff'}">${groupEmojis[g]||''} ${g}: <b>${n}</b></span>`
-      ).join('');
-      if(wData.wallets?.length){
-        walletRows += `<div style="font-size:.65rem;color:var(--muted);margin-top:.3rem;font-family:var(--font-mono)">${wData.wallets.join('  ')}</div>`;
-      }
+      walletRows = Object.entries(wg).filter(([,n])=>n>0).map(([g,n])=>{
+        const addrs = wbg[g] || [];
+        const id = `wgrp_${g.replace(/\s/g,'_')}`;
+        const addrHtml = addrs.length ? addrs.map(a=>
+          `<div style="display:flex;align-items:center;gap:.4rem;padding:.15rem 0">
+            <span style="font-family:var(--font-mono);font-size:.62rem;color:rgba(255,255,255,.75);word-break:break-all">${a}</span>
+            <span onclick="navigator.clipboard.writeText('${a}')" title="Copier" style="cursor:pointer;opacity:.5;font-size:.7rem">📋</span>
+          </div>`
+        ).join('') : '<span style="color:var(--muted);font-size:.65rem">adresses non disponibles</span>';
+        return `<div style="margin-bottom:.35rem">
+          <div onclick="const el=document.getElementById('${id}');el.style.display=el.style.display==='none'?'block':'none'"
+               style="cursor:pointer;display:inline-flex;align-items:center;gap:.3rem;color:${groupColors[g]||'#fff'}">
+            ${groupEmojis[g]||''} <b>${g}</b>: <b>${n}</b>
+            <span style="font-size:.6rem;opacity:.5">▼</span>
+          </div>
+          <div id="${id}" style="display:none;margin-top:.3rem;padding:.4rem .6rem;background:rgba(0,0,0,.3);border-radius:6px;border-left:2px solid ${groupColors[g]||'#555'}">
+            ${addrHtml}
+          </div>
+        </div>`;
+      }).join('');
     } else {
       walletRows = '<span style="color:var(--red)">❌ Aucun wallet tracké détecté</span>';
     }

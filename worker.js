@@ -421,30 +421,41 @@ async function checkAxiomWallets(tokenAddr, pairAddr = null, deep = false) {
 
     const ownersList     = [...allOwners].filter(o => !KNOWN_PROGRAMS.has(o));
     const matchingOwners = ownersList.filter(o => AXIOM_SET.has(o));
-    const newCount       = matchingOwners.length;
-    const newWallets     = matchingOwners.slice(0, 4).map(w => w.slice(0, 8) + '…');
+    const newCount   = matchingOwners.length;
+    const newWallets = matchingOwners.slice(0, 4).map(w => w.slice(0, 8) + '…'); // compat
 
-    // byGroup : compter par catégorie
-    const newByGroup = { KOL: 0, 'gros trader': 0, DEV: 0, farmer: 0 };
+    // byGroup : compter + stocker adresses complètes par catégorie
+    const newByGroup       = { KOL: 0, 'gros trader': 0, DEV: 0, farmer: 0 };
+    const newWalletsByGroup = { KOL: [], 'gros trader': [], DEV: [], farmer: [] };
     for (const addr of matchingOwners) {
       const grp = WALLET_TRACKER.get(addr);
-      if (grp && newByGroup[grp] !== undefined) newByGroup[grp]++;
+      if (grp && newByGroup[grp] !== undefined) {
+        newByGroup[grp]++;
+        newWalletsByGroup[grp].push(addr);
+      }
     }
 
-    const prev       = swCache.get(tokenAddr)?.result;
-    const prevCount  = prev?.count || 0;
-    const prevByGroup = prev?.byGroup || { KOL: 0, 'gros trader': 0, DEV: 0, farmer: 0 };
-    const count      = Math.max(newCount, prevCount);
-    const wallets    = count > newCount && prev?.wallets?.length ? prev.wallets : newWallets;
-    // byGroup : prendre le max par groupe (sticky)
+    const prev            = swCache.get(tokenAddr)?.result;
+    const prevCount       = prev?.count || 0;
+    const prevByGroup     = prev?.byGroup || { KOL: 0, 'gros trader': 0, DEV: 0, farmer: 0 };
+    const prevWBG         = prev?.walletsByGroup || { KOL: [], 'gros trader': [], DEV: [], farmer: [] };
+    const count           = Math.max(newCount, prevCount);
+    const wallets         = count > newCount && prev?.wallets?.length ? prev.wallets : newWallets;
+    // byGroup + walletsByGroup : sticky (on accumule, jamais on descend)
     const byGroup = {
       KOL:          Math.max(newByGroup.KOL,          prevByGroup.KOL || 0),
       'gros trader':Math.max(newByGroup['gros trader'],prevByGroup['gros trader'] || 0),
       DEV:          Math.max(newByGroup.DEV,           prevByGroup.DEV || 0),
       farmer:       Math.max(newByGroup.farmer,        prevByGroup.farmer || 0),
     };
+    const walletsByGroup = {
+      KOL:          [...new Set([...newWalletsByGroup.KOL,          ...(prevWBG.KOL || [])])],
+      'gros trader':[...new Set([...newWalletsByGroup['gros trader'],...(prevWBG['gros trader'] || [])])],
+      DEV:          [...new Set([...newWalletsByGroup.DEV,           ...(prevWBG.DEV || [])])],
+      farmer:       [...new Set([...newWalletsByGroup.farmer,        ...(prevWBG.farmer || [])])],
+    };
 
-    const result = { count, wallets, clustered: count >= 2, byGroup };
+    const result = { count, wallets, clustered: count >= 2, byGroup, walletsByGroup };
     swCache.set(tokenAddr, { ts: Date.now(), result, maxEver: count });
     return result;
   } catch (e) {
