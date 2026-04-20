@@ -6056,9 +6056,9 @@ function ptRender(){
   const cfg=ptConfig(), stats=ptCalcStats(), trades=ptTrades();
   ptUpdateToggleUI(cfg.enabled);
 
-  // Config inputs de base
+  // Config inputs de base — ne pas écraser si l'utilisateur est en train de taper
   const cfgMap={ptCfgCapital:'capital',ptCfgSize:'posSize',ptCfgSl:'sl',ptCfgScore:'minScore'};
-  Object.entries(cfgMap).forEach(([id,key])=>{ const el=document.getElementById(id); if(el) el.value=cfg[key]??el.value; });
+  Object.entries(cfgMap).forEach(([id,key])=>{ const el=document.getElementById(id); if(el && document.activeElement!==el) el.value=cfg[key]??el.value; });
   // SL display
   const slPctEl=document.getElementById('ptSlPct');
   if(slPctEl) slPctEl.textContent=(cfg.sl||20)+'%';
