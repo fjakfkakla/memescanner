@@ -637,18 +637,16 @@ export async function runScanCycle() {
         if (p.info?.imageUrl || p.profile?.icon || p.profile?.header) p._isPaid = true;
 
         // Merge GMGN + Helius wallet data — GMGN couvre les achats pump.fun pré-migration
-        // que Helius ne voit pas sur le pair pumpswap
+        // que Helius ne voit pas sur le pair pumpswap.
+        // IMPORTANT: byGroup (KOL/gros trader) = uniquement Helius/axiomWallets.
+        // Les renowned/smart_degen GMGN sont ses propres wallets, pas notre liste →
+        // on ne les mappe PAS dans byGroup pour éviter les faux positifs sur le hard filter.
         const gmgnWD = gmgnWalletMap.get(tokenAddr);
         let effectiveWData = wData;
         if (gmgnWD && gmgnWD.count > (wData.count || 0)) {
           effectiveWData = {
             count:    gmgnWD.count,
-            byGroup:  {
-              KOL:           Math.max(wData.byGroup?.KOL           || 0, gmgnWD.byGroup?.KOL           || 0),
-              'gros trader': Math.max(wData.byGroup?.['gros trader']|| 0, gmgnWD.byGroup?.['gros trader']|| 0),
-              DEV:           Math.max(wData.byGroup?.DEV            || 0, gmgnWD.byGroup?.DEV            || 0),
-              farmer:        Math.max(wData.byGroup?.farmer         || 0, gmgnWD.byGroup?.farmer         || 0),
-            },
+            byGroup:  wData.byGroup || { KOL: 0, 'gros trader': 0, DEV: 0, farmer: 0 },
             wallets:   wData.wallets || [],
             clustered: wData.clustered || gmgnWD.clustered,
             source:    'gmgn+helius',
