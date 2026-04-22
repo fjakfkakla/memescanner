@@ -653,7 +653,14 @@ export async function runScanCycle() {
           };
         }
 
-        const scored = scoreTokenV2(p, effectiveWData);
+        const gmgnRaw = gmgnRawMap.get(tokenAddr) || {};
+        const scored = scoreTokenV2(p, effectiveWData, gmgnRaw);
+
+        // Hard rejects GMGN (wash trading, rug extrême, bundler massif)
+        if (scored._minFail?.startsWith('gmgn_')) {
+          rejected[scored._minFail] = (rejected[scored._minFail] || 0) + 1;
+          continue;
+        }
 
         // Sticky Axiom
         const hist      = scoreHistory.get(scored.addr) || {};

@@ -1,5 +1,91 @@
 const EMOJIS = ['🐸','🚀','💎','🌙','🔥','⚡','🦊','🐶','🐱','🎰','🍌','🧸','🦍','🐻','🎯'];
 
+// ── GMGN SCORING ─────────────────────────────────────────────────────────────
+// Retourne { score: -50..+50, hardReject: string|null }
+function calculateGmgnScore(g) {
+  if (!g || Object.keys(g).length === 0) return { score: 0, hardReject: null };
+
+  // Hard rejects GMGN
+  if (g.is_wash_trading === true)     return { score: 0, hardReject: 'gmgn_wash_trading' };
+  if ((g.rug_ratio ?? 0) > 0.85)     return { score: 0, hardReject: `gmgn_rug_${Math.round((g.rug_ratio ?? 0) * 100)}%` };
+  if ((g.bundler_mhr ?? 0) > 0.75)   return { score: 0, hardReject: `gmgn_bundler_${Math.round((g.bundler_mhr ?? 0) * 100)}%` };
+
+  let score = 0;
+
+  // ── Risques → pénalités ───────────────────────────────────────────────────
+  const rug = g.rug_ratio ?? 0;
+  if      (rug > 0.5)  score -= 15;
+  else if (rug > 0.3)  score -= 8;
+
+  const bundler = g.bundler_mhr ?? 0;
+  if      (bundler > 0.5)  score -= 12;
+  else if (bundler > 0.3)  score -= 5;
+
+  const insider = g.suspected_insider_hold_rate ?? 0;
+  if      (insider > 0.3)  score -= 12;
+  else if (insider > 0.1)  score -= 5;
+
+  const top10 = g.top_10_holder_rate ?? 0;
+  if      (top10 > 0.7)  score -= 12;
+  else if (top10 > 0.5)  score -= 5;
+
+  const fresh = g.fresh_wallet_rate ?? 0;
+  if      (fresh > 0.7)  score -= 10;
+  else if (fresh > 0.5)  score -= 5;
+
+  const rat = g.rat_trader_amount_rate ?? 0;
+  if      (rat > 0.4)  score -= 10;
+  else if (rat > 0.2)  score -= 5;
+
+  const entrap = g.entrapment_ratio ?? 0;
+  if      (entrap > 0.5)  score -= 15;
+  else if (entrap > 0.3)  score -= 8;
+
+  const sniper70 = g.top70_sniper_hold_rate ?? 0;
+  if      (sniper70 > 0.5)  score -= 10;
+  else if (sniper70 > 0.3)  score -= 5;
+
+  const devHold = g.dev_team_hold_rate ?? 0;
+  if      (devHold > 0.2)  score -= 8;
+  else if (devHold > 0.1)  score -= 4;
+
+  if (g.image_dup === true)                                              score -= 10;
+
+  const renames = g.twitter_rename_count ?? 0;
+  if      (renames > 5)  score -= 15;
+  else if (renames > 2)  score -= 8;
+
+  // Serial deployer avec mauvais track record
+  const openRatio = g.creator_created_open_ratio ?? null;
+  if (openRatio !== null && openRatio < 0.2 && (g.creator_created_count ?? 0) > 5) score -= 8;
+
+  // ── Signaux positifs → bonus ──────────────────────────────────────────────
+  if (g.cto_flag === true)          score += 8;  // community takeover = organique
+
+  const tgCalls = g.tg_call_count ?? 0;
+  if      (tgCalls >= 10)  score += 10;
+  else if (tgCalls >= 3)   score += 5;
+
+  const followers = g.x_user_follower ?? 0;
+  if      (followers >= 5000)  score += 10;
+  else if (followers >= 500)   score += 5;
+
+  if (g.has_at_least_one_social === true)  score += 3;
+  if (g.dexscr_ad)                         score += 8;  // paid DexScreener = engagement réel
+
+  const completeCost = g.complete_cost_time ?? null;
+  if (completeCost !== null && completeCost < 300) score += 5;  // bonding curve ultra-rapide
+
+  const botDegen = g.bot_degen_count ?? 0;
+  if      (botDegen >= 3)  score += 5;
+  else if (botDegen >= 1)  score += 3;
+
+  const netBuy = g.net_buy_24h ?? null;
+  if (netBuy !== null && netBuy > 0) score += 5;
+
+  return { score: Math.max(-50, Math.min(50, score)), hardReject: null };
+}
+
 function hardFilterV2(p) {
   const ageH = (Date.now() - (p.pairCreatedAt || 0)) / 3600000;
   const mcap = p.marketCap || p.fdv || 0;
@@ -79,7 +165,7 @@ function calculatePatternScore(p) {
   return Math.max(0, Math.min(45, Math.round(score)));
 }
 
-export function scoreTokenV2(p, walletData = { count: 0, byGroup: { KOL: 0, 'gros trader': 0, DEV: 0, farmer: 0 }, wallets: [], clustered: false }) {
+export function scoreTokenV2(p, walletData = { count: 0, byGroup: { KOL: 0, 'gros trader': 0, DEV: 0, farmer: 0 }, wallets: [], clustered: false }, gmgnData = {}) {
   const ageMs  = Date.now() - (p.pairCreatedAt || 0);
   const ageH   = ageMs / 3600000;
   const ageMin = ageMs / 60000;
@@ -103,6 +189,21 @@ export function scoreTokenV2(p, walletData = { count: 0, byGroup: { KOL: 0, 'gro
   const sec        = p.security || null;
   const top10pct   = sec ? parseFloat(sec.top10Pct || 0) : 0;
   const holderCount = sec?.holderCount || 0;
+
+  // ── GMGN hard rejects + score ────────────────────────────────
+  const gmgn = calculateGmgnScore(gmgnData);
+  const sym_early = (p.baseToken?.symbol || 'UNKNOWN').toUpperCase().slice(0, 12);
+  if (gmgn.hardReject) {
+    return {
+      score: 0, _minFail: gmgn.hardReject,
+      symbol: sym_early,
+      addr: p.baseToken?.address || '', mcap: p.marketCap || p.fdv || 0, liq: 0,
+      socials: false, rugRisk: 'HIGH', walletData,
+      pairUrl: p.url || '',
+      raw: p,
+      debug: { gmgnHardReject: gmgn.hardReject, gmgnData }
+    };
+  }
 
   let score = 0;
 
@@ -200,7 +301,8 @@ export function scoreTokenV2(p, walletData = { count: 0, byGroup: { KOL: 0, 'gro
   const patternScore = calculatePatternScore(p);
   score += patternScore;
 
-  const finalScore = Math.min(170, Math.max(0, Math.round(score)));
+  score += gmgn.score;
+  const finalScore = Math.min(200, Math.max(0, Math.round(score)));
 
   // RUG RISK
   let rugPts = 0;
@@ -229,7 +331,8 @@ export function scoreTokenV2(p, walletData = { count: 0, byGroup: { KOL: 0, 'gro
       walletCount: axiomCount, axiomCount, clustered: walletData.clustered,
       kolCount, traderCount, devCount, farmerCount, byGroup,
       buyRatio: buyR, volAccel, c1h, m5, c6h, m1, ageH,
-      top10pct, volMcapH1: vol1/mcap, sellBuyRatio: sells1/(buys1||1)
+      top10pct, volMcapH1: vol1/mcap, sellBuyRatio: sells1/(buys1||1),
+      gmgnScore: gmgn.score, gmgnData
     }
   };
 }
