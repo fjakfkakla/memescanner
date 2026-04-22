@@ -124,8 +124,8 @@ body { background: var(--lp-bg); color: var(--lp-text); font-family: var(--font)
   background: #ffffff;
   color: #0f1117;
 }
-/* Canvas WebGL sombre → masqué sur fond blanc */
-#heroGLCanvas { display: none !important; }
+/* Canvas WebGL : blend screen → fond noir transparent, courbes visibles sur blanc */
+#heroGLCanvas { display: block !important; mix-blend-mode: screen; opacity: 0.7; }
 /* Textes hero codés en dur blanc → dark */
 #landing-wrap .lp-hero-title     { color: #0f1117; }
 #landing-wrap .lp-hero-sub       { color: #6b7280; }
