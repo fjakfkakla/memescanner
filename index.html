@@ -111,6 +111,53 @@ nav.scrolled { box-shadow: 0 2px 20px rgba(0,0,0,0.08); }
 body { background: var(--lp-bg); color: var(--lp-text); font-family: var(--font); }
 #landing-wrap { background: var(--lp-bg); }
 
+/* ═══ LANDING — THÈME CLAIR ══════════════════════════════════ */
+#landing-wrap {
+  --lp-bg:     #ffffff;
+  --lp-bg2:    #f7f8fa;
+  --lp-bg3:    #eff1f5;
+  --lp-card:   #ffffff;
+  --lp-border: #e2e6ed;
+  --lp-text:   #0f1117;
+  --lp-muted:  #6b7280;
+  --lp-subtle: #9ca3af;
+  background: #ffffff;
+  color: #0f1117;
+}
+/* Canvas WebGL sombre → masqué sur fond blanc */
+#heroGLCanvas { display: none !important; }
+/* Textes hero codés en dur blanc → dark */
+#landing-wrap .lp-hero-title     { color: #0f1117; }
+#landing-wrap .lp-hero-sub       { color: #6b7280; }
+#landing-wrap .lp-section-title  { color: #0f1117; }
+#landing-wrap .lp-section-label  { color: #6366f1; }
+/* Cards features → fond clair */
+#landing-wrap .lp-feat-card {
+  background: #ffffff;
+  border-color: #e2e6ed;
+}
+#landing-wrap .lp-feat-card h3,
+#landing-wrap .lp-feat-card p { color: #0f1117; }
+#landing-wrap .lp-feat-card p   { color: #6b7280; }
+/* Tableau comparaison → fond clair */
+#landing-wrap .lp-cmp-table th  { color: #6b7280; border-color: #e2e6ed; }
+#landing-wrap .lp-cmp-table td  { color: #0f1117; border-color: #e2e6ed; }
+/* SM stats */
+#landing-wrap .lp-sm-stat-val   { color: #0f1117; }
+#landing-wrap .lp-sm-stat-lbl   { color: #6b7280; }
+#landing-wrap .lp-sm-desc       { color: #6b7280; }
+/* Score cats */
+#landing-wrap .lp-score-cat-label { color: #6b7280; }
+/* Pricing cards */
+#landing-wrap .lp-price-card {
+  background: #ffffff;
+  border-color: #e2e6ed;
+}
+#landing-wrap .lp-price-name,
+#landing-wrap .lp-price-amount  { color: #0f1117; }
+#landing-wrap .lp-price-desc    { color: #6b7280; }
+#landing-wrap .lp-price-feature { color: #374151; }
+
 /* ═══ LANDING WRAPPER ════════════════════════════════════════════ */
 #landing-wrap{background:var(--lp-bg);position:relative;overflow:hidden;}
 
