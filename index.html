@@ -124,8 +124,8 @@ body { background: var(--lp-bg); color: var(--lp-text); font-family: var(--font)
   background: #ffffff;
   color: #0f1117;
 }
-/* Canvas WebGL : blend screen → fond noir transparent, courbes visibles sur blanc */
-#heroGLCanvas { display: block !important; mix-blend-mode: screen; opacity: 0.7; }
+/* Canvas WebGL : alpha transparent, courbes visibles sur fond blanc */
+#heroGLCanvas { display: block !important; opacity: 0.85; }
 /* Textes hero codés en dur blanc → dark */
 #landing-wrap .lp-hero-title     { color: #0f1117; }
 #landing-wrap .lp-hero-sub       { color: #6b7280; }
@@ -10580,8 +10580,12 @@ window.addEventListener('DOMContentLoaded',()=>{
   function initHeroShader() {
     const canvas = document.getElementById('heroGLCanvas');
     if (!canvas) return;
-    const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+    const gl = canvas.getContext('webgl', { alpha: true, premultipliedAlpha: false })
+             || canvas.getContext('experimental-webgl', { alpha: true, premultipliedAlpha: false });
     if (!gl) return;
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+    gl.clearColor(0, 0, 0, 0);
 
     const vs = gl.createShader(gl.VERTEX_SHADER);
     gl.shaderSource(vs, 'attribute vec3 p;void main(){gl_Position=vec4(p,1.);}');
@@ -10597,7 +10601,8 @@ window.addEventListener('DOMContentLoaded',()=>{
         float r=0.035/abs(p.y+sin((p.x*(1.+d)+t)*1.1)*0.3);
         float g=0.03/abs(p.y+sin((p.x+t)*1.1)*0.3);
         float b=0.045/abs(p.y+sin((p.x*(1.-d)+t)*1.1)*0.3);
-        gl_FragColor=vec4(r*0.5,g*0.4,b*1.2,1.);
+        float br=clamp(r*0.5+g*0.4+b*1.2,0.,1.);
+        gl_FragColor=vec4(clamp(r*0.5,0.,1.),clamp(g*0.4,0.,1.),clamp(b*1.2,0.,1.),br);
       }
     `);
     gl.compileShader(fs);
@@ -10627,6 +10632,7 @@ window.addEventListener('DOMContentLoaded',()=>{
 
     function tick() {
       time += 0.006;
+      gl.clear(gl.COLOR_BUFFER_BIT);
       gl.uniform1f(tU, time);
       gl.drawArrays(gl.TRIANGLES, 0, 6);
       requestAnimationFrame(tick);
