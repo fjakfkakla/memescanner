@@ -139,6 +139,125 @@ nav.scrolled { box-shadow: 0 2px 20px rgba(0,0,0,0.4); }
 .lang-switch { background: transparent; border: 1px solid var(--lp-border); color: var(--lp-muted); padding: .38rem .8rem; border-radius: 8px; cursor: pointer; font-size: .82rem; font-family: 'Inter', sans-serif; transition: .2s; }
 .lang-switch:hover { color: var(--lp-violet); border-color: var(--lp-violet); }
 
+/* ── NAV DROPDOWNS ──────────────────────────────────────────── */
+.nav-link-plain {
+  color: var(--lp-muted); font-size: .87rem; text-decoration: none;
+  font-weight: 500; transition: color .2s; white-space: nowrap;
+}
+.nav-link-plain:hover { color: #fff; }
+
+.nav-dd { position: relative; }
+.nav-dd-trigger {
+  display: flex; align-items: center; gap: 4px;
+  background: transparent; border: none;
+  color: var(--lp-muted); font-size: .87rem; font-weight: 500;
+  cursor: pointer; font-family: 'Inter', sans-serif;
+  padding: .25rem 0; transition: color .2s; white-space: nowrap;
+}
+.nav-dd-trigger:hover, .nav-dd.open .nav-dd-trigger { color: #fff; }
+.nav-dd-chevron { width: 13px; height: 13px; flex-shrink: 0; transition: transform .22s; }
+.nav-dd.open .nav-dd-chevron { transform: rotate(180deg); }
+
+.nav-dd-panel {
+  position: absolute; top: calc(100% + 18px); left: 50%;
+  transform: translateX(-50%) translateY(-6px);
+  background: rgba(11,11,13,0.98);
+  border: 1px solid rgba(255,255,255,.07);
+  border-radius: 14px; padding: 6px; min-width: 272px;
+  opacity: 0; pointer-events: none;
+  transition: opacity .18s, transform .18s;
+  box-shadow: 0 24px 60px rgba(0,0,0,.65), 0 0 0 1px rgba(99,102,241,.07);
+  backdrop-filter: blur(24px); z-index: 500;
+}
+.nav-dd.open .nav-dd-panel {
+  opacity: 1; pointer-events: auto;
+  transform: translateX(-50%) translateY(0);
+}
+/* Petite flèche au dessus du panel */
+.nav-dd-panel::before {
+  content: ''; position: absolute; top: -5px; left: 50%; transform: translateX(-50%);
+  width: 10px; height: 10px; background: rgba(11,11,13,0.98);
+  border-left: 1px solid rgba(255,255,255,.07);
+  border-top: 1px solid rgba(255,255,255,.07);
+  transform: translateX(-50%) rotate(45deg);
+}
+
+.nav-dd-item {
+  display: flex; align-items: flex-start; gap: 11px;
+  padding: 10px 11px; border-radius: 10px;
+  text-decoration: none; color: inherit;
+  transition: background .14s;
+}
+.nav-dd-item:hover { background: rgba(255,255,255,.05); }
+.nav-dd-icon {
+  width: 34px; height: 34px; border-radius: 8px; flex-shrink: 0;
+  background: rgba(99,102,241,.1); border: 1px solid rgba(99,102,241,.14);
+  display: flex; align-items: center; justify-content: center; font-size: .95rem;
+}
+.nav-dd-title { font-size: .84rem; font-weight: 600; color: #eee; margin-bottom: 1px; }
+.nav-dd-desc { font-size: .73rem; color: var(--lp-muted); line-height: 1.35; }
+.nav-dd-sep { height: 1px; background: rgba(255,255,255,.05); margin: 4px 5px; }
+
+/* ── HAMBURGER MOBILE ───────────────────────────────────────── */
+.nav-hamburger {
+  display: none; flex-direction: column; justify-content: center; gap: 5px;
+  background: transparent; border: 1px solid rgba(255,255,255,.1);
+  border-radius: 8px; padding: 8px 10px; cursor: pointer; margin-left: auto; flex-shrink: 0;
+}
+.nav-hamburger span {
+  width: 18px; height: 1.5px; background: rgba(255,255,255,.65);
+  display: block; transition: all .25s; border-radius: 2px;
+}
+.nav-hamburger.open span:first-child  { transform: translateY(6.5px) rotate(45deg); }
+.nav-hamburger.open span:nth-child(2) { opacity: 0; transform: scaleX(0); }
+.nav-hamburger.open span:last-child   { transform: translateY(-6.5px) rotate(-45deg); }
+
+/* ── MOBILE MENU PANEL ──────────────────────────────────────── */
+.nav-mobile-menu {
+  display: none; position: fixed; top: 64px; left: 0; right: 0; bottom: 0;
+  background: rgba(8,8,10,.97); border-top: 1px solid rgba(255,255,255,.06);
+  backdrop-filter: blur(24px); z-index: 998;
+  overflow-y: auto; padding: 12px 16px 32px;
+  animation: slideDown .22s ease;
+}
+@keyframes slideDown { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+.nav-mobile-menu.open { display: block; }
+
+.mob-simple-link {
+  display: block; padding: 13px 16px; color: #f0f0f0;
+  font-size: .95rem; font-weight: 600; text-decoration: none;
+  border-radius: 10px; transition: background .14s;
+}
+.mob-simple-link:hover { background: rgba(255,255,255,.05); }
+
+.mob-section { border-bottom: 1px solid rgba(255,255,255,.05); margin-bottom: 4px; }
+.mob-section-hd {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 13px 16px; color: #f0f0f0; font-size: .95rem; font-weight: 600;
+  cursor: pointer; border-radius: 10px; transition: background .14s; user-select: none;
+}
+.mob-section-hd:hover { background: rgba(255,255,255,.05); }
+.mob-chevron { width: 14px; height: 14px; color: var(--lp-muted); transition: transform .22s; flex-shrink: 0; }
+.mob-section.open .mob-chevron { transform: rotate(180deg); }
+.mob-sub { display: none; padding: 0 4px 8px; }
+.mob-section.open .mob-sub { display: block; }
+.mob-sub-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px; color: var(--lp-muted); font-size: .85rem;
+  text-decoration: none; border-radius: 8px; transition: all .14s;
+}
+.mob-sub-item:hover { background: rgba(255,255,255,.04); color: #fff; }
+.mob-sub-icon { font-size: .95rem; width: 22px; text-align: center; flex-shrink: 0; }
+
+@media (max-width: 768px) {
+  .nav-links  { display: none !important; }
+  .nav-hamburger { display: flex; }
+}
+@media (max-width: 600px) {
+  .nav-links  { display: none !important; }
+  .nav-hamburger { display: flex; }
+}
+
 /* CONTAINER */
 .lp-container { max-width: 1200px; margin: 0 auto; padding: 0 2rem; }
 
@@ -2235,11 +2354,87 @@ nav.scrolled { box-shadow: 0 1px 40px rgba(0,0,0,0.6) !important; }
       <div class="logo-tagline">Analyse. Comprends. Décide.</div>
     </div>
   </a>
-  <div class="nav-links">
-    <a href="#features">Features</a>
-    <a href="#pricing-preview">Pricing</a>
-    <a href="#">Discord</a>
-  </div>
+  <!-- NAV LINKS (desktop) -->
+  <div class="nav-links" id="navLinks">
+
+    <!-- 1. Accueil -->
+    <a href="#hero" class="nav-link-plain">Accueil</a>
+
+    <!-- 2. Décryptage -->
+    <div class="nav-dd" id="dd-decryptage">
+      <button class="nav-dd-trigger" onclick="toggleDD('dd-decryptage')">
+        Décryptage
+        <svg class="nav-dd-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <div class="nav-dd-panel">
+        <a href="#features" class="nav-dd-item">
+          <div class="nav-dd-icon">🔬</div>
+          <div><div class="nav-dd-title">Comment ça marche</div><div class="nav-dd-desc">L'algorithme de détection expliqué</div></div>
+        </a>
+        <a href="#smartmoney" class="nav-dd-item">
+          <div class="nav-dd-icon">🧠</div>
+          <div><div class="nav-dd-title">Smart Money</div><div class="nav-dd-desc">1 064 wallets KOL trackés en live</div></div>
+        </a>
+        <a href="#scoring" class="nav-dd-item">
+          <div class="nav-dd-icon">📊</div>
+          <div><div class="nav-dd-title">Le Scoring</div><div class="nav-dd-desc">Chaque token noté sur 200 points</div></div>
+        </a>
+        <div class="nav-dd-sep"></div>
+        <a href="#vs" class="nav-dd-item">
+          <div class="nav-dd-icon">⚔️</div>
+          <div><div class="nav-dd-title">Vs Concurrents</div><div class="nav-dd-desc">Pourquoi MemeScanner domine</div></div>
+        </a>
+      </div>
+    </div>
+
+    <!-- 3. Outils -->
+    <div class="nav-dd" id="dd-outils">
+      <button class="nav-dd-trigger" onclick="toggleDD('dd-outils')">
+        Outils
+        <svg class="nav-dd-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <div class="nav-dd-panel">
+        <a href="#scanner" class="nav-dd-item">
+          <div class="nav-dd-icon">📡</div>
+          <div><div class="nav-dd-title">Scanner Live</div><div class="nav-dd-desc">Détection tokens en temps réel</div></div>
+        </a>
+        <a href="#rugsnip" class="nav-dd-item">
+          <div class="nav-dd-icon">🛡️</div>
+          <div><div class="nav-dd-title">Anti-Rug</div><div class="nav-dd-desc">Snipers, bundlers & rugs détectés</div></div>
+        </a>
+        <div class="nav-dd-sep"></div>
+        <a href="#pricing-preview" class="nav-dd-item">
+          <div class="nav-dd-icon">💎</div>
+          <div><div class="nav-dd-title">Plans & Accès</div><div class="nav-dd-desc">Rejoindre la communauté alpha</div></div>
+        </a>
+      </div>
+    </div>
+
+    <!-- 4. Avis -->
+    <div class="nav-dd" id="dd-avis">
+      <button class="nav-dd-trigger" onclick="toggleDD('dd-avis')">
+        Avis
+        <svg class="nav-dd-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <div class="nav-dd-panel">
+        <a href="#reviews" class="nav-dd-item">
+          <div class="nav-dd-icon">⭐</div>
+          <div><div class="nav-dd-title">Témoignages</div><div class="nav-dd-desc">Ce que disent nos membres</div></div>
+        </a>
+        <a href="#pricing-preview" class="nav-dd-item">
+          <div class="nav-dd-icon">🚀</div>
+          <div><div class="nav-dd-title">Rejoindre</div><div class="nav-dd-desc">Commencer dès maintenant</div></div>
+        </a>
+      </div>
+    </div>
+
+  </div><!-- /nav-links -->
+
+  <!-- Hamburger mobile -->
+  <button class="nav-hamburger" id="navHamburger" onclick="toggleMobileMenu()" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
+
   <button class="lang-switch" onclick="toggleLang()">🇫🇷 FR</button>
   <button class="nav-btn btn-outline" onclick="openAdmin()" id="adminBtn">⚙ Admin</button>
   <button id="notifBtn" onclick="handleNotifBtn()" title="Activer les alertes calls" style="background:transparent;border:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.35);padding:.4rem .75rem;border-radius:8px;cursor:pointer;font-size:.85rem;transition:.2s;font-family:'Space Mono',monospace;">🔔</button>
@@ -2248,6 +2443,49 @@ nav.scrolled { box-shadow: 0 1px 40px rgba(0,0,0,0.6) !important; }
     <span id="streakNum" style="font-size:1rem;font-weight:800;color:#ffaa00;">0</span>
   </div>
 </nav>
+
+<!-- ── MOBILE MENU ──────────────────────────────────────────── -->
+<div class="nav-mobile-menu" id="navMobileMenu">
+
+  <a href="#hero" class="mob-simple-link" onclick="closeMobileMenu()">Accueil</a>
+
+  <div class="mob-section" id="mob-decryptage">
+    <div class="mob-section-hd" onclick="toggleMobSection('mob-decryptage')">
+      Décryptage
+      <svg class="mob-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+    </div>
+    <div class="mob-sub">
+      <a href="#features"   class="mob-sub-item" onclick="closeMobileMenu()"><span class="mob-sub-icon">🔬</span>Comment ça marche</a>
+      <a href="#smartmoney" class="mob-sub-item" onclick="closeMobileMenu()"><span class="mob-sub-icon">🧠</span>Smart Money</a>
+      <a href="#scoring"    class="mob-sub-item" onclick="closeMobileMenu()"><span class="mob-sub-icon">📊</span>Le Scoring</a>
+      <a href="#vs"         class="mob-sub-item" onclick="closeMobileMenu()"><span class="mob-sub-icon">⚔️</span>Vs Concurrents</a>
+    </div>
+  </div>
+
+  <div class="mob-section" id="mob-outils">
+    <div class="mob-section-hd" onclick="toggleMobSection('mob-outils')">
+      Outils
+      <svg class="mob-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+    </div>
+    <div class="mob-sub">
+      <a href="#scanner"       class="mob-sub-item" onclick="closeMobileMenu()"><span class="mob-sub-icon">📡</span>Scanner Live</a>
+      <a href="#rugsnip"       class="mob-sub-item" onclick="closeMobileMenu()"><span class="mob-sub-icon">🛡️</span>Anti-Rug</a>
+      <a href="#pricing-preview" class="mob-sub-item" onclick="closeMobileMenu()"><span class="mob-sub-icon">💎</span>Plans & Accès</a>
+    </div>
+  </div>
+
+  <div class="mob-section" id="mob-avis">
+    <div class="mob-section-hd" onclick="toggleMobSection('mob-avis')">
+      Avis
+      <svg class="mob-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+    </div>
+    <div class="mob-sub">
+      <a href="#reviews"         class="mob-sub-item" onclick="closeMobileMenu()"><span class="mob-sub-icon">⭐</span>Témoignages</a>
+      <a href="#pricing-preview" class="mob-sub-item" onclick="closeMobileMenu()"><span class="mob-sub-icon">🚀</span>Rejoindre</a>
+    </div>
+  </div>
+
+</div>
 
 <div id="landing-wrap">
 
@@ -2331,7 +2569,7 @@ nav.scrolled { box-shadow: 0 1px 40px rgba(0,0,0,0.6) !important; }
 </section>
 
 <!-- ═══ SMART MONEY ══════════════════════════════════════════════ -->
-<section class="lp-smartmoney">
+<section class="lp-smartmoney" id="smartmoney">
   <div class="lp-container">
     <div class="lp-sm-inner">
       <div class="lp-sm-left">
@@ -2365,7 +2603,7 @@ nav.scrolled { box-shadow: 0 1px 40px rgba(0,0,0,0.6) !important; }
 </section>
 
 <!-- ═══ SCORING ══════════════════════════════════════════════════ -->
-<section class="lp-scoring">
+<section class="lp-scoring" id="scoring">
   <div class="lp-container">
     <div class="lp-section-label" style="text-align:center">Le moteur</div>
     <h2 class="lp-section-title" style="text-align:center">Un algorithme de scoring qui<br>ne laisse rien au hasard.</h2>
@@ -2455,7 +2693,7 @@ nav.scrolled { box-shadow: 0 1px 40px rgba(0,0,0,0.6) !important; }
 </section>
 
 <!-- ═══ COMPARAISON ══════════════════════════════════════════════ -->
-<section class="lp-comparison">
+<section class="lp-comparison" id="vs">
   <div class="lp-container">
     <div class="lp-section-label" style="text-align:center">Comparaison</div>
     <h2 class="lp-section-title" style="text-align:center">Pourquoi MemeScanner<br>domine les alternatives.</h2>
@@ -9916,6 +10154,53 @@ document.addEventListener('visibilitychange',()=>{
     }
   }
 });
+
+// ── NAV DROPDOWNS ────────────────────────────────────────────
+function toggleDD(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const isOpen = el.classList.contains('open');
+  // Fermer tous les autres
+  document.querySelectorAll('.nav-dd.open').forEach(d => { if (d.id !== id) d.classList.remove('open'); });
+  el.classList.toggle('open', !isOpen);
+}
+// Clic en dehors → fermer tous
+document.addEventListener('click', e => {
+  if (!e.target.closest('.nav-dd')) {
+    document.querySelectorAll('.nav-dd.open').forEach(d => d.classList.remove('open'));
+  }
+});
+// Échap → fermer
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    document.querySelectorAll('.nav-dd.open').forEach(d => d.classList.remove('open'));
+    closeMobileMenu();
+  }
+});
+
+// ── MOBILE MENU ──────────────────────────────────────────────
+function toggleMobileMenu() {
+  const menu = document.getElementById('navMobileMenu');
+  const btn  = document.getElementById('navHamburger');
+  if (!menu || !btn) return;
+  const open = menu.classList.toggle('open');
+  btn.classList.toggle('open', open);
+  document.body.style.overflow = open ? 'hidden' : '';
+}
+function closeMobileMenu() {
+  const menu = document.getElementById('navMobileMenu');
+  const btn  = document.getElementById('navHamburger');
+  if (menu) menu.classList.remove('open');
+  if (btn)  btn.classList.remove('open');
+  document.body.style.overflow = '';
+}
+function toggleMobSection(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  // Fermer les autres sections mobiles
+  document.querySelectorAll('.mob-section.open').forEach(s => { if (s.id !== id) s.classList.remove('open'); });
+  el.classList.toggle('open');
+}
 
 window.addEventListener('DOMContentLoaded',()=>{
   try{
