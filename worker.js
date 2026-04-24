@@ -173,7 +173,15 @@ async function fetchDexScreener() {
       if (!p?.baseToken?.address) continue;
       if ((p.chainId || p.chain || '') !== 'solana') continue;
       const addr = p.baseToken.address;
-      if (!pairMap.has(addr)) { pairMap.set(addr, p); count++; }
+      if (!pairMap.has(addr)) {
+        pairMap.set(addr, p); count++;
+      } else {
+        // Préférer la paire avec le plus de volume récent (après migration, c'est la nouvelle paire active)
+        const existing = pairMap.get(addr);
+        const existingVol = existing.volume?.m5 || existing.volume?.h1 || existing.volume?.h6 || 0;
+        const newVol      = p.volume?.m5        || p.volume?.h1        || p.volume?.h6        || 0;
+        if (newVol > existingVol) pairMap.set(addr, p);
+      }
     }
     if (count > 0) console.log(`[DexScreener] ${source}: +${count} paires`);
   }
@@ -527,6 +535,8 @@ export async function runScanCycle() {
           has_at_least_one_social:     t.has_at_least_one_social      ?? null,
           dexscr_ad:                   t.dexscr_ad                    ?? null,
           complete_cost_time:          t.complete_cost_time           ?? null,
+          cashback:                    t.cashback                     ?? null,
+          is_cashback:                 t.is_cashback                  ?? null,
         });
         if (!existingAddrs.has(addr)) newGmgnAddrs.push(addr);
       }
@@ -538,13 +548,22 @@ export async function runScanCycle() {
               { signal: AbortSignal.timeout(10000) });
             const data = await resp.json();
             const newPairs = (data.pairs || []).filter(p => p.chainId === 'solana' && p.baseToken?.address);
+            // Pour chaque token, garder la paire avec le plus de volume récent (post-migration)
+            const bestByAddr = new Map();
             for (const p of newPairs) {
-              if (!existingAddrs.has(p.baseToken.address)) {
-                allPairs.push(p);
-                existingAddrs.add(p.baseToken.address);
-              }
+              const a = p.baseToken.address;
+              if (existingAddrs.has(a)) continue;
+              const prev = bestByAddr.get(a);
+              if (!prev) { bestByAddr.set(a, p); continue; }
+              const prevVol = prev.volume?.m5 || prev.volume?.h1 || 0;
+              const newVol  = p.volume?.m5    || p.volume?.h1    || 0;
+              if (newVol > prevVol) bestByAddr.set(a, p);
             }
-            if (newPairs.length > 0) console.log(`[GMGN] +${newPairs.length} paires GMGN ajoutées`);
+            for (const p of bestByAddr.values()) {
+              allPairs.push(p);
+              existingAddrs.add(p.baseToken.address);
+            }
+            if (bestByAddr.size > 0) console.log(`[GMGN] +${bestByAddr.size} paires GMGN ajoutées`);
           } catch (e) {}
         }
       }
@@ -565,13 +584,21 @@ export async function runScanCycle() {
               { signal: AbortSignal.timeout(10000) });
             const data = await resp.json();
             const newPairs = (data.pairs || []).filter(p => p.chainId === 'solana' && p.baseToken?.address);
+            const bestByAddr = new Map();
             for (const p of newPairs) {
-              if (!existingAddrs.has(p.baseToken.address)) {
-                allPairs.push(p);
-                existingAddrs.add(p.baseToken.address);
-              }
+              const a = p.baseToken.address;
+              if (existingAddrs.has(a)) continue;
+              const prev = bestByAddr.get(a);
+              if (!prev) { bestByAddr.set(a, p); continue; }
+              const prevVol = prev.volume?.m5 || prev.volume?.h1 || 0;
+              const newVol  = p.volume?.m5    || p.volume?.h1    || 0;
+              if (newVol > prevVol) bestByAddr.set(a, p);
             }
-            if (newPairs.length > 0) console.log(`[Discovery] +${newPairs.length} paires Axiom ajoutées`);
+            for (const p of bestByAddr.values()) {
+              allPairs.push(p);
+              existingAddrs.add(p.baseToken.address);
+            }
+            if (bestByAddr.size > 0) console.log(`[Discovery] +${bestByAddr.size} paires Axiom ajoutées`);
           } catch (e) {}
         }
       }
