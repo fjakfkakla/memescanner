@@ -49,8 +49,8 @@ export async function saveCall(token) {
       debug:      token.debug,
       lastSeenAt: Date.now(),
     };
-    // Permettre la correction du callMcap juste après le call (background fresh fetch)
-    if (token.callMcap !== undefined) updates.callMcap = token.callMcap;
+    // Ne jamais écraser un callMcap déjà enregistré (protège contre restart Railway)
+    if (token.callMcap !== undefined && !existing.callMcap) updates.callMcap = token.callMcap;
     await ref.update(updates);
     return key;
   }
