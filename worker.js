@@ -2,7 +2,6 @@ import fetch from 'node-fetch';
 import { WALLET_TRACKER, AXIOM_WALLETS } from './axiomWallets.js';
 import { scoreTokenV2, hardFilterV2 } from './scorer.js';
 import { saveCall, getCallByAddr } from './firebase.js';
-import { checkSmartFilters } from './aiEngine.js';
 import { gmgnFetchTrenches, gmgnToWalletData } from './gmgn.js';
 
 const HELIUS_KEY  = process.env.HELIUS_KEY;
@@ -721,19 +720,6 @@ export async function runScanCycle() {
         // HARD FILTER 2 — Mcap min
         if (scored.mcap < 15000) { rejected['mcap<15K'] = (rejected['mcap<15K'] || 0) + 1; continue; }
 
-        // SMART FILTER IA — filtres adaptatifs appris des données
-        const smartCheck = checkSmartFilters(scored.debug || {});
-        if (!smartCheck.pass) {
-          rejected[`AI_reject`] = (rejected[`AI_reject`] || 0) + 1;
-          console.log(`[AI] Rejeté ${scored.symbol}: ${smartCheck.reasons[0]}`);
-          continue;
-        }
-        // Appliquer pénalité IA au score si pas reject
-        if (smartCheck.penalty) {
-          scored.score = Math.max(0, scored.score + smartCheck.penalty);
-          scored.debug.aiPenalty = smartCheck.penalty;
-          scored.debug.aiReasons = smartCheck.reasons;
-        }
 
         if (scored.score >= 80) {
           finalScored.push(scored);
