@@ -27,19 +27,22 @@ function calculatePatternScore(p) {
   const volMcapH1  = volH1 / mcap;
   const avgTxSize  = volH1 / totalTxH1;
 
-  // 1. Montée douce / Staircase : c1h fort mais c5m modéré = croissance régulière
-  if (c1h > 35 && c5m > 0 && c5m < 20 && c1h > c5m * 3) score += 15;
-  // 2. Correction saine (pas trop violente)
-  if (c1h >= -20 && c1h <= -5) score += 10;
-  // 3. Gros pump avec structure (multi-pumps)
-  if (c1h > 35 && c6h > 55) score += 10;
-  if (c6h > 75) score += 5;
-  // 4. Consolidation propre (stabilisation après pump)
-  if (Math.abs(c5m) < 7 && c1h > 22) score += 8;
-  // 5. Pas de dump violent
-  if (c5m > -25 && m1 > -16) score += 5;
-  // 6. Volume organique — buys dominent les sells
-  if (buysM5 > sellsM5 * 1.55) score += 7;
+  // LIQUIDITÉ
+  let liqScore = 0;
+  if (liq < 10000) liqScore = -10;
+  else if (liq <= 13000) liqScore = 10;
+  else if (liq <= 20000) liqScore = 20;
+  score += liqScore;
+
+  // VOLUME H1
+  let volH1Score = 0;
+  if (volH1 < 10000) volH1Score = -20;
+  else if (volH1 < 20000) volH1Score = -10;
+  else if (volH1 < 30000) volH1Score = 15;
+  else if (volH1 < 50000) volH1Score = 30;
+  else if (volH1 < 80000) volH1Score = 40;
+  else volH1Score = 50;
+  score += volH1Score;
 
   // 7. NEW — Buy ratio m5 élevé (bon: >0.55, mauvais: <0.50)
   if (buyRatioM5 >= 0.58) score += 5;
@@ -76,7 +79,8 @@ function calculatePatternScore(p) {
   if (c1h > 60 && c5m < -20) score -= 10;
   if (c5m < -35) score -= 8;
 
-  return Math.max(0, Math.min(45, Math.round(score)));
+  const total = Math.max(0, Math.min(45, Math.round(score)));
+  return { score: total, liqScore, volH1Score, liq, volH1 };
 }
 
 export function scoreTokenV2(p, walletData = { count: 0, byGroup: { KOL: 0, 'gros trader': 0, DEV: 0, farmer: 0 }, wallets: [], clustered: false }) {
@@ -197,7 +201,8 @@ export function scoreTokenV2(p, walletData = { count: 0, byGroup: { KOL: 0, 'gro
   score += ageScore;
 
   // PATTERN
-  const patternScore = calculatePatternScore(p);
+  const patternResult = calculatePatternScore(p);
+  const patternScore = patternResult.score;
   score += patternScore;
 
   const finalScore = Math.min(170, Math.max(0, Math.round(score)));
@@ -226,6 +231,10 @@ export function scoreTokenV2(p, walletData = { count: 0, byGroup: { KOL: 0, 'gro
     debug: {
       traderScore, socialScore, holderScore, platformScore,
       mcapScore, ageScore, patternScore,
+      pattern: {
+        liq, liqScore: patternResult.liqScore,
+        volH1: vol1, volH1Score: patternResult.volH1Score
+      },
       walletCount: axiomCount, axiomCount, clustered: walletData.clustered,
       kolCount, traderCount, devCount, farmerCount, byGroup,
       buyRatio: buyR, volAccel, c1h, m5, c6h, m1, ageH,

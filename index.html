@@ -897,55 +897,20 @@ section#scanner, #panelPaperBot, #panelGems, section#rugsnip, .admin-panel {
 .nightly-insight{background:rgba(168,85,247,.06);border:1px solid rgba(168,85,247,.15);border-radius:8px;padding:10px 12px;margin-bottom:8px;}
 .nightly-insight-title{font-size:10px;font-weight:700;color:#a855f7;text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px;}
 .nightly-adj-chip{display:inline-flex;align-items:center;gap:5px;background:rgba(0,229,255,.08);border:1px solid rgba(0,229,255,.2);color:#00e5ff;font-size:10px;font-weight:700;padding:3px 8px;border-radius:5px;margin:2px;font-family:var(--font-mono);}
-/* ── DEBUG MODAL ──────────────────────────────────────────────── */
-.debug-overlay{position:fixed;inset:0;background:rgba(0,0,0,.9);backdrop-filter:blur(12px);z-index:300;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:.25s;}
+.debug-overlay{position:fixed;inset:0;background:rgba(0,0,0,.88);backdrop-filter:blur(10px);z-index:300;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:.3s;}
 .debug-overlay.open{opacity:1;pointer-events:all;}
-.debug-box{background:#0f0f17;border:1px solid rgba(97,86,217,.25);border-radius:20px;padding:1.8rem;width:92%;max-width:660px;max-height:88vh;overflow-y:auto;position:relative;box-shadow:0 28px 70px rgba(0,0,0,.7);}
-.debug-box::-webkit-scrollbar{width:4px}.debug-box::-webkit-scrollbar-track{background:transparent}.debug-box::-webkit-scrollbar-thumb{background:rgba(97,86,217,.3);border-radius:4px}
-/* Header */
-.dbg-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.3rem;}
-.dbg-sym{font-family:var(--font-head);font-size:1.4rem;font-weight:800;color:#fff;}
-.dbg-close{width:28px;height:28px;border-radius:8px;background:rgba(255,255,255,.06);border:none;color:var(--muted);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1rem;transition:.15s;}
-.dbg-close:hover{background:rgba(255,68,102,.15);color:var(--red);}
-/* CA block */
-.dbg-ca{display:flex;align-items:center;gap:.6rem;background:rgba(0,0,0,.4);border:1px solid rgba(97,86,217,.15);border-radius:10px;padding:.6rem 1rem;margin-bottom:1.3rem;}
-.dbg-ca-label{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);white-space:nowrap;}
-.dbg-ca-addr{font-family:var(--font-mono);font-size:.78rem;color:#a89de8;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.dbg-ca-copy{padding:.25rem .55rem;background:rgba(97,86,217,.15);border:1px solid rgba(97,86,217,.3);border-radius:6px;color:var(--purple2);font-size:.7rem;font-weight:700;cursor:pointer;white-space:nowrap;transition:.15s;}
-.dbg-ca-copy:hover{background:rgba(97,86,217,.3);}
-/* Score total */
-.dbg-total{text-align:center;margin-bottom:1.4rem;}
-.dbg-total-num{font-family:var(--font-head);font-size:3.2rem;font-weight:900;line-height:1;}
-.dbg-total-sub{font-size:.78rem;color:var(--muted);margin-top:.2rem;}
-/* Categories accordion */
-.dbg-cats{display:flex;flex-direction:column;gap:.5rem;margin-bottom:1.2rem;}
-.dbg-cat{border-radius:12px;overflow:hidden;border:1px solid rgba(255,255,255,.06);}
-.dbg-cat-header{display:flex;align-items:center;gap:.7rem;padding:.65rem 1rem;cursor:pointer;user-select:none;transition:.15s;background:rgba(255,255,255,.03);}
-.dbg-cat-header:hover{background:rgba(97,86,217,.08);}
-.dbg-cat-icon{font-size:1rem;flex-shrink:0;}
-.dbg-cat-label{font-size:.82rem;font-weight:700;flex:1;color:#ccc;}
-.dbg-bar-wrap{flex:1;max-width:120px;height:5px;background:rgba(255,255,255,.08);border-radius:3px;overflow:hidden;}
-.dbg-bar-inner{height:100%;border-radius:3px;transition:.4s;}
-.dbg-cat-pts{font-family:var(--font-mono);font-size:.82rem;font-weight:700;min-width:44px;text-align:right;}
-.dbg-cat-arrow{font-size:.65rem;color:var(--muted);transition:.2s;margin-left:.3rem;}
-.dbg-cat.open .dbg-cat-arrow{transform:rotate(90deg);}
-/* Category body */
-.dbg-cat-body{display:none;background:rgba(0,0,0,.25);border-top:1px solid rgba(255,255,255,.05);}
-.dbg-cat.open .dbg-cat-body{display:block;}
-.dbg-sub{display:flex;justify-content:space-between;align-items:center;padding:.45rem 1rem;border-bottom:1px solid rgba(255,255,255,.03);}
-.dbg-sub:last-child{border-bottom:none;}
-.dbg-sub-label{font-size:.79rem;color:var(--muted);}
-.dbg-sub-label small{display:block;font-size:.7rem;color:#555;margin-top:.05rem;}
-.dbg-sub-pts{font-family:var(--font-mono);font-size:.78rem;font-weight:700;padding:.15rem .4rem;border-radius:5px;}
-.dbg-sub-pts.pos{background:rgba(0,255,136,.1);color:#00ff88;}
-.dbg-sub-pts.neg{background:rgba(255,68,102,.1);color:#ff4466;}
-.dbg-sub-pts.zero{background:rgba(255,255,255,.06);color:#666;}
-/* Raw data */
-.dbg-raw-wrap{margin-top:.5rem;}
-.dbg-raw-toggle{display:flex;align-items:center;gap:.5rem;padding:.55rem .8rem;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:8px;cursor:pointer;font-size:.75rem;color:var(--muted);font-weight:600;}
-.dbg-raw-toggle:hover{background:rgba(255,255,255,.06);}
-.dbg-raw-pre{display:none;font-family:var(--font-mono);font-size:.72rem;color:#7a7a9a;background:rgba(0,0,0,.4);padding:.8rem;border-radius:8px;max-height:180px;overflow-y:auto;white-space:pre-wrap;margin-top:.4rem;border:1px solid rgba(97,86,217,.08);}
-.dbg-raw-pre.open{display:block;}
+.debug-box{background:linear-gradient(160deg,var(--bg2),var(--bg));border:1px solid rgba(97,86,217,.2);border-radius:18px;padding:2rem;width:90%;max-width:620px;max-height:85vh;overflow-y:auto;position:relative;box-shadow:0 24px 60px rgba(0,0,0,.5);}
+.debug-title{font-family:var(--font-head);font-size:1rem;color:var(--purple2);margin-bottom:1.2rem;font-weight:700;}
+.debug-score-big{font-family:var(--font-head);font-size:3rem;text-align:center;margin-bottom:1.2rem;font-weight:700;}
+.debug-bars{display:flex;flex-direction:column;gap:.8rem;margin-bottom:1.5rem;}
+.debug-bar-row{display:flex;align-items:center;gap:.8rem;}
+.debug-bar-label{font-size:.82rem;color:var(--muted);width:90px;font-weight:600;}
+.debug-bar-track{flex:1;background:var(--bg3);border-radius:6px;height:7px;overflow:hidden;}
+.debug-bar-fill{height:100%;border-radius:6px;background:linear-gradient(90deg,var(--purple),var(--green));transition:.5s;}
+.debug-bar-val{font-size:.82rem;color:var(--text);width:50px;text-align:right;font-weight:600;}
+.debug-details{font-size:.85rem;color:var(--muted);background:rgba(0,0,0,.3);padding:1rem;border-radius:10px;line-height:1.8;white-space:pre-wrap;border:1px solid rgba(97,86,217,.08);}
+.debug-raw{font-size:.8rem;color:var(--muted);background:rgba(0,0,0,.3);padding:.8rem;border-radius:8px;line-height:1.6;max-height:200px;overflow-y:auto;white-space:pre-wrap;margin-top:1rem;border:1px solid rgba(97,86,217,.06);}
+.debug-raw summary{color:var(--muted);cursor:pointer;font-size:.82rem;margin-bottom:.4rem;font-weight:600;}
 footer{border-top:1px solid var(--border);padding:2.5rem 4rem;display:flex;align-items:center;justify-content:space-between;position:relative;z-index:1;}
 .footer-left{font-size:.9rem;color:var(--muted);}
 .footer-links{display:flex;gap:1.5rem;}
@@ -4978,21 +4943,82 @@ async function checkAxiomWallets(tokenAddr, pairAddr = null, deep = false) {
 function hardFilterV2(p){
   const ageH=(Date.now()-(p.pairCreatedAt||0))/3600000;
   const mcap=p.marketCap||p.fdv||0;
-  const liq=p.liquidity?.usd||(p.liquidity?.base&&p.priceNative?(p.liquidity.base*parseFloat(p.priceNative||0)):0)||0;
-  const sellR=((p.txns?.h1?.sells||0)/Math.max(1,(p.txns?.h1?.buys||0)+(p.txns?.h1?.sells||0)));
-  // Seuls filtres maintenus : âge raisonnable + pas complètement mort
   if(mcap<3000)return{pass:false,reason:`mcap $${fmtNum(mcap)} < $3K`};
-  if(ageH>48)return{pass:false,reason:`trop vieux ${ageH.toFixed(0)}h`};
-  return{pass:true,ageH,sellR};
+  if(ageH>0.33)return{pass:false,reason:`trop vieux ${(ageH*60).toFixed(0)}min`};
+  return{pass:true,ageH};
 }
 
 // ============================================================
 // SCORER v2
 // ============================================================
-// ── calculateActivityScore ─────────────────────────────────────────────────
-// Remplace Pattern. Basé UNIQUEMENT sur les counts de transactions (pas les %).
-// Signal clé : combien de vrais acheteurs actifs en ce moment ?
-// Anti-bundle : peu de txns mais gros volume = quelques wallets coordonnés
+// ── SCORER V2 — sync avec backend/scorer.js ────────────────────────────────
+function calculateGmgnScore(g){
+  if(!g||Object.keys(g).length===0)return{score:0,hardReject:null};
+  if(g.is_wash_trading===true)return{score:0,hardReject:'gmgn_wash_trading'};
+  if((g.rug_ratio??0)>0.85)return{score:0,hardReject:`gmgn_rug_${Math.round((g.rug_ratio??0)*100)}%`};
+  if((g.bundler_mhr??0)>0.75)return{score:0,hardReject:`gmgn_bundler_${Math.round((g.bundler_mhr??0)*100)}%`};
+  let score=0;
+  const rug=g.rug_ratio??0;if(rug>0.5)score-=15;else if(rug>0.3)score-=8;
+  const bundler=g.bundler_mhr??0;if(bundler>0.5)score-=12;else if(bundler>0.3)score-=5;
+  const insider=g.suspected_insider_hold_rate??0;if(insider>0.3)score-=12;else if(insider>0.1)score-=5;
+  const top10=g.top_10_holder_rate??0;if(top10>0.7)score-=12;else if(top10>0.5)score-=5;
+  const fresh=g.fresh_wallet_rate??0;if(fresh>0.7)score-=10;else if(fresh>0.5)score-=5;
+  const rat=g.rat_trader_amount_rate??0;if(rat>0.4)score-=10;else if(rat>0.2)score-=5;
+  const entrap=g.entrapment_ratio??0;if(entrap>0.5)score-=15;else if(entrap>0.3)score-=8;
+  const sniper70=g.top70_sniper_hold_rate??0;if(sniper70>0.5)score-=10;else if(sniper70>0.3)score-=5;
+  const devHold=g.dev_team_hold_rate??0;if(devHold>0.2)score-=8;else if(devHold>0.1)score-=4;
+  if(g.image_dup===true)score-=10;
+  const renames=g.twitter_rename_count??0;if(renames>5)score-=15;else if(renames>2)score-=8;
+  const openRatio=g.creator_created_open_ratio??null;
+  if(openRatio!==null&&openRatio<0.2&&(g.creator_created_count??0)>5)score-=8;
+  if(g.cto_flag===true)score+=8;
+  const tgCalls=g.tg_call_count??0;if(tgCalls>=10)score+=10;else if(tgCalls>=3)score+=5;
+  const followers=g.x_user_follower??0;if(followers>=5000)score+=10;else if(followers>=500)score+=5;
+  if(g.has_at_least_one_social===true)score+=3;
+  // dexscr_ad compté en Social (+10) — pas ici pour éviter double comptage
+  const completeCost=g.complete_cost_time??null;if(completeCost!==null&&completeCost<300)score+=5;
+  const botDegen=g.bot_degen_count??0;if(botDegen>=3)score+=5;else if(botDegen>=1)score+=3;
+  const netBuy=g.net_buy_24h??null;if(netBuy!==null&&netBuy>0)score+=5;
+  return{score:Math.max(-50,Math.min(50,score)),hardReject:null};
+}
+function _calcWalletScore(byGroup){
+  const kol=byGroup['KOL']||0,trader=byGroup['gros trader']||0,farmer=byGroup['farmer']||0;
+  let kolPts=0;if(kol>=6)kolPts=20;else if(kol===5)kolPts=15;else if(kol===4)kolPts=12;else if(kol===3)kolPts=8;else if(kol===2)kolPts=5;else if(kol===1)kolPts=2;
+  let traderPts=0;if(trader>=6)traderPts=18;else if(trader===5)traderPts=14;else if(trader===4)traderPts=11;else if(trader===3)traderPts=8;else if(trader===2)traderPts=6;else if(trader===1)traderPts=4;
+  let farmerPts=0;if(farmer>=5)farmerPts=-15;else if(farmer===4)farmerPts=-10;else if(farmer===3)farmerPts=-5;else if(farmer===2)farmerPts=-4;else if(farmer===1)farmerPts=-3;
+  return{kolPts,traderPts,farmerPts,total:kolPts+traderPts+farmerPts};
+}
+function _calcSocialScore(p,sec,ageMin,gmgnData){
+  const dexSocials=[...(p.info?.socials||[]),...(p.baseToken?.info?.socials||[])];
+  const gotX=sec?.hasTwitter||dexSocials.some(s=>(s.type||'').toLowerCase().includes('twitter')||(s.url||'').includes('twitter.com')||(s.url||'').includes('x.com'));
+  const gotTG=sec?.hasTelegram||dexSocials.some(s=>(s.type||'').toLowerCase().includes('telegram')||(s.url||'').includes('t.me'));
+  const gotWEB=sec?.hasWebsite||!!(p.info?.websites?.length)||dexSocials.some(s=>{const u=s.url||'';return u.length>5&&!u.includes('twitter')&&!u.includes('x.com')&&!u.includes('t.me')&&!u.includes('github.com')&&!u.includes('instagram.com');});
+  const gotGH=dexSocials.some(s=>(s.type||'').toLowerCase().includes('github')||(s.url||'').includes('github.com'));
+  const gotIG=dexSocials.some(s=>(s.type||'').toLowerCase().includes('instagram')||(s.url||'').includes('instagram.com'));
+  const gotXCommunity=dexSocials.some(s=>(s.type||'').toLowerCase().includes('community')||(s.url||'').includes('x.com/i/communities'));
+  const twitterPts=gotX?(ageMin<=1?10:5):0;
+  const tgPts=gotTG?5:0,webPts=gotWEB?5:0,ghPts=gotGH?10:0,communityPts=gotXCommunity?10:0,igPts=gotIG?8:0;
+  const cashbackPts=gmgnData?.dexscr_ad?10:0;
+  const score=twitterPts+tgPts+webPts+ghPts+communityPts+igPts+cashbackPts;
+  return{score,gotX,gotTG,gotWEB,gotGH,gotIG,gotXCommunity,twitterPts,tgPts,webPts,ghPts,communityPts,igPts,cashbackPts,twitterEarly:gotX&&ageMin<=1};
+}
+function _calcHolderScore(sec,kolCount,traderCount){
+  const top10pct=sec?parseFloat(sec.top10Pct||0):0;
+  let top10Score=0;
+  if(top10pct>=10&&top10pct<=20)top10Score=15;else if(top10pct>20&&top10pct<=30)top10Score=15;else if(top10pct>30&&top10pct<=40)top10Score=10;else if(top10pct>40&&top10pct<=60)top10Score=5;else if(top10pct>60)top10Score=-10;
+  let kolTop50Pts=0;if(kolCount>=3)kolTop50Pts=12;else if(kolCount===2)kolTop50Pts=10;else if(kolCount===1)kolTop50Pts=5;
+  let traderTop50Pts=0;if(traderCount>=3)traderTop50Pts=12;else if(traderCount===2)traderTop50Pts=10;else if(traderCount===1)traderTop50Pts=5;
+  const bonusCombo=(kolCount>=2&&traderCount>=2)?20:0;
+  return{total:top10Score+kolTop50Pts+traderTop50Pts+bonusCombo,top10Score,kolTop50Pts,traderTop50Pts,bonusCombo,top10pct};
+}
+function _calcPatternScore(p){
+  const liq=p.liquidity?.usd||(p.liquidity?.base||0)*(p.priceNative||0)||0;
+  const volH1=p.volume?.h1||0;
+  let liqScore=0;if(liq<10000)liqScore=-10;else if(liq<=13000)liqScore=10;else if(liq<=20000)liqScore=20;
+  let volH1Score=0;if(volH1<10000)volH1Score=-20;else if(volH1<20000)volH1Score=-10;else if(volH1<30000)volH1Score=15;else if(volH1<50000)volH1Score=30;else if(volH1<80000)volH1Score=40;else volH1Score=50;
+  return{total:liqScore+volH1Score,liqScore,volH1Score,liq,volH1};
+}
+// stub conservé pour compatibilité (appelé depuis scannerPnl etc.)
 function calculateActivityScore(p) {
   let score = 0;
   const buysM5  = p.txns?.m5?.buys  || 0;
@@ -5059,226 +5085,83 @@ function calculateActivityScore(p) {
   return Math.max(0, Math.min(40, Math.round(score)));
 }
 
-function scoreTokenV2(p,walletData={count:0,byGroup:{KOL:0,'gros trader':0,DEV:0,farmer:0},wallets:[],clustered:false}){
-  const ageMs  = Date.now()-(p.pairCreatedAt||0);
-  const ageH   = ageMs/3600000;
-  const ageMin = ageMs/60000;
-  const liq    = p.liquidity?.usd || (p.liquidity?.base||0)*(p.priceNative||0) || 0;
-  const mcap   = p.marketCap||p.fdv||0;
-  const buys1  = p.txns?.h1?.buys||0, sells1=p.txns?.h1?.sells||0, total1=buys1+sells1||1;
-  const buyR   = buys1/total1;
-  const vol1   = p.volume?.h1||0, vol6=p.volume?.h6||0;
-  const c1h    = p.priceChange?.h1||0;
-  const c6h    = p.priceChange?.h6||0;
-  const m5     = p.priceChange?.m5||0;
-  const m1     = p.priceChange?.m1||0; // si dispo
-  const hasSocials = !!(p.info?.socials?.length||p.info?.websites?.length||p.baseToken?.info?.socials?.length||p.profile?.socials?.length);
-  const volAvgH = (vol6/6)||(vol1||1);
-  const volAccel = vol1/volAvgH;
-  const dexId   = (p.dexId||p.dex||'').toLowerCase();
+function scoreTokenV2(p,walletData={count:0,byGroup:{KOL:0,'gros trader':0,DEV:0,farmer:0},wallets:[],clustered:false},gmgnData={}){
+  const ageMs=Date.now()-(p.pairCreatedAt||0);
+  const ageH=ageMs/3600000,ageMin=ageMs/60000;
+  const liq=p.liquidity?.usd||(p.liquidity?.base||0)*(p.priceNative||0)||0;
+  const mcap=p.marketCap||p.fdv||0;
+  const buys1=p.txns?.h1?.buys||0,sells1=p.txns?.h1?.sells||0,total1=buys1+sells1||1;
+  const buyR=buys1/total1;
+  const vol1=p.volume?.h1||0,vol6=p.volume?.h6||0;
+  const c1h=p.priceChange?.h1||0,c6h=p.priceChange?.h6||0,m5=p.priceChange?.m5||0,m1=p.priceChange?.m1||0;
+  const hasSocials=!!(p.info?.socials?.length||p.info?.websites?.length||p.baseToken?.info?.socials?.length);
+  const volAvgH=(vol6/6)||(vol1||1),volAccel=vol1/volAvgH;
+  const sec=p.security||null;
+  const sym_early=(p.baseToken?.symbol||'UNKNOWN').toUpperCase().slice(0,12);
 
-  // Données sécurité Helius (attachées par checkTokenSecurity)
-  const sec = p.security || null;
-  const top10pct = sec ? parseFloat(sec.top10Pct||0) : 0;
-  const holderCount = sec?.holderCount || 0;
+  const gmgn=calculateGmgnScore(gmgnData);
+  if(gmgn.hardReject)return{score:0,_minFail:gmgn.hardReject,symbol:sym_early,addr:p.baseToken?.address||'',mcap,liq:0,socials:false,rugRisk:'HIGH',walletData,pairUrl:p.url||'',raw:p,debug:{gmgnHardReject:gmgn.hardReject}};
 
-  let score = 0;
+  const byGroup=walletData.byGroup||{};
+  const kolCount=byGroup['KOL']||0,traderCount=byGroup['gros trader']||0,devCount=byGroup['DEV']||0,farmerCount=byGroup['farmer']||0;
+  const axiomCount=walletData.count||0;
 
-  // ── 🎯 WALLET TRACKER ─────────────────────────────────────────────────────
-  // Points par catégorie : farmer=1, gros trader=3, KOL=4, DEV=5
-  const byGroup     = walletData.byGroup || {};
-  const kolCount    = byGroup['KOL']          || 0;
-  const traderCount = byGroup['gros trader']  || 0;
-  const devCount    = byGroup['DEV']          || 0;
-  const farmerCount = byGroup['farmer']       || 0;
-  const axiomCount  = walletData.count        || 0; // total (alias pour compat)
-  let traderScore = farmerCount * (-3) + traderCount * 3 + kolCount * 4 + devCount * 5;
-  score += traderScore;
+  if(kolCount<1||traderCount<1)return{score:0,_minFail:'wallet',symbol:sym_early,addr:p.baseToken?.address||'',mcap,liq,socials:hasSocials,rugRisk:'HIGH',walletData,pairUrl:p.url||'',raw:p,debug:{kolCount,traderCount,farmerCount,byGroup,buyRatio:buyR,c1h,m5,ageH}};
 
-  // ── 🌐 SOCIAL (max +26) ───────────────────────────────────────────────────
-  // Socials lus depuis métadonnées Metaplex on-chain (Helius getAsset)
-  // Même source qu'Axiom / Terminal / DexScreener
-  //
-  // Règle tweet (non cumulable, max +10) :
-  //   Twitter présent ET token < 1h → proxy "tweet récent dans l'heure" → +10
-  //   Twitter présent ET token > 1h → proxy "tweet du jour"              → +5
-  //   → (distinction exacte nécessiterait API Twitter payante)
-  //
-  // Présence communauté X → +8 (proxy : Telegram présent)
-  // Profil Twitter actif  → +8 (proxy : Twitter + Telegram + Website)
-  let socialScore = 0;
+  let score=0;
 
-  // Source 1 : Helius getAsset on-chain (hasTwitter/hasTelegram/hasWebsite)
-  const hasX   = sec?.hasTwitter  || false;
-  const hasTG  = sec?.hasTelegram || false;
-  const hasWEB = sec?.hasWebsite  || false;
+  const walletResult=_calcWalletScore(byGroup);
+  score+=walletResult.total;
 
-  // Source 2 : DexScreener p.info.socials [{type, url}]
-  const dexSocials = [...(p.info?.socials||[]),...(p.baseToken?.info?.socials||[])];
-  const dexX   = dexSocials.some(s=>(s.type||'').toLowerCase().includes('twitter')||(s.url||'').includes('twitter.com')||(s.url||'').includes('x.com'));
-  const dexTG  = dexSocials.some(s=>(s.type||'').toLowerCase().includes('telegram')||(s.url||'').includes('t.me'));
-  const dexWEB = !!(p.info?.websites?.length)||dexSocials.some(s=>{const u=s.url||'';return u.length>5&&!u.includes('twitter')&&!u.includes('x.com')&&!u.includes('t.me');});
+  const socialResult=_calcSocialScore(p,sec,ageMin,gmgnData);
+  score+=socialResult.score;
 
-  const gotX   = hasX   || dexX;
-  const gotTG  = hasTG  || dexTG;
-  const gotWEB = hasWEB || dexWEB;
-  // Detect GitHub
-  const gotGH  = dexSocials.some(s=>(s.type||'').toLowerCase().includes('github')||(s.url||'').includes('github.com'));
-  // Detect PumpFun cashback (profile/banner)
-  const hasCashback = !!(p.profile?.icon || p.profile?.banner || p.info?.imageUrl);
+  const isDexPaid=p._isPaid||(p.labels||[]).some(l=>(l.label||l||'').toLowerCase().includes('paid'))||!!(p.info?.imageUrl||p.profile?.icon||p.profile?.header);
+  const platformScore=isDexPaid?15:0;
+  score+=platformScore;
 
-  // LÉGITIMITÉ (max 25) — Twitter: minute +8, heure +4, sinon +2
-  if (gotX) {
-    if (ageMin <= 1) socialScore += 15;
-    else if (ageH < 1) socialScore += 5;
-    else socialScore += 2;
-  }
-  if (gotTG || gotWEB) socialScore += 10;
-  if (gotX && (gotTG || gotWEB)) socialScore += 8; // combo
-  if (gotGH || hasCashback) socialScore += 8;
+  const holderResult=_calcHolderScore(sec,kolCount,traderCount);
+  score+=holderResult.total;
 
-  // Proxy : token < 5min avec achats actifs = lancé avec tweet (pas encore indexé)
-  if (socialScore === 0) {
-    const buys1 = p.txns?.h1?.buys || 0;
-    if      (ageMin < 5 && buys1 >= 5)  socialScore += 8;
-    else if (holderCount >= 300)         socialScore += 10;
-    else if (holderCount >= 150)         socialScore += 5;
-  }
-  score += socialScore;
+  let mcapScore=0;
+  if(mcap>=15000&&mcap<=20000)mcapScore=25;else if(mcap>20000&&mcap<=60000)mcapScore=20;else if(mcap>60000&&mcap<=120000)mcapScore=15;else if(mcap>150000)mcapScore=5;else mcapScore=5;
+  score+=mcapScore;
 
-  // ── 👥 HOLDERS ────────────────────────────────────────────────────────────
-  // Holders — top10pct après exclusion LP pool (pairAddress exclu dans checkTokenSecurity)
-  const top5pct = sec ? parseFloat(sec.top5Pct||0) : 0;
-  let holderScore = 0;
-  // DISTRIBUTION (max 25)
-  if (top10pct > 0) {
-    if      (top10pct <= 15)  holderScore += 15;
-    else if (top10pct <= 25)  holderScore += 12;
-    else if (top10pct <= 35)  holderScore +=  8;
-    else if (top10pct <= 50)  holderScore +=  3;
-  }
-  // Bonus pro traders
-  // holderCount Helius = max 19 (20 comptes - 1 LP skippé) → pas fiable pour seuil 100
-  // Proxy : utiliser les txns DexScreener pour estimer l'activité
-  const totalTxns = (p.txns?.h1?.buys||0) + (p.txns?.h1?.sells||0)
-                  + (p.txns?.h6?.buys||0) + (p.txns?.h6?.sells||0);
-  const hasProTraders = (kolCount >= 1 || traderCount >= 2)
-    || (totalTxns >= 100 && top10pct <= 60)
-    || (totalTxns >= 50  && top10pct <= 30);
-  if (hasProTraders) holderScore += 10;
-  score += holderScore;
+  let ageScore=0;
+  if(ageMin>=0.5&&ageMin<=2)ageScore=15;else if(ageMin>2&&ageMin<=5)ageScore=15;else if(ageMin>5&&ageMin<=10)ageScore=10;
+  score+=ageScore;
 
-  // ── 🪙 DEX PAID (max 10) ────────────────────────────────────────────────────
-  let platformScore = 0;
-  const isDexPaid = p._isPaid
-    || (p.labels||[]).some(l=>(l.label||l||'').toLowerCase().includes('paid'))
-    || !!(p.info?.imageUrl || p.profile?.icon || p.profile?.header);
-  if (isDexPaid) platformScore += 10;
-  score += platformScore;
+  const patternResult=_calcPatternScore(p);
+  score+=patternResult.total;
 
-  // ── ⭐ MCAP ───────────────────────────────────────────────────────────────
-  // Zone 15-25K = sweet spot optimal (YOSHI, 81 → 5x-37x)
-  // Au-delà de 40K le potentiel de x diminue fortement
-  let mcapScore = 0;
-  if      (mcap >= 15000 && mcap <= 25000)  mcapScore = 15;  // sweet spot maximal
-  else if (mcap >  25000 && mcap <= 40000)  mcapScore = 11;  // encore bon
-  else if (mcap >  40000 && mcap <= 60000)  mcapScore =  5;  // acceptable (ex-NFORGE $33K → ok)
-  else if (mcap >  60000 && mcap <= 75000)  mcapScore =  1;  // limite, potentiel réduit
-  else if (mcap > 75000)                    mcapScore = -5;  // trop tard, pénalisé
-  score += mcapScore;
+  score+=gmgn.score;
 
-  // ── ⏱ AGE ─────────────────────────────────────────────────────────────────
-  let ageScore = 0;
-  if      (ageMin >= 0.5 && ageMin <= 2)   ageScore = 10;
-  else if (ageMin >  2  && ageMin <= 5)   ageScore =  7;
-  else if (ageMin >  5  && ageMin <= 10)  ageScore =  3;
-  score += ageScore;
+  const finalScore=Math.min(300,Math.max(0,Math.round(score)));
 
-  // ── 📈 ACTIVITÉ (via calculateActivityScore) ──────────────────────────────
-  const patternScore = calculateActivityScore(p); // alias conservé pour compat debug
-  score += patternScore;
+  let rugPts=0;
+  if(buyR<0.52)rugPts+=3;if(volAccel<0.5)rugPts++;if(c1h<-5)rugPts++;if(!hasSocials)rugPts++;if(liq<6000)rugPts+=2;if(ageH<0.5)rugPts++;
+  if(kolCount>=1||traderCount>=1)rugPts=Math.max(0,rugPts-2);
+  const rugRisk=rugPts>=5?'HIGH':rugPts>=3?'MEDIUM':'LOW';
 
-  // ── 🐦 KOL TWITTER MENTION ───────────────────────────────────────────────
-  const tokenAddr = p.baseToken?.address || '';
-  const kolMentioned = tokenAddr ? getKolMentions(tokenAddr) : [];
-  let kolScore = 0;
-  if      (kolMentioned.length >= 3) kolScore = 20;
-  else if (kolMentioned.length === 2) kolScore = 12;
-  else if (kolMentioned.length === 1) kolScore = 7;
-  score += kolScore;
+  const emoji=EMOJIS[Math.floor(Math.random()*EMOJIS.length)];
+  const sym=(p.baseToken?.symbol||'UNKNOWN').toUpperCase().slice(0,12);
+  const addr=p.baseToken?.address||'';
 
-  // ── 🚨 DEPLOYER HISTORY ──────────────────────────────────────────────────
-  const deployerCount = sec?.deployerCount ?? 0;
-  let deployerPenalty = 0;
-  if      (deployerCount >= 10) deployerPenalty = -20;
-  else if (deployerCount >= 6)  deployerPenalty = -12;
-  else if (deployerCount >= 3)  deployerPenalty =  -6;
-  score += deployerPenalty;
-
-  // ── 🚫 WASH TRADING DETECTION ────────────────────────────────────────────
-  // Peu de txs mais volume élevé = wallets coordonnés qui se s'échangent entre eux
-  let washPenalty = 0;
-  const avgTxVal = total1 > 0 ? vol1 / total1 : 0;
-  if (total1 > 0 && total1 < 12 && vol1 > mcap * 0.5)        washPenalty = -15; // quasi 0 txs mais énorme volume
-  else if (avgTxVal > 2500 && mcap < 40000 && total1 < 25)   washPenalty = -10; // avg tx > $2500 = baleine/bot
-  else if (total1 >= 4 && total1 < 20 && Math.abs(buys1 - sells1) <= 1) washPenalty = -8; // buys == sells = coordinated
-  score += washPenalty;
-
-  // ── 💧 LIQUIDITÉ QUALITÉ (ratio liq/mcap) ────────────────────────────────
-  // Ratio élevé = profondeur saine, difficile à dump; ratio faible = rugable en 1 tx
-  const liqRatio = mcap > 0 ? liq / mcap : 0;
-  let liqQualScore = 0;
-  if      (liqRatio >= 0.12)                  liqQualScore =  6; // excellente profondeur
-  else if (liqRatio >= 0.06)                  liqQualScore =  3; // bonne
-  else if (liqRatio > 0 && liqRatio < 0.025)  liqQualScore = -8; // dangereux (rugable)
-  score += liqQualScore;
-
-  // ── MINIMUMS OBLIGATOIRES ─────────────────────────────────────────────────
-  const _mkFail = (reason) => ({ score: 0, _minFail: reason, symbol: (p.baseToken?.symbol||'UNKNOWN').toUpperCase().slice(0,12), addr: p.baseToken?.address||'', mcap, liq, socials: hasSocials, rugRisk: 'HIGH', walletData, pairUrl: p.url||'', raw: p, debug: { traderScore, socialScore, holderScore, platformScore, mcapScore, ageScore, patternScore, washPenalty, liqQualScore, deployerPenalty, deployerCount, axiomCount, kolCount, traderCount, devCount, farmerCount, byGroup, buyRatio: buyR, volAccel, c1h, m5, c6h, m1, ageH, top10pct, volMcapH1: vol1/mcap, sellBuyRatio: sells1/(buys1||1) } });
-  if (kolCount < 1 || traderCount < 1) { const r=_mkFail('wallet'); r.score=Math.round(score); return r; } // partial score pour pre-ranking
-  if (patternScore < 8) return _mkFail('activity');     // activité minimale requise
-  if (holderScore < 3)   return _mkFail('distrib');
-  if (buyR < 0.40)       return _mkFail('sell_pressure'); // +60% sells en h1 = dump actif
-
-  // ── CALCUL FINAL ──────────────────────────────────────────────────────────
-  const finalScore = Math.min(150, Math.max(0, Math.round(score)));
-
-  // Rug risk inchangé (basé sur données disponibles)
-  let rugPts = 0;
-  if(buyR<0.52)rugPts+=3;
-  if(volAccel<0.5)rugPts++;
-  if(c1h<-5)rugPts++;
-  if(!hasSocials)rugPts++;
-  if(liq<6000)rugPts+=2;
-  if(ageH<0.5)rugPts++;
-  if(kolCount>=1 || traderCount>=1)rugPts=Math.max(0,rugPts-2);
-  const rugRisk = rugPts>=5?'HIGH':rugPts>=3?'MEDIUM':'LOW';
-
-  const emoji = EMOJIS[Math.floor(Math.random()*EMOJIS.length)];
-  const sym   = (p.baseToken?.symbol||'UNKNOWN').toUpperCase().slice(0,12);
-  const addr  = p.baseToken?.address||'';
-
-  return {
-    score: finalScore,
-    symbol: sym, emoji, addr, mcap, liq,
-    socials: hasSocials, rugRisk, walletData,
-    pairUrl: p.url||`https://dexscreener.com/solana/${addr}`,
-    raw: p,
-    debug: {
-      traderScore, socialScore, holderScore, platformScore,
-      mcapScore, ageScore, patternScore,
-      walletScore: traderScore, // alias pour debug panel
-      momentumScore: patternScore,
-      buyScore: 0, volScore: 0, // non utilisés dans ce scoring
-      walletCount: axiomCount, clustered: walletData.clustered,
-      kolCount, traderCount, devCount, farmerCount, byGroup,
-      buyRatio: buyR, volAccel, c1h, m5, ageH, c6h, m1,
-      top10pct, axiomCount,
-      volMcapH1: vol1/mcap,
-      sellBuyRatio: sells1/(buys1||1),
-      kolScore, kolMentioned,
-      washPenalty, liqQualScore,
-      deployerPenalty, deployerCount,
+  return{
+    score:finalScore,symbol:sym,emoji,addr,mcap,liq,
+    socials:hasSocials,rugRisk,walletData,
+    pairUrl:p.url||`https://dexscreener.com/solana/${addr}`,
+    raw:p,
+    debug:{
+      walletScore:walletResult.total,socialScore:socialResult.score,platformScore,
+      holderScore:holderResult.total,mcapScore,ageScore,patternScore:patternResult.total,gmgnScore:gmgn.score,
+      kolPts:walletResult.kolPts,traderPts:walletResult.traderPts,farmerPts:walletResult.farmerPts,
+      kolCount,traderCount,devCount,farmerCount,byGroup,axiomCount,
+      social:{twitterPts:socialResult.twitterPts,tgPts:socialResult.tgPts,webPts:socialResult.webPts,ghPts:socialResult.ghPts,communityPts:socialResult.communityPts,igPts:socialResult.igPts,cashbackPts:socialResult.cashbackPts,twitterEarly:socialResult.twitterEarly,gotX:socialResult.gotX,gotTG:socialResult.gotTG,gotWEB:socialResult.gotWEB,gotGH:socialResult.gotGH,gotIG:socialResult.gotIG,gotXCommunity:socialResult.gotXCommunity},
+      holders:{top10Score:holderResult.top10Score,kolTop50Pts:holderResult.kolTop50Pts,traderTop50Pts:holderResult.traderTop50Pts,bonusCombo:holderResult.bonusCombo,top10pct:holderResult.top10pct},
+      pattern:{liqScore:patternResult.liqScore,volH1Score:patternResult.volH1Score,liq:patternResult.liq,volH1:patternResult.volH1},
+      buyRatio:buyR,volAccel,c1h,m5,c6h,m1,ageH,
+      top10pct:holderResult.top10pct,volM5:p.volume?.m5||0,
     }
   };
 }
@@ -7367,131 +7250,15 @@ function toggleDebugMode(){debugModeOn=!debugModeOn;const btn=document.getElemen
 // ============================================================
 // DEBUG MODAL
 // ============================================================
-function dbgPts(v){if(v===0)return`<span class="dbg-sub-pts zero">0</span>`;return v>0?`<span class="dbg-sub-pts pos">+${v}</span>`:`<span class="dbg-sub-pts neg">${v}</span>`;}
-function dbgRow(label,pts,note=''){return`<div class="dbg-sub"><span class="dbg-sub-label">${label}${note?`<small>${note}</small>`:''}</span>${dbgPts(pts)}</div>`;}
-function dbgBarColor(v,max){if(v<0)return'#ff4466';if(v>=max*.7)return'#00ff88';return'#ffaa00';}
-
 function showDebug(idx){
   const t=lastScored[idx];if(!t)return;
-  const d=t.debug||{};
-  const addr=t.addr||'';
-
-  // ── Score total color ──
-  const scoreColor=t.score>=160?'#ffd700':t.score>=120?'#00ff88':t.score>=80?'#4488ff':'#ff4466';
-
-  // ── Build categories ──
-  const cats=[];
-
-  // 1. Wallet
-  const wMax=38;
-  cats.push({icon:'👛',label:'Wallet Tracker',val:d.walletScore||0,max:wMax,rows:[
-    dbgRow(`KOL (${d.kolCount||0} détecté${(d.kolCount||0)>1?'s':''})`,d.kolPts||0,`barème paliers — 1→+2, 2→+5, 3→+8, 4→+12, 5→+15, 6+→+20`),
-    dbgRow(`Gros traders (${d.traderCount||0} détecté${(d.traderCount||0)>1?'s':''})`,d.traderPts||0,`1→+4, 2→+6, 3→+8, 4→+11, 5→+14, 6+→+18`),
-    dbgRow(`Farmers (${d.farmerCount||0} détecté${(d.farmerCount||0)>1?'s':''})`,d.farmerPts||0,`1→−3, 2→−4, 3→−5, 4→−10, 5+→−15`),
-  ]});
-
-  // 2. Social
-  const s=d.social||{};
-  const sMax=48;
-  cats.push({icon:'📡',label:'Social',val:d.socialScore||0,max:sMax,rows:[
-    dbgRow(s.gotX?(s.twitterEarly?'Twitter/X (< 1 min du lancement)':'Twitter/X (standard)'):'Twitter/X (absent)',s.twitterPts||0,s.gotX?(s.twitterEarly?'tweet dans la minute → +10':'présent mais pas early → +5'):'non détecté → 0'),
-    dbgRow(`Site web`,s.webPts||0,s.gotWEB?'présent → +5':'absent → 0'),
-    dbgRow(`Telegram`,s.tgPts||0,s.gotTG?'présent → +5':'absent → 0'),
-    dbgRow(`GitHub`,s.ghPts||0,s.gotGH?'présent → +10':'absent → 0'),
-    dbgRow(`Communauté X`,s.communityPts||0,s.gotXCommunity?'présent → +10':'absent → 0'),
-    dbgRow(`Instagram`,s.igPts||0,s.gotIG?'présent → +8':'absent → 0'),
-    dbgRow(`Cashback GMGN`,(s.cashbackPts||0),(s.cashbackPts||0)>0?'cashback détecté → +15':'absent → 0'),
-    dbgRow(`Dex payé`,d.platformScore||0,(d.platformScore||0)>0?'profil/boost DexScreener détecté → +15':'non détecté → 0'),
-  ]});
-
-  // 3. Holders
-  const h=d.holders||{};
-  const hMax=59;
-  cats.push({icon:'🏆',label:'Holders',val:d.holderScore||0,max:hMax,rows:[
-    dbgRow(`Top 10 concentration (${(h.top10pct||0).toFixed(1)}%)`,h.top10Score||0,`10-20%→+15 | 20-30%→+15 | 30-40%→+10 | 40-60%→+5 | >60%→−10`),
-    dbgRow(`KOL dans top 50 (${d.kolCount||0})`,h.kolTop50Pts||0,`1→+5, 2→+10, 3+→+12`),
-    dbgRow(`Gros traders dans top 50 (${d.traderCount||0})`,h.traderTop50Pts||0,`1→+5, 2→+10, 3+→+12`),
-    dbgRow(`Bonus combiné`,h.bonusCombo||0,(h.bonusCombo||0)>0?`≥2 KOL + ≥2 traders → +20`:`condition non remplie (besoin ≥2 KOL et ≥2 traders)`),
-  ]});
-
-  // 4. Market Cap
-  const mMax=25;
-  cats.push({icon:'💰',label:'Market Cap',val:d.mcapScore||0,max:mMax,rows:[
-    dbgRow(`$${fmtNum(t.mcap)}`,d.mcapScore||0,`15K-20K→+25 | 20K-60K→+20 | 60K-120K→+15 | >150K→+5 | <15K→+5`),
-  ]});
-
-  // 5. Age
-  const aMin=(d.ageH||0)*60;
-  const aMax=15;
-  cats.push({icon:'⏱️',label:'Âge',val:d.ageScore||0,max:aMax,rows:[
-    dbgRow(`${aMin.toFixed(1)} min`,d.ageScore||0,`0.5-2min→+15 | 2-5min→+15 | 5-10min→+10 | >10min→0`),
-  ]});
-
-  // 6. Pattern
-  const pt=d.pattern||{};
-  const ptMax=150;
-  cats.push({icon:'📊',label:'Pattern',val:d.patternScore||0,max:ptMax,rows:[
-    dbgRow(pt.liq>0?`Liquidité ($${fmtNum(pt.liq)})`:`Liquidité (N/A — pas de données)`,pt.liqScore||0,pt.liq>0?`≥13K→+30 | 10-13K→+5 | <10K→−20`:`données absentes → 0pts (pas de pénalité)`),
-    dbgRow(`Variation 1h (${(pt.c1h||0).toFixed(1)}%)`,pt.c1hScore||0,`70-125%→+30 | 125-150%→+15 | 150-200%→+5 | 200-300%→−20 | >300%→−10 | <70%→−20`),
-    dbgRow(`Variation 5m (${(pt.c5m||0).toFixed(1)}%)`,pt.c5mScore||0,`15-40%→+40 | 40-70%→+10 | 70-120%→+5 | 120-200%→−15 | >200%→−15 | <15%→−10`),
-    dbgRow(`Volume 5m ($${fmtNum(pt.volM5||0)})`,pt.volM5Score||0,`≥20K→+50 | 15-20K→+30 | 10-15K→+20 | 5-10K→+10 | 1-5K→−30 | <1K→0`),
-  ]});
-
-  // 7. GMGN
-  const gmMax=50;
-  cats.push({icon:'🤖',label:'GMGN',val:d.gmgnScore||0,max:gmMax,rows:[
-    dbgRow(`Score GMGN`,d.gmgnScore||0,`Analyse risque externe — plage −50 → +50`),
-    dbgRow(`Rug risk`,0,`${t.rugRisk}`),
-    dbgRow(`Buy ratio h1`,0,`${((d.buyRatio||0)*100).toFixed(1)}%`),
-  ]});
-
-  // ── Render cats ──
-  const catsHtml=cats.map((c,i)=>{
-    const pct=Math.max(0,Math.min(100,(Math.max(0,c.val)/c.max)*100));
-    const col=dbgBarColor(c.val,c.max);
-    const ptsHtml=c.val===0?`<span style="color:#555;font-family:var(--font-mono);font-size:.82rem">0</span>`
-      :c.val>0?`<span style="color:#00ff88;font-family:var(--font-mono);font-size:.82rem;font-weight:700">+${c.val}</span>`
-      :`<span style="color:#ff4466;font-family:var(--font-mono);font-size:.82rem;font-weight:700">${c.val}</span>`;
-    return`<div class="dbg-cat" id="dbgcat${i}">
-      <div class="dbg-cat-header" onclick="dbgToggle(${i})">
-        <span class="dbg-cat-icon">${c.icon}</span>
-        <span class="dbg-cat-label">${c.label}</span>
-        <div class="dbg-bar-wrap"><div class="dbg-bar-inner" style="width:${pct}%;background:${col}"></div></div>
-        ${ptsHtml}
-        <span class="dbg-cat-arrow">▶</span>
-      </div>
-      <div class="dbg-cat-body">${c.rows.join('')}</div>
-    </div>`;
-  }).join('');
-
-  document.getElementById('debugContent').innerHTML=`
-    <div class="dbg-header">
-      <span class="dbg-sym">${t.emoji||'🔬'} ${t.symbol}</span>
-      <button class="dbg-close" onclick="closeDebug()">✕</button>
-    </div>
-    <div class="dbg-ca">
-      <span class="dbg-ca-label">CA</span>
-      <span class="dbg-ca-addr" title="${addr}">${addr}</span>
-      <button class="dbg-ca-copy" onclick="navigator.clipboard.writeText('${addr}').then(()=>{this.textContent='✓ Copié';setTimeout(()=>this.textContent='Copier',1500)})">Copier</button>
-    </div>
-    <div class="dbg-total">
-      <div class="dbg-total-num" style="color:${scoreColor}">${t.score}</div>
-      <div class="dbg-total-sub">/ 300 pts &nbsp;•&nbsp; ${t.rugRisk} risk &nbsp;•&nbsp; $${fmtNum(t.mcap)} mcap</div>
-    </div>
-    <div class="dbg-cats">${catsHtml}</div>
-    <div class="dbg-raw-wrap">
-      <div class="dbg-raw-toggle" onclick="this.nextElementSibling.classList.toggle('open');this.querySelector('.dbg-raw-arr').textContent=this.nextElementSibling.classList.contains('open')?'▼':'▶'">
-        <span class="dbg-raw-arr">▶</span> Données brutes
-      </div>
-      <pre class="dbg-raw-pre">${JSON.stringify(d,null,2)}</pre>
-    </div>`;
-
   document.getElementById('debugOverlay').classList.add('open');
-}
-
-function dbgToggle(i){
-  const el=document.getElementById('dbgcat'+i);
-  if(el)el.classList.toggle('open');
+  const cats=[{label:'WALLET',val:t.debug.walletScore||0,max:38},{label:'SOCIAL',val:t.debug.socialScore||0,max:48},{label:'HOLDERS',val:t.debug.holderScore||0,max:59},{label:'TOKEN',val:t.debug.platformScore||0,max:15},{label:'MCAP',val:t.debug.mcapScore||0,max:25},{label:'AGE',val:t.debug.ageScore||0,max:15},{label:'ACTIVITÉ',val:t.debug.patternScore||0,max:150}];
+  const bars=cats.map(c=>{const pct=Math.max(0,Math.min(100,(Math.max(0,c.val)/c.max)*100));const color=c.val<0?'var(--red)':c.val>c.max*.7?'var(--green)':'#ffaa00';return`<div class="debug-bar-row"><div class="debug-bar-label">${c.label}</div><div class="debug-bar-track"><div class="debug-bar-fill" style="width:${pct}%;background:${color}"></div></div><div class="debug-bar-val">${c.val>0?'+':''}${c.val}</div></div>`;}).join('');
+  const scoreColor=t.score>=110?'var(--gold)':t.score>=80?'var(--green)':t.score>=55?'var(--blue)':'var(--red)';
+  const d=t.debug;
+  const details=`TRACKER WALLETS : ${d.walletCount||0} détectés\nBUY RATIO h1   : ${((d.buyRatio||0)*100).toFixed(1)}%\nVOL ACCEL      : ${(d.volAccel||0).toFixed(2)}x\nPRICE h1       : ${(d.c1h||0).toFixed(1)}%\nPRICE m5       : ${(d.m5||0).toFixed(1)}%\nAGE            : ${(d.ageH||0).toFixed(1)}h\nMCAP           : $${fmtNum(t.mcap)}\nSOCIALS        : ${t.socials?'✓':'✗'}\nRUG RISK       : ${t.rugRisk}`;
+  document.getElementById('debugContent').innerHTML=`<div class="debug-title">🔬 DEBUG — ${t.symbol}</div><div class="debug-score-big" style="color:${scoreColor}">${t.score}<span style="font-size:1rem;color:var(--muted)"> /300</span></div><div class="debug-bars">${bars}</div><div class="debug-details">${details}</div><details class="debug-raw"><summary>▶ Données brutes</summary><pre>${JSON.stringify(t.raw||{},null,2)}</pre></details>`;
 }
 
 // ============================================================
@@ -8220,21 +7987,19 @@ async function debugCA(){
       pairData = (dex.pairs||[]).sort((a,b)=>(b.volume?.h1||0)-(a.volume?.h1||0))[0] || null;
     }catch(e){}
 
-    // 2+3. Security via backend Railway + wallets via frontend (WALLET_TRACKER local = groupes à jour)
+    // 2+3. Security + wallets via backend Railway (WALLET_TRACKER complet, pas de CORS)
     const pairAddr = pairData?.pairAddress || null;
     const backendUrl = `${BACKEND_URL}/debug/${addr}${pairAddr?'?pair='+pairAddr:''}`;
     const backendResp = await fetch(backendUrl, {signal:AbortSignal.timeout(30000)}).then(r=>r.json());
     const sec   = backendResp.sec || null;
-    // Toujours re-checker wallets côté frontend : le backend retourne l'ancien format sans byGroup
-    // checkAxiomWallets utilise WALLET_TRACKER local (groupes KOL/trader/DEV/farmer à jour)
-    const wDataFresh = await checkAxiomWallets(addr, pairAddr, true);
+    // Priorité : wData retourné par le backend (dispose du WALLET_TRACKER complet + Helius sans CORS)
+    // Fallback : check frontend si le backend ne retourne pas de wData
+    const wDataFresh = backendResp.wData || await checkAxiomWallets(addr, pairAddr, true);
     // Récupère walletData sauvegardé au moment du call (sticky — évite de perdre les détections passées)
     let wData = wDataFresh;
-    let fbGmgn = {};
     try {
       const key = addr.replace(/[.#$\/\[\]]/g,'_');
       const fbCall = await fetch(`${FB_URL}/calls/${key}.json`,{signal:AbortSignal.timeout(5000)}).then(r=>r.json()).catch(()=>null);
-      if(fbCall?.gmgn) fbGmgn = fbCall.gmgn;
       if(fbCall?.walletData){
         const saved = fbCall.walletData;
         const savedByGroup = saved.byGroup || {};
@@ -8262,17 +8027,17 @@ async function debugCA(){
     } catch(e) {}
 
     // 4. Score
-    let score=0,traderScore=0,socialScore=0,holderScore=0,platformScore=0,mcapScore=0,ageScore=0,patternScore=0;
+    let score=0,walletScore=0,socialScore=0,holderScore=0,platformScore=0,mcapScore=0,ageScore=0,patternScore=0,gmgnScore=0;
     let sym=addr.slice(0,8)+'...',mcap=0,liq=0,ageH=0,ageMin=0;
 
     if(pairData){
       pairData.security = sec;
       const scored = scoreTokenV2(pairData, wData);
       score=scored.score; sym=scored.symbol; mcap=scored.mcap; liq=scored.liq;
-      traderScore=scored.debug.traderScore; socialScore=scored.debug.socialScore;
-      holderScore=scored.debug.holderScore; platformScore=scored.debug.platformScore;
-      mcapScore=scored.debug.mcapScore; ageScore=scored.debug.ageScore;
-      patternScore=scored.debug.patternScore;
+      walletScore=scored.debug.walletScore||0; socialScore=scored.debug.socialScore||0;
+      holderScore=scored.debug.holderScore||0; platformScore=scored.debug.platformScore||0;
+      mcapScore=scored.debug.mcapScore||0; ageScore=scored.debug.ageScore||0;
+      patternScore=scored.debug.patternScore||0; gmgnScore=scored.debug.gmgnScore||0;
       ageH=scored.debug.ageH; ageMin=ageH*60;
     }
 
@@ -8281,13 +8046,13 @@ async function debugCA(){
     const labelText=label?label.text:'❌ SOUS SEUIL (< 55)';
 
     const cats=[
-      {name:'🎯 Tracker',   val:traderScore,  max:35},
-      {name:'🌐 Social',   val:socialScore,  max:25},
-      {name:'👥 Holders',  val:holderScore,  max:25},
-      {name:'🪙 Token', val:platformScore,max:10},
-      {name:'⭐ Mcap',     val:mcapScore,    max:15},
-      {name:'⏱ Age',       val:ageScore,     max:10},
-      {name:'📈 Activité', val:patternScore, max:40},
+      {name:'🎯 Tracker',   val:walletScore,  max:38},
+      {name:'🌐 Social',   val:socialScore,  max:48},
+      {name:'👥 Holders',  val:holderScore,  max:59},
+      {name:'🪙 Token',    val:platformScore, max:15},
+      {name:'⭐ Mcap',     val:mcapScore,    max:25},
+      {name:'⏱ Age',       val:ageScore,     max:15},
+      {name:'📈 Activité', val:patternScore, max:150},
     ];
 
     const bars=cats.map(c=>{
@@ -8372,9 +8137,6 @@ async function debugCA(){
     // ── HARD FILTERS STATUS ──────────────────────────────────────────────────
     const kolOk    = (wg['KOL']||0) >= 1;
     const traderOk = (wg['gros trader']||0) >= 1;
-    const actOk    = (d.patternScore||0) >= 8;
-    const distribOk= (d.holderScore||0) >= 3;
-    const buyOk    = (d.buyRatio||0) >= 0.40;
     const mkFilter = (label, ok, detail) =>
       `<div style="display:flex;align-items:center;gap:.5rem;padding:.25rem 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:.75rem">
         <span style="color:${ok?'#00ff88':'#ff4466'};font-size:.9rem">${ok?'✅':'❌'}</span>
@@ -8384,11 +8146,8 @@ async function debugCA(){
     const filtersHtml = `
       <div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:.7rem .9rem;margin:.6rem 0">
         <div style="font-size:.65rem;color:var(--muted);letter-spacing:.08em;margin-bottom:.4rem">HARD FILTERS</div>
-        ${mkFilter('1 KOL obligatoire',      kolOk,    `${wg['KOL']||0} KOL`)}
+        ${mkFilter('1 KOL obligatoire',         kolOk,    `${wg['KOL']||0} KOL`)}
         ${mkFilter('1 Gros trader obligatoire', traderOk, `${wg['gros trader']||0} trader`)}
-        ${mkFilter('Activité ≥ 8pts',        actOk,    `${d.patternScore||0}pts`)}
-        ${mkFilter('Distribution holders',  distribOk, `${d.holderScore||0}pts`)}
-        ${mkFilter('Buy ratio ≥ 40%',        buyOk,    `${((d.buyRatio||0)*100).toFixed(0)}%`)}
       </div>`;
 
     // ── CATÉGORIES DÉTAILLÉES ─────────────────────────────────────────────────
@@ -8409,37 +8168,26 @@ async function debugCA(){
     const hasX   = sec?.hasTwitter  || dbHasX  || !!twitterUrl;
     const hasTG  = sec?.hasTelegram || dbHasTG || !!tgUrl;
     const hasWEB = sec?.hasWebsite  || dbHasWEB|| !!webUrl;
-    // Pattern detail — calculé depuis pairData brut pour le debug CA
-    const _ptLiq   = pairData?.liquidity?.usd || 0;
-    const _ptC1h   = pairData?.priceChange?.h1 || 0;
-    const _ptC5m   = pairData?.priceChange?.m5 || 0;
-    const _ptVolM5 = pairData?.volume?.m5 || 0;
-    const _ptLiqScore   = _ptLiq>=13000?30:_ptLiq>=10000?5:_ptLiq>0?-20:0;
-    const _ptC1hScore   = (_ptC1h>=70&&_ptC1h<=125)?30:(_ptC1h>125&&_ptC1h<=150)?15:(_ptC1h>150&&_ptC1h<=200)?5:(_ptC1h>200&&_ptC1h<=300)?-20:_ptC1h>300?-10:-20;
-    const _ptC5mScore   = (_ptC5m>=15&&_ptC5m<=40)?40:(_ptC5m>40&&_ptC5m<=70)?10:(_ptC5m>70&&_ptC5m<=120)?5:(_ptC5m>120&&_ptC5m<=200)?-15:_ptC5m>200?-15:-10;
-    const _ptVolM5Score = _ptVolM5>=20000?50:_ptVolM5>=15000?30:_ptVolM5>=10000?20:_ptVolM5>=5000?10:_ptVolM5>=1000?-30:0;
-    const _pts = (v) => v>=0?`<span style="color:#44ff88">+${v}</span>`:`<span style="color:#ff5577">${v}</span>`;
-
     const catDetails = {
-      'Tracker':  `KOL:${wg['KOL']||0} Trader:${wg['gros trader']||0} DEV:${wg['DEV']||0} Farmer:${wg['farmer']||0}`,
+      'Tracker':  `KOL:${wg['KOL']||0}(+${d.kolPts||0}pts) Trader:${wg['gros trader']||0}(+${d.traderPts||0}pts) Farmer:${wg['farmer']||0}(${d.farmerPts||0}pts)`,
       'Social':   `${hasX?'𝕏 ':''}${hasTG?'TG ':''}${hasWEB?'WEB ':''} | Helius:${sec?'✅':'❌'}`,
       'Holders':  `top10=${dbTop10.toFixed(0)}% | ${dbHolderCount} comptes`,
       'Token':    `DEX paid: ${d.platformScore>0?'✅':'❌'}`,
       'Mcap':     `$${fmtNum(mcap)}`,
       'Age':      `${(ageH*60).toFixed(0)}min`,
-      'Activité': `Liq:${_ptLiq>0?'$'+fmtNum(_ptLiq):'N/A'} ${_pts(_ptLiqScore)} | 1h:${_ptC1h.toFixed(1)}% ${_pts(_ptC1hScore)} | 5m:${_ptC5m.toFixed(1)}% ${_pts(_ptC5mScore)} | Vol5m:$${fmtNum(_ptVolM5)} ${_pts(_ptVolM5Score)}`,
+      'Activité': `liq=${d.pattern?.liqScore||0}pts | volH1=${d.pattern?.volH1Score||0}pts`,
     };
     const catExpanded = {
-      'Tracker': Object.entries(wg).filter(([,n])=>n>0).map(([g,n])=>{
+      'Tracker': `<b>KOL: ${wg['KOL']||0} → +${d.kolPts||0}pts</b><br><b>Gros trader: ${wg['gros trader']||0} → +${d.traderPts||0}pts</b><br><b>Farmer: ${wg['farmer']||0} → ${d.farmerPts||0}pts</b><br><br>`+Object.entries(wg).filter(([,n])=>n>0).map(([g,n])=>{
         const addrs = wbg[g]||[];
-        return `<b style="color:${groupColors[g]||'#fff'}">${groupEmojis[g]||''} ${g}: ${n}</b>${addrs.length?'<br>'+addrs.map(a=>`<span style="font-family:var(--font-mono);font-size:.58rem;opacity:.8;cursor:pointer" onclick="navigator.clipboard.writeText('${a}')" title="Copier">${a}</span>`).join('<br>'):''}`;
+        return `<span style="color:${groupColors[g]||'#fff'}">${groupEmojis[g]||''} ${g}: ${n}</span>${addrs.length?'<br>'+addrs.map(a=>`<span style="font-family:var(--font-mono);font-size:.58rem;opacity:.8;cursor:pointer" onclick="navigator.clipboard.writeText('${a}')" title="Copier">${a}</span>`).join('<br>'):''}`;
       }).join('<br><br>'),
-      'Social': `${hasX?(twitterUrl?`<a href="${twitterUrl}" target="_blank" style="color:#1da1f2">𝕏 Twitter ↗</a>`:'𝕏 Twitter ✅ (URL non dispo)')+'<br>':''}${hasTG?(tgUrl?`<a href="${tgUrl}" target="_blank" style="color:#0088cc">✈ Telegram ↗</a>`:'✈ Telegram ✅ (URL non dispo)')+'<br>':''}${hasWEB?(webUrl?`<a href="${webUrl}" target="_blank" style="color:#aaa">🌐 Website ↗</a>`:'🌐 Website ✅ (URL non dispo)')+'<br>':''}${(fbGmgn.cashback||fbGmgn.is_cashback)?'<span style="color:#ffaa00">💰 Cashback GMGN → +15pts</span><br>':''}${!hasX&&!hasTG&&!hasWEB?'<span style="color:var(--red)">Aucun social détecté</span>':''}`,
-      'Holders': `Top1: ${dbTop1.toFixed(1)}%<br>Top5: ${dbTop5.toFixed(1)}%<br>Top10: ${dbTop10.toFixed(1)}%<br>Comptes: ${dbHolderCount}`,
+      'Social': `Twitter: +${d.social?.twitterPts||0}pts${d.social?.twitterEarly?' (early 🚀)':''}<br>Telegram: +${d.social?.tgPts||0}pts<br>Website: +${d.social?.webPts||0}pts<br>GitHub: +${d.social?.ghPts||0}pts<br>Community X: +${d.social?.communityPts||0}pts<br>Instagram: +${d.social?.igPts||0}pts<br>Cashback DexScreener: +${d.social?.cashbackPts||0}pts<br><br>${hasX?(twitterUrl?`<a href="${twitterUrl}" target="_blank" style="color:#1da1f2">𝕏 Twitter ↗</a>`:'𝕏 Twitter ✅')+'<br>':''}${hasTG?(tgUrl?`<a href="${tgUrl}" target="_blank" style="color:#0088cc">✈ Telegram ↗</a>`:'✈ Telegram ✅')+'<br>':''}${hasWEB?(webUrl?`<a href="${webUrl}" target="_blank" style="color:#aaa">🌐 Website ↗</a>`:'🌐 Website ✅'):''}${!hasX&&!hasTG&&!hasWEB?'<span style="color:var(--red)">Aucun social détecté</span>':''}`,
+      'Holders': `Top10 ${dbTop10.toFixed(1)}% → +${d.holders?.top10Score||0}pts<br>KOL top50: ${wg['KOL']||0} → +${d.holders?.kolTop50Pts||0}pts<br>Trader top50: ${wg['gros trader']||0} → +${d.holders?.traderTop50Pts||0}pts<br>Bonus combo (KOL≥2+Trader≥2): +${d.holders?.bonusCombo||0}pts<br><br>Top1: ${dbTop1.toFixed(1)}% | Top5: ${dbTop5.toFixed(1)}% | Comptes: ${dbHolderCount}`,
       'Token':   `DEX Paid: ${d.platformScore>0?'✅ oui':'❌ non'}<br>Platform score: +${d.platformScore||0}pts`,
-      'Mcap':    `Mcap actuel: $${fmtNum(mcap)}<br>Liq: ${_ptLiq>0?'$'+fmtNum(_ptLiq):'N/A — pas de données'}<br>Score mcap: +${d.mcapScore||0}pts`,
+      'Mcap':    `Mcap actuel: $${fmtNum(mcap)}<br>Liq: $${fmtNum(liq)}<br>Score mcap: +${d.mcapScore||0}pts`,
       'Age':     `Âge: ${(ageH*60).toFixed(0)}min (${ageH.toFixed(2)}h)<br>Score age: +${d.ageScore||0}pts`,
-      'Activité':`<b>Pattern :</b><br>Liquidité: ${_ptLiq>0?'$'+fmtNum(_ptLiq):'N/A'} → ${_pts(_ptLiqScore)}pts<br>Variation 1h: ${_ptC1h.toFixed(1)}% → ${_pts(_ptC1hScore)}pts<br>Variation 5m: ${_ptC5m.toFixed(1)}% → ${_pts(_ptC5mScore)}pts<br>Volume 5m: $${fmtNum(_ptVolM5)} → ${_pts(_ptVolM5Score)}pts<br><br><b>Transactions :</b><br>buysM5=${buysM5} | sellsM5=${sellsM5} | ratioM5=${(buyRatioM5*100).toFixed(0)}%<br>buysH1=${buysH1} | sellsH1=${sellsH1} | ratioH1=${(buyRatioH1d*100).toFixed(0)}%<br>buyRatio global: ${((d.buyRatio||0)*100).toFixed(0)}%`,
+      'Activité':`Liquidité: $${fmtNum(d.pattern?.liq||0)} → ${d.pattern?.liqScore||0}pts<br>Volume H1: $${fmtNum(d.pattern?.volH1||0)} → ${d.pattern?.volH1Score||0}pts<br><br>buysM5=${buysM5} sellsM5=${sellsM5} ratioM5=${(buyRatioM5*100).toFixed(0)}%`,
     };
     const detailedBars = cats.map(c=>{
       const pct=Math.max(0,Math.min(100,(Math.max(0,c.val)/c.max)*100));
@@ -8504,7 +8252,7 @@ async function fetchTokens(){
       walletData: c.walletData || {count:0,byGroup:{KOL:0,'gros trader':0,DEV:0,farmer:0},wallets:[],clustered:false},
       _callTime: c.calledAt || c.savedAt || Date.now(),
       _callMcap: c.callMcap || c.mcap || 0,
-      debug: c.debug || {traderScore:0,socialScore:0,holderScore:0,platformScore:0,mcapScore:0,ageScore:0,patternScore:0,axiomCount:0},
+      debug: c.debug || {walletScore:0,socialScore:0,holderScore:0,platformScore:0,mcapScore:0,ageScore:0,patternScore:0,gmgnScore:0},
       raw: c.raw || {},
       security: c.raw?.security || null,
     }));
@@ -8544,7 +8292,7 @@ async function fetchTokens(){
             walletData:c.walletData||{count:c.debug?.axiomCount||0,byGroup:{KOL:0,'gros trader':0,DEV:0,farmer:0},wallets:[],clustered:false},
             _callTime:c.calledAt||c.callTime||c.savedAt||Date.now(),
             _callMcap:c.callMcap||c.mcap||0,
-            debug:c.debug||{traderScore:0,socialScore:0,holderScore:0,platformScore:0,mcapScore:0,ageScore:0,patternScore:0,axiomCount:0,ageH:0,c1h:0,m5:0,c6h:0,buyRatio:0.5},
+            debug:c.debug||{walletScore:0,socialScore:0,holderScore:0,platformScore:0,mcapScore:0,ageScore:0,patternScore:0,gmgnScore:0,ageH:0,c1h:0,m5:0,c6h:0,buyRatio:0.5},
             raw:c.raw||{},security:c.security||null,_fromHistory:true,
           }));
         if(recentH.length>0){
@@ -8598,8 +8346,8 @@ async function fetchTokens(){
             _callTime:v.callTime, _fromCache:true,
             pairUrl:`https://dexscreener.com/solana/${v.addr}`,
             emoji:'📋', rugRisk:'LOW', socials:false,
-            debug:{ageH:0,traderScore:0,socialScore:0,holderScore:0,
-                   platformScore:0,mcapScore:0,ageScore:0,patternScore:0},
+            debug:{ageH:0,walletScore:0,socialScore:0,holderScore:0,
+                   platformScore:0,mcapScore:0,ageScore:0,patternScore:0,gmgnScore:0},
             raw:{}
           }));
           console.log(`[fetchTokens] Rechargé ${lastScored.length} calls récents depuis Firebase`);
@@ -8772,11 +8520,11 @@ async function fetchTokens(){
 
       const rescored=scoreTokenV2(t.raw, wData);
       const hist=scoreHistory[rescored.addr]||{};
-      const stickyAxiom=Math.max(rescored.debug.traderScore,hist.maxAxiom||0);
-      const stickySocial=Math.max(rescored.debug.socialScore,hist.maxSocial||0);
-      const axiomDiff=stickyAxiom-rescored.debug.traderScore;
-      const socialDiff=stickySocial-rescored.debug.socialScore;
-      if(axiomDiff>0||socialDiff>0){rescored.score=Math.min(150,rescored.score+axiomDiff+socialDiff);rescored.debug.traderScore=stickyAxiom;rescored.debug.socialScore=stickySocial;}
+      const stickyAxiom=Math.max(rescored.debug.walletScore||0,hist.maxAxiom||0);
+      const stickySocial=Math.max(rescored.debug.socialScore||0,hist.maxSocial||0);
+      const axiomDiff=stickyAxiom-(rescored.debug.walletScore||0);
+      const socialDiff=stickySocial-(rescored.debug.socialScore||0);
+      if(axiomDiff>0||socialDiff>0){rescored.score=Math.min(300,rescored.score+axiomDiff+socialDiff);rescored.debug.walletScore=stickyAxiom;rescored.debug.socialScore=stickySocial;}
       scoreHistory[rescored.addr]={maxAxiom:stickyAxiom,maxSocial:stickySocial};
 
       // Hard filters POST-score
@@ -9060,12 +8808,12 @@ async function renderTokenTable(tokens){
     </div>`;
     // ── Score breakdown chips ──
     const scoreChips=[
-      {lbl:'T',val:d.traderScore||0,max:30},
-      {lbl:'S',val:d.socialScore||0,max:26},
-      {lbl:'H',val:d.holderScore||0,max:25},
+      {lbl:'W',val:d.walletScore||0,max:38},
+      {lbl:'S',val:d.socialScore||0,max:48},
+      {lbl:'H',val:d.holderScore||0,max:59},
       {lbl:'P',val:d.platformScore||0,max:15},
-      {lbl:'A',val:d.ageScore||0,max:20},
-      {lbl:'ACT',val:d.patternScore||0,max:40},
+      {lbl:'A',val:d.ageScore||0,max:15},
+      {lbl:'PAT',val:d.patternScore||0,max:150},
     ].map(({lbl,val,max})=>{
       const pct=max>0?val/max:0;
       const col=pct>=0.7?'#00ff88':pct>=0.35?'#ffcc44':'rgba(255,255,255,.35)';
