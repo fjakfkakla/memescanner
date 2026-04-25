@@ -1,0 +1,2074 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>MemeScanner — Scanner Solana memecoins</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap">
+
+<script>
+const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+  "accentHue": 268,
+  "signalHue": 142,
+  "scrollSpeed": 1.0,
+  "stagger": 90,
+  "terminalLive": true,
+  "tickerSpeed": 1.0,
+  "parallax": true,
+  "showGrain": true,
+  "showCursorGlow": true,
+  "displayFont": "Instrument Serif"
+}/*EDITMODE-END*/;
+</script>
+
+<style>
+:root {
+  --bg:    oklch(14% 0.012 270);
+  --bg-1:  oklch(17% 0.014 270);
+  --bg-2:  oklch(20% 0.016 270);
+  --bg-3:  oklch(24% 0.018 270);
+  --line:  oklch(28% 0.018 270);
+  --line-2:oklch(34% 0.020 270);
+
+  --ink:   oklch(98% 0.005 270);
+  --ink-2: oklch(86% 0.010 270);
+  --ink-3: oklch(64% 0.018 270);
+  --ink-4: oklch(46% 0.020 270);
+
+  --accent:      oklch(70% 0.18 268);
+  --accent-2:    oklch(82% 0.14 268);
+  --accent-soft: oklch(30% 0.10 268);
+  --signal:      oklch(78% 0.20 142);
+  --signal-soft: oklch(28% 0.10 142);
+  --warn:        oklch(72% 0.18 35);
+
+  --serif: "Instrument Serif", "Times New Roman", serif;
+  --sans:  "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+  --mono:  "JetBrains Mono", ui-monospace, Menlo, monospace;
+
+  --maxw: 1280px;
+  --pad-x: clamp(20px, 4vw, 64px);
+  --section-pad: clamp(120px, 14vw, 200px);
+  --ease: cubic-bezier(.2,.7,.2,1);
+}
+
+*,*::before,*::after { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+html { scroll-behavior: smooth; background: var(--bg); }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  font-feature-settings: "ss01","cv11";
+  overflow-x: hidden;
+}
+
+::selection { background: var(--accent); color: var(--bg); }
+
+/* grain */
+body::before {
+  content: ""; position: fixed; inset: 0;
+  pointer-events: none; z-index: 1500; opacity: .6;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.10 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+}
+body.no-grain::before { display: none; }
+
+/* cursor glow */
+.cursor-glow {
+  position: fixed;
+  width: 520px; height: 520px;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 1;
+  left: 50%; top: 30%;
+  transform: translate(-50%,-50%);
+  background: radial-gradient(circle, color-mix(in oklab, var(--accent) 25%, transparent) 0%, transparent 60%);
+  mix-blend-mode: screen;
+  filter: blur(40px);
+  transition: transform .25s var(--ease), opacity .3s;
+  opacity: .9;
+}
+body.no-glow .cursor-glow { display: none; }
+
+.wrap { max-width: var(--maxw); margin: 0 auto; padding: 0 var(--pad-x); position: relative; }
+
+/* =========== NAV =========== */
+.topnav {
+  position: sticky; top: 0; z-index: 50;
+  background: color-mix(in oklab, var(--bg) 70%, transparent);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border-bottom: 1px solid var(--line);
+}
+.topnav-inner {
+  max-width: var(--maxw); margin: 0 auto;
+  padding: 14px var(--pad-x);
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 24px;
+}
+.brand { display: flex; align-items: center; gap: 10px; font-weight: 600; }
+.brand-mark {
+  width: 24px; height: 24px;
+  border-radius: 7px;
+  background: linear-gradient(135deg, var(--accent), var(--signal));
+  position: relative; overflow: hidden;
+  box-shadow: 0 0 24px -4px var(--accent);
+}
+.brand-mark::after {
+  content: ""; position: absolute; inset: 4px;
+  border-radius: 3px; background: var(--bg);
+  clip-path: polygon(0 65%, 22% 38%, 45% 58%, 70% 22%, 100% 50%, 100% 100%, 0 100%);
+}
+.brand-name { font-family: var(--serif); font-size: 24px; }
+.brand-tag {
+  font-family: var(--mono); font-size: 10px;
+  color: var(--ink-3); text-transform: uppercase; letter-spacing: 0.1em;
+  padding: 3px 7px; border: 1px solid var(--line-2); border-radius: 4px;
+}
+
+.nav-links { display: flex; gap: 4px; }
+.nav-link {
+  padding: 8px 14px; border-radius: 999px;
+  font-size: 14px; color: var(--ink-3); text-decoration: none;
+  transition: all .2s var(--ease);
+}
+.nav-link:hover { background: var(--bg-2); color: var(--ink); }
+.nav-link.active { background: var(--ink); color: var(--bg); }
+
+.nav-cta { display: flex; gap: 10px; align-items: center; }
+
+/* scroll progress */
+.scroll-progress {
+  position: fixed; top: 0; left: 0; right: 0;
+  height: 2px;
+  background: transparent;
+  z-index: 200;
+}
+.scroll-progress > i {
+  display: block; height: 100%;
+  background: linear-gradient(90deg, var(--accent), var(--signal));
+  width: var(--p, 0%);
+  box-shadow: 0 0 12px var(--accent);
+}
+
+/* buttons */
+.btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 14px 22px;
+  border-radius: 999px;
+  font: 500 14px var(--sans);
+  letter-spacing: -0.005em;
+  text-decoration: none;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: transform .2s var(--ease), background .2s var(--ease), border-color .2s var(--ease), color .2s var(--ease), box-shadow .25s var(--ease);
+  white-space: nowrap;
+  position: relative;
+}
+.btn-primary {
+  background: var(--ink); color: var(--bg);
+  box-shadow: 0 0 0 0 color-mix(in oklab, var(--accent) 60%, transparent);
+}
+.btn-primary:hover { transform: translateY(-1px); box-shadow: 0 12px 32px -10px color-mix(in oklab, var(--accent) 70%, transparent); }
+.btn-accent {
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  color: var(--bg);
+  box-shadow: 0 0 0 0 var(--accent);
+}
+.btn-accent:hover { transform: translateY(-1px); box-shadow: 0 16px 40px -10px var(--accent); }
+.btn-ghost { background: transparent; color: var(--ink); border-color: var(--line-2); }
+.btn-ghost:hover { background: var(--bg-2); border-color: var(--line-2); }
+.btn-sm { padding: 8px 14px; font-size: 13px; }
+.btn-arrow { width: 14px; height: 14px; transition: transform .2s var(--ease); }
+.btn:hover .btn-arrow { transform: translate(2px, -2px); }
+
+/* reveal */
+.reveal { opacity: 0; transform: translateY(40px); transition: opacity 1s var(--ease), transform 1s var(--ease); will-change: opacity, transform; }
+.reveal.in { opacity: 1; transform: none; }
+.reveal-stagger > * { opacity: 0; transform: translateY(40px); transition: opacity .9s var(--ease), transform .9s var(--ease); }
+.reveal-stagger.in > * { opacity: 1; transform: none; }
+
+/* ============ HERO ============ */
+.hero {
+  position: relative;
+  min-height: clamp(720px, 100vh, 980px);
+  padding: clamp(80px, 10vw, 140px) 0 clamp(64px, 8vw, 100px);
+  overflow: hidden;
+  isolation: isolate;
+}
+
+/* layered background: grid + gradient blobs */
+.hero-bg {
+  position: absolute; inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  overflow: hidden;
+}
+.hero-grid {
+  position: absolute; inset: -2px;
+  background-image:
+    linear-gradient(var(--line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line) 1px, transparent 1px);
+  background-size: 80px 80px;
+  mask-image: radial-gradient(ellipse 80% 70% at 50% 40%, black 0%, transparent 75%);
+  -webkit-mask-image: radial-gradient(ellipse 80% 70% at 50% 40%, black 0%, transparent 75%);
+  opacity: .55;
+  transform: translateY(var(--py, 0));
+}
+.hero-blob {
+  position: absolute;
+  width: 700px; height: 700px;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: .35;
+  transform: translate3d(var(--bx,0), var(--by,0), 0);
+}
+.hero-blob.b1 { background: radial-gradient(circle, var(--accent) 0%, transparent 60%); top: -200px; left: -100px; }
+.hero-blob.b2 { background: radial-gradient(circle, var(--signal) 0%, transparent 60%); bottom: -250px; right: -100px; opacity: .25; }
+
+.eyebrow {
+  display: inline-flex; align-items: center; gap: 10px;
+  font-family: var(--mono); font-size: 12px;
+  text-transform: uppercase; letter-spacing: 0.12em;
+  color: var(--ink-2);
+  padding: 8px 14px;
+  border: 1px solid var(--line-2);
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--bg) 60%, transparent);
+  backdrop-filter: blur(8px);
+}
+.dot-live {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--signal);
+  position: relative;
+  box-shadow: 0 0 8px var(--signal);
+}
+.dot-live::after {
+  content: ""; position: absolute; inset: -3px;
+  border-radius: 50%; border: 1.5px solid var(--signal);
+  opacity: .6; animation: pulse 2s var(--ease) infinite;
+}
+@keyframes pulse {
+  0% { transform: scale(.6); opacity: .9; }
+  100% { transform: scale(1.7); opacity: 0; }
+}
+
+.hero-meta {
+  display: flex; align-items: center; gap: 14px;
+  font-family: var(--mono); font-size: 11px;
+  text-transform: uppercase; letter-spacing: 0.1em;
+  color: var(--ink-3);
+  margin-bottom: 40px;
+}
+.hero-meta-line { flex: 1; height: 1px; background: var(--line); }
+
+.h1 {
+  font-family: var(--serif); font-weight: 400;
+  font-size: clamp(60px, 10vw, 168px);
+  line-height: 0.95;
+  letter-spacing: -0.025em;
+  margin: 0;
+  color: var(--ink);
+}
+.h1 em { font-style: italic; color: var(--ink-3); }
+.h1 .line { display: block; }
+.h1 .word { display: inline-block; white-space: nowrap; }
+.h1 .ch {
+  display: inline-block;
+  opacity: 0;
+  transform: translateY(0.55em) rotateX(-40deg);
+  transform-origin: 50% 100%;
+  transition: opacity .7s var(--ease), transform .7s var(--ease);
+  will-change: transform, opacity;
+}
+.h1.revealed .ch { opacity: 1; transform: none; }
+
+.h1 .accent-word {
+  background: linear-gradient(110deg, var(--accent), var(--signal));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.hero-sub {
+  margin-top: 40px;
+  max-width: 640px;
+  font-size: clamp(17px, 1.4vw, 20px);
+  line-height: 1.55;
+  color: var(--ink-2);
+  letter-spacing: -0.005em;
+}
+.hero-sub strong { color: var(--ink); font-weight: 600; }
+
+.hero-ctas {
+  margin-top: 40px;
+  display: flex; flex-wrap: wrap; gap: 12px; align-items: center;
+}
+.hero-ctas .price-note {
+  font-family: var(--mono); font-size: 11px;
+  text-transform: uppercase; letter-spacing: 0.1em;
+  color: var(--ink-3);
+  margin-left: 6px;
+}
+
+/* hero stats */
+.hero-stats {
+  margin-top: clamp(60px, 8vw, 100px);
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  background: color-mix(in oklab, var(--bg-1) 60%, transparent);
+  backdrop-filter: blur(6px);
+}
+.stat {
+  padding: 28px 24px 26px;
+  border-right: 1px solid var(--line);
+  display: flex; flex-direction: column; gap: 10px;
+  position: relative; overflow: hidden;
+}
+.stat::before {
+  content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 2px;
+  background: linear-gradient(90deg, var(--accent), var(--signal));
+  transform: translateX(-101%);
+  transition: transform 1.4s var(--ease);
+}
+.hero-stats.in .stat::before { transform: translateX(0); transition-delay: var(--d, 0ms); }
+.hero-stats.in .stat:nth-child(1) { --d: 200ms; }
+.hero-stats.in .stat:nth-child(2) { --d: 350ms; }
+.hero-stats.in .stat:nth-child(3) { --d: 500ms; }
+.hero-stats.in .stat:nth-child(4) { --d: 650ms; }
+.stat:last-child { border-right: none; }
+.stat-label {
+  font-family: var(--mono); font-size: 11px;
+  text-transform: uppercase; letter-spacing: 0.1em;
+  color: var(--ink-3);
+  display: flex; align-items: center; gap: 8px;
+}
+.stat-num {
+  font-family: var(--serif);
+  font-size: clamp(46px, 5.5vw, 72px);
+  line-height: 1; letter-spacing: -0.02em;
+  color: var(--ink);
+  font-feature-settings: "tnum";
+  display: flex; align-items: baseline; gap: 4px;
+}
+.stat-num .unit { font-size: 0.4em; color: var(--ink-3); font-family: var(--mono); letter-spacing: 0; }
+.stat-foot { font-size: 12px; color: var(--ink-3); margin-top: 2px; }
+
+/* ============ Marquee ticker ============ */
+.ticker {
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  background: var(--bg-1);
+  overflow: hidden;
+  padding: 16px 0;
+  font-family: var(--mono); font-size: 13px;
+  color: var(--ink-2);
+}
+.ticker-track {
+  display: flex; gap: 48px;
+  white-space: nowrap;
+  animation: marquee 40s linear infinite;
+  animation-play-state: running;
+  width: max-content;
+}
+.ticker.paused .ticker-track { animation-play-state: paused; }
+@keyframes marquee {
+  to { transform: translateX(-50%); }
+}
+.tk {
+  display: inline-flex; align-items: center; gap: 12px;
+}
+.tk .name { color: var(--ink); font-weight: 500; }
+.tk .pct { color: var(--signal); }
+.tk .pct.dn { color: var(--warn); }
+.tk .dot { width: 4px; height: 4px; border-radius: 50%; background: var(--ink-4); }
+
+/* ============ Section ============ */
+.section { padding: var(--section-pad) 0; border-bottom: 1px solid var(--line); position: relative; }
+.section-header {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: clamp(24px, 5vw, 80px);
+  margin-bottom: clamp(48px, 6vw, 80px);
+  align-items: end;
+}
+.section-tag {
+  font-family: var(--mono); font-size: 11px;
+  text-transform: uppercase; letter-spacing: 0.12em;
+  color: var(--ink-3);
+  display: flex; align-items: center; gap: 10px;
+}
+.section-tag .num {
+  font-family: var(--mono);
+  padding: 2px 8px;
+  border: 1px solid var(--line-2);
+  border-radius: 999px;
+  color: var(--ink-2);
+}
+.section-title {
+  font-family: var(--serif);
+  font-size: clamp(44px, 6vw, 88px);
+  font-weight: 400;
+  letter-spacing: -0.022em;
+  line-height: 0.98;
+  margin: 0;
+  color: var(--ink);
+}
+.section-title em { font-style: italic; color: var(--ink-3); }
+.section-title .grad {
+  background: linear-gradient(110deg, var(--accent), var(--signal));
+  -webkit-background-clip: text; background-clip: text;
+  color: transparent;
+}
+.section-lede {
+  margin-top: 20px;
+  max-width: 560px;
+  font-size: 17px;
+  line-height: 1.55;
+  color: var(--ink-2);
+}
+
+/* ============ FEATURES ============ */
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1px;
+  background: var(--line);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  overflow: hidden;
+}
+.feature {
+  background: var(--bg-1);
+  padding: 40px 36px 36px;
+  display: flex; flex-direction: column; gap: 18px;
+  position: relative;
+  min-height: 340px;
+  transition: background .3s var(--ease);
+  overflow: hidden;
+}
+.feature::before {
+  content: ""; position: absolute; inset: 0;
+  background: radial-gradient(circle at var(--mx, -200px) var(--my, -200px), color-mix(in oklab, var(--accent) 18%, transparent) 0%, transparent 240px);
+  pointer-events: none; opacity: 0;
+  transition: opacity .4s var(--ease);
+}
+.feature:hover::before { opacity: 1; }
+.feature:hover { background: var(--bg-2); }
+.feature-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; position: relative; z-index: 1; }
+.feature-mark {
+  width: 40px; height: 40px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--accent-soft), transparent);
+  border: 1px solid var(--line-2);
+  color: var(--ink);
+  display: grid; place-items: center;
+  font-family: var(--mono); font-size: 12px; font-weight: 600;
+  letter-spacing: -0.02em;
+}
+.feature-num {
+  font-family: var(--mono); font-size: 11px;
+  color: var(--ink-3); letter-spacing: 0.1em;
+}
+.feature-name {
+  font-family: var(--serif);
+  font-size: 40px;
+  line-height: 1; letter-spacing: -0.02em;
+  margin: 0; color: var(--ink);
+  position: relative; z-index: 1;
+}
+.feature-name sup {
+  font-family: var(--mono); font-size: 11px;
+  color: var(--accent);
+  vertical-align: top; top: -0.2em; position: relative;
+  margin-left: 2px;
+}
+.feature-desc {
+  font-size: 15px;
+  color: var(--ink-2);
+  line-height: 1.55;
+  position: relative; z-index: 1;
+}
+.feature-meta {
+  margin-top: auto;
+  padding-top: 20px;
+  border-top: 1px dashed var(--line-2);
+  display: flex; gap: 24px; flex-wrap: wrap;
+  position: relative; z-index: 1;
+}
+.feature-meta-item {
+  font-family: var(--mono); font-size: 11px;
+  text-transform: uppercase; letter-spacing: 0.08em;
+  color: var(--ink-3);
+}
+.feature-meta-item b {
+  font-family: var(--serif);
+  font-size: 24px;
+  font-weight: 400;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+  text-transform: none;
+  display: block;
+  font-style: italic;
+}
+
+/* ============ TRACKER (sticky scrub) ============ */
+.tracker-sticky {
+  position: relative;
+  height: 220vh; /* scroll runway */
+}
+.tracker-pin {
+  position: sticky; top: 12vh;
+  height: 76vh;
+  display: grid;
+  grid-template-columns: 1fr 1.4fr;
+  gap: clamp(32px, 5vw, 72px);
+  align-items: stretch;
+}
+
+.tracker-copy { display: flex; flex-direction: column; padding-top: 20px; }
+.tracker-copy .eyebrow { align-self: flex-start; margin-bottom: 24px; }
+
+.tp-stack {
+  position: relative;
+  flex: 1;
+  display: flex; flex-direction: column; justify-content: flex-end;
+  padding-bottom: 30px;
+}
+.tp-card {
+  position: absolute; left: 0; right: 0; bottom: 0;
+  padding: 28px 32px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: linear-gradient(180deg, var(--bg-1), var(--bg-2));
+  transform: translateY(60px);
+  opacity: 0;
+  transition: opacity .5s var(--ease), transform .5s var(--ease);
+}
+.tp-card.active { opacity: 1; transform: none; }
+.tp-card.past { opacity: 0; transform: translateY(-60px); }
+.tp-tier {
+  font-family: var(--mono); font-size: 11px;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 12px;
+  display: flex; gap: 8px; align-items: center;
+}
+.tp-name {
+  font-family: var(--serif); font-size: 36px;
+  letter-spacing: -0.018em; line-height: 1;
+  color: var(--ink); margin-bottom: 14px;
+}
+.tp-desc { color: var(--ink-2); font-size: 15px; line-height: 1.55; }
+.tp-progress {
+  margin-top: 24px;
+  display: flex; gap: 8px;
+}
+.tp-progress span {
+  flex: 1; height: 2px;
+  background: var(--line);
+  border-radius: 2px; overflow: hidden;
+  position: relative;
+}
+.tp-progress span.done { background: var(--accent); }
+.tp-progress span.curr {
+  background: linear-gradient(90deg, var(--accent) var(--cp, 0%), var(--line) var(--cp, 0%));
+}
+
+.terminal {
+  border: 1px solid var(--line-2);
+  border-radius: 16px;
+  background: linear-gradient(180deg, var(--bg-1), oklch(12% 0.012 270));
+  overflow: hidden;
+  display: flex; flex-direction: column;
+  box-shadow: 0 30px 80px -30px black, 0 0 0 1px color-mix(in oklab, var(--accent) 12%, transparent) inset;
+}
+.term-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--line);
+  background: var(--bg-2);
+}
+.term-head-l { display: flex; align-items: center; gap: 10px; font-family: var(--mono); font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--ink-2); }
+.term-head-r { font-family: var(--mono); font-size: 11px; color: var(--ink-3); display: flex; align-items: center; gap: 12px; }
+.term-cycle { display: flex; align-items: center; gap: 6px; }
+.term-cycle-bar {
+  width: 60px; height: 4px;
+  background: var(--bg-3); border-radius: 2px;
+  overflow: hidden;
+}
+.term-cycle-bar > i {
+  display: block; height: 100%;
+  background: linear-gradient(90deg, var(--accent), var(--signal));
+  border-radius: 2px; width: 0;
+  animation: cycleFill 45s linear infinite;
+}
+@keyframes cycleFill { from { width: 0; } to { width: 100%; } }
+
+.term-cols {
+  display: grid;
+  grid-template-columns: 1fr 88px 110px 100px;
+  padding: 12px 18px;
+  font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--ink-3);
+  border-bottom: 1px solid var(--line);
+}
+.term-body {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+}
+.term-row {
+  display: grid;
+  grid-template-columns: 1fr 88px 110px 100px;
+  padding: 14px 18px;
+  font-family: var(--mono); font-size: 12px;
+  border-bottom: 1px solid var(--line);
+  align-items: center;
+  animation: rowIn .55s var(--ease) both;
+}
+@keyframes rowIn {
+  from { opacity: 0; transform: translateY(-8px); background: color-mix(in oklab, var(--accent) 14%, transparent); }
+  to   { opacity: 1; transform: none; background: transparent; }
+}
+.term-row .wallet {
+  display: flex; align-items: center; gap: 10px;
+  color: var(--ink); overflow: hidden;
+}
+.term-row .avatar {
+  width: 22px; height: 22px; border-radius: 50%;
+  flex: 0 0 auto;
+  background: linear-gradient(135deg, var(--ink-3), var(--ink-4));
+}
+.term-row .avatar.kol { background: linear-gradient(135deg, var(--accent), var(--accent-2)); box-shadow: 0 0 12px -2px var(--accent); }
+.term-row .avatar.whale { background: linear-gradient(135deg, var(--signal), oklch(60% 0.15 142)); box-shadow: 0 0 12px -2px var(--signal); }
+.term-row .avatar.smart { background: linear-gradient(135deg, oklch(75% 0.18 60), oklch(85% 0.16 50)); }
+.term-row .hash { color: var(--ink-3); font-size: 11px; }
+.term-row .label {
+  display: inline-block;
+  font-size: 9px; letter-spacing: 0.1em;
+  padding: 2px 6px; border-radius: 4px;
+  background: var(--bg-3); color: var(--ink-2);
+  text-transform: uppercase; margin-left: 6px;
+}
+.term-row .label.kol { background: var(--accent-soft); color: var(--accent-2); }
+.term-row .label.whale { background: var(--signal-soft); color: var(--signal); }
+.term-row .label.smart { background: oklch(28% 0.10 60); color: oklch(82% 0.16 60); }
+.term-row .pts { color: var(--signal); font-weight: 500; text-align: right; }
+.term-row .pts::before { content: "+"; }
+.term-row .time { color: var(--ink-3); text-align: right; font-size: 11px; }
+.term-row .price { color: var(--ink); text-align: right; }
+
+.term-foot {
+  display: flex; justify-content: space-between;
+  padding: 12px 18px;
+  border-top: 1px solid var(--line);
+  background: var(--bg-2);
+  font-family: var(--mono); font-size: 11px;
+  color: var(--ink-3);
+}
+
+/* ============ SCORING ============ */
+.scoring-layout {
+  display: grid;
+  grid-template-columns: 1.05fr 1.45fr;
+  gap: clamp(32px, 5vw, 80px);
+  align-items: start;
+}
+.score-aside { position: sticky; top: 14vh; }
+.score-total {
+  display: flex; align-items: baseline; gap: 12px;
+  margin-top: 28px;
+}
+.score-total-num {
+  font-family: var(--serif);
+  font-size: clamp(96px, 12vw, 168px);
+  line-height: 0.85;
+  letter-spacing: -0.04em;
+  background: linear-gradient(110deg, var(--ink), var(--accent) 80%);
+  -webkit-background-clip: text; background-clip: text;
+  color: transparent;
+}
+.score-total-denom {
+  font-family: var(--mono);
+  font-size: 16px; color: var(--ink-3);
+  letter-spacing: 0.05em;
+}
+.score-summary { font-size: 14px; color: var(--ink-3); margin-top: 16px; max-width: 360px; line-height: 1.55; }
+.score-tier {
+  margin-top: 24px;
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 8px 14px;
+  border: 1px solid var(--accent);
+  border-radius: 999px;
+  background: var(--accent-soft);
+  font-family: var(--mono); font-size: 12px;
+  letter-spacing: 0.05em;
+  color: var(--accent-2);
+}
+
+.score-bars {
+  display: flex; flex-direction: column;
+  border-top: 1px solid var(--line);
+}
+.bar {
+  padding: 22px 0 24px;
+  border-bottom: 1px solid var(--line);
+  display: grid;
+  grid-template-columns: 32px 1fr 80px;
+  gap: 18px;
+  align-items: center;
+}
+.bar-num { font-family: var(--mono); font-size: 11px; color: var(--ink-3); letter-spacing: 0.06em; }
+.bar-body { display: flex; flex-direction: column; gap: 10px; }
+.bar-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.bar-name { font-family: var(--serif); font-size: 24px; letter-spacing: -0.012em; color: var(--ink); }
+.bar-desc { font-size: 13px; color: var(--ink-3); line-height: 1.55; }
+.bar-track {
+  height: 5px;
+  background: var(--bg-2);
+  border-radius: 3px;
+  overflow: hidden;
+  position: relative;
+}
+.bar-fill {
+  position: absolute; top: 0; bottom: 0; left: 0;
+  width: 0;
+  background: linear-gradient(90deg, var(--accent), var(--signal));
+  border-radius: 3px;
+  box-shadow: 0 0 12px -2px var(--accent);
+  transition: width 1.2s var(--ease);
+}
+.bar.in .bar-fill { width: var(--w, 50%); }
+.bar-pts {
+  font-family: var(--mono);
+  font-size: 14px;
+  color: var(--ink);
+  text-align: right;
+  font-feature-settings: "tnum";
+}
+.bar-pts .total { color: var(--ink-4); }
+
+/* ============ COMPARISON ============ */
+.compare-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+.compare-card {
+  background: var(--bg-1);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 32px 28px 24px;
+  display: flex; flex-direction: column; gap: 18px;
+  min-height: 480px;
+  transition: transform .35s var(--ease), border-color .25s var(--ease);
+}
+.compare-card:hover { transform: translateY(-4px); border-color: var(--line-2); }
+.compare-card.featured {
+  background: linear-gradient(180deg, var(--accent-soft), var(--bg-1) 60%);
+  border-color: var(--accent);
+  position: relative;
+  transform: translateY(-12px);
+  box-shadow: 0 30px 80px -30px var(--accent);
+}
+.compare-card.featured:hover { transform: translateY(-16px); }
+.compare-tag {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-family: var(--mono); font-size: 10px;
+  text-transform: uppercase; letter-spacing: 0.12em;
+  color: var(--ink-3);
+}
+.compare-card.featured .compare-tag { color: var(--accent-2); }
+.compare-name {
+  font-family: var(--serif);
+  font-size: 38px;
+  letter-spacing: -0.02em; line-height: 1;
+  color: var(--ink);
+}
+.compare-blurb { font-size: 13px; color: var(--ink-3); line-height: 1.55; }
+.compare-list {
+  list-style: none; margin: 8px 0 0; padding: 0;
+  display: flex; flex-direction: column;
+  border-top: 1px solid var(--line);
+}
+.compare-card.featured .compare-list { border-color: color-mix(in oklab, var(--accent) 30%, transparent); }
+.compare-list li {
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 14px;
+  display: grid; grid-template-columns: 18px 1fr; gap: 10px;
+  align-items: start;
+  color: var(--ink-2);
+}
+.compare-card.featured .compare-list li { border-color: color-mix(in oklab, var(--accent) 20%, transparent); }
+.ck { color: var(--ink-3); font-family: var(--mono); font-size: 14px; }
+.ck.yes { color: var(--ink); }
+.ck.no { color: var(--ink-4); }
+.compare-card.featured .ck.yes { color: var(--signal); }
+
+/* ============ PRICING ============ */
+.pricing-shell {
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  overflow: hidden;
+  background: var(--bg-1);
+  position: relative;
+}
+.pricing-shell::before {
+  content: ""; position: absolute; inset: 0;
+  background: radial-gradient(ellipse 60% 100% at 50% 0%, var(--accent-soft) 0%, transparent 60%);
+  pointer-events: none; opacity: .55;
+}
+.pricing-toggle-bar {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border-bottom: 1px solid var(--line);
+  background: var(--bg-2);
+  position: relative;
+  z-index: 1;
+}
+.pt-btn {
+  appearance: none; background: transparent; border: 0;
+  padding: 22px 28px;
+  text-align: left; cursor: pointer;
+  display: flex; flex-direction: column; gap: 6px;
+  position: relative; z-index: 1;
+  font: inherit;
+  color: var(--ink-3);
+  transition: color .25s var(--ease);
+}
+.pt-btn[aria-pressed="true"] { color: var(--ink); }
+.pt-btn .pt-eyebrow {
+  font-family: var(--mono); font-size: 10px;
+  text-transform: uppercase; letter-spacing: 0.14em;
+}
+.pt-btn .pt-name {
+  font-family: var(--serif);
+  font-size: 30px; letter-spacing: -0.015em; line-height: 1;
+}
+.pt-indicator {
+  position: absolute; bottom: -1px; left: 0;
+  height: 2px; width: 50%;
+  background: linear-gradient(90deg, var(--accent), var(--signal));
+  transition: transform .4s var(--ease);
+  z-index: 0; box-shadow: 0 0 12px var(--accent);
+}
+.pricing-toggle-bar[data-plan="premium"] .pt-indicator { transform: translateX(100%); }
+
+.pricing-body {
+  display: grid;
+  grid-template-columns: 1.05fr 1.4fr;
+  position: relative; z-index: 1;
+}
+.pricing-detail {
+  padding: 44px 36px;
+  border-right: 1px solid var(--line);
+  display: flex; flex-direction: column; gap: 20px;
+}
+.price-row { display: flex; align-items: baseline; gap: 10px; }
+.price-num {
+  font-family: var(--serif);
+  font-size: clamp(80px, 9vw, 132px);
+  line-height: 0.9;
+  letter-spacing: -0.03em;
+  color: var(--ink);
+  font-feature-settings: "tnum";
+}
+.price-cur { font-family: var(--mono); font-size: 24px; color: var(--ink-3); }
+.price-period { font-family: var(--mono); font-size: 13px; color: var(--ink-3); margin-left: 4px; }
+.price-blurb { font-size: 15px; color: var(--ink-2); line-height: 1.55; max-width: 320px; }
+.price-callouts {
+  margin-top: 8px;
+  display: flex; flex-direction: column; gap: 12px;
+  padding-top: 20px;
+  border-top: 1px dashed var(--line-2);
+}
+.price-callout {
+  font-family: var(--mono);
+  font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em;
+  color: var(--ink-3);
+  display: flex; gap: 10px; align-items: center;
+}
+.price-callout b {
+  font-family: var(--serif);
+  text-transform: none;
+  font-size: 17px; letter-spacing: -0.01em;
+  color: var(--ink); font-weight: 400;
+}
+.pricing-features {
+  padding: 44px 36px;
+  background: var(--bg-2);
+}
+.pf-cols {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px 32px;
+}
+.pf-item {
+  padding: 14px 0;
+  border-bottom: 1px solid var(--line);
+  display: grid; grid-template-columns: 18px 1fr auto; gap: 12px;
+  align-items: center;
+  font-size: 14px;
+  transition: opacity .3s var(--ease);
+}
+.pf-item .pf-mark { font-family: var(--mono); font-size: 13px; color: var(--accent); line-height: 1; }
+.pf-item .pf-name { color: var(--ink); }
+.pf-item .pf-meta { font-family: var(--mono); font-size: 11px; color: var(--ink-3); }
+.pf-item.off { opacity: 0.3; }
+.pf-item.off .pf-mark { color: var(--ink-4); }
+
+.pricing-cta {
+  padding: 24px 36px;
+  border-top: 1px solid var(--line);
+  display: flex; gap: 14px; align-items: center; justify-content: space-between;
+  background: var(--bg-1);
+  position: relative; z-index: 1;
+}
+.pricing-cta-note { font-family: var(--mono); font-size: 11px; color: var(--ink-3); text-transform: uppercase; letter-spacing: 0.08em; }
+
+/* ============ FOOTER ============ */
+.footer {
+  padding: clamp(80px, 10vw, 120px) 0 40px;
+  border-top: 1px solid var(--line);
+  background: var(--bg);
+  position: relative; overflow: hidden;
+}
+.footer-mega {
+  font-family: var(--serif);
+  font-size: clamp(80px, 14vw, 220px);
+  line-height: 0.9;
+  letter-spacing: -0.04em;
+  color: var(--ink);
+  margin-bottom: 60px;
+  display: flex; flex-direction: column;
+}
+.footer-mega em { font-style: italic; color: var(--ink-3); }
+.footer-mega .grad {
+  background: linear-gradient(110deg, var(--accent), var(--signal));
+  -webkit-background-clip: text; background-clip: text;
+  color: transparent;
+}
+.footer-top {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr 1fr 1fr;
+  gap: 32px;
+  margin-bottom: 60px;
+}
+.footer h4 {
+  font-family: var(--mono); font-size: 11px;
+  text-transform: uppercase; letter-spacing: 0.12em;
+  color: var(--ink-3); margin: 0 0 18px; font-weight: 500;
+}
+.footer ul { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px; }
+.footer a { color: var(--ink-2); text-decoration: none; font-size: 14px; transition: color .2s; }
+.footer a:hover { color: var(--ink); }
+
+.disclaimer {
+  border-top: 1px solid var(--line);
+  padding-top: 32px;
+  font-size: 12px;
+  color: var(--ink-3);
+  line-height: 1.7;
+}
+.disclaimer .nfa {
+  display: inline-block;
+  font-family: var(--mono); font-size: 11px;
+  letter-spacing: 0.1em;
+  border: 1px solid var(--line-2);
+  padding: 3px 8px; border-radius: 4px;
+  margin-right: 8px;
+  color: var(--ink-2);
+}
+.foot-bar {
+  margin-top: 32px;
+  display: flex; justify-content: space-between;
+  font-family: var(--mono); font-size: 11px;
+  text-transform: uppercase; letter-spacing: 0.1em;
+  color: var(--ink-3);
+}
+
+/* ============ Tweaks panel ============ */
+.tweaks {
+  position: fixed; right: 20px; bottom: 20px;
+  width: 320px;
+  background: var(--bg-1);
+  border: 1px solid var(--line-2);
+  border-radius: 14px;
+  z-index: 1100;
+  box-shadow: 0 30px 80px -20px black;
+  font-family: var(--sans);
+  display: none;
+  max-height: 80vh; overflow: hidden;
+  color: var(--ink);
+}
+.tweaks.open { display: flex; flex-direction: column; }
+.tweaks-head {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--line);
+  display: flex; justify-content: space-between; align-items: center;
+  cursor: grab; user-select: none;
+}
+.tweaks-head:active { cursor: grabbing; }
+.tweaks-head h3 { margin: 0; font-family: var(--serif); font-size: 22px; font-weight: 400; }
+.tweaks-close {
+  appearance: none; background: transparent; border: 0;
+  width: 28px; height: 28px; border-radius: 6px;
+  display: grid; place-items: center;
+  cursor: pointer; color: var(--ink-3);
+}
+.tweaks-close:hover { background: var(--bg-2); color: var(--ink); }
+.tweaks-body { padding: 8px 16px 16px; overflow: auto; }
+.tweaks-section { padding: 14px 0; border-bottom: 1px solid var(--line); }
+.tweaks-section:last-child { border-bottom: 0; }
+.tweaks-section-title {
+  font-family: var(--mono); font-size: 10px;
+  text-transform: uppercase; letter-spacing: 0.12em;
+  color: var(--ink-3); margin-bottom: 10px;
+}
+.tw-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; gap: 12px; }
+.tw-row label { font-size: 13px; color: var(--ink-2); }
+.tw-row .val { font-family: var(--mono); font-size: 11px; color: var(--ink-3); min-width: 40px; text-align: right; }
+.tw-row input[type="range"] { flex: 1; max-width: 140px; accent-color: var(--accent); }
+.tw-row select { font: inherit; font-size: 12px; padding: 4px 8px; border-radius: 6px; border: 1px solid var(--line-2); background: var(--bg-2); color: var(--ink); }
+.tw-row .toggle {
+  width: 36px; height: 20px; border-radius: 999px;
+  background: var(--bg-3); border: 1px solid var(--line-2);
+  position: relative; cursor: pointer; transition: background .2s;
+}
+.tw-row .toggle::after {
+  content: ""; position: absolute; top: 1px; left: 1px;
+  width: 16px; height: 16px; border-radius: 50%;
+  background: var(--ink-2); transition: transform .2s var(--ease);
+}
+.tw-row .toggle.on { background: var(--accent); border-color: var(--accent); }
+.tw-row .toggle.on::after { transform: translateX(16px); background: var(--bg); }
+
+/* ============ Responsive ============ */
+@media (max-width: 880px) {
+  .nav-links { display: none; }
+  .hero-stats { grid-template-columns: repeat(2, 1fr); }
+  .stat:nth-child(2) { border-right: none; }
+  .stat:nth-child(1), .stat:nth-child(2) { border-bottom: 1px solid var(--line); }
+  .features-grid { grid-template-columns: 1fr; }
+  .section-header { grid-template-columns: 1fr; align-items: start; }
+  .tracker-sticky { height: auto; }
+  .tracker-pin { position: static; height: auto; grid-template-columns: 1fr; gap: 32px; }
+  .tp-stack { position: static; min-height: 320px; }
+  .scoring-layout { grid-template-columns: 1fr; }
+  .score-aside { position: static; }
+  .compare-grid { grid-template-columns: 1fr; }
+  .compare-card.featured { transform: none; }
+  .compare-card.featured:hover { transform: translateY(-4px); }
+  .pricing-body { grid-template-columns: 1fr; }
+  .pricing-detail { border-right: 0; border-bottom: 1px solid var(--line); }
+  .pf-cols { grid-template-columns: 1fr; }
+  .term-cols, .term-row { grid-template-columns: 1fr 60px 90px; }
+  .term-cols .col-time, .term-row .time { display: none; }
+  .footer-top { grid-template-columns: 1fr 1fr; }
+  .tweaks { right: 12px; left: 12px; bottom: 12px; width: auto; }
+}
+</style>
+</head>
+<body>
+
+<div class="cursor-glow" id="cursorGlow"></div>
+<div class="scroll-progress"><i id="scrollBar"></i></div>
+
+<!-- ============ NAV ============ -->
+<nav class="topnav" aria-label="Primary">
+  <div class="topnav-inner">
+    <div class="brand">
+      <span class="brand-mark"></span>
+      <span class="brand-name">MemeScanner</span>
+      <span class="brand-tag">SOL</span>
+    </div>
+    <div class="nav-links">
+      <a class="nav-link active" href="#">Accueil</a>
+      <a class="nav-link" href="#">Décryptage</a>
+      <a class="nav-link" href="#">Outils</a>
+      <a class="nav-link" href="#">Avis</a>
+    </div>
+    <div class="nav-cta">
+      <a class="btn btn-ghost btn-sm" href="#">Connexion</a>
+      <a class="btn btn-accent btn-sm" href="#pricing">Démarrer</a>
+    </div>
+  </div>
+</nav>
+
+<!-- ============ LANDING ============ -->
+<div id="landing-wrap">
+
+  <!-- HERO -->
+  <section class="hero" id="hero">
+    <div class="hero-bg" aria-hidden="true">
+      <div class="hero-grid" id="heroGrid"></div>
+      <div class="hero-blob b1" id="blob1"></div>
+      <div class="hero-blob b2" id="blob2"></div>
+    </div>
+
+    <div class="wrap">
+      <div class="hero-meta reveal">
+        <span class="eyebrow">
+          <span class="dot-live"></span>
+          Scanner actif &nbsp;·&nbsp; Solana Mainnet
+        </span>
+        <span class="hero-meta-line"></span>
+        <span>Cycle&nbsp;·&nbsp;<span id="cycleClock">00:42</span></span>
+      </div>
+
+      <h1 class="h1" id="heroTitle">
+        <span class="line"><span class="word">Voir</span> <span class="word">avant</span></span>
+        <span class="line"><em><span class="word">la</span> <span class="word accent-word">foule.</span></em></span>
+        <span class="line"><span class="word">Sortir</span> <span class="word">avant</span></span>
+        <span class="line"><em><span class="word">le</span> <span class="word accent-word">rug.</span></em></span>
+      </h1>
+
+      <p class="hero-sub reveal">
+        Scanner Solana memecoins en temps réel. Toutes les <strong>45 secondes</strong>, un algorithme propriétaire score chaque token sur <strong>150 points</strong> — wallet tracker, socials, liquidité, holders, pattern d'activité — et alerte les traders <strong>avant la foule</strong>.
+      </p>
+
+      <div class="hero-ctas reveal">
+        <a class="btn btn-accent" href="index.html">
+          Accéder au scanner
+          <svg class="btn-arrow" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 11 L11 3 M5 3 H11 V9"/></svg>
+        </a>
+        <a class="btn btn-ghost" href="#features">Voir comment ça marche</a>
+        <span class="price-note">Plan gratuit · Sans CB</span>
+      </div>
+
+      <div class="hero-stats">
+        <div class="stat">
+          <div class="stat-label"><span class="dot-live"></span> Winrate moyen</div>
+          <div class="stat-num" data-count="68"><span class="cval">0</span><span class="unit">%</span></div>
+          <div class="stat-foot">Calls premium · 30j glissants</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Rugs bloqués</div>
+          <div class="stat-num" data-count="95"><span class="cval">0</span><span class="unit">%</span></div>
+          <div class="stat-foot">Détectés par Rug Snip™</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Cycle de scan</div>
+          <div class="stat-num" data-count="45"><span class="cval">0</span><span class="unit">sec</span></div>
+          <div class="stat-foot">Rafraîchissement complet</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Wallets tracés</div>
+          <div class="stat-num" data-count="1064"><span class="cval">0</span></div>
+          <div class="stat-foot">KOL, alpha, market makers</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TICKER -->
+  <div class="ticker" id="ticker" aria-hidden="true">
+    <div class="ticker-track" id="tickerTrack"></div>
+  </div>
+
+  <!-- FEATURES -->
+  <section class="section" id="features">
+    <div class="wrap">
+      <div class="section-header reveal">
+        <div class="section-tag"><span class="num">01</span> Boîte à outils</div>
+        <div>
+          <h2 class="section-title">Quatre instruments,<br/><em>un seul tableau de bord.</em></h2>
+          <p class="section-lede">Chaque module tourne en continu sur un cycle de 45&nbsp;secondes. Ils partagent le même flux on-chain, le même graphe de wallets, la même grille de scoring.</p>
+        </div>
+      </div>
+
+      <div class="features-grid reveal-stagger" id="featuresGrid">
+        <article class="feature">
+          <div class="feature-head"><span class="feature-mark">SS</span><span class="feature-num">01 / 04</span></div>
+          <h3 class="feature-name">SmartScan<sup>™</sup></h3>
+          <p class="feature-desc">Le moteur central. Score chaque token Solana sur 150 points en croisant 7 signaux on-chain et off-chain. Filtre 99,2&nbsp;% du bruit avant qu'il atteigne votre dashboard.</p>
+          <div class="feature-meta">
+            <div class="feature-meta-item">Cycle <b>45 s</b></div>
+            <div class="feature-meta-item">Score <b>/ 150</b></div>
+            <div class="feature-meta-item">Signaux <b>7</b></div>
+          </div>
+        </article>
+        <article class="feature">
+          <div class="feature-head"><span class="feature-mark">RS</span><span class="feature-num">02 / 04</span></div>
+          <h3 class="feature-name">Rug Snip<sup>™</sup></h3>
+          <p class="feature-desc">Détecte les patterns de rug avant exécution : LP non lock, mint authority active, distribution concentrée, dump coordonné. Vous notifie en moins d'un cycle.</p>
+          <div class="feature-meta">
+            <div class="feature-meta-item">Patterns <b>14</b></div>
+            <div class="feature-meta-item">Précision <b>95 %</b></div>
+            <div class="feature-meta-item">Latence <b>&lt; 45 s</b></div>
+          </div>
+        </article>
+        <article class="feature">
+          <div class="feature-head"><span class="feature-mark">PB</span><span class="feature-num">03 / 04</span></div>
+          <h3 class="feature-name">Paper Bot</h3>
+          <p class="feature-desc">Backtestez votre stratégie sans risquer un sat. Le bot simule des trades automatiques sur les calls SmartScan, journalisé tick par tick, exportable en CSV.</p>
+          <div class="feature-meta">
+            <div class="feature-meta-item">Mode <b>Sandbox</b></div>
+            <div class="feature-meta-item">Capital <b>Virtuel</b></div>
+            <div class="feature-meta-item">Export <b>CSV</b></div>
+          </div>
+        </article>
+        <article class="feature">
+          <div class="feature-head"><span class="feature-mark">KT</span><span class="feature-num">04 / 04</span></div>
+          <h3 class="feature-name">KOL Tracker</h3>
+          <p class="feature-desc">Surveille en continu 1&nbsp;064 wallets classés par alpha&nbsp;: KOL crypto, traders top-PnL, market makers. Vous alerte dès qu'ils ouvrent une position significative.</p>
+          <div class="feature-meta">
+            <div class="feature-meta-item">Wallets <b>1 064</b></div>
+            <div class="feature-meta-item">Tiers <b>S / A / B</b></div>
+            <div class="feature-meta-item">Alertes <b>Live</b></div>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- WALLET TRACKER (sticky scrub) -->
+  <section class="section" id="tracker" style="border-bottom: 0;">
+    <div class="wrap">
+      <div class="section-header reveal">
+        <div class="section-tag"><span class="num">02</span> Wallet Tracker</div>
+        <div>
+          <h2 class="section-title">Le livre d'ordres<br/><em>des </em><span class="grad">initiés</span><em>.</em></h2>
+          <p class="section-lede">On suit qui achète, pas seulement quoi. Quand quatre wallets KOL ouvrent une position dans le même cycle, ce n'est plus du bruit — c'est un signal.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="wrap tracker-sticky" id="trackerSticky">
+      <div class="tracker-pin">
+        <aside class="tracker-copy">
+          <div class="eyebrow"><span class="dot-live"></span> Cycle en cours</div>
+          <div class="tp-stack" id="tpStack">
+            <div class="tp-card" data-i="0">
+              <div class="tp-tier">Tier S · KOL identifiés</div>
+              <div class="tp-name">Influenceurs<br/>nominatifs.</div>
+              <div class="tp-desc">Suivis manuellement, comptes vérifiés. Position confirmée = +20 pts dans le score global du token.</div>
+              <div class="tp-progress" data-step="0"><span></span><span></span><span></span><span></span></div>
+            </div>
+            <div class="tp-card" data-i="1">
+              <div class="tp-tier">Tier A · Top trader PnL</div>
+              <div class="tp-name">Profitables,<br/>récurrents.</div>
+              <div class="tp-desc">Wallets classés par retour réalisé sur 90 jours. Filtre par taille de bag, fréquence, et winrate.</div>
+              <div class="tp-progress" data-step="1"><span></span><span></span><span></span><span></span></div>
+            </div>
+            <div class="tp-card" data-i="2">
+              <div class="tp-tier">Tier B · Smart money</div>
+              <div class="tp-name">Détection<br/>algorithmique.</div>
+              <div class="tp-desc">Profils anonymes, mais comportement statistiquement profitable sur 30 jours glissants.</div>
+              <div class="tp-progress" data-step="2"><span></span><span></span><span></span><span></span></div>
+            </div>
+            <div class="tp-card" data-i="3">
+              <div class="tp-tier">Market makers</div>
+              <div class="tp-name">Whales &amp;<br/>liquidité.</div>
+              <div class="tp-desc">Pas de score positif — sert d'indicateur de liquidité, et d'avertissement quand ils sortent.</div>
+              <div class="tp-progress" data-step="3"><span></span><span></span><span></span><span></span></div>
+            </div>
+          </div>
+        </aside>
+
+        <div class="terminal" id="terminal" aria-hidden="true">
+          <div class="term-head">
+            <div class="term-head-l"><span class="dot-live"></span> Wallet Tracker · Live feed</div>
+            <div class="term-head-r">
+              <span class="term-cycle">Cycle <span class="term-cycle-bar"><i></i></span></span>
+              <span id="termClock">14:23:07</span>
+            </div>
+          </div>
+          <div class="term-cols">
+            <div>Wallet</div>
+            <div style="text-align:right">Pts</div>
+            <div style="text-align:right">Token</div>
+            <div style="text-align:right" class="col-time">Time</div>
+          </div>
+          <div class="term-body" id="termBody"></div>
+          <div class="term-foot">
+            <span>1 064 wallets surveillés</span>
+            <span>Block 296 184 522</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SCORING -->
+  <section class="section" id="scoring">
+    <div class="wrap">
+      <div class="section-header reveal">
+        <div class="section-tag"><span class="num">03</span> Scoring Engine</div>
+        <div>
+          <h2 class="section-title">150&nbsp;points,<br/><em>sept </em><span class="grad">signaux</span><em>.</em></h2>
+          <p class="section-lede">Pas de boîte noire. Chaque score est décomposable, chaque pondération documentée. Voici la grille appliquée à un token candidat.</p>
+        </div>
+      </div>
+
+      <div class="scoring-layout">
+        <aside class="score-aside reveal">
+          <div class="eyebrow">Token candidat · $WIF-RR</div>
+          <div class="score-total">
+            <span class="score-total-num" data-count="127"><span class="cval">0</span></span>
+            <span class="score-total-denom">/ 150 pts</span>
+          </div>
+          <p class="score-summary">Note finale calculée à 14:23:07&nbsp;UTC. Alerte envoyée à 312 abonnés Premium en moins de 8&nbsp;secondes.</p>
+          <div class="score-tier">
+            <span class="dot-live"></span> Tier A+ · Recommandé
+          </div>
+        </aside>
+
+        <div class="score-bars" id="scoreBars">
+          <div class="bar" style="--w: 87%;" data-pts="26" data-max="30">
+            <span class="bar-num">01</span>
+            <div class="bar-body">
+              <div class="bar-head"><span class="bar-name">Wallet Tracker</span></div>
+              <div class="bar-desc">7 wallets KOL et 4 smart-money ont ouvert position ce cycle.</div>
+              <div class="bar-track"><div class="bar-fill"></div></div>
+            </div>
+            <div class="bar-pts"><b><span class="cval">0</span></b><span class="total">/30</span></div>
+          </div>
+          <div class="bar" style="--w: 72%;" data-pts="18" data-max="25">
+            <span class="bar-num">02</span>
+            <div class="bar-body">
+              <div class="bar-head"><span class="bar-name">Social Signal</span></div>
+              <div class="bar-desc">Mentions X &amp; Telegram en hausse de 340&nbsp;% sur 12 minutes.</div>
+              <div class="bar-track"><div class="bar-fill"></div></div>
+            </div>
+            <div class="bar-pts"><b><span class="cval">0</span></b><span class="total">/25</span></div>
+          </div>
+          <div class="bar" style="--w: 80%;" data-pts="20" data-max="25">
+            <span class="bar-num">03</span>
+            <div class="bar-body">
+              <div class="bar-head"><span class="bar-name">Holders</span></div>
+              <div class="bar-desc">2&nbsp;184 holders, top 10 détient 18&nbsp;%. Distribution saine.</div>
+              <div class="bar-track"><div class="bar-fill"></div></div>
+            </div>
+            <div class="bar-pts"><b><span class="cval">0</span></b><span class="total">/25</span></div>
+          </div>
+          <div class="bar" style="--w: 100%;" data-pts="20" data-max="20">
+            <span class="bar-num">04</span>
+            <div class="bar-body">
+              <div class="bar-head"><span class="bar-name">DexPaid</span></div>
+              <div class="bar-desc">Boost Dexscreener payé · LP locked 12 mois · Mint renounced.</div>
+              <div class="bar-track"><div class="bar-fill"></div></div>
+            </div>
+            <div class="bar-pts"><b><span class="cval">0</span></b><span class="total">/20</span></div>
+          </div>
+          <div class="bar" style="--w: 67%;" data-pts="10" data-max="15">
+            <span class="bar-num">05</span>
+            <div class="bar-body">
+              <div class="bar-head"><span class="bar-name">Market Cap</span></div>
+              <div class="bar-desc">$840&nbsp;K — fenêtre optimale entre liquidité suffisante et upside.</div>
+              <div class="bar-track"><div class="bar-fill"></div></div>
+            </div>
+            <div class="bar-pts"><b><span class="cval">0</span></b><span class="total">/15</span></div>
+          </div>
+          <div class="bar" style="--w: 50%;" data-pts="10" data-max="20">
+            <span class="bar-num">06</span>
+            <div class="bar-body">
+              <div class="bar-head"><span class="bar-name">Age &amp; Maturité</span></div>
+              <div class="bar-desc">Token déployé il y a 4&nbsp;h&nbsp;12 — sweet spot post-snipe, pré-pump.</div>
+              <div class="bar-track"><div class="bar-fill"></div></div>
+            </div>
+            <div class="bar-pts"><b><span class="cval">0</span></b><span class="total">/20</span></div>
+          </div>
+          <div class="bar" style="--w: 92%;" data-pts="23" data-max="25">
+            <span class="bar-num">07</span>
+            <div class="bar-body">
+              <div class="bar-head"><span class="bar-name">Pattern d'activité</span></div>
+              <div class="bar-desc">Volume croissant, pas de wash trading détecté, candle clean.</div>
+              <div class="bar-track"><div class="bar-fill"></div></div>
+            </div>
+            <div class="bar-pts"><b><span class="cval">0</span></b><span class="total">/25</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- COMPARISON -->
+  <section class="section" id="comparison">
+    <div class="wrap">
+      <div class="section-header reveal">
+        <div class="section-tag"><span class="num">04</span> Comparatif</div>
+        <div>
+          <h2 class="section-title">Pas un autre<br/><em>terminal de </em><span class="grad">bruit</span><em>.</em></h2>
+          <p class="section-lede">Photon, GMGN et les outils génériques affichent les tokens. MemeScanner les filtre, les score, et les contextualise. Ce qui change tout, c'est la curation — pas le débit.</p>
+        </div>
+      </div>
+
+      <div class="compare-grid reveal-stagger">
+        <article class="compare-card">
+          <span class="compare-tag">Photon</span>
+          <h3 class="compare-name">Terminal sniper</h3>
+          <p class="compare-blurb">Rapide, brut, orienté exécution. Vous voyez tout — y compris le bruit.</p>
+          <ul class="compare-list">
+            <li><span class="ck yes">+</span> Exécution low-latency</li>
+            <li><span class="ck yes">+</span> Filtres de base</li>
+            <li><span class="ck no">—</span> Pas de scoring agrégé</li>
+            <li><span class="ck no">—</span> Pas de wallet tracker curé</li>
+            <li><span class="ck no">—</span> Pas de détection rug</li>
+            <li><span class="ck no">—</span> Lecture brute, à interpréter seul</li>
+          </ul>
+        </article>
+        <article class="compare-card featured">
+          <span class="compare-tag"><span class="dot-live"></span> Choix éditorial</span>
+          <h3 class="compare-name">MemeScanner</h3>
+          <p class="compare-blurb">Curation algorithmique + signaux humains. On ne montre que ce qui mérite votre attention.</p>
+          <ul class="compare-list">
+            <li><span class="ck yes">+</span> Score sur 150 par token</li>
+            <li><span class="ck yes">+</span> 1 064 wallets curés (S / A / B)</li>
+            <li><span class="ck yes">+</span> Rug Snip™ — 14 patterns détectés</li>
+            <li><span class="ck yes">+</span> Paper Bot intégré</li>
+            <li><span class="ck yes">+</span> Cycle 45 s · Alertes &lt; 8 s</li>
+            <li><span class="ck yes">+</span> Décryptage hebdo éditorial</li>
+          </ul>
+        </article>
+        <article class="compare-card">
+          <span class="compare-tag">GMGN · Génériques</span>
+          <h3 class="compare-name">Aggrégateurs</h3>
+          <p class="compare-blurb">Bons pour scanner large. Faibles sur la curation, le contexte et la détection.</p>
+          <ul class="compare-list">
+            <li><span class="ck yes">+</span> Couverture multi-chain</li>
+            <li><span class="ck yes">+</span> Données on-chain de base</li>
+            <li><span class="ck no">—</span> Scoring superficiel</li>
+            <li><span class="ck no">—</span> Pas de KOL tracker dédié</li>
+            <li><span class="ck no">—</span> Détection rug limitée</li>
+            <li><span class="ck no">—</span> Pas d'éditorial</li>
+          </ul>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- PRICING -->
+  <section class="section" id="pricing">
+    <div class="wrap">
+      <div class="section-header reveal">
+        <div class="section-tag"><span class="num">05</span> Tarification</div>
+        <div>
+          <h2 class="section-title">Deux portes<br/><em>d'entrée.</em></h2>
+          <p class="section-lede">Le plan Gratuit donne accès au scanner de base et à la grille de score publique. Le plan Premium Dubai débloque le wallet tracker complet, les alertes &lt;&nbsp;8&nbsp;s, le Paper Bot et le décryptage hebdomadaire.</p>
+        </div>
+      </div>
+
+      <div class="pricing-shell reveal">
+        <div class="pricing-toggle-bar" id="planToggle" data-plan="premium">
+          <button class="pt-btn" type="button" data-plan="free" aria-pressed="false">
+            <span class="pt-eyebrow">Plan 01</span>
+            <span class="pt-name">Gratuit</span>
+          </button>
+          <button class="pt-btn" type="button" data-plan="premium" aria-pressed="true">
+            <span class="pt-eyebrow">Plan 02 · Recommandé</span>
+            <span class="pt-name">Premium Dubai</span>
+          </button>
+          <span class="pt-indicator"></span>
+        </div>
+
+        <div class="pricing-body">
+          <div class="pricing-detail">
+            <div class="price-row">
+              <span class="price-cur">$</span>
+              <span class="price-num" id="priceNum">79</span>
+              <span class="price-period" id="pricePeriod">/ mois</span>
+            </div>
+            <p class="price-blurb" id="priceBlurb">L'accès complet — wallet tracker S/A/B, alertes prioritaires, Paper Bot illimité, décryptage hebdo.</p>
+            <div class="price-callouts">
+              <div class="price-callout">Engagement <b>Aucun · Sans CB</b></div>
+              <div class="price-callout">Support <b id="priceSupport">Discord prioritaire · &lt; 1 h</b></div>
+              <div class="price-callout">Géo <b>Mondial · Hosted in Dubai</b></div>
+            </div>
+          </div>
+
+          <div class="pricing-features">
+            <div class="pf-cols" id="pfCols">
+              <div class="pf-item" data-tier="free"><span class="pf-mark">+</span><span class="pf-name">Scanner SmartScan</span><span class="pf-meta">Cycle 90 s</span></div>
+              <div class="pf-item" data-tier="free"><span class="pf-mark">+</span><span class="pf-name">Score sur 150 (lecture)</span><span class="pf-meta">Top 20</span></div>
+              <div class="pf-item" data-tier="premium"><span class="pf-mark">+</span><span class="pf-name">Wallet Tracker complet</span><span class="pf-meta">1 064 wallets</span></div>
+              <div class="pf-item" data-tier="premium"><span class="pf-mark">+</span><span class="pf-name">Alertes en &lt; 8 s</span><span class="pf-meta">Push + Discord</span></div>
+              <div class="pf-item" data-tier="premium"><span class="pf-mark">+</span><span class="pf-name">Rug Snip™ — 14 patterns</span><span class="pf-meta">Pré-exécution</span></div>
+              <div class="pf-item" data-tier="premium"><span class="pf-mark">+</span><span class="pf-name">Paper Bot illimité</span><span class="pf-meta">+ Export CSV</span></div>
+              <div class="pf-item" data-tier="premium"><span class="pf-mark">+</span><span class="pf-name">KOL Tracker (S / A / B)</span><span class="pf-meta">Tier complet</span></div>
+              <div class="pf-item" data-tier="premium"><span class="pf-mark">+</span><span class="pf-name">Décryptage hebdo</span><span class="pf-meta">PDF + audio</span></div>
+              <div class="pf-item" data-tier="premium"><span class="pf-mark">+</span><span class="pf-name">API privée</span><span class="pf-meta">10k req / j</span></div>
+              <div class="pf-item" data-tier="premium"><span class="pf-mark">+</span><span class="pf-name">Salon Premium Dubai</span><span class="pf-meta">Discord fermé</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="pricing-cta">
+          <span class="pricing-cta-note">Annulable à tout moment · Aucun engagement</span>
+          <a class="btn btn-accent" href="#" id="pricingBtn">
+            <span id="pricingBtnText">Activer Premium Dubai</span>
+            <svg class="btn-arrow" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 11 L11 3 M5 3 H11 V9"/></svg>
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="footer" id="footer">
+    <div class="wrap">
+      <div class="footer-mega reveal">
+        <span>Scanne ce que</span>
+        <em>les autres <span class="grad">manquent</span>.</em>
+      </div>
+
+      <div class="footer-top reveal">
+        <div>
+          <div class="brand" style="margin-bottom: 14px;">
+            <span class="brand-mark"></span>
+            <span class="brand-name">MemeScanner</span>
+            <span class="brand-tag">SOL</span>
+          </div>
+          <p style="color: var(--ink-3); font-size: 14px; max-width: 360px; line-height: 1.6;">Outil de recherche on-chain pour traders Solana. Scanner, scoring, wallet tracker, décryptage hebdomadaire.</p>
+        </div>
+        <div>
+          <h4>Produit</h4>
+          <ul><li><a href="#">SmartScan</a></li><li><a href="#">Rug Snip</a></li><li><a href="#">Paper Bot</a></li><li><a href="#">KOL Tracker</a></li></ul>
+        </div>
+        <div>
+          <h4>Site</h4>
+          <ul><li><a href="#">Décryptage</a></li><li><a href="#">Outils</a></li><li><a href="#">Avis</a></li><li><a href="#">Changelog</a></li></ul>
+        </div>
+        <div>
+          <h4>Légal</h4>
+          <ul><li><a href="#">Conditions</a></li><li><a href="#">Confidentialité</a></li><li><a href="#">Disclaimer</a></li><li><a href="#">Contact</a></li></ul>
+        </div>
+      </div>
+
+      <div class="disclaimer reveal">
+        <p>
+          <span class="nfa">NFA</span><span class="nfa">DYOR</span>
+          MemeScanner est un outil de recherche on-chain. Aucune information publiée sur ce site, dans le scanner, les alertes ou le décryptage ne constitue un conseil en investissement, une sollicitation ou une recommandation d'achat ou de vente de quelque actif que ce soit.
+        </p>
+        <p style="margin-top: 12px;">
+          Les memecoins Solana sont des actifs spéculatifs hautement volatils. Vous êtes seul responsable de vos décisions de trading. Ne tradez jamais des fonds que vous ne pouvez pas vous permettre de perdre intégralement. Faites vos propres recherches.
+        </p>
+      </div>
+
+      <div class="foot-bar">
+        <span>© 2026 MemeScanner</span>
+        <span>v 4.2 · build 296.184.522</span>
+      </div>
+    </div>
+  </footer>
+
+</div>
+
+<!-- TWEAKS PANEL -->
+<div class="tweaks" id="tweaks" role="dialog" aria-label="Tweaks">
+  <div class="tweaks-head" id="tweaksDrag">
+    <h3>Tweaks</h3>
+    <button class="tweaks-close" id="tweaksClose" aria-label="Close">✕</button>
+  </div>
+  <div class="tweaks-body">
+    <div class="tweaks-section">
+      <div class="tweaks-section-title">Couleur</div>
+      <div class="tw-row"><label>Teinte accent</label>
+        <input type="range" min="0" max="360" step="1" data-key="accentHue">
+        <span class="val" data-val="accentHue">268°</span>
+      </div>
+      <div class="tw-row"><label>Teinte signal</label>
+        <input type="range" min="0" max="360" step="1" data-key="signalHue">
+        <span class="val" data-val="signalHue">142°</span>
+      </div>
+    </div>
+    <div class="tweaks-section">
+      <div class="tweaks-section-title">Typographie</div>
+      <div class="tw-row"><label>Police display</label>
+        <select data-key="displayFont">
+          <option>Instrument Serif</option>
+          <option>Fraunces</option>
+          <option>Space Grotesk</option>
+          <option>JetBrains Mono</option>
+          <option>Inter</option>
+        </select>
+      </div>
+    </div>
+    <div class="tweaks-section">
+      <div class="tweaks-section-title">Animation</div>
+      <div class="tw-row"><label>Vitesse globale</label>
+        <input type="range" min="0.4" max="2.0" step="0.1" data-key="scrollSpeed">
+        <span class="val" data-val="scrollSpeed">1.0×</span>
+      </div>
+      <div class="tw-row"><label>Stagger (ms)</label>
+        <input type="range" min="0" max="200" step="10" data-key="stagger">
+        <span class="val" data-val="stagger">90</span>
+      </div>
+      <div class="tw-row"><label>Parallaxe</label>
+        <span class="toggle on" data-key="parallax"></span>
+      </div>
+    </div>
+    <div class="tweaks-section">
+      <div class="tweaks-section-title">Terminal &amp; ticker</div>
+      <div class="tw-row"><label>Flux live</label>
+        <span class="toggle on" data-key="terminalLive"></span>
+      </div>
+      <div class="tw-row"><label>Vitesse du flux</label>
+        <input type="range" min="0.3" max="3" step="0.1" data-key="tickerSpeed">
+        <span class="val" data-val="tickerSpeed">1.0×</span>
+      </div>
+    </div>
+    <div class="tweaks-section">
+      <div class="tweaks-section-title">Texture</div>
+      <div class="tw-row"><label>Grain</label>
+        <span class="toggle on" data-key="showGrain"></span>
+      </div>
+      <div class="tw-row"><label>Halo curseur</label>
+        <span class="toggle on" data-key="showCursorGlow"></span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  'use strict';
+  const state = Object.assign({}, TWEAK_DEFAULTS);
+
+  function applyState() {
+    const r = document.documentElement.style;
+    const h = state.accentHue;
+    r.setProperty('--accent', `oklch(70% 0.18 ${h})`);
+    r.setProperty('--accent-2', `oklch(82% 0.14 ${h})`);
+    r.setProperty('--accent-soft', `oklch(30% 0.10 ${h})`);
+    r.setProperty('--bg',    `oklch(14% 0.012 ${h})`);
+    r.setProperty('--bg-1',  `oklch(17% 0.014 ${h})`);
+    r.setProperty('--bg-2',  `oklch(20% 0.016 ${h})`);
+    r.setProperty('--bg-3',  `oklch(24% 0.018 ${h})`);
+    r.setProperty('--line',  `oklch(28% 0.018 ${h})`);
+    r.setProperty('--line-2',`oklch(34% 0.020 ${h})`);
+
+    const sh = state.signalHue;
+    r.setProperty('--signal', `oklch(78% 0.20 ${sh})`);
+    r.setProperty('--signal-soft', `oklch(28% 0.10 ${sh})`);
+
+    const fontMap = {
+      'Instrument Serif': '"Instrument Serif", serif',
+      'Fraunces': '"Fraunces", serif',
+      'Space Grotesk': '"Space Grotesk", sans-serif',
+      'JetBrains Mono': '"JetBrains Mono", monospace',
+      'Inter': '"Inter", sans-serif'
+    };
+    r.setProperty('--serif', fontMap[state.displayFont] || fontMap['Instrument Serif']);
+
+    document.body.classList.toggle('no-grain', !state.showGrain);
+    document.body.classList.toggle('no-glow', !state.showCursorGlow);
+
+    document.querySelectorAll('.toggle').forEach(el => {
+      const k = el.dataset.key;
+      el.classList.toggle('on', !!state[k]);
+    });
+    document.querySelectorAll('[data-val]').forEach(el => {
+      const k = el.dataset.val, v = state[k];
+      if (k === 'accentHue' || k === 'signalHue') el.textContent = v + '°';
+      else if (k === 'scrollSpeed' || k === 'tickerSpeed') el.textContent = (+v).toFixed(1) + '×';
+      else el.textContent = v;
+    });
+    document.querySelectorAll('[data-key]').forEach(el => {
+      const k = el.dataset.key;
+      if (el.tagName === 'INPUT' && el.type === 'range') el.value = state[k];
+      else if (el.tagName === 'SELECT') el.value = state[k];
+    });
+
+    if (state.displayFont === 'Fraunces' && !document.querySelector('link[data-f="fraunces"]')) {
+      const l = document.createElement('link'); l.rel='stylesheet'; l.dataset.f='fraunces';
+      l.href='https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&display=swap';
+      document.head.appendChild(l);
+    }
+    if (state.displayFont === 'Space Grotesk' && !document.querySelector('link[data-f="sg"]')) {
+      const l = document.createElement('link'); l.rel='stylesheet'; l.dataset.f='sg';
+      l.href='https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&display=swap';
+      document.head.appendChild(l);
+    }
+  }
+
+  function setKey(k, v) {
+    state[k] = v; applyState();
+    try { window.parent.postMessage({type:'__edit_mode_set_keys', edits: {[k]: v}}, '*'); } catch(e) {}
+  }
+
+  // ===== Hero letter reveal =====
+  function setupHeroTitle(){
+    const h1 = document.getElementById('heroTitle');
+    if (!h1) return;
+    h1.querySelectorAll('.word').forEach(word => {
+      const txt = word.textContent;
+      word.innerHTML = '';
+      [...txt].forEach(c => {
+        const s = document.createElement('span');
+        s.className = 'ch'; s.textContent = c;
+        word.appendChild(s);
+      });
+    });
+    const chars = h1.querySelectorAll('.ch');
+    chars.forEach((c, i) => { c.style.transitionDelay = (i * 24) + 'ms'; });
+    requestAnimationFrame(()=> requestAnimationFrame(()=> h1.classList.add('revealed')));
+    setTimeout(()=> h1.classList.add('revealed'), 100);
+  }
+
+  // ===== Reveal observer =====
+  function setupReveal(){
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach(en => {
+        if (en.isIntersecting) {
+          const el = en.target;
+          el.classList.add('in');
+          if (el.classList.contains('reveal-stagger')) {
+            const kids = el.children;
+            for (let i = 0; i < kids.length; i++) kids[i].style.transitionDelay = (i * state.stagger) + 'ms';
+          }
+          el.querySelectorAll('[data-count]').forEach(n => animateCounter(n));
+          if (el.id === 'scoreBars' || el.classList.contains('bar')) animateBars(el);
+          io.unobserve(el);
+        }
+      });
+    }, { threshold: 0.15, rootMargin: '0px 0px -8% 0px' });
+
+    document.querySelectorAll('.reveal, .reveal-stagger').forEach(el => io.observe(el));
+    document.querySelectorAll('.hero-stats, #scoreBars').forEach(el => io.observe(el));
+
+    // fallback for in-view on load
+    setTimeout(() => {
+      document.querySelectorAll('.reveal, .reveal-stagger, .hero-stats, #scoreBars').forEach(el => {
+        if (el.classList.contains('in')) return;
+        const r = el.getBoundingClientRect();
+        const vh = window.innerHeight || 0;
+        if (r.top < vh * 0.95 && r.bottom > 0) {
+          el.classList.add('in');
+          if (el.classList.contains('reveal-stagger')) {
+            const kids = el.children;
+            for (let i = 0; i < kids.length; i++) kids[i].style.transitionDelay = (i * state.stagger) + 'ms';
+          }
+          el.querySelectorAll('[data-count]').forEach(n => animateCounter(n));
+          if (el.id === 'scoreBars') animateBars(el);
+        }
+      });
+    }, 80);
+  }
+
+  function animateCounter(node){
+    if (node.dataset._done) return;
+    node.dataset._done = '1';
+    const target = parseFloat(node.dataset.count);
+    const dur = 1500 / state.scrollSpeed;
+    const start = performance.now();
+    const valEl = node.querySelector('.cval') || node;
+    function step(t){
+      const p = Math.min(1, (t - start) / dur);
+      const eased = 1 - Math.pow(1 - p, 3);
+      const v = Math.round(target * eased);
+      valEl.textContent = v.toLocaleString('fr-FR');
+      if (p < 1) requestAnimationFrame(step);
+      else valEl.textContent = target.toLocaleString('fr-FR');
+    }
+    requestAnimationFrame(step);
+  }
+
+  function animateBars(el){
+    const bars = el.classList.contains('bar') ? [el] : el.querySelectorAll('.bar');
+    bars.forEach((b, i) => {
+      setTimeout(()=> {
+        b.classList.add('in');
+        const pts = parseInt(b.dataset.pts, 10);
+        if (pts) {
+          const v = b.querySelector('.bar-pts .cval');
+          if (v) {
+            const start = performance.now();
+            const dur = 1100 / state.scrollSpeed;
+            (function tick(t){
+              const p = Math.min(1, (t - start)/dur);
+              v.textContent = Math.round(pts * (1 - Math.pow(1 - p, 3)));
+              if (p < 1) requestAnimationFrame(tick);
+            })(start);
+          }
+        }
+      }, i * 110);
+    });
+  }
+
+  // ===== Terminal feed =====
+  const wallets = [
+    { hash:'7xKp...mQv2', tag:'kol',   name:'@solscanjedi'  },
+    { hash:'B3rT...8nL9', tag:'whale', name:'mm-deep'       },
+    { hash:'Hf2W...qP4x', tag:'smart', name:'sm-#0418'      },
+    { hash:'C8mN...Jr1k', tag:'kol',   name:'@dougsolana'   },
+    { hash:'Y9pE...Vm6t', tag:'smart', name:'sm-#0211'      },
+    { hash:'Lk4D...Wq8h', tag:'kol',   name:'@meowanon'     },
+    { hash:'Q1rS...Tb5y', tag:'whale', name:'mm-aurora'     },
+    { hash:'3Vp9...Xn7c', tag:'smart', name:'sm-#1042'      },
+    { hash:'Z6tR...Hg2v', tag:'kol',   name:'@frankdegods'  },
+    { hash:'M4uK...Pb9z', tag:'smart', name:'sm-#0876'      },
+    { hash:'F7sJ...Ld3m', tag:'kol',   name:'@cobie'        },
+    { hash:'8wRq...Ce6n', tag:'smart', name:'sm-#0312'      }
+  ];
+  const tokens = ['$WIF-RR','$BONK2','$POPCAT','$MYRO','$NUB','$SLERF','$MOTHER','$PNUT','$GIGA','$RETARDIO'];
+  let termTimer = null;
+
+  function pad(n){return String(n).padStart(2,'0');}
+  function nowStr(){
+    const d = new Date();
+    return pad(d.getHours())+':'+pad(d.getMinutes())+':'+pad(d.getSeconds());
+  }
+  function termTick(){
+    const body = document.getElementById('termBody');
+    if (!body || !state.terminalLive) return;
+    const w = wallets[Math.floor(Math.random()*wallets.length)];
+    const tk = tokens[Math.floor(Math.random()*tokens.length)];
+    const pts = w.tag==='kol' ? 18+Math.floor(Math.random()*5)
+              : w.tag==='whale' ? 8+Math.floor(Math.random()*5)
+              : 12+Math.floor(Math.random()*4);
+    const labelMap = { kol:'KOL', whale:'MM', smart:'SM' };
+    const row = document.createElement('div');
+    row.className = 'term-row';
+    row.innerHTML = `
+      <span class="wallet">
+        <span class="avatar ${w.tag}"></span>
+        <span><b>${w.name}</b> <span class="hash">${w.hash}</span> <span class="label ${w.tag}">${labelMap[w.tag]}</span></span>
+      </span>
+      <span class="pts">${pts}</span>
+      <span class="price">${tk}</span>
+      <span class="time">${nowStr()}</span>
+    `;
+    body.insertBefore(row, body.firstChild);
+    while (body.children.length > 14) body.removeChild(body.lastChild);
+  }
+  function startTerminal(){
+    if (termTimer) clearInterval(termTimer);
+    for (let i=0; i<7; i++) termTick();
+    termTimer = setInterval(()=> { if (state.terminalLive) termTick(); }, 1300 / state.tickerSpeed);
+  }
+
+  // ===== Clocks =====
+  function startClocks(){
+    const cycleClock = document.getElementById('cycleClock');
+    const termClock = document.getElementById('termClock');
+    let cycle = 0;
+    setInterval(()=>{
+      cycle = (cycle + 1) % 45;
+      const remain = 45 - cycle;
+      if (cycleClock) cycleClock.textContent = '00:'+pad(remain);
+      if (termClock) termClock.textContent = nowStr();
+    }, 1000);
+  }
+
+  // ===== Marquee ticker =====
+  function buildTicker(){
+    const track = document.getElementById('tickerTrack');
+    if (!track) return;
+    const items = [
+      { name:'$WIF-RR',   pct:'+184.2%', dn:false, score:127 },
+      { name:'$POPCAT',   pct:'+62.4%',  dn:false, score:98  },
+      { name:'$MYRO',     pct:'-12.1%',  dn:true,  score:71  },
+      { name:'$BONK2',    pct:'+340.0%', dn:false, score:142 },
+      { name:'$NUB',      pct:'+18.7%',  dn:false, score:88  },
+      { name:'$SLERF',    pct:'-3.2%',   dn:true,  score:64  },
+      { name:'$MOTHER',   pct:'+22.0%',  dn:false, score:103 },
+      { name:'$PNUT',     pct:'+88.6%',  dn:false, score:118 },
+      { name:'$GIGA',     pct:'+204.1%', dn:false, score:131 },
+      { name:'$RETARDIO', pct:'-44.0%',  dn:true,  score:42  }
+    ];
+    const block = items.map(i => `
+      <span class="tk">
+        <span class="dot"></span>
+        <span class="name">${i.name}</span>
+        <span class="pct ${i.dn?'dn':''}">${i.pct}</span>
+        <span class="muted">· score ${i.score}/150</span>
+      </span>
+    `).join('');
+    // duplicate for seamless loop
+    track.innerHTML = block + block;
+  }
+
+  // ===== Scroll-driven (hero parallax + tracker scrub + cursor glow) =====
+  function setupScroll(){
+    const grid = document.getElementById('heroGrid');
+    const blob1 = document.getElementById('blob1');
+    const blob2 = document.getElementById('blob2');
+    const scrollBar = document.getElementById('scrollBar');
+    const trackerSticky = document.getElementById('trackerSticky');
+    const tpCards = trackerSticky.querySelectorAll('.tp-card');
+    const tpStack = document.getElementById('tpStack');
+    const ticker = document.getElementById('ticker');
+
+    let lastY = 0, ticking = false;
+
+    function update(){
+      const y = window.scrollY || window.pageYOffset || 0;
+      lastY = y;
+
+      // scroll progress
+      const max = (document.documentElement.scrollHeight - window.innerHeight) || 1;
+      const p = Math.max(0, Math.min(1, y / max));
+      if (scrollBar) scrollBar.style.setProperty('--p', (p * 100).toFixed(2) + '%');
+
+      // hero parallax
+      if (state.parallax) {
+        const heroH = window.innerHeight;
+        const ratio = Math.min(1, y / heroH);
+        if (grid) grid.style.setProperty('--py', (-y * 0.15) + 'px');
+        if (blob1) blob1.style.setProperty('--by', (y * 0.25) + 'px');
+        if (blob1) blob1.style.setProperty('--bx', (y * -0.05) + 'px');
+        if (blob2) blob2.style.setProperty('--by', (y * -0.18) + 'px');
+        if (blob2) blob2.style.setProperty('--bx', (y * 0.08) + 'px');
+      }
+
+      // tracker scrub — drives which tp-card is active
+      if (trackerSticky) {
+        const r = trackerSticky.getBoundingClientRect();
+        const total = trackerSticky.offsetHeight - window.innerHeight;
+        const traveled = Math.max(0, Math.min(total, -r.top));
+        const tprog = total > 0 ? traveled / total : 0;
+        const idx = Math.min(tpCards.length - 1, Math.floor(tprog * tpCards.length));
+        const subProg = (tprog * tpCards.length) - idx;
+        tpCards.forEach((c, i) => {
+          c.classList.remove('active','past');
+          if (i < idx) c.classList.add('past');
+          else if (i === idx) {
+            c.classList.add('active');
+            const prog = c.querySelector('.tp-progress');
+            if (prog) {
+              [...prog.children].forEach((s, j) => {
+                s.classList.remove('done','curr');
+                if (j < idx) s.classList.add('done');
+                else if (j === idx) { s.classList.add('curr'); s.style.setProperty('--cp', (subProg*100).toFixed(0)+'%'); }
+              });
+            }
+          }
+        });
+      }
+
+      // ticker pause when out of view (perf)
+      if (ticker) {
+        const tr = ticker.getBoundingClientRect();
+        const visible = tr.bottom > 0 && tr.top < window.innerHeight;
+        ticker.classList.toggle('paused', !visible);
+      }
+
+      ticking = false;
+    }
+
+    window.addEventListener('scroll', () => {
+      if (!ticking) { ticking = true; requestAnimationFrame(update); }
+    }, { passive: true });
+    update();
+
+    // cursor glow
+    const glow = document.getElementById('cursorGlow');
+    window.addEventListener('mousemove', (e) => {
+      glow.style.transform = `translate(${e.clientX - 260}px, ${e.clientY - 260}px)`;
+    });
+
+    // feature cards mouse light
+    document.querySelectorAll('.feature').forEach(card => {
+      card.addEventListener('mousemove', (e) => {
+        const r = card.getBoundingClientRect();
+        card.style.setProperty('--mx', (e.clientX - r.left) + 'px');
+        card.style.setProperty('--my', (e.clientY - r.top) + 'px');
+      });
+    });
+  }
+
+  // ===== Pricing toggle =====
+  function setupPricing(){
+    const tg = document.getElementById('planToggle');
+    if (!tg) return;
+    const buttons = tg.querySelectorAll('.pt-btn');
+    const priceNum = document.getElementById('priceNum');
+    const pricePeriod = document.getElementById('pricePeriod');
+    const priceBlurb = document.getElementById('priceBlurb');
+    const priceBtnText = document.getElementById('pricingBtnText');
+    const priceSupport = document.getElementById('priceSupport');
+    const items = document.querySelectorAll('.pf-item');
+
+    function setPlan(plan){
+      tg.dataset.plan = plan;
+      buttons.forEach(b => b.setAttribute('aria-pressed', b.dataset.plan === plan ? 'true' : 'false'));
+      if (plan === 'free'){
+        priceNum.textContent = '0';
+        pricePeriod.textContent = '/ pour toujours';
+        priceBlurb.textContent = "L'accès basique au scanner. Cycle ralenti, top 20, sans alertes prioritaires.";
+        priceBtnText.textContent = 'Créer un compte gratuit';
+        priceSupport.textContent = 'Communauté Discord public';
+        items.forEach(it => it.classList.toggle('off', it.dataset.tier === 'premium'));
+      } else {
+        priceNum.textContent = '79';
+        pricePeriod.textContent = '/ mois';
+        priceBlurb.textContent = "L'accès complet — wallet tracker S/A/B, alertes prioritaires, Paper Bot illimité, décryptage hebdo.";
+        priceBtnText.textContent = 'Activer Premium Dubai';
+        priceSupport.textContent = 'Discord prioritaire · < 1 h';
+        items.forEach(it => it.classList.remove('off'));
+      }
+    }
+    buttons.forEach(b => b.addEventListener('click', ()=> setPlan(b.dataset.plan)));
+    setPlan('premium');
+  }
+
+  // ===== Tweaks =====
+  function setupTweaks(){
+    const panel = document.getElementById('tweaks');
+    window.addEventListener('message', (e) => {
+      const d = e.data || {};
+      if (d.type === '__activate_edit_mode') panel.classList.add('open');
+      if (d.type === '__deactivate_edit_mode') panel.classList.remove('open');
+    });
+    try { window.parent.postMessage({type:'__edit_mode_available'}, '*'); } catch(e) {}
+    document.getElementById('tweaksClose').addEventListener('click', ()=>{
+      panel.classList.remove('open');
+      try { window.parent.postMessage({type:'__edit_mode_dismissed'}, '*'); } catch(e) {}
+    });
+    panel.querySelectorAll('input[type="range"]').forEach(inp => {
+      inp.addEventListener('input', ()=> setKey(inp.dataset.key, parseFloat(inp.value)));
+    });
+    panel.querySelectorAll('select').forEach(sel => {
+      sel.addEventListener('change', ()=> setKey(sel.dataset.key, sel.value));
+    });
+    panel.querySelectorAll('.toggle').forEach(t => {
+      t.addEventListener('click', ()=> {
+        const k = t.dataset.key;
+        setKey(k, !state[k]);
+        if (k === 'terminalLive') startTerminal();
+      });
+    });
+
+    const head = document.getElementById('tweaksDrag');
+    let dragging = false, ox = 0, oy = 0;
+    head.addEventListener('mousedown', (e) => {
+      if (e.target.closest('button')) return;
+      dragging = true;
+      const rect = panel.getBoundingClientRect();
+      ox = e.clientX - rect.left; oy = e.clientY - rect.top;
+      panel.style.right = 'auto'; panel.style.bottom = 'auto';
+    });
+    window.addEventListener('mousemove', (e) => {
+      if (!dragging) return;
+      panel.style.left = (e.clientX - ox) + 'px';
+      panel.style.top  = (e.clientY - oy) + 'px';
+    });
+    window.addEventListener('mouseup', ()=> dragging = false);
+  }
+
+  // ===== Boot =====
+  applyState();
+  setupHeroTitle();
+  setupReveal();
+  startTerminal();
+  startClocks();
+  buildTicker();
+  setupScroll();
+  setupPricing();
+  setupTweaks();
+})();
+</script>
+</body>
+</html>
