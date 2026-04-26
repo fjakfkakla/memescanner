@@ -779,13 +779,10 @@ export async function runScanCycle() {
           const liveEntry = liveTokens.get(token.addr);
           if (liveEntry) liveEntry.callMcap = callMcap;
 
-          // 1. Discord en priorité absolue — pas de fetch bloquant
+          // 1. Firebase immédiatement — c'est ce que le frontend lit
           console.log(`[Worker] CALL: ${token.symbol} score=${token.score} mcap=$${callMcap}`);
-          await sendDiscordCall(token);
-
-          // 2. Firebase + refresh mcap en background (sans bloquer le prochain cycle)
           const gmgnSnap = gmgnRawMap.get(token.addr) || null;
-          saveCall({
+          await saveCall({
             addr:       token.addr,
             symbol:     token.symbol,
             score:      token.score,
@@ -800,19 +797,10 @@ export async function runScanCycle() {
             security:   token.raw?.security || null,
             gmgn:       gmgnSnap,
             calledAt:   now,
-          }).then(async () => {
-            // Mettre à jour le callMcap dans Firebase avec valeur fraîche (fire & forget)
-            try {
-              const freshData = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${token.addr}`,
-                { signal: AbortSignal.timeout(3000) }).then(r => r.json());
-              const freshPair = (freshData.pairs || []).find(p => p.chainId === 'solana');
-              const fm = freshPair?.marketCap || freshPair?.fdv || 0;
-              if (fm > 0) {
-                if (liveEntry) liveEntry.callMcap = fm;
-                await saveCall({ addr: token.addr, mcap: fm, callMcap: fm });
-              }
-            } catch(e) { /* pas grave, le mcap scan suffit */ }
-          }).catch(e => console.warn('[Worker] saveCall error:', e.message));
+          });
+
+          // 2. Discord fire & forget — ne bloque plus rien
+          sendDiscordCall(token).catch(e => console.warn('[Discord] error:', e.message));
         } catch (e) {
           console.warn('[Worker] saveCall error:', e.message);
         }
