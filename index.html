@@ -2506,6 +2506,313 @@ body.view-avis section#reviews { display: block !important; }
 body.view-outils #landing-wrap,
 body.view-avis #landing-wrap { display: none !important; }
 
+/* ═══════════════════════════════════════════════════════════════════
+   ACCUEIL V2 — HERO DARK + SCROLL ANIMATIONS
+   Ces règles écrasent TOUT ce qui précède (cascade finale)
+═══════════════════════════════════════════════════════════════════ */
+
+/* ── HERO : fond sombre, textes blancs, canvas lisible ─────────── */
+#hero {
+  background: linear-gradient(180deg, #05050e 0%, #08081a 70%, #0c0c22 100%) !important;
+  min-height: 100vh !important;
+  display: flex !important;
+  align-items: center !important;
+  padding: 7rem 2rem 5rem !important;
+}
+#heroGLCanvas { opacity: 0.55 !important; }
+
+/* Supprime le glow de fond inutile */
+#hero .lp-hero-glow { display: none !important; }
+
+/* Textes du hero → BLANCS */
+#hero .lp-hero-title,
+#landing-wrap #hero .lp-hero-title {
+  color: #ffffff !important;
+  opacity: 1 !important;
+  animation: none !important;
+  font-size: 5.5rem !important;
+  line-height: 1.0 !important;
+  letter-spacing: -0.05em !important;
+}
+#hero .lp-hero-grad {
+  background: linear-gradient(135deg, #818cf8 0%, #a78bfa 50%, #c084fc 100%) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  background-clip: text !important;
+}
+#hero .lp-hero-sub,
+#landing-wrap #hero .lp-hero-sub {
+  color: rgba(255,255,255,0.55) !important;
+  opacity: 1 !important;
+  animation: none !important;
+  font-size: 1.05rem !important;
+  line-height: 1.8 !important;
+  max-width: 520px !important;
+}
+#hero .lp-hero-cta,
+#landing-wrap #hero .lp-hero-cta {
+  opacity: 1 !important;
+  animation: none !important;
+}
+#hero .lp-hero-eyebrow,
+#landing-wrap #hero .lp-hero-eyebrow {
+  background: rgba(99,102,241,0.15) !important;
+  border-color: rgba(129,140,248,0.35) !important;
+  color: #a5b4fc !important;
+  opacity: 1 !important;
+  margin-bottom: 2rem !important;
+}
+/* Stats */
+#hero .lp-hstat,
+#landing-wrap #hero .lp-hstat { opacity: 1 !important; animation: none !important; }
+#hero .lp-hstat-sep,
+#landing-wrap #hero .lp-hstat-sep { opacity: 1 !important; animation: none !important; background: rgba(255,255,255,0.1) !important; }
+#hero .lp-hstat-val { color: #ffffff !important; }
+#hero .lp-hstat-val.green { color: #34d399 !important; }
+#hero .lp-hstat-val.violet { color: #a78bfa !important; }
+#hero .lp-hstat-lbl { color: rgba(255,255,255,0.38) !important; }
+
+/* Entrée du texte hero → animation propre sans !important opacity */
+#hero .lp-container { animation: heroContentIn 1s cubic-bezier(0.16,1,0.3,1) 0.1s both; }
+@keyframes heroContentIn {
+  from { opacity: 0; transform: translateY(28px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Boutons hero */
+#hero .lp-btn-primary {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6) !important;
+  box-shadow: 0 0 30px rgba(99,102,241,0.4), 0 4px 20px rgba(0,0,0,0.4) !important;
+  font-size: 1rem !important;
+  padding: 0.95rem 2.2rem !important;
+}
+#hero .lp-btn-primary:hover {
+  box-shadow: 0 0 50px rgba(99,102,241,0.6), 0 8px 30px rgba(0,0,0,0.4) !important;
+  transform: translateY(-2px) !important;
+}
+#hero .lp-btn-ghost {
+  border-color: rgba(255,255,255,0.15) !important;
+  color: rgba(255,255,255,0.65) !important;
+}
+#hero .lp-btn-ghost:hover {
+  border-color: rgba(255,255,255,0.35) !important;
+  color: #fff !important;
+}
+
+/* Cursor glow dans le hero */
+.hero-cursor-glow {
+  background: radial-gradient(circle, rgba(99,102,241,0.09) 0%, transparent 65%) !important;
+}
+
+/* ── CONTAINER SCROLL — section entre hero et features ─────────── */
+.lp-cs-wrap {
+  background: #080814;
+  padding: 0;
+  overflow: hidden;
+  position: relative;
+}
+.cs-sticky {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+.cs-header-text {
+  text-align: center;
+  position: relative;
+  z-index: 2;
+  margin-bottom: 2.5rem;
+  transform: translateY(var(--cs-title-y, 0px));
+  transition: none;
+}
+.cs-header-text .lp-section-label { color: #818cf8 !important; }
+.cs-header-text .cs-big-title {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: clamp(2rem, 4vw, 3.2rem);
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: -0.04em;
+  line-height: 1.1;
+  margin: 0.5rem 0 0.7rem;
+}
+.cs-header-text .cs-sub {
+  color: rgba(255,255,255,0.45);
+  font-size: 1rem;
+}
+/* Le device qui se déplie */
+.cs-device-outer {
+  width: 90%;
+  max-width: 900px;
+  position: relative;
+  z-index: 1;
+  transform-origin: center top;
+  transform: perspective(1400px) rotateX(var(--cs-rx, 22deg)) scale(var(--cs-scale, 0.88));
+  transition: none; /* animé par JS en temps réel */
+  border-radius: 16px;
+  box-shadow:
+    0 40px 120px rgba(0,0,0,0.7),
+    0 0 0 1px rgba(255,255,255,0.06),
+    0 0 60px rgba(99,102,241,0.12);
+}
+.cs-device-inner {
+  background: #0d0d1c;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.07);
+}
+.cs-device-bar {
+  background: #141428;
+  padding: 0.7rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.cs-device-dot { width: 10px; height: 10px; border-radius: 50%; }
+.cs-device-body {
+  padding: 1.2rem 1.4rem;
+  min-height: 280px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+.cs-token-row {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 0.6rem 0.8rem;
+  background: rgba(255,255,255,0.025);
+  border: 1px solid rgba(255,255,255,0.045);
+  border-radius: 10px;
+  animation: cs-row-in 0.4s both;
+}
+.cs-token-row:nth-child(1) { animation-delay: 0.1s; }
+.cs-token-row:nth-child(2) { animation-delay: 0.25s; }
+.cs-token-row:nth-child(3) { animation-delay: 0.4s; }
+.cs-token-row:nth-child(4) { animation-delay: 0.55s; }
+.cs-token-row:nth-child(5) { animation-delay: 0.7s; }
+@keyframes cs-row-in {
+  from { opacity: 0; transform: translateX(-12px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+.cs-tok-sym { font-family: 'Space Grotesk', sans-serif; font-size: 0.9rem; font-weight: 700; color: #e8e8f8; flex: 1; }
+.cs-tok-bar { flex: 2; height: 5px; background: rgba(255,255,255,0.06); border-radius: 3px; overflow: hidden; }
+.cs-tok-fill { height: 100%; border-radius: 3px; }
+.cs-tok-fill.god { background: linear-gradient(90deg, #fbbf24, #f59e0b); width: 92%; }
+.cs-tok-fill.high { background: linear-gradient(90deg, #34d399, #10b981); width: 76%; }
+.cs-tok-fill.mid { background: linear-gradient(90deg, #818cf8, #6366f1); width: 58%; }
+.cs-tok-fill.low { background: rgba(255,255,255,0.15); width: 35%; }
+.cs-tok-score { font-family: 'Space Mono', monospace; font-size: 0.78rem; font-weight: 700; min-width: 36px; text-align: right; }
+.cs-tok-score.god { color: #fbbf24; }
+.cs-tok-score.high { color: #34d399; }
+.cs-tok-score.mid { color: #818cf8; }
+.cs-tok-score.low { color: rgba(255,255,255,0.3); }
+.cs-tok-badge { font-size: 0.65rem; font-weight: 800; padding: 0.18rem 0.55rem; border-radius: 5px; white-space: nowrap; font-family: 'Space Mono', monospace; }
+.cs-tok-badge.buy { background: rgba(52,211,153,0.12); color: #34d399; border: 1px solid rgba(52,211,153,0.2); }
+.cs-tok-badge.skip { background: rgba(255,255,255,0.04); color: rgba(255,255,255,0.3); border: 1px solid rgba(255,255,255,0.07); }
+.cs-scrollable { height: 200vh; /* zone de scroll pour l'effet sticky */ }
+
+/* ── SCROLL REVEAL V2 — sections avec animation continue ────────── */
+
+/* Chaque section du landing a son animation d'entrée */
+.lp-features,
+.lp-smartmoney,
+.lp-scoring,
+.lp-pricing-preview,
+.lp-testimonials,
+.lp-comparison {
+  --section-enter: 0; /* 0=hors vue, 1=dans vue — mis à jour par JS */
+}
+
+/* Feature cards : entrée spectaculaire */
+.lp-feat-card.reveal-3d {
+  opacity: 0;
+  transform: perspective(900px) rotateX(14deg) translateY(50px);
+  transition: opacity 0.9s cubic-bezier(0.16,1,0.3,1), transform 0.9s cubic-bezier(0.16,1,0.3,1);
+  transition-delay: var(--delay, 0s);
+}
+.lp-feat-card.reveal-3d.visible {
+  opacity: 1;
+  transform: perspective(900px) rotateX(0deg) translateY(0);
+}
+
+/* Prix — scale + montée */
+.lp-price-card.reveal-scale {
+  opacity: 0;
+  transform: scale(0.88) translateY(40px);
+  transition: opacity 0.75s cubic-bezier(0.16,1,0.3,1), transform 0.75s cubic-bezier(0.16,1,0.3,1);
+  transition-delay: var(--delay, 0s);
+}
+.lp-price-card.reveal-scale.visible {
+  opacity: 1;
+  transform: scale(1) translateY(0);
+}
+
+/* Section labels + titles */
+.reveal, .reveal-left, .reveal-right {
+  transition-duration: 0.85s !important;
+}
+
+/* Score cats — cascade */
+.lp-score-cat {
+  opacity: 0;
+  transform: translateY(30px) scale(0.95);
+  transition: opacity 0.6s cubic-bezier(0.16,1,0.3,1), transform 0.6s cubic-bezier(0.16,1,0.3,1);
+}
+.lp-score-cat.visible {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+/* Testimonials */
+.lp-testi-card {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.7s cubic-bezier(0.16,1,0.3,1), transform 0.7s cubic-bezier(0.16,1,0.3,1);
+}
+.lp-testi-card.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ── PRICING — featured card amélioré ─────────────────────────── */
+.lp-price-card.featured {
+  animation: priceFloat 5s ease-in-out infinite !important;
+}
+@keyframes priceFloat {
+  0%, 100% { transform: translateY(0); box-shadow: 0 0 50px rgba(99,102,241,0.15), 0 0 0 1px rgba(99,102,241,0.3), 0 20px 60px rgba(0,0,0,0.5); }
+  50%       { transform: translateY(-9px); box-shadow: 0 0 80px rgba(99,102,241,0.28), 0 0 0 1px rgba(99,102,241,0.55), 0 34px 80px rgba(0,0,0,0.6); }
+}
+.lp-price-card.featured:hover {
+  animation-play-state: paused !important;
+  transform: translateY(-10px) scale(1.02) !important;
+  transition: transform 0.3s ease !important;
+}
+.lp-price-card.featured::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  border-radius: 16px 16px 0 0;
+  background: linear-gradient(90deg, transparent, rgba(129,140,248,0.9) 40%, rgba(167,139,250,1) 50%, rgba(129,140,248,0.9) 60%, transparent);
+  background-size: 300% 100%;
+  animation: shimmerLine 2.5s linear infinite;
+  z-index: 2;
+}
+@keyframes shimmerLine {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ── RESPONSIVE ────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  #hero .lp-hero-title,
+  #landing-wrap #hero .lp-hero-title { font-size: 3rem !important; }
+  .cs-device-outer { width: 95%; }
+}
+
 </style>
 </head>
 <body>
@@ -2741,6 +3048,65 @@ body.view-avis #landing-wrap { display: none !important; }
     </div>
   </div>
 </section>
+
+<!-- ═══ CONTAINER SCROLL — DEMO DÉPLIANTE ═══════════════════════ -->
+<div class="lp-cs-wrap" id="csWrap">
+  <div class="cs-scrollable">
+    <div class="cs-sticky" id="csSticky">
+      <div class="cs-header-text" id="csTitleWrap">
+        <div class="lp-section-label">Live Demo</div>
+        <h2 class="cs-big-title">L'algo tourne<br>pendant que tu dors.</h2>
+        <p class="cs-sub">45s par cycle · 12 sources · Solana Mainnet</p>
+      </div>
+      <div class="cs-device-outer" id="csDevice">
+        <div class="cs-device-inner">
+          <div class="cs-device-bar">
+            <div class="cs-device-dot" style="background:#ff5f57"></div>
+            <div class="cs-device-dot" style="background:#febc2e"></div>
+            <div class="cs-device-dot" style="background:#28c840"></div>
+            <span style="font-family:'Space Mono',monospace;font-size:0.6rem;color:rgba(255,255,255,0.25);margin-left:0.8rem;letter-spacing:0.06em;">MEMESCANNER · SCANNER LIVE · SOLANA</span>
+            <span style="margin-left:auto;font-family:'Space Mono',monospace;font-size:0.6rem;display:flex;align-items:center;gap:5px;">
+              <span style="width:6px;height:6px;border-radius:50%;background:#34d399;animation:pulse 1.5s infinite;display:inline-block;"></span>
+              <span style="color:#34d399;">LIVE</span>
+            </span>
+          </div>
+          <div class="cs-device-body">
+            <div class="cs-token-row">
+              <span class="cs-tok-sym">🦊 FOXRUN</span>
+              <div class="cs-tok-bar"><div class="cs-tok-fill god"></div></div>
+              <span class="cs-tok-score god">128</span>
+              <span class="cs-tok-badge buy">✓ BUY</span>
+            </div>
+            <div class="cs-token-row">
+              <span class="cs-tok-sym">🚀 MOON9</span>
+              <div class="cs-tok-bar"><div class="cs-tok-fill high"></div></div>
+              <span class="cs-tok-score high">97</span>
+              <span class="cs-tok-badge buy">✓ BUY</span>
+            </div>
+            <div class="cs-token-row">
+              <span class="cs-tok-sym">💎 DEGEN</span>
+              <div class="cs-tok-bar"><div class="cs-tok-fill mid"></div></div>
+              <span class="cs-tok-score mid">71</span>
+              <span class="cs-tok-badge buy">✓ BUY</span>
+            </div>
+            <div class="cs-token-row">
+              <span class="cs-tok-sym">💀 RUGME</span>
+              <div class="cs-tok-bar"><div class="cs-tok-fill low"></div></div>
+              <span class="cs-tok-score low">18</span>
+              <span class="cs-tok-badge skip">— SKIP</span>
+            </div>
+            <div class="cs-token-row">
+              <span class="cs-tok-sym">⚡ VOLT</span>
+              <div class="cs-tok-bar"><div class="cs-tok-fill low"></div></div>
+              <span class="cs-tok-score low">22</span>
+              <span class="cs-tok-badge skip">— SKIP</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- ═══ FEATURES ════════════════════════════════════════════════ -->
 <section class="lp-features" id="features">
@@ -10888,6 +11254,70 @@ window.addEventListener('DOMContentLoaded',()=>{
   } else {
     setTimeout(() => { initPricingTilt(); initHeroParallax(); extendReveal(); }, 400);
   }
+})();
+</script>
+
+<!-- ═══ CONTAINER SCROLL + REVEALS (score-cats, testi-cards) ═════ -->
+<script>
+(function(){
+
+  // ── ContainerScroll — 3D unfold driven by real-time scroll ──────
+  const csWrap      = document.getElementById('csWrap');
+  const csDevice    = document.getElementById('csDevice');
+  const csTitleWrap = document.getElementById('csTitleWrap');
+
+  if (csWrap && csDevice) {
+    function tickCS() {
+      const rect     = csWrap.getBoundingClientRect();
+      // total scrollable distance inside the sticky zone = csWrap height – viewport height
+      const total    = Math.max(1, csWrap.offsetHeight - window.innerHeight);
+      // how far the top of csWrap has travelled above the viewport top
+      const scrolled = -rect.top;
+      const progress = Math.max(0, Math.min(1, scrolled / total));
+
+      // rotateX : 22deg → 0deg
+      const rx    = (22 * (1 - progress)).toFixed(3);
+      // scale   : 0.88  → 1.0
+      const scale = (0.88 + 0.12 * progress).toFixed(4);
+      // title slight upward parallax
+      const titleY = (-40 * progress).toFixed(2);
+
+      csDevice.style.setProperty('--cs-rx',    rx    + 'deg');
+      csDevice.style.setProperty('--cs-scale', scale);
+      if (csTitleWrap) csTitleWrap.style.setProperty('--cs-title-y', titleY + 'px');
+
+      requestAnimationFrame(tickCS);
+    }
+    requestAnimationFrame(tickCS);
+  }
+
+  // ── IntersectionObserver — score categories + testimonials ──────
+  const revObs = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+        revObs.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.08, rootMargin: '0px 0px -24px 0px' });
+
+  function initExtraReveals() {
+    document.querySelectorAll('.lp-score-cat').forEach((el, i) => {
+      el.style.transitionDelay = (i * 0.065) + 's';
+      revObs.observe(el);
+    });
+    document.querySelectorAll('.lp-testi-card').forEach((el, i) => {
+      el.style.transitionDelay = (i * 0.10) + 's';
+      revObs.observe(el);
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => setTimeout(initExtraReveals, 600));
+  } else {
+    setTimeout(initExtraReveals, 600);
+  }
+
 })();
 </script>
 
