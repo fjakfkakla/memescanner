@@ -1473,6 +1473,40 @@ footer{border-top:1px solid var(--border);}
   font-size:.62rem;font-family:var(--font-mono);color:rgba(255,215,0,.55);
   background:rgba(255,215,0,.02);line-height:1.6;}
 
+/* ── SCANNER CARD V2 ─────────────────────────────────────────── */
+.scv2-card{
+  background:#1c1c22 !important;
+  border:1.5px solid rgba(255,255,255,.07) !important;
+  border-radius:16px;
+  box-shadow:0 2px 12px rgba(0,0,0,.4) !important;
+  padding:0;overflow:hidden;
+  transition:transform .2s,box-shadow .2s;
+}
+.scv2-card::before,.scv2-card::after{display:none !important;}
+.scv2-card:hover{transform:translateY(-3px) !important;box-shadow:0 8px 24px rgba(0,0,0,.5) !important;border-color:rgba(255,255,255,.13) !important;}
+/* Header */
+.scv2-header{display:flex;align-items:center;gap:.75rem;padding:.9rem 1rem .75rem;border-bottom:1px solid rgba(255,255,255,.05);}
+.scv2-logo-wrap{flex-shrink:0;width:42px;height:42px;border-radius:50%;overflow:hidden;background:#2a2a32;display:flex;align-items:center;justify-content:center;}
+.scv2-logo-img{width:42px;height:42px;object-fit:cover;border-radius:50%;}
+.scv2-logo-fallback{width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,#3d3580,#6156d9);display:flex;align-items:center;justify-content:center;font-size:.85rem;font-weight:800;color:#fff;letter-spacing:.02em;}
+.scv2-meta{flex:1;min-width:0;}
+.scv2-sym{font-family:var(--font-head);font-size:1.05rem;font-weight:800;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.scv2-tw{font-size:.68rem;color:rgba(255,255,255,.38);margin-top:.1rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.scv2-score-badge{flex-shrink:0;background:rgba(97,86,217,.12);border:1px solid rgba(97,86,217,.25);border-radius:8px;padding:.3rem .6rem;font-size:.92rem;font-weight:800;color:#a99cff;text-align:center;line-height:1.2;}
+.scv2-score-pts{font-size:.6rem;font-weight:600;color:rgba(169,156,255,.6);display:block;letter-spacing:.04em;}
+/* Stats */
+.scv2-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:0;border-bottom:1px solid rgba(255,255,255,.05);}
+.scv2-stat{text-align:center;padding:.65rem .4rem;border-right:1px solid rgba(255,255,255,.05);}
+.scv2-stat:last-child{border-right:none;}
+.scv2-stat-lbl{font-size:.6rem;color:rgba(255,255,255,.3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.28rem;}
+.scv2-stat-val{font-size:.95rem;font-weight:800;line-height:1.1;}
+/* Footer */
+.scv2-footer{display:flex;align-items:center;justify-content:space-between;padding:.65rem 1rem;gap:.5rem;flex-wrap:wrap;}
+.scv2-copy-btn{background:rgba(97,86,217,.08);border:1px solid rgba(97,86,217,.2);color:rgba(169,156,255,.7);border-radius:7px;padding:.3rem .7rem;font-size:.7rem;font-family:var(--font-mono);cursor:pointer;transition:.2s;white-space:nowrap;}
+.scv2-copy-btn:hover{background:rgba(97,86,217,.18);border-color:rgba(97,86,217,.4);color:#c5bcff;}
+.scv2-copy-btn.copied,.scv2-copy-btn[style*="green"]{color:var(--green) !important;border-color:rgba(0,255,136,.3) !important;background:rgba(0,255,136,.06) !important;}
+.scv2-callinfo{font-size:.65rem;color:rgba(255,255,255,.25);font-family:var(--font-mono);text-align:right;}
+
 /* ── PAPER BOT ──────────────────────────────────────────────── */
 /* ===== PAPER TRADING BOT UI ===== */
 .pt-wrap{padding:.5rem 0;}
@@ -8844,46 +8878,43 @@ async function renderHistory(force=false){
     const scoreEmoji=savedScore>=130?'☢️':savedScore>=110?'💎':savedScore>=95?'🚀':savedScore>=80?'👁':'📡';
     const badgeCls=savedScore>=130?'nuclear':savedScore>=110?'diamond':savedScore>=95?'runner':savedScore>=80?'watchlist':'radar';
     const labelTxt=savedScore>=130?'☢️ NUCLEAR':savedScore>=110?'💎 DIAMOND':savedScore>=95?'🚀 RUNNER':savedScore>=80?'📋 CALL':'📡 RADAR';
-    cards.push(`<div class="sc-card" style="opacity:${isLive?1:.8}">
-      <div class="sc-header">
-        <span style="font-size:1.2rem;flex-shrink:0">${scoreEmoji}</span>
-        <span class="sc-sym">${sym}</span>
-        <div style="display:flex;gap:.3rem;align-items:center;flex-shrink:0">
-          <span class="hist-badge ${isLive?'hist-badge-live':'hist-badge-dead'}">${isLive?'🟢 LIVE':'⚫ PASSÉ'}</span>
-          ${savedScore?`<span class="sc-badge ${badgeCls}">${labelTxt} ${savedScore}</span>`:''}
+    const _hImgUrl = v.raw?.info?.imageUrl || '';
+    const _hTwRaw = v.raw?.info?.socials?.find(s=>s.type==='twitter')?.url || '';
+    const _hTwHandle = _hTwRaw ? '@'+_hTwRaw.replace(/\/+$/,'').split('/').pop() : '';
+    const _hXNow = (isLive && callMcap>0) ? curMcap/callMcap : null;
+    const _hXNowColor = _hXNow===null?'rgba(255,255,255,.2)':_hXNow>=2?'#00e676':_hXNow>=1.3?'#69f0ae':_hXNow>=0.8?'#ffd740':'#ff5252';
+    const _hXAthColor = xAth>=5?'#00e676':xAth>=3?'#69f0ae':xAth>=2?'#ffd740':'#ff8a65';
+    cards.push(`<div class="sc-card scv2-card" style="opacity:${isLive?1:.75}">
+      <div class="scv2-header">
+        <div class="scv2-logo-wrap">
+          ${_hImgUrl
+            ? `<img class="scv2-logo-img" src="${_hImgUrl}" alt="${sym}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
+            : ''}
+          <div class="scv2-logo-fallback" style="${_hImgUrl?'display:none':''}">${sym.slice(0,2).toUpperCase()}</div>
+        </div>
+        <div class="scv2-meta">
+          <div class="scv2-sym">${sym}</div>
+          ${_hTwHandle ? `<div class="scv2-tw">𝕏 ${_hTwHandle}</div>` : `<div class="scv2-tw">${isLive?'🟢 live':'⚫ passé'}</div>`}
+        </div>
+        <div class="scv2-score-badge">${savedScore}<span class="scv2-score-pts">pts</span></div>
+      </div>
+      <div class="scv2-stats">
+        <div class="scv2-stat">
+          <div class="scv2-stat-lbl">X actuel</div>
+          <div class="scv2-stat-val" style="color:${_hXNowColor}">${_hXNow!==null?_hXNow.toFixed(2)+'x':'—'}</div>
+        </div>
+        <div class="scv2-stat">
+          <div class="scv2-stat-lbl">X plus haut${isAdminMode?` <button onclick="adminEditAth('${key}','${addr}','${sym}')" style="background:none;border:none;color:rgba(255,170,0,.5);font-size:.6rem;cursor:pointer;padding:0 .2rem">✏️</button>`:''}</div>
+          <div class="scv2-stat-val" style="color:${_hXAthColor}" id="xath-val-${key}">${xAth.toFixed(2)}x</div>
+        </div>
+        <div class="scv2-stat">
+          <div class="scv2-stat-lbl">Mcap call</div>
+          <div class="scv2-stat-val" style="color:#757575">$${fmtNum(callMcap)}</div>
         </div>
       </div>
-      <div class="sc-calltime">
-        <span style="opacity:.5">⏰</span>
-        <span>CALLED AT: ${callHeure}</span>
-        <span style="margin-left:auto;opacity:.5;font-size:.56rem">${timeAgo(callTime)} ago</span>
-      </div>
-      <div class="sc-stats">
-        <div class="sc-stat">
-          <div class="sc-stat-lbl">📍 CALL</div>
-          <div class="sc-stat-val" style="color:#ffaa44">$${fmtNum(callMcap)}</div>
-        </div>
-        <div class="sc-stat">
-          <div class="sc-stat-lbl">⏰ NOW</div>
-          <div class="sc-stat-val" style="color:${nowColor}">$${fmtNum(curMcap||0)}</div>
-        </div>
-        <div class="sc-stat">
-          <div class="sc-stat-lbl">🏆 ATH${isAdminMode?` <button onclick="adminEditAth('${key}','${addr}','${sym}')" style="background:rgba(255,170,0,.15);border:1px solid rgba(255,170,0,.3);color:#ffaa00;border-radius:3px;font-size:.55rem;padding:.08rem .28rem;cursor:pointer;vertical-align:middle">✏️</button>`:''}</div>
-          <div class="sc-stat-val" style="color:#ffaa44" id="ath-val-${key}">$${fmtNum(athMcap)}</div>
-        </div>
-        <div class="sc-stat gold">
-          <div class="sc-stat-lbl">🎯 × ATH</div>
-          <div class="sc-stat-val" style="color:${xColor};font-size:.88rem" id="xath-val-${key}">${xAth.toFixed(2)}x</div>
-        </div>
-      </div>
-      <div class="sc-footer">
-        <div style="display:flex;gap:.35rem;align-items:center;flex-wrap:wrap;flex:1;min-width:0">
-          <span class="sc-addr" data-addr="${addr}" onclick="copyHistCA(this)" title="Copier CA">${addrShort} 📋</span>
-        </div>
-        <div style="display:flex;gap:.32rem;align-items:center;flex-shrink:0">
-          <button class="sc-btn-pnl" onclick="openScannerPnl('${addr}','${sym}',${callMcap},${athMcap},${savedScore})">📤 PnL</button>
-          <a href="https://dexscreener.com/solana/${addr}" target="_blank" class="sc-btn-dex">DEX →</a>
-        </div>
+      <div class="scv2-footer">
+        <button class="scv2-copy-btn" data-addr="${addr}" onclick="copyHistCA(this)">📋 ${addrShort}</button>
+        <div class="scv2-callinfo">il y a ${timeAgo(callTime)} · ${callHeure}</div>
       </div>
     </div>`);
   }
@@ -9772,36 +9803,44 @@ async function renderTokenTable(tokens){
       : t.pvp==='loser'
         ? `<span class="sc-pvp-badge pvp-l">⚔️ PVP LOSE</span>`
         : '';
-    cards.push(`<div class="sc-card sc-live-card">
-      <div class="sc-live-head">
-        <span class="sc-sym">${t.symbol}</span>
-        <span class="sc-live-ago">${timeAgo(callTime)}</span>
+    // ── V2 card extra vars ──
+    const _imageUrl = t.raw?.info?.imageUrl || '';
+    const _twRaw = t.raw?.info?.socials?.find(s=>s.type==='twitter')?.url || '';
+    const _twHandle = _twRaw ? '@'+_twRaw.replace(/\/+$/,'').split('/').pop() : '';
+    const _xNow = callMcap>0 ? (nowMcap||t.mcap)/callMcap : 1;
+    const _xNowColor = _xNow>=2?'#00e676':_xNow>=1.3?'#69f0ae':_xNow>=0.8?'#ffd740':'#ff5252';
+    const _xAthColor = xAth>=3?'#00e676':xAth>=2?'#69f0ae':xAth>=1.5?'#ffd740':'#ff8a65';
+    cards.push(`<div class="sc-card sc-live-card scv2-card">
+      <div class="scv2-header">
+        <div class="scv2-logo-wrap">
+          ${_imageUrl
+            ? `<img class="scv2-logo-img" src="${_imageUrl}" alt="${t.symbol}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
+            : ''}
+          <div class="scv2-logo-fallback" style="${_imageUrl?'display:none':''}">${t.symbol.slice(0,2).toUpperCase()}</div>
+        </div>
+        <div class="scv2-meta">
+          <div class="scv2-sym">${t.symbol}</div>
+          ${_twHandle ? `<div class="scv2-tw">𝕏 ${_twHandle}</div>` : ''}
+        </div>
+        <div class="scv2-score-badge">${t.score}<span class="scv2-score-pts">pts</span></div>
       </div>
-      <div class="sc-live-time">${callHeure}</div>
-      <div class="sc-stats">
-        <div class="sc-stat">
-          <div class="sc-stat-lbl">CALL</div>
-          <div class="sc-stat-val" style="color:#ffaa44">$${fmtNum(callMcap)}</div>
+      <div class="scv2-stats">
+        <div class="scv2-stat" data-live-addr="${t.addr}" data-call-mcap="${callMcap}">
+          <div class="scv2-stat-lbl">X actuel</div>
+          <div class="scv2-stat-val live-mcap-val" style="color:${_xNowColor}">${_xNow.toFixed(2)}x</div>
         </div>
-        <div class="sc-stat" data-live-addr="${t.addr}" data-call-mcap="${callMcap}">
-          <div class="sc-stat-lbl">NOW</div>
-          <div class="sc-stat-val live-mcap-val" style="color:${nowColor}">$${fmtNum(nowMcap||t.mcap)}</div>
+        <div class="scv2-stat" data-live-xath="${t.addr}">
+          <div class="scv2-stat-lbl">X plus haut</div>
+          <div class="scv2-stat-val live-xath-val" style="color:${_xAthColor}">${xAth.toFixed(2)}x</div>
         </div>
-        <div class="sc-stat" data-live-ath="${t.addr}" data-call-mcap2="${callMcap}">
-          <div class="sc-stat-lbl">ATH</div>
-          <div class="sc-stat-val live-ath-val" style="color:${athColor}">$${fmtNum(athMcap)}</div>
-        </div>
-        <div class="sc-stat gold" data-live-xath="${t.addr}">
-          <div class="sc-stat-lbl">× ATH</div>
-          <div class="sc-stat-val live-xath-val" style="color:${xColor}">${xAth.toFixed(2)}x</div>
+        <div class="scv2-stat">
+          <div class="scv2-stat-lbl">Mcap call</div>
+          <div class="scv2-stat-val" style="color:#757575">$${fmtNum(callMcap)}</div>
         </div>
       </div>
-      <div class="sc-footer">
-        <span class="sc-addr" data-addr="${t.addr}" onclick="copyHistCA(this)" title="Copier CA">${t.addr.slice(0,6)}...${t.addr.slice(-4)}</span>
-        <div style="display:flex;gap:.32rem;align-items:center">
-          <button class="sc-btn-pnl" onclick="openScannerPnl('${t.addr}','${t.symbol}',${callMcap},${athMcap},${t.score})">PnL</button>
-          <a href="${t.pairUrl}" target="_blank" class="sc-btn-dex">DEX →</a>
-        </div>
+      <div class="scv2-footer">
+        <button class="scv2-copy-btn" data-addr="${t.addr}" onclick="copyHistCA(this)">📋 ${t.addr.slice(0,6)}...${t.addr.slice(-4)}</button>
+        <div class="scv2-callinfo">il y a ${timeAgo(callTime)} · ${callHeure}</div>
       </div>
     </div>`);
   }
@@ -11014,25 +11053,24 @@ async function refreshLiveMcap() {
       const newMcap = entry?.now || t.mcap || 0;
       if (newMcap <= 0) return;
       t.mcap = newMcap;
-      // NOW
+      // X actuel
       const nowVal = cell.querySelector('.live-mcap-val');
-      if (nowVal) {
-        nowVal.textContent = `$${fmtNum(newMcap)}`;
-        nowVal.style.color = newMcap > callMcap ? '#44ff88' : newMcap < callMcap * 0.7 ? '#ff5577' : '#ffcc44';
+      if (nowVal && callMcap > 0) {
+        const xNow = newMcap / callMcap;
+        nowVal.textContent = `${xNow.toFixed(2)}x`;
+        nowVal.style.color = xNow >= 2 ? '#00e676' : xNow >= 1.3 ? '#69f0ae' : xNow >= 0.8 ? '#ffd740' : '#ff5252';
       }
-      // ATH — meilleur entre live et ATH connu (athEst retiré : ignore callTime)
+      // ATH — meilleur entre live et ATH connu
       const bestAth = Math.max(newMcap, t._athMcap || 0);
       if (bestAth > (t._athMcap || 0)) {
         t._athMcap = bestAth;
         updateAth(addr, bestAth).catch(()=>{});
-        const athCell = document.querySelector(`[data-live-ath="${addr}"] .live-ath-val`);
-        if (athCell) athCell.textContent = `$${fmtNum(bestAth)}`;
-        // xATH
+        // xATH (X plus haut)
         const xAthCell = document.querySelector(`[data-live-xath="${addr}"] .live-xath-val`);
         if (xAthCell && callMcap > 0) {
           const xAth = bestAth / callMcap;
           xAthCell.textContent = `${xAth.toFixed(2)}x`;
-          xAthCell.style.color = xAth >= 3 ? '#00ff88' : xAth >= 2 ? '#88ff44' : xAth >= 1.5 ? '#ffcc44' : '#ff8866';
+          xAthCell.style.color = xAth >= 3 ? '#00e676' : xAth >= 2 ? '#69f0ae' : xAth >= 1.5 ? '#ffd740' : '#ff8a65';
         }
       }
     });
