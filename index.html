@@ -3021,6 +3021,186 @@ body.view-avis #landing-wrap { display: none !important; }
   .sec-ambient { width: 400px; height: 300px; }
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   INTERACTIONS AVANCÉES — progress, dots, toggle, ripple,
+   magnetic, expand, score sim, carousel, floating CTA
+═══════════════════════════════════════════════════════════════ */
+
+/* ── Scroll progress bar ─────────────────────────────────────── */
+#scrollBar{position:fixed;top:0;left:0;z-index:9000;height:2px;width:0%;
+  background:linear-gradient(90deg,#6366f1,#8b5cf6 50%,#34d399);
+  pointer-events:none;transition:width .06s linear;}
+
+/* ── Section nav dots ────────────────────────────────────────── */
+#secDots{position:fixed;right:20px;top:50%;z-index:500;transform:translateY(-50%);
+  display:flex;flex-direction:column;gap:10px;pointer-events:auto;}
+.sec-dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,0.18);
+  border:1px solid rgba(255,255,255,0.12);cursor:pointer;position:relative;
+  transition:all 0.3s cubic-bezier(0.16,1,0.3,1);}
+.sec-dot.active{background:#818cf8;border-color:#818cf8;
+  box-shadow:0 0 10px rgba(129,140,248,0.7);transform:scale(1.5);}
+.sec-dot::after{content:attr(data-label);position:absolute;right:18px;top:50%;
+  transform:translateY(-50%);background:rgba(8,8,20,0.95);
+  border:1px solid rgba(255,255,255,0.1);color:#e8e8ff;
+  font-size:0.65rem;font-weight:700;padding:3px 9px;border-radius:6px;
+  white-space:nowrap;opacity:0;pointer-events:none;transition:opacity 0.2s;
+  font-family:'Space Mono',monospace;letter-spacing:0.04em;}
+.sec-dot:hover::after{opacity:1;}
+.sec-dot:hover:not(.active){background:rgba(129,140,248,0.45);transform:scale(1.2);}
+@media(max-width:768px){#secDots{display:none;}}
+
+/* ── Ripple ──────────────────────────────────────────────────── */
+.ripple-host{position:relative;overflow:hidden;}
+.ripple-circle{position:absolute;border-radius:50%;background:rgba(255,255,255,0.22);
+  transform:scale(0);pointer-events:none;
+  animation:rippleOut 0.55s linear forwards;}
+@keyframes rippleOut{to{transform:scale(4);opacity:0;}}
+
+/* ── Magnetic button wrap ────────────────────────────────────── */
+.mag-btn-wrap{display:inline-block;
+  transition:transform 0.25s cubic-bezier(0.16,1,0.3,1);}
+
+/* ── Pricing toggle ─────────────────────────────────────────── */
+.price-toggle-wrap{display:flex;align-items:center;justify-content:center;
+  gap:1rem;margin:1.5rem 0 2rem;}
+.price-toggle{display:flex;background:rgba(255,255,255,0.04);
+  border:1px solid rgba(255,255,255,0.08);border-radius:50px;padding:4px;}
+.ptb{padding:0.45rem 1.2rem;border-radius:40px;border:none;
+  background:transparent;color:rgba(200,200,255,0.5);
+  font-size:0.83rem;font-weight:700;cursor:pointer;transition:all 0.25s;
+  font-family:'Space Grotesk',sans-serif;}
+.ptb.active{background:rgba(99,102,241,0.85);color:#fff;
+  box-shadow:0 0 18px rgba(99,102,241,0.35);}
+.price-save-badge{background:rgba(52,211,153,0.14);border:1px solid rgba(52,211,153,0.3);
+  color:#34d399;font-size:0.7rem;font-weight:800;padding:3px 10px;border-radius:20px;
+  font-family:'Space Mono',monospace;transition:opacity 0.3s;opacity:0;}
+.price-save-badge.show{opacity:1;}
+
+/* ── Feature card expand ────────────────────────────────────── */
+.lp-feat-card{cursor:pointer;}
+.feat-expand-hint{font-size:0.62rem;color:rgba(200,200,255,0.28);
+  margin-top:0.9rem;font-family:'Space Mono',monospace;
+  display:flex;align-items:center;gap:0.35rem;transition:color 0.2s;}
+.lp-feat-card:hover .feat-expand-hint{color:rgba(200,200,255,0.55);}
+.feat-expand-icon{display:inline-block;transition:transform 0.35s;font-size:0.9rem;}
+.lp-feat-card.expanded .feat-expand-icon{transform:rotate(45deg);}
+.feat-extra{max-height:0;overflow:hidden;
+  transition:max-height 0.45s cubic-bezier(0.16,1,0.3,1),opacity 0.35s;opacity:0;}
+.lp-feat-card.expanded .feat-extra{max-height:220px;opacity:1;}
+.feat-extra-inner{border-top:1px solid rgba(255,255,255,0.07);
+  margin-top:1rem;padding-top:1rem;
+  font-size:0.75rem;color:rgba(200,200,255,0.5);
+  display:flex;flex-direction:column;gap:0.38rem;
+  font-family:'Space Mono',monospace;line-height:1.5;}
+
+/* ── Score sim ───────────────────────────────────────────────── */
+.lp-score-cat{cursor:pointer;transition:all 0.25s!important;}
+.lp-score-cat.selected{
+  border-color:rgba(129,140,248,0.45)!important;
+  background:rgba(99,102,241,0.1)!important;
+  box-shadow:0 0 22px rgba(99,102,241,0.14)!important;
+  transform:translateY(-4px) scale(1.04)!important;}
+.score-sim-bar{margin:2.5rem auto 0;max-width:480px;
+  background:rgba(255,255,255,0.025);border:1px solid rgba(255,255,255,0.07);
+  border-radius:18px;padding:1.3rem 1.6rem;text-align:center;}
+.score-sim-label{font-size:0.65rem;color:rgba(200,200,255,0.38);
+  font-family:'Space Mono',monospace;text-transform:uppercase;
+  letter-spacing:0.1em;margin-bottom:0.6rem;}
+.score-sim-num{font-family:'Space Grotesk',sans-serif;font-size:3rem;
+  font-weight:900;line-height:1;color:#818cf8;
+  transition:color 0.4s;display:block;}
+.score-sim-num.god{color:#fbbf24;} .score-sim-num.high{color:#34d399;}
+.score-sim-num.mid{color:#818cf8;} .score-sim-num.danger{color:#f87171;}
+.score-sim-track{width:100%;height:5px;background:rgba(255,255,255,0.06);
+  border-radius:3px;overflow:hidden;margin:0.7rem 0 0.5rem;}
+.score-sim-fill{height:100%;border-radius:3px;width:0%;
+  background:linear-gradient(90deg,#6366f1,#8b5cf6);
+  transition:width 0.45s cubic-bezier(0.16,1,0.3,1),background 0.4s;}
+.score-sim-verdict{font-size:0.72rem;color:rgba(200,200,255,0.4);
+  font-family:'Space Mono',monospace;margin-top:0.3rem;min-height:1.1em;
+  transition:color 0.3s;}
+
+/* ── Score cat tooltip ───────────────────────────────────────── */
+.sc-tip{position:absolute;bottom:calc(100% + 10px);left:50%;
+  transform:translateX(-50%);background:rgba(8,8,22,0.97);
+  border:1px solid rgba(129,140,248,0.28);border-radius:10px;
+  padding:0.5rem 0.85rem;font-size:0.67rem;font-family:'Space Mono',monospace;
+  color:rgba(200,200,255,0.75);white-space:nowrap;pointer-events:none;
+  z-index:200;opacity:0;transition:opacity 0.2s;
+  box-shadow:0 8px 28px rgba(0,0,0,0.55);line-height:1.45;}
+.sc-tip::after{content:'';position:absolute;top:100%;left:50%;
+  transform:translateX(-50%);border:5px solid transparent;
+  border-top-color:rgba(129,140,248,0.28);}
+.lp-score-cat{position:relative;}
+.lp-score-cat:hover .sc-tip{opacity:1;}
+
+/* ── CS token row clickable ─────────────────────────────────── */
+.cs-token-row{cursor:pointer;
+  transition:background 0.2s!important;}
+.cs-token-row:hover{background:rgba(255,255,255,0.055)!important;}
+.cs-token-row.expanded{background:rgba(99,102,241,0.07)!important;
+  border-color:rgba(129,140,248,0.2)!important;}
+.cs-tok-detail{max-height:0;overflow:hidden;
+  transition:max-height 0.38s cubic-bezier(0.16,1,0.3,1),opacity 0.28s;opacity:0;}
+.cs-tok-detail.open{max-height:72px;opacity:1;}
+.cs-tok-detail-inner{display:flex;gap:1.2rem;padding:0.45rem 0.8rem 0.75rem;
+  font-size:0.7rem;font-family:'Space Mono',monospace;
+  color:rgba(200,200,255,0.5);flex-wrap:wrap;}
+.cs-tok-di{display:flex;flex-direction:column;gap:2px;}
+.cs-tok-dl{color:rgba(200,200,255,0.3);font-size:0.58rem;text-transform:uppercase;letter-spacing:0.06em;}
+.cs-tok-dv{color:rgba(200,200,255,0.8);}
+
+/* ── Testimonial carousel nav ───────────────────────────────── */
+.testi-nav{display:flex;justify-content:center;gap:0.5rem;
+  margin-top:2rem;align-items:center;}
+.testi-dot{width:7px;height:7px;border-radius:50%;
+  background:rgba(255,255,255,0.14);cursor:pointer;
+  border:1px solid rgba(255,255,255,0.09);transition:all 0.28s;}
+.testi-dot.active{background:#818cf8;border-color:#818cf8;
+  box-shadow:0 0 9px rgba(129,140,248,0.55);transform:scale(1.4);}
+.testi-arrow{width:36px;height:36px;border-radius:50%;
+  background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);
+  color:rgba(200,200,255,0.5);display:flex;align-items:center;
+  justify-content:center;cursor:pointer;transition:all 0.25s;font-size:1rem;}
+.testi-arrow:hover{background:rgba(129,140,248,0.12);
+  border-color:rgba(129,140,248,0.3);color:#818cf8;}
+
+/* ── Floating CTA bar ────────────────────────────────────────── */
+#floatingCTA{position:fixed;bottom:0;left:0;right:0;z-index:800;
+  background:rgba(4,4,14,0.94);border-top:1px solid rgba(99,102,241,0.32);
+  backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+  padding:0.85rem 2rem;display:flex;align-items:center;
+  justify-content:center;gap:1.4rem;
+  transform:translateY(100%);
+  transition:transform 0.5s cubic-bezier(0.16,1,0.3,1);
+  pointer-events:none;}
+#floatingCTA.show{transform:translateY(0);pointer-events:auto;}
+.flt-txt{color:rgba(200,200,255,0.65);font-size:0.85rem;}
+.flt-btn{background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;
+  border:none;cursor:pointer;padding:0.6rem 1.5rem;border-radius:30px;
+  font-size:0.85rem;font-weight:800;font-family:'Space Grotesk',sans-serif;
+  transition:all 0.25s;box-shadow:0 0 22px rgba(99,102,241,0.35);}
+.flt-btn:hover{transform:scale(1.05);box-shadow:0 0 34px rgba(99,102,241,0.55);}
+.flt-x{position:absolute;right:1.5rem;top:50%;transform:translateY(-50%);
+  color:rgba(255,255,255,0.28);cursor:pointer;font-size:1rem;
+  transition:color 0.2s;line-height:1;}
+.flt-x:hover{color:rgba(255,255,255,0.65);}
+@media(max-width:560px){.flt-txt{display:none;}}
+
+/* ── Live member counter ─────────────────────────────────────── */
+#liveMemberWrap{display:inline-flex;align-items:center;gap:0.5rem;
+  background:rgba(52,211,153,0.08);border:1px solid rgba(52,211,153,0.22);
+  border-radius:20px;padding:0.28rem 0.9rem;
+  font-size:0.7rem;font-family:'Space Mono',monospace;color:#34d399;
+  margin-top:1.2rem;}
+.live-dot-sm{width:6px;height:6px;border-radius:50%;
+  background:#34d399;animation:pulse 1.5s infinite;}
+
+/* ── Hero typewriter cursor ─────────────────────────────────── */
+#heroTw{border-right:2px solid rgba(165,180,252,0.65);
+  animation:twBlink 0.75s steps(1) infinite;padding-right:2px;}
+@keyframes twBlink{50%{border-color:transparent;}}
+
 </style>
 </head>
 <body>
@@ -11727,6 +11907,393 @@ window.addEventListener('DOMContentLoaded',()=>{
   } else {
     setTimeout(init, 300);
   }
+
+})();
+</script>
+
+<!-- ═══ INTERACTIONS LANDING — 10X features ══════════════════════ -->
+<script>
+(function(){
+'use strict';
+
+/* ─── helpers ────────────────────────────────────────────────── */
+function qs(sel,ctx){return (ctx||document).querySelector(sel);}
+function qsa(sel,ctx){return Array.from((ctx||document).querySelectorAll(sel));}
+
+function ripple(e){
+  const b=e.currentTarget;
+  if(!b.classList.contains('ripple-host'))b.classList.add('ripple-host');
+  const r=b.getBoundingClientRect();
+  const sz=Math.max(r.width,r.height);
+  const c=document.createElement('span');
+  c.className='ripple-circle';
+  c.style.cssText=`width:${sz}px;height:${sz}px;left:${e.clientX-r.left-sz/2}px;top:${e.clientY-r.top-sz/2}px`;
+  b.appendChild(c);
+  setTimeout(()=>c.remove(),620);
+}
+
+function animNum(el,from,to,dur,fmt){
+  const t0=performance.now();
+  (function s(now){
+    const p=Math.min((now-t0)/dur,1);
+    const ease=1-Math.pow(1-p,3);
+    el.innerHTML=fmt(Math.round(from+(to-from)*ease));
+    if(p<1)requestAnimationFrame(s);
+  })(performance.now());
+}
+
+/* ═══ 1. SCROLL PROGRESS BAR ════════════════════════════════════ */
+const bar=document.createElement('div');bar.id='scrollBar';
+document.body.insertBefore(bar,document.body.firstChild);
+window.addEventListener('scroll',()=>{
+  const tot=document.documentElement.scrollHeight-window.innerHeight;
+  bar.style.width=(tot>0?window.scrollY/tot*100:0)+'%';
+},{passive:true});
+
+/* ═══ 2. SECTION NAV DOTS ═══════════════════════════════════════ */
+const SECS=[
+  {id:'hero',       lbl:'Accueil'},
+  {id:'csWrap',     lbl:'Demo live'},
+  {id:'features',   lbl:'Features'},
+  {id:'smartmoney', lbl:'Smart Money'},
+  {id:'scoring',    lbl:'Scoring'},
+  {id:'pricing-preview',lbl:'Tarifs'},
+  {id:'vs',         lbl:'Comparaison'},
+];
+(function initDots(){
+  const wrap=document.createElement('div');wrap.id='secDots';
+  document.body.appendChild(wrap);
+  SECS.forEach(({id,lbl})=>{
+    const d=document.createElement('div');
+    d.className='sec-dot';d.dataset.sec=id;d.dataset.label=lbl;
+    d.addEventListener('click',()=>{
+      const el=document.getElementById(id);
+      if(el)el.scrollIntoView({behavior:'smooth',block:'start'});
+    });
+    wrap.appendChild(d);
+  });
+  const obs=new IntersectionObserver(entries=>{
+    entries.forEach(en=>{
+      const d=wrap.querySelector(`[data-sec="${en.target.id}"]`);
+      if(d)d.classList.toggle('active',en.isIntersecting);
+    });
+  },{threshold:0.35});
+  SECS.forEach(({id})=>{const el=document.getElementById(id);if(el)obs.observe(el);});
+})();
+
+/* ═══ 3. RIPPLE ON ALL BUTTONS ══════════════════════════════════ */
+function initRipples(){
+  qsa('.lp-btn-primary,.lp-btn-ghost,.lp-price-btn,.flt-btn').forEach(b=>{
+    b.addEventListener('click',ripple);
+  });
+}
+
+/* ═══ 4. MAGNETIC CTA BUTTONS ═══════════════════════════════════ */
+function initMagnetic(){
+  qsa('.lp-btn-primary,.lp-btn-ghost').forEach(btn=>{
+    const w=document.createElement('div');w.className='mag-btn-wrap';
+    btn.parentNode.insertBefore(w,btn);w.appendChild(btn);
+    let mx=0,my=0,cx=0,cy=0;
+    w.addEventListener('mousemove',e=>{
+      const r=w.getBoundingClientRect();
+      mx=(e.clientX-r.left-r.width/2)*0.28;
+      my=(e.clientY-r.top-r.height/2)*0.28;
+    });
+    w.addEventListener('mouseleave',()=>{mx=0;my=0;});
+    (function tick(){
+      cx+=(mx-cx)*0.18;cy+=(my-cy)*0.18;
+      w.style.transform=`translate(${cx.toFixed(2)}px,${cy.toFixed(2)}px)`;
+      requestAnimationFrame(tick);
+    })();
+  });
+}
+
+/* ═══ 5. HERO TYPEWRITER ═════════════════════════════════════════ */
+const TW_LINES=[
+  'Algo propriétaire 24/7 · Smart Money + 15 signaux · Scoring 150 pts.',
+  'Détecte les rugs avant crash · Score danger 0-12 · Temps réel.',
+  '1 064 wallets profitables trackés · Entres quand les pros entrent.',
+  '45 secondes par cycle · Les calls arrivent avant la foule.',
+];
+function initTypewriter(){
+  const sub=qs('#hero .lp-hero-sub');if(!sub)return;
+  sub.innerHTML='<span id="heroTw"></span>';
+  const tw=document.getElementById('heroTw');
+  let li=0,ci=0,del=false;
+  function tick(){
+    const cur=TW_LINES[li];
+    if(!del){tw.textContent=cur.slice(0,++ci);if(ci===cur.length){del=true;setTimeout(tick,2600);return;}}
+    else{tw.textContent=cur.slice(0,--ci);if(ci===0){del=false;li=(li+1)%TW_LINES.length;setTimeout(tick,280);return;}}
+    setTimeout(tick,del?26:40);
+  }
+  setTimeout(tick,1400);
+}
+
+/* ═══ 6. LIVE MEMBER COUNTER ═════════════════════════════════════ */
+function initLiveCounter(){
+  const stats=qs('#hero .lp-hero-stats');if(!stats)return;
+  let n=2347+Math.floor(Math.random()*120);
+  const el=document.createElement('div');el.id='liveMemberWrap';
+  el.innerHTML=`<span class="live-dot-sm"></span><span id="liveMemberN">${n.toLocaleString('fr-FR')}</span>&nbsp;membres connectés`;
+  stats.insertAdjacentElement('afterend',el);
+  setInterval(()=>{
+    if(Math.random()>.55){
+      n+=Math.floor(Math.random()*3)+1;
+      const ne=document.getElementById('liveMemberN');
+      if(ne)ne.textContent=n.toLocaleString('fr-FR');
+    }
+  },3800);
+}
+
+/* ═══ 7. PRICING TOGGLE ═════════════════════════════════════════ */
+const PRICES={
+  mensuel:{starter:19,alpha:49,elite:99},
+  annuel: {starter:15,alpha:39,elite:79},
+};
+function initPricingToggle(){
+  const grid=qs('.lp-pricing-grid');if(!grid)return;
+  const wrap=document.createElement('div');wrap.className='price-toggle-wrap';
+  wrap.innerHTML=`
+    <div class="price-toggle">
+      <button class="ptb active" data-mode="mensuel">Mensuel</button>
+      <button class="ptb" data-mode="annuel">Annuel</button>
+    </div>
+    <span class="price-save-badge" id="pSaveBadge">🎉 -20% — économise jusqu'à $240/an</span>`;
+  grid.parentNode.insertBefore(wrap,grid);
+  const keys=['starter','alpha','elite'];
+  const cards=qsa('.lp-price-card',grid);
+  cards.forEach((c,i)=>{
+    const v=c.querySelector('.lp-price-val');if(v)v.dataset.key=keys[i];
+  });
+  wrap.addEventListener('click',e=>{
+    const b=e.target.closest('.ptb');if(!b)return;
+    qsa('.ptb',wrap).forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+    const mode=b.dataset.mode;
+    const badge=document.getElementById('pSaveBadge');
+    badge.classList.toggle('show',mode==='annuel');
+    const suffix=mode==='annuel'?'/mois · annuel':'/mois';
+    cards.forEach((c,i)=>{
+      const v=c.querySelector('.lp-price-val');if(!v)return;
+      const from=PRICES[mode==='annuel'?'mensuel':'annuel'][keys[i]];
+      const to=PRICES[mode][keys[i]];
+      animNum(v,from,to,480,x=>`$${x}<span class="lp-price-period">${suffix}</span>`);
+    });
+    // ripple on active button
+    qsa('.ptb.active',wrap).forEach(x=>{ const fe=new MouseEvent('click',{bubbles:false}); });
+  });
+}
+
+/* ═══ 8. FEATURE CARDS EXPAND ═══════════════════════════════════ */
+const FEAT_DATA=[
+  ['⚡ Cycle 45s continu','📡 12 sources Helius + DexScreener','🎯 Score 150 pts / token','🔔 Alertes Discord & Telegram'],
+  ['🔍 Staircase pattern detection','💀 Bundlers & snipers flaggés','📉 Sell pressure tracking','⚠️ Score danger 0–12 en temps réel'],
+  ['💰 Capital virtuel $10 000','📊 Equity curve en direct','🏆 Meilleur call + ROI tracké','📈 Win rate calculé sur toute la période'],
+  ['👁️ 1 064 wallets profitables','🐦 Twitter & Telegram monitoring','⚡ Signal avant le marché','📊 KOL ranking interne propriétaire'],
+];
+function initFeatExpand(){
+  qsa('.lp-feat-card').forEach((c,i)=>{
+    const hint=document.createElement('div');hint.className='feat-expand-hint';
+    hint.innerHTML='<span class="feat-expand-icon">+</span>&nbsp;Voir les détails techniques';
+    c.appendChild(hint);
+    const ex=document.createElement('div');ex.className='feat-extra';
+    const inn=document.createElement('div');inn.className='feat-extra-inner';
+    (FEAT_DATA[i]||[]).forEach(l=>{const s=document.createElement('span');s.textContent=l;inn.appendChild(s);});
+    ex.appendChild(inn);c.appendChild(ex);
+    c.addEventListener('click',e=>{
+      if(e.target.closest('button'))return;
+      const was=c.classList.contains('expanded');
+      qsa('.lp-feat-card').forEach(x=>x.classList.remove('expanded'));
+      if(!was){c.classList.add('expanded');}
+      const ic=c.querySelector('.feat-expand-icon');
+      if(ic)ic.textContent=c.classList.contains('expanded')?'–':'+';
+    });
+  });
+}
+
+/* ═══ 9. SCORE SIMULATOR ═════════════════════════════════════════ */
+const SCAT=[
+  {pts:30,desc:'Holders & historique wallets'},
+  {pts:20,desc:'Mentions Twitter / Telegram'},
+  {pts:20,desc:'Distribution & concentration'},
+  {pts:25,desc:'Platform score & market cap idéal'},
+  {pts:15,desc:'Fenêtre temporelle optimale'},
+  {pts:15,desc:'Momentum + volume signal'},
+  {pts:15,desc:'Ranking plateforme launch'},
+  {pts:10,desc:'KOL Solana · early signal'},
+];
+function initScoreSim(){
+  const grid=qs('.lp-score-cats');if(!grid)return;
+  grid.insertAdjacentHTML('afterend',`
+    <div class="score-sim-bar" id="scoreSimBar">
+      <div class="score-sim-label">Simulateur · clique sur les catégories</div>
+      <span class="score-sim-num mid" id="ssNum">0</span><span style="font-family:'Space Mono',monospace;color:rgba(200,200,255,0.25);font-size:1rem">&thinsp;/ 150</span>
+      <div class="score-sim-track"><div class="score-sim-fill" id="ssFill"></div></div>
+      <div class="score-sim-verdict" id="ssVerdict">Clique sur les catégories pour simuler le score</div>
+    </div>`);
+  const cats=qsa('.lp-score-cat');
+  cats.forEach((c,i)=>{
+    const d=SCAT[i]||{};
+    if(d.desc){const t=document.createElement('div');t.className='sc-tip';t.textContent=`+${d.pts} pts · ${d.desc}`;c.appendChild(t);}
+    c.addEventListener('click',()=>{c.classList.toggle('selected');updateSim();});
+  });
+  function updateSim(){
+    const sel=qsa('.lp-score-cat.selected');
+    let tot=0;sel.forEach(c=>{const idx=cats.indexOf(c);tot+=(SCAT[idx]?.pts||0);});
+    const numEl=document.getElementById('ssNum');
+    const fillEl=document.getElementById('ssFill');
+    const vEl=document.getElementById('ssVerdict');
+    if(!numEl)return;
+    const from=parseInt(numEl.textContent)||0;
+    animNum(numEl,from,tot,380,x=>String(x));
+    numEl.className='score-sim-num '+(tot>=100?'god':tot>=60?'high':tot>=30?'mid':'danger');
+    if(fillEl){
+      fillEl.style.width=(tot/150*100)+'%';
+      fillEl.style.background=tot>=100?'linear-gradient(90deg,#f59e0b,#fbbf24)':tot>=60?'linear-gradient(90deg,#10b981,#34d399)':'linear-gradient(90deg,#6366f1,#8b5cf6)';
+    }
+    if(vEl){
+      const v=tot>=100?'🚀 CALL — Signal fort, algo envoie l\'alerte':tot>=60?'✓ BUY — À surveiller, bon potentiel':tot>=30?'⏳ SKIP — Score insuffisant':tot>0?'✗ AVOID — Trop risqué, rug potentiel':'Clique sur les catégories pour simuler le score';
+      vEl.textContent=v;
+      vEl.style.color=tot>=100?'#fbbf24':tot>=60?'#34d399':tot>=30?'#818cf8':tot>0?'#f87171':'rgba(200,200,255,0.4)';
+    }
+  }
+}
+
+/* ═══ 10. CS TOKEN CLICK DETAILS ════════════════════════════════ */
+const CS_DATA={
+  FOXRUN:{mc:'$242K',vol:'$89K',age:'3h',chain:'Pump.fun',kol:'3 wallets'},
+  MOON9: {mc:'$118K',vol:'$41K',age:'7h', chain:'Raydium', kol:'1 wallet'},
+  DEGEN: {mc:'$67K', vol:'$22K',age:'12h',chain:'Pump.fun',kol:'aucun'},
+  RUGME: {mc:'$8K',  vol:'$3K', age:'45m',chain:'Pump.fun',kol:'aucun'},
+  VOLT:  {mc:'$11K', vol:'$4K', age:'1h', chain:'Pump.fun',kol:'aucun'},
+};
+function initCSTokens(){
+  const body=qs('.cs-device-body');if(!body)return;
+  qsa('.cs-token-row',body).forEach(row=>{
+    const sym=(qs('.cs-tok-sym',row)||{}).textContent||'';
+    const key=sym.trim().split(/\s+/).pop();
+    const d=CS_DATA[key];if(!d)return;
+    const det=document.createElement('div');det.className='cs-tok-detail';
+    det.innerHTML=`<div class="cs-token-detail-inner">
+      <div class="cs-tok-di"><div class="cs-tok-dl">MCAP</div><div class="cs-tok-dv">${d.mc}</div></div>
+      <div class="cs-tok-di"><div class="cs-tok-dl">VOL 24H</div><div class="cs-tok-dv">${d.vol}</div></div>
+      <div class="cs-tok-di"><div class="cs-tok-dl">ÂGE</div><div class="cs-tok-dv">${d.age}</div></div>
+      <div class="cs-tok-di"><div class="cs-tok-dl">CHAIN</div><div class="cs-tok-dv">${d.chain}</div></div>
+      <div class="cs-tok-di"><div class="cs-tok-dl">KOL</div><div class="cs-tok-dv">${d.kol}</div></div>
+    </div>`;
+    row.insertAdjacentElement('afterend',det);
+    row.addEventListener('click',()=>{
+      const was=row.classList.contains('expanded');
+      qsa('.cs-token-row',body).forEach(r=>{r.classList.remove('expanded');const nx=r.nextElementSibling;if(nx?.classList.contains('cs-tok-detail'))nx.classList.remove('open');});
+      if(!was){row.classList.add('expanded');det.classList.add('open');}
+    });
+  });
+}
+
+/* ═══ 11. TESTIMONIAL CAROUSEL ══════════════════════════════════ */
+function initCarousel(){
+  const grid=qs('.lp-testi-grid');if(!grid)return;
+  const cards=qsa('.lp-testi-card',grid);if(cards.length<2)return;
+  let cur=0;
+  // Wrap
+  const outer=document.createElement('div');outer.style.position='relative';
+  grid.parentNode.insertBefore(outer,grid);outer.appendChild(grid);
+  // Nav
+  const nav=document.createElement('div');nav.className='testi-nav';
+  const prev=document.createElement('div');prev.className='testi-arrow';prev.innerHTML='‹';
+  const dotsW=document.createElement('div');dotsW.style.cssText='display:flex;gap:6px;align-items:center;';
+  const next=document.createElement('div');next.className='testi-arrow';next.innerHTML='›';
+  cards.forEach((_,i)=>{const d=document.createElement('div');d.className='testi-dot'+(i===0?' active':'');d.addEventListener('click',()=>goTo(i));dotsW.appendChild(d);});
+  nav.append(prev,dotsW,next);outer.appendChild(nav);
+  function goTo(i){
+    cur=(i+cards.length)%cards.length;
+    if(window.innerWidth<=768)grid.style.transform=`translateX(-${cur*(100/cards.length)}%)`;
+    qsa('.testi-dot',dotsW).forEach((d,j)=>d.classList.toggle('active',j===cur));
+  }
+  prev.addEventListener('click',()=>goTo(cur-1));
+  next.addEventListener('click',()=>goTo(cur+1));
+  let auto=setInterval(()=>goTo(cur+1),5200);
+  outer.addEventListener('mouseenter',()=>clearInterval(auto));
+  outer.addEventListener('mouseleave',()=>{auto=setInterval(()=>goTo(cur+1),5200);});
+  // Mobile sliding
+  if(window.innerWidth<=768){
+    grid.style.display='flex';grid.style.width=(cards.length*100)+'%';
+    cards.forEach(c=>{c.style.flex=`0 0 ${100/cards.length}%`;c.style.minWidth=`${100/cards.length}%`;});
+  }
+}
+
+/* ═══ 12. FLOATING CTA ══════════════════════════════════════════ */
+function initFloatingCTA(){
+  const el=document.createElement('div');el.id='floatingCTA';
+  el.innerHTML=`
+    <span class="flt-txt">🚀 Rejoins <strong>+2 400 traders</strong> sur MemeScanner</span>
+    <button class="flt-btn ripple-host" onclick="openCode()">Accès immédiat →</button>
+    <span class="flt-x" id="fltX">✕</span>`;
+  document.body.appendChild(el);
+  qs('.flt-btn',el).addEventListener('click',ripple);
+  let dismissed=false;
+  document.getElementById('fltX').addEventListener('click',()=>{dismissed=true;el.classList.remove('show');});
+  const obs=new IntersectionObserver(([e])=>{if(!dismissed)el.classList.toggle('show',!e.isIntersecting);},{threshold:0.1});
+  const hero=document.getElementById('hero');if(hero)obs.observe(hero);
+}
+
+/* ═══ 13. WALLET CARD — ROW HOVER DETAILS ═══════════════════════ */
+const WC_INFO={
+  '7xKp...mN3f':{roi:'+847%',tokens:'312',wr:'74%'},
+  'Bq9R...vL2k':{roi:'+623%',tokens:'287',wr:'68%'},
+  '9nFv...qM1a':{roi:'+1240%',tokens:'401',wr:'81%'},
+};
+function initWalletRows(){
+  qsa('.lp-wc-row').forEach(row=>{
+    const addr=(qs('.lp-wc-addr',row)||{}).textContent||'';
+    const info=WC_INFO[addr.trim()];if(!info)return;
+    row.style.cursor='pointer';row.title=`ROI: ${info.roi} · ${info.tokens} tokens · Win rate: ${info.wr}`;
+    row.addEventListener('mouseenter',()=>{
+      let tip=row.querySelector('.wc-tip');
+      if(!tip){tip=document.createElement('span');tip.className='wc-tip';
+        tip.style.cssText='margin-left:auto;font-size:0.62rem;font-family:Space Mono,monospace;color:rgba(200,200,255,0.55);white-space:nowrap;';
+        tip.textContent=`ROI ${info.roi} · WR ${info.wr}`;row.appendChild(tip);}
+    });
+    row.addEventListener('mouseleave',()=>{const t=row.querySelector('.wc-tip');if(t)t.remove();});
+  });
+}
+
+/* ═══ 14. COMPARISON TABLE — ROW HIGHLIGHT ══════════════════════ */
+function initCmpTable(){
+  qsa('.lp-cmp-table tbody tr').forEach(tr=>{
+    tr.style.cursor='pointer';
+    tr.addEventListener('click',()=>{
+      const was=tr.classList.contains('sel');
+      qsa('.lp-cmp-table tbody tr').forEach(r=>r.classList.remove('sel'));
+      if(!was){tr.classList.add('sel');tr.style.background='rgba(99,102,241,0.07)';}
+      else tr.style.background='';
+    });
+    tr.addEventListener('mouseenter',()=>{if(!tr.classList.contains('sel'))tr.style.background='rgba(255,255,255,0.025)';});
+    tr.addEventListener('mouseleave',()=>{if(!tr.classList.contains('sel'))tr.style.background='';});
+  });
+}
+
+/* ═══ INIT ALL ═══════════════════════════════════════════════════ */
+function initAll(){
+  initRipples();
+  initMagnetic();
+  initTypewriter();
+  initLiveCounter();
+  initPricingToggle();
+  initFeatExpand();
+  initScoreSim();
+  initCSTokens();
+  initCarousel();
+  initFloatingCTA();
+  initWalletRows();
+  initCmpTable();
+}
+
+if(document.readyState==='loading'){
+  document.addEventListener('DOMContentLoaded',()=>setTimeout(initAll,400));
+}else{
+  setTimeout(initAll,400);
+}
 
 })();
 </script>
