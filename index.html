@@ -10052,6 +10052,7 @@ function getRarity(xAth){
   if(xAth>=5)  return{cls:'rarity-legendary',label:'👑 LEGENDARY',emoji:'👑'};
   if(xAth>=2)  return{cls:'rarity-epic',label:'💎 EPIC',emoji:'💎'};
   if(xAth>=1.2)return{cls:'rarity-rare',label:'🏆 RARE',emoji:'🏆'};
+  if(xAth>1)   return{cls:'rarity-common',label:'📊 CALL',emoji:'📊'};
   return{cls:'rarity-common',label:'❌ BAD CALL',emoji:'❌'};
 }
 
@@ -10325,21 +10326,22 @@ function openScannerPnl(addr,sym,callMcap,athMcap,score,imgUrl=''){
     playSound('rare');
 
   } else {
-    // ── COMMON — Red card, BAD CALL stamp after 2s ──
+    // ── COMMON — affichage simple ──
     multEl.textContent=xAth.toFixed(2)+'x';
-    // BAD CALL stamp arrives after 2 seconds
-    setTimeout(()=>{
-      badCallEl.classList.add('show');
-      // Shake effect
-      card.animate([
-        {transform:'translateX(0)'},
-        {transform:'translateX(-8px)'},
-        {transform:'translateX(8px)'},
-        {transform:'translateX(-5px)'},
-        {transform:'translateX(5px)'},
-        {transform:'translateX(0)'}
-      ],{duration:300,easing:'ease-out'});
-    },2000);
+    // Stamp BAD CALL uniquement si <= x1 (perte réelle)
+    if(xAth<=1){
+      setTimeout(()=>{
+        badCallEl.classList.add('show');
+        card.animate([
+          {transform:'translateX(0)'},
+          {transform:'translateX(-8px)'},
+          {transform:'translateX(8px)'},
+          {transform:'translateX(-5px)'},
+          {transform:'translateX(5px)'},
+          {transform:'translateX(0)'}
+        ],{duration:300,easing:'ease-out'});
+      },2000);
+    }
   }
 }
 
