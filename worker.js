@@ -664,21 +664,18 @@ export async function runScanCycle() {
 
         // Merge GMGN + Helius wallet data — GMGN couvre les achats pump.fun pré-migration
         // que Helius ne voit pas sur le pair pumpswap.
-        // byGroup = MAX(Helius, GMGN) : renowned=KOL, smart_degen=gros trader
+        // byGroup vient UNIQUEMENT de Helius (notre WALLET_TRACKER) — les compteurs GMGN
+        // (renowned/smart_degen) sont leur propre liste, pas la nôtre, donc on les ignore.
         const gmgnWD = gmgnWalletMap.get(tokenAddr);
         let effectiveWData = wData;
         if (gmgnWD && gmgnWD.count > (wData.count || 0)) {
           effectiveWData = {
-            count:    gmgnWD.count,
-            byGroup: {
-              KOL:           Math.max(wData.byGroup?.KOL           || 0, gmgnWD.byGroup?.KOL           || 0),
-              'gros trader': Math.max(wData.byGroup?.['gros trader']|| 0, gmgnWD.byGroup?.['gros trader']|| 0),
-              DEV:           Math.max(wData.byGroup?.DEV            || 0, gmgnWD.byGroup?.DEV            || 0),
-              farmer:        Math.max(wData.byGroup?.farmer         || 0, gmgnWD.byGroup?.farmer         || 0),
-            },
-            wallets:   wData.wallets || [],
-            clustered: wData.clustered || gmgnWD.clustered,
-            source:    'gmgn+helius',
+            count:          gmgnWD.count,
+            byGroup:        wData.byGroup || { KOL: 0, 'gros trader': 0, DEV: 0, farmer: 0 },
+            wallets:        wData.wallets || [],
+            walletsByGroup: wData.walletsByGroup || { KOL: [], 'gros trader': [], DEV: [], farmer: [] },
+            clustered:      wData.clustered || gmgnWD.clustered,
+            source:         'gmgn+helius',
           };
         }
 
