@@ -9757,9 +9757,10 @@ function tcMultDisp(xAth){
   return xAth.toFixed(1)+'x';
 }
 function fmtSignalDate(ts){
-  const d=new Date(ts);
-  const months=['janv.','févr.','mars','avr.','mai','juin','juil.','août','sept.','oct.','nov.','déc.'];
-  return `${d.getUTCDate()} ${months[d.getUTCMonth()]} ${d.getUTCFullYear()} — ${String(d.getUTCHours()).padStart(2,'0')}:${String(d.getUTCMinutes()).padStart(2,'0')} UTC`;
+  const fmt=new Intl.DateTimeFormat('fr-FR',{timeZone:'Europe/Paris',day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
+  const parts=fmt.formatToParts(new Date(ts));
+  const get=t=>parts.find(p=>p.type===t)?.value||'';
+  return `${get('day')} ${get('month')} ${get('year')} — ${get('hour')}:${get('minute')}`;
 }
 // Emoji par catégorie de score
 function getScoreEmoji(score){
