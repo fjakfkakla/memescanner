@@ -1356,6 +1356,22 @@ footer{border-top:1px solid var(--border);}
 .pnl-btn-dl:hover{transform:translateY(-2px);box-shadow:0 6px 24px rgba(97,86,217,.35);}
 .pnl-btn-close{padding:.65rem 1rem;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);color:rgba(255,255,255,.4);border-radius:10px;font-family:var(--font);font-size:.82rem;cursor:pointer;transition:.25s;}
 .pnl-btn-close:hover{border-color:rgba(97,86,217,.3);color:var(--purple2);}
+/* PNL card TC redesign */
+.pnl-tc-img-wrap{position:relative;width:100%;height:140px;overflow:hidden;background:#1a1f2e;border-radius:0;margin:-1.8rem -1.6rem 1rem;width:calc(100% + 3.2rem);}
+.pnl-tc-img{width:100%;height:100%;object-fit:cover;display:block;}
+.pnl-tc-img-fallback{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:3rem;background:linear-gradient(135deg,#1a1f2e,#2d3348);}
+.pnl-tc-overlay{position:absolute;inset:0;background:linear-gradient(to bottom,rgba(0,0,0,0) 30%,rgba(0,0,0,.75) 100%);}
+.pnl-tc-sym-wrap{position:absolute;bottom:10px;left:14px;right:14px;}
+.pnl-tc-stars{font-size:.72rem;color:#f5c542;margin-top:.1rem;letter-spacing:.05em;}
+.pnl-tc-progress-wrap{margin:.2rem 0 .6rem;}
+.pnl-tc-progress-bg{height:5px;background:rgba(255,255,255,.08);border-radius:3px;overflow:hidden;margin-bottom:.3rem;}
+.pnl-tc-progress-fill{height:100%;background:linear-gradient(90deg,#f5c542,#ffe066);border-radius:3px;transition:width .5s ease;}
+.pnl-tc-progress-footer{display:flex;justify-content:space-between;}
+.pnl-tc-marks{display:flex;gap:.7rem;}
+.pnl-tc-marks span{font-size:.56rem;color:rgba(255,255,255,.22);font-family:'Space Mono',monospace;}
+.pnl-tc-mc-row{display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin:.2rem 0 .6rem;}
+.pnl-tc-mc-cell{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:8px;padding:.45rem .6rem;text-align:center;}
+.pnl-tc-mc-lbl{font-size:.58rem;color:rgba(255,255,255,.3);margin-bottom:.15rem;text-transform:uppercase;letter-spacing:.04em;}
 
 /* ── SCANNER CARDS — Cyberpunk Degen Style ─────────────────────── */
 .scanner-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:1.2rem;padding:.5rem 0;}
@@ -1506,6 +1522,52 @@ footer{border-top:1px solid var(--border);}
 .scv2-copy-btn:hover{background:rgba(97,86,217,.18);border-color:rgba(97,86,217,.4);color:#c5bcff;}
 .scv2-copy-btn.copied,.scv2-copy-btn[style*="green"]{color:var(--green) !important;border-color:rgba(0,255,136,.3) !important;background:rgba(0,255,136,.06) !important;}
 .scv2-callinfo{font-size:.65rem;color:rgba(255,255,255,.25);font-family:var(--font-mono);text-align:right;}
+
+/* ═══ TRENCHONCHAIN STYLE CARDS ══════════════════════════════════ */
+.tc-card{background:#111827;border:1.5px solid rgba(255,255,255,.06);border-radius:16px;overflow:hidden;transition:transform .2s,box-shadow .2s;font-family:'Inter',sans-serif;}
+.tc-card:hover{transform:translateY(-3px);box-shadow:0 8px 32px rgba(0,0,0,.6);border-color:rgba(255,255,255,.12);}
+.tc-img-wrap{position:relative;width:100%;height:165px;overflow:hidden;background:#1a1f2e;}
+.tc-img{width:100%;height:100%;object-fit:cover;display:block;}
+.tc-img-fallback{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:3rem;background:linear-gradient(135deg,#1a1f2e,#2d3348);color:rgba(255,255,255,.15);font-family:'Space Grotesk',sans-serif;font-weight:800;letter-spacing:-.02em;}
+.tc-img-overlay{position:absolute;inset:0;background:linear-gradient(to bottom,rgba(0,0,0,0) 35%,rgba(0,0,0,.8) 100%);}
+.tc-mult-badge{position:absolute;top:10px;right:10px;background:linear-gradient(135deg,#f5c542,#f0a500);color:#000;font-weight:900;font-size:.8rem;padding:.22rem .58rem;border-radius:20px;font-family:'Space Mono',monospace;box-shadow:0 2px 10px rgba(245,197,66,.4);white-space:nowrap;z-index:2;}
+.tc-recent-badge{position:absolute;top:10px;left:10px;background:rgba(0,188,212,.15);color:#00bcd4;border:1px solid rgba(0,188,212,.4);font-size:.58rem;font-weight:700;padding:.16rem .48rem;border-radius:20px;letter-spacing:.06em;text-transform:uppercase;z-index:2;}
+.tc-img-info{position:absolute;bottom:10px;left:12px;right:76px;z-index:2;}
+.tc-sym{font-family:'Space Grotesk',sans-serif;font-size:1rem;font-weight:800;color:#fff;text-shadow:0 1px 6px rgba(0,0,0,.9);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.tc-ticker-stars{display:flex;align-items:center;gap:.35rem;margin-top:.08rem;}
+.tc-ticker{font-size:.7rem;color:rgba(255,255,255,.65);font-weight:600;text-shadow:0 1px 4px rgba(0,0,0,.9);}
+.tc-stars{font-size:.65rem;color:#f5c542;letter-spacing:.05em;}
+.tc-body{padding:.7rem .85rem .4rem;display:flex;flex-direction:column;gap:.45rem;}
+.tc-addr-row{display:flex;align-items:center;gap:.35rem;background:rgba(255,255,255,.04);border-radius:8px;padding:.3rem .55rem;}
+.tc-addr-lbl{font-size:.6rem;color:rgba(255,255,255,.3);white-space:nowrap;flex-shrink:0;}
+.tc-addr{flex:1;font-family:'Space Mono',monospace;font-size:.6rem;color:#f5c542;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.tc-copy-btn{background:none;border:none;cursor:pointer;font-size:.68rem;opacity:.45;padding:0;transition:opacity .15s;flex-shrink:0;}
+.tc-copy-btn:hover{opacity:1;}
+.tc-copy-btn.copied{opacity:1;}
+.tc-signal-row{display:flex;align-items:center;gap:.35rem;font-size:.67rem;}
+.tc-signal-icon{color:rgba(0,188,212,.6);}
+.tc-signal-lbl{color:rgba(255,255,255,.32);white-space:nowrap;}
+.tc-signal-time{color:rgba(255,255,255,.72);font-weight:500;margin-left:auto;text-align:right;}
+.tc-perf-row{display:flex;align-items:center;justify-content:space-between;}
+.tc-perf-lbl{font-size:.6rem;color:rgba(255,255,255,.32);text-transform:uppercase;letter-spacing:.06em;}
+.tc-perf-val{font-size:.78rem;font-weight:700;color:#f5c542;}
+.tc-progress-bg{height:5px;background:rgba(255,255,255,.08);border-radius:3px;overflow:hidden;margin-bottom:.28rem;}
+.tc-progress-fill{height:100%;background:linear-gradient(90deg,#f5c542,#ffe066);border-radius:3px;transition:width .4s ease;}
+.tc-progress-footer{display:flex;justify-content:space-between;align-items:center;}
+.tc-progress-marks{display:flex;gap:.7rem;}
+.tc-progress-marks span{font-size:.56rem;color:rgba(255,255,255,.22);font-family:'Space Mono',monospace;}
+.tc-mult-current{font-family:'Space Mono',monospace;font-size:.67rem;color:#f5c542;font-weight:700;}
+.tc-mc-row{display:grid;grid-template-columns:1fr 1fr;gap:.45rem;}
+.tc-mc-cell{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.05);border-radius:8px;padding:.45rem .55rem;}
+.tc-mc-lbl{font-size:.58rem;color:rgba(255,255,255,.32);margin-bottom:.15rem;text-transform:uppercase;letter-spacing:.04em;}
+.tc-mc-val{font-size:.92rem;font-weight:800;color:#fff;}
+.tc-footer{display:flex;align-items:center;justify-content:space-between;padding:.45rem .85rem .6rem;border-top:1px solid rgba(255,255,255,.04);margin-top:.2rem;}
+.tc-socials{display:flex;gap:.35rem;}
+.tc-social-btn{width:27px;height:27px;border-radius:50%;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.09);display:flex;align-items:center;justify-content:center;font-size:.68rem;cursor:pointer;transition:.15s;color:rgba(255,255,255,.55);text-decoration:none;line-height:1;}
+.tc-social-btn:hover{background:rgba(255,255,255,.13);color:#fff;}
+.tc-platform-badge{background:rgba(0,200,100,.1);border:1px solid rgba(0,200,100,.22);color:#00cc64;font-size:.62rem;font-weight:700;padding:.18rem .5rem;border-radius:20px;display:flex;align-items:center;gap:.22rem;}
+.tc-pnl-btn{background:rgba(97,86,217,.1);border:1px solid rgba(97,86,217,.25);color:#a99cff;font-size:.62rem;font-weight:700;padding:.18rem .55rem;border-radius:20px;cursor:pointer;transition:.15s;font-family:'Inter',sans-serif;}
+.tc-pnl-btn:hover{background:rgba(97,86,217,.22);color:#c5bcff;}
 
 /* ── PAPER BOT ──────────────────────────────────────────────── */
 /* ===== PAPER TRADING BOT UI ===== */
@@ -4707,23 +4769,34 @@ body.view-avis #landing-wrap { display: none !important; }
     <div class="pnl-badcall" id="pnlBadCall">BAD CALL</div>
     <div class="pnl-candles" id="pnlCandles"></div>
     <div class="pnl-card-inner">
-      <div class="pnl-logo">🐸 MemecoinPump</div>
-      <div class="pnl-sym" id="pnlSym">TOKEN</div>
-      <div class="pnl-called" id="pnlCalled">called at $—</div>
-      <div class="pnl-mult" id="pnlMult">0.00x</div>
-      <div class="pnl-sub" id="pnlSub">ATH depuis le call</div>
-      <div class="pnl-mcap-row">
-        <div class="pnl-mcap-cell">
-          <div class="pnl-mcap-val" style="color:#ffaa44" id="pnlCallVal">$—</div>
-          <div class="pnl-mcap-lbl">Call</div>
-        </div>
-        <div class="pnl-mcap-cell" style="font-size:1.4rem;color:rgba(0,255,136,.4);align-self:center">→</div>
-        <div class="pnl-mcap-cell">
-          <div class="pnl-mcap-val" style="color:#00ff88" id="pnlAthVal">$—</div>
-          <div class="pnl-mcap-lbl">ATH</div>
+      <div class="pnl-tc-img-wrap">
+        <img id="pnlImg" class="pnl-tc-img" src="" alt="" style="display:none" onerror="this.style.display='none';document.getElementById('pnlImgFallback').style.display='flex'">
+        <div class="pnl-tc-img-fallback" id="pnlImgFallback">🐸</div>
+        <div class="pnl-tc-overlay"></div>
+        <div class="pnl-tc-sym-wrap">
+          <div class="pnl-sym" id="pnlSym" style="font-size:1.1rem;text-shadow:0 1px 6px rgba(0,0,0,.9)">TOKEN</div>
+          <div class="pnl-tc-stars" id="pnlStars">★★★</div>
         </div>
       </div>
-      <div class="pnl-footer-txt">DYOR · NFA 🐸</div>
+      <div class="pnl-mult" id="pnlMult">0.00x</div>
+      <div class="pnl-sub" id="pnlSub">ATH depuis le call</div>
+      <div class="pnl-tc-progress-wrap">
+        <div class="pnl-tc-progress-bg"><div class="pnl-tc-progress-fill" id="pnlProgressFill" style="width:0%"></div></div>
+        <div class="pnl-tc-progress-footer">
+          <div class="pnl-tc-marks"><span>x1</span><span>x1.5</span><span>x2</span><span>x2.5+</span></div>
+        </div>
+      </div>
+      <div class="pnl-tc-mc-row">
+        <div class="pnl-tc-mc-cell">
+          <div class="pnl-tc-mc-lbl">MC Initial</div>
+          <div class="pnl-mcap-val" style="color:#ffaa44" id="pnlCallVal">$—</div>
+        </div>
+        <div class="pnl-tc-mc-cell">
+          <div class="pnl-tc-mc-lbl">MC Max</div>
+          <div class="pnl-mcap-val" style="color:#00ff88" id="pnlAthVal">$—</div>
+        </div>
+      </div>
+      <div class="pnl-footer-txt">DYOR · NFA 🐸 MemeScanner</div>
     </div>
     <div class="pnl-actions">
       <button class="pnl-btn-dl" onclick="downloadPnl()">⬇ Image</button>
@@ -8883,41 +8956,70 @@ async function renderHistory(force=false){
     const labelTxt=savedScore>=130?'☢️ NUCLEAR':savedScore>=110?'💎 DIAMOND':savedScore>=95?'🚀 RUNNER':savedScore>=80?'📋 CALL':'📡 RADAR';
     const _hImgUrl = histImageMap[addr] || v.raw?.info?.imageUrl || v.raw?.info?.header || v.raw?.baseToken?.info?.imageUrl || '';
     const _hTwRaw = v.raw?.info?.socials?.find(s=>s.type==='twitter')?.url || '';
-    const _hTwHandle = _hTwRaw ? '@'+_hTwRaw.replace(/\/+$/,'').split('/').pop() : '';
-    const _hXNow = (isLive && callMcap>0) ? curMcap/callMcap : null;
-    const _hXNowColor = _hXNow===null?'rgba(255,255,255,.2)':_hXNow>=2?'#00e676':_hXNow>=1.3?'#69f0ae':_hXNow>=0.8?'#ffd740':'#ff5252';
-    const _hXAthColor = xAth>=5?'#00e676':xAth>=3?'#69f0ae':xAth>=2?'#ffd740':'#ff8a65';
-    cards.push(`<div class="sc-card scv2-card" style="opacity:${isLive?1:.75}">
-      <div class="scv2-header">
-        <div class="scv2-logo-wrap">
-          ${_hImgUrl
-            ? `<img class="scv2-logo-img" src="${_hImgUrl}" alt="${sym}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
-            : ''}
-          <div class="scv2-logo-fallback" style="${_hImgUrl?'display:none':''}">${sym.slice(0,2).toUpperCase()}</div>
-        </div>
-        <div class="scv2-meta">
-          <div class="scv2-sym">${sym}</div>
-          ${_hTwHandle ? `<div class="scv2-tw">𝕏 ${_hTwHandle}</div>` : `<div class="scv2-tw">${isLive?'🟢 live':'⚫ passé'}</div>`}
-        </div>
-        <div class="scv2-score-badge">${savedScore}<span class="scv2-score-pts">pts</span></div>
-      </div>
-      <div class="scv2-stats">
-        <div class="scv2-stat">
-          <div class="scv2-stat-lbl">X actuel</div>
-          <div class="scv2-stat-val" style="color:${_hXNowColor}">${_hXNow!==null?_hXNow.toFixed(2)+'x':'—'}</div>
-        </div>
-        <div class="scv2-stat">
-          <div class="scv2-stat-lbl">X plus haut${isAdminMode?` <button onclick="adminEditAth('${key}','${addr}','${sym}')" style="background:none;border:none;color:rgba(255,170,0,.5);font-size:.6rem;cursor:pointer;padding:0 .2rem">✏️</button>`:''}</div>
-          <div class="scv2-stat-val" style="color:${_hXAthColor}" id="xath-val-${key}">${xAth.toFixed(2)}x</div>
-        </div>
-        <div class="scv2-stat">
-          <div class="scv2-stat-lbl">Mcap call</div>
-          <div class="scv2-stat-val" style="color:#757575">$${fmtNum(callMcap)}</div>
+    const _hWebUrl = v.raw?.info?.websites?.[0]?.url || '';
+    const _hIsPump = (v.raw?.dexId||addr||'').toLowerCase().includes('pump');
+    const _hBarW = tcBarWidth(xAth);
+    const _hMult = tcMultDisp(xAth);
+    const _hFallback = sym.slice(0,4).toUpperCase();
+    const _hAdminEdit = isAdminMode?`<button onclick="adminEditAth('${key}','${addr}','${sym}')" style="background:none;border:none;color:rgba(255,170,0,.5);font-size:.6rem;cursor:pointer;padding:0 .2rem;position:absolute;top:6px;right:6px;z-index:10">✏️</button>`:'';
+    cards.push(`<div class="tc-card" style="opacity:${isLive?1:.8}">
+      <div class="tc-img-wrap">
+        ${_hImgUrl
+          ? `<img class="tc-img" src="${_hImgUrl}" alt="${sym}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div class="tc-img-fallback" style="display:none">${_hFallback}</div>`
+          : `<div class="tc-img-fallback">${_hFallback}</div>`}
+        <div class="tc-img-overlay"></div>
+        <div class="tc-mult-badge" id="xath-val-${key}">${_hMult} ⚡</div>
+        ${_hAdminEdit}
+        <div class="tc-img-info">
+          <div class="tc-sym">${sym}</div>
+          <div class="tc-ticker-stars">
+            <span class="tc-ticker">$${sym}</span>
+            <span class="tc-stars">${tcStars(savedScore)}</span>
+          </div>
         </div>
       </div>
-      <div class="scv2-footer">
-        <button class="scv2-copy-btn" data-addr="${addr}" onclick="copyHistCA(this)">📋 ${addrShort}</button>
-        <div class="scv2-callinfo">il y a ${timeAgo(callTime)} · ${callHeure}</div>
+      <div class="tc-body">
+        <div class="tc-addr-row">
+          <span class="tc-addr-lbl">Adresse:</span>
+          <span class="tc-addr">${addr.slice(0,18)}...${addr.slice(-6)}</span>
+          <button class="tc-copy-btn scv2-copy-btn" data-addr="${addr}" onclick="copyHistCA(this)" title="Copier">📋</button>
+        </div>
+        <div class="tc-signal-row">
+          <span class="tc-signal-icon">⏱</span>
+          <span class="tc-signal-lbl">Signal détecté:</span>
+          <span class="tc-signal-time">${fmtSignalDate(callTime)}</span>
+        </div>
+        <div class="tc-perf-row">
+          <span class="tc-perf-lbl">Performance</span>
+          <span class="tc-perf-val">${tcPerfPct(xAth)}</span>
+        </div>
+        <div>
+          <div class="tc-progress-bg"><div class="tc-progress-fill" style="width:${_hBarW}%"></div></div>
+          <div class="tc-progress-footer">
+            <div class="tc-progress-marks"><span>x1</span><span>x1.5</span><span>x2</span><span>x2.5+</span></div>
+            <div class="tc-mult-current">${_hMult}</div>
+          </div>
+        </div>
+        <div class="tc-mc-row">
+          <div class="tc-mc-cell">
+            <div class="tc-mc-lbl">MC Initial</div>
+            <div class="tc-mc-val">$${fmtNum(callMcap)}</div>
+          </div>
+          <div class="tc-mc-cell">
+            <div class="tc-mc-lbl">MC Max</div>
+            <div class="tc-mc-val">$${fmtNum(athMcap)}</div>
+          </div>
+        </div>
+      </div>
+      <div class="tc-footer">
+        <div class="tc-socials">
+          ${_hWebUrl?`<a class="tc-social-btn" href="${_hWebUrl}" target="_blank" rel="noopener" title="Site web">🌐</a>`:''}
+          ${_hTwRaw?`<a class="tc-social-btn" href="${_hTwRaw}" target="_blank" rel="noopener" title="Twitter/X">𝕏</a>`:''}
+        </div>
+        <div style="display:flex;align-items:center;gap:.4rem">
+          ${_hIsPump?`<div class="tc-platform-badge">🟢 Pump.fun</div>`:''}
+          <button class="tc-pnl-btn" onclick="openScannerPnl('${addr}','${sym}',${callMcap},${athMcap},${savedScore},'${_hImgUrl.replace(/'/g,'')}')">📊 PNL</button>
+        </div>
       </div>
     </div>`);
   }
@@ -9626,6 +9728,31 @@ async function fetchTokens(){
 // ============================================================
 // RENDER TOKEN TABLE
 // ============================================================
+// ── TC card helpers ──
+function tcStars(score){
+  if(score>=110) return '★★★★';
+  if(score>=95)  return '★★★';
+  if(score>=80)  return '★★';
+  return '★';
+}
+function tcBarWidth(xAth){
+  return Math.min(100,Math.max(0,(xAth-1)/1.5*100)).toFixed(1);
+}
+function tcPerfPct(xAth){
+  const pct=(xAth-1)*100;
+  if(pct>=1000) return '↗ +'+Math.round(pct).toLocaleString('fr-FR')+'%';
+  if(pct>=0)    return '↗ +'+pct.toFixed(1)+'%';
+  return '↘ '+pct.toFixed(1)+'%';
+}
+function tcMultDisp(xAth){
+  if(xAth>=1000) return Math.round(xAth).toLocaleString('fr-FR')+'x';
+  return xAth.toFixed(1)+'x';
+}
+function fmtSignalDate(ts){
+  const d=new Date(ts);
+  const months=['janv.','févr.','mars','avr.','mai','juin','juil.','août','sept.','oct.','nov.','déc.'];
+  return `${d.getUTCDate()} ${months[d.getUTCMonth()]} ${d.getUTCFullYear()} — ${String(d.getUTCHours()).padStart(2,'0')}:${String(d.getUTCMinutes()).padStart(2,'0')} UTC`;
+}
 // Emoji par catégorie de score
 function getScoreEmoji(score){
   if(score>=130) return '☢️';
@@ -9809,44 +9936,73 @@ async function renderTokenTable(tokens){
       : t.pvp==='loser'
         ? `<span class="sc-pvp-badge pvp-l">⚔️ PVP LOSE</span>`
         : '';
-    // ── V2 card extra vars ──
+    // ── TC card vars ──
     const _imageUrl = liveImageMap[t.addr] || t.raw?.info?.imageUrl || t.raw?.info?.header || t.raw?.baseToken?.info?.imageUrl || '';
     const _twRaw = t.raw?.info?.socials?.find(s=>s.type==='twitter')?.url || '';
-    const _twHandle = _twRaw ? '@'+_twRaw.replace(/\/+$/,'').split('/').pop() : '';
-    const _xNow = callMcap>0 ? (nowMcap||t.mcap)/callMcap : 1;
-    const _xNowColor = _xNow>=2?'#00e676':_xNow>=1.3?'#69f0ae':_xNow>=0.8?'#ffd740':'#ff5252';
-    const _xAthColor = xAth>=3?'#00e676':xAth>=2?'#69f0ae':xAth>=1.5?'#ffd740':'#ff8a65';
-    cards.push(`<div class="sc-card sc-live-card scv2-card">
-      <div class="scv2-header">
-        <div class="scv2-logo-wrap">
-          ${_imageUrl
-            ? `<img class="scv2-logo-img" src="${_imageUrl}" alt="${t.symbol}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
-            : ''}
-          <div class="scv2-logo-fallback" style="${_imageUrl?'display:none':''}">${t.symbol.slice(0,2).toUpperCase()}</div>
-        </div>
-        <div class="scv2-meta">
-          <div class="scv2-sym">${t.symbol}</div>
-          ${_twHandle ? `<div class="scv2-tw">𝕏 ${_twHandle}</div>` : ''}
-        </div>
-        <div class="scv2-score-badge">${t.score}<span class="scv2-score-pts">pts</span></div>
-      </div>
-      <div class="scv2-stats">
-        <div class="scv2-stat" data-live-addr="${t.addr}" data-call-mcap="${callMcap}">
-          <div class="scv2-stat-lbl">X actuel</div>
-          <div class="scv2-stat-val live-mcap-val" style="color:${_xNowColor}">${_xNow.toFixed(2)}x</div>
-        </div>
-        <div class="scv2-stat" data-live-xath="${t.addr}">
-          <div class="scv2-stat-lbl">X plus haut</div>
-          <div class="scv2-stat-val live-xath-val" style="color:${_xAthColor}">${xAth.toFixed(2)}x</div>
-        </div>
-        <div class="scv2-stat">
-          <div class="scv2-stat-lbl">Mcap call</div>
-          <div class="scv2-stat-val" style="color:#757575">$${fmtNum(callMcap)}</div>
+    const _webUrl = t.raw?.info?.websites?.[0]?.url || '';
+    const _tcIsRecent = (Date.now()-callTime)<30*60*1000;
+    const _tcIsPump = (t.raw?.dexId||t.raw?.pairAddress||'').toLowerCase().includes('pump');
+    const _tcBarW = tcBarWidth(xAth);
+    const _tcMult = tcMultDisp(xAth);
+    const _tcFallback = t.symbol.slice(0,4).toUpperCase();
+    cards.push(`<div class="tc-card" data-live-addr="${t.addr}" data-call-mcap="${callMcap}">
+      <div class="tc-img-wrap">
+        ${_imageUrl
+          ? `<img class="tc-img" src="${_imageUrl}" alt="${t.symbol}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div class="tc-img-fallback" style="display:none">${_tcFallback}</div>`
+          : `<div class="tc-img-fallback">${_tcFallback}</div>`}
+        <div class="tc-img-overlay"></div>
+        ${_tcIsRecent?`<div class="tc-recent-badge">⏱ RÉCENT</div>`:''}
+        <div class="tc-mult-badge" data-live-xath="${t.addr}"><span class="live-xath-val">${_tcMult}</span> ⚡</div>
+        <div class="tc-img-info">
+          <div class="tc-sym">${t.symbol}</div>
+          <div class="tc-ticker-stars">
+            <span class="tc-ticker">$${t.symbol}</span>
+            <span class="tc-stars">${tcStars(t.score)}</span>
+          </div>
         </div>
       </div>
-      <div class="scv2-footer">
-        <button class="scv2-copy-btn" data-addr="${t.addr}" onclick="copyHistCA(this)">📋 ${t.addr.slice(0,6)}...${t.addr.slice(-4)}</button>
-        <div class="scv2-callinfo">il y a ${timeAgo(callTime)} · ${callHeure}</div>
+      <div class="tc-body">
+        <div class="tc-addr-row">
+          <span class="tc-addr-lbl">Adresse:</span>
+          <span class="tc-addr">${t.addr.slice(0,18)}...${t.addr.slice(-6)}</span>
+          <button class="tc-copy-btn scv2-copy-btn" data-addr="${t.addr}" onclick="copyHistCA(this)" title="Copier">📋</button>
+        </div>
+        <div class="tc-signal-row">
+          <span class="tc-signal-icon">⏱</span>
+          <span class="tc-signal-lbl">Signal détecté:</span>
+          <span class="tc-signal-time">${fmtSignalDate(callTime)}</span>
+        </div>
+        <div class="tc-perf-row">
+          <span class="tc-perf-lbl">Performance</span>
+          <span class="tc-perf-val">${tcPerfPct(xAth)}</span>
+        </div>
+        <div>
+          <div class="tc-progress-bg"><div class="tc-progress-fill" style="width:${_tcBarW}%"></div></div>
+          <div class="tc-progress-footer">
+            <div class="tc-progress-marks"><span>x1</span><span>x1.5</span><span>x2</span><span>x2.5+</span></div>
+            <div class="tc-mult-current">${_tcMult}</div>
+          </div>
+        </div>
+        <div class="tc-mc-row">
+          <div class="tc-mc-cell">
+            <div class="tc-mc-lbl">MC Initial</div>
+            <div class="tc-mc-val">$${fmtNum(callMcap)}</div>
+          </div>
+          <div class="tc-mc-cell" data-live-ath="${t.addr}">
+            <div class="tc-mc-lbl">MC Max</div>
+            <div class="tc-mc-val live-ath-val">$${fmtNum(athMcap)}</div>
+          </div>
+        </div>
+      </div>
+      <div class="tc-footer">
+        <div class="tc-socials">
+          ${_webUrl?`<a class="tc-social-btn" href="${_webUrl}" target="_blank" rel="noopener" title="Site web">🌐</a>`:''}
+          ${_twRaw?`<a class="tc-social-btn" href="${_twRaw}" target="_blank" rel="noopener" title="Twitter/X">𝕏</a>`:''}
+        </div>
+        <div style="display:flex;align-items:center;gap:.4rem">
+          ${_tcIsPump?`<div class="tc-platform-badge">🟢 Pump.fun</div>`:''}
+          <button class="tc-pnl-btn" onclick="openScannerPnl('${t.addr}','${t.symbol}',${callMcap},${athMcap},${t.score},'${_imageUrl.replace(/'/g,'')}')">📊 PNL</button>
+        </div>
       </div>
     </div>`);
   }
@@ -9992,7 +10148,7 @@ function launchExplosions(){
   }
 }
 
-function openScannerPnl(addr,sym,callMcap,athMcap,score){
+function openScannerPnl(addr,sym,callMcap,athMcap,score,imgUrl=''){
   const xAth=callMcap>0?(athMcap/callMcap):1;
   _pnlXAth = xAth;
   _pnlSym = sym;
@@ -10005,6 +10161,26 @@ function openScannerPnl(addr,sym,callMcap,athMcap,score){
   badCallEl.classList.remove('show');
   candlesEl.innerHTML='';
   card.classList.remove('spin-entrance');
+
+  // ── Set token image ──
+  const pnlImg=document.getElementById('pnlImg');
+  const pnlImgFallback=document.getElementById('pnlImgFallback');
+  if(imgUrl){
+    pnlImg.src=imgUrl;pnlImg.style.display='block';
+    pnlImgFallback.style.display='none';
+  } else {
+    pnlImg.style.display='none';
+    pnlImgFallback.style.display='flex';
+    pnlImgFallback.textContent='🐸';
+  }
+
+  // ── Stars ──
+  const starsEl=document.getElementById('pnlStars');
+  if(starsEl) starsEl.textContent=tcStars(score||0);
+
+  // ── Progress bar ──
+  const progFill=document.getElementById('pnlProgressFill');
+  if(progFill) progFill.style.width=tcBarWidth(xAth)+'%';
 
   // Set rarity
   const rarity=getRarity(xAth);
@@ -10024,7 +10200,6 @@ function openScannerPnl(addr,sym,callMcap,athMcap,score){
   multEl.className='pnl-mult'+(xAth>=5?' big-mult':'');
 
   document.getElementById('pnlSym').textContent=rarity.emoji+' '+sym;
-  document.getElementById('pnlCalled').textContent='called at $'+fmtNum(callMcap);
   document.getElementById('pnlCallVal').textContent='$'+fmtNum(callMcap);
   document.getElementById('pnlAthVal').textContent='$'+fmtNum(athMcap);
   document.getElementById('pnlSub').textContent='ATH depuis le call · '+new Date().toLocaleDateString('fr-FR');
