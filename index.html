@@ -1846,7 +1846,7 @@ nav{background:rgba(0,0,0,.96)!important;border-bottom:1px solid rgba(255,109,0,
 /* ═══ HERO WEBGL CANVAS ══════════════════════════════════════ */
 #heroGLCanvas {
   position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-  opacity: 0.55; pointer-events: none; z-index: 0;
+  opacity: 0.72; pointer-events: none; z-index: 0;
 }
 .lp-hero { position: relative; overflow: hidden; }
 .lp-hero > .lp-container { position: relative; z-index: 1; }
@@ -1980,7 +1980,159 @@ nav.scrolled { box-shadow: 0 2px 16px rgba(0,0,0,0.08) !important; }
 .lp-price-card { border-radius: 16px !important; }
 .lp-price-card.featured {
   background: linear-gradient(145deg, #0e0e1a, #111122) !important;
-  box-shadow: 0 0 50px rgba(99,102,241,0.12), 0 0 0 1px rgba(99,102,241,0.3) !important;
+  /* box-shadow overridden by featured-card-life animation below */
+}
+
+/* ═══ HERO — MOUSE INTERACTION & ANIMATIONS ═════════════════ */
+.hero-cursor-glow {
+  position: absolute; width: 600px; height: 600px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(99,102,241,0.06) 0%, transparent 65%);
+  pointer-events: none; z-index: 0;
+  transform: translate(-50%, -50%);
+  will-change: left, top;
+  transition: left 0.25s cubic-bezier(0.25,0.46,0.45,0.94), top 0.25s cubic-bezier(0.25,0.46,0.45,0.94);
+}
+.lp-hero-eyebrow {
+  animation: float-badge 3.5s ease-in-out infinite !important;
+}
+@keyframes float-badge {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-5px); }
+}
+/* Hero stats entrance avec délai */
+.lp-hero-stats .lp-hstat { opacity: 0; animation: stat-slide-up 0.6s cubic-bezier(0.16,1,0.3,1) forwards; }
+.lp-hero-stats .lp-hstat:nth-child(1) { animation-delay: 0.5s; }
+.lp-hero-stats .lp-hstat:nth-child(2),
+.lp-hero-stats .lp-hstat-sep:nth-child(2) { animation-delay: 0.65s; }
+.lp-hero-stats .lp-hstat:nth-child(3) { animation-delay: 0.8s; }
+.lp-hero-stats .lp-hstat:nth-child(4) { animation-delay: 0.95s; }
+.lp-hero-stats .lp-hstat-sep { opacity: 0; animation: stat-slide-up 0.5s cubic-bezier(0.16,1,0.3,1) forwards; }
+@keyframes stat-slide-up {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+/* Hero title entrance */
+.lp-hero-title {
+  animation: hero-title-in 0.9s cubic-bezier(0.16,1,0.3,1) forwards !important;
+  opacity: 0 !important;
+}
+.lp-hero-sub { opacity: 0; animation: hero-title-in 0.9s 0.2s cubic-bezier(0.16,1,0.3,1) forwards; }
+.lp-hero-cta { opacity: 0; animation: hero-title-in 0.9s 0.35s cubic-bezier(0.16,1,0.3,1) forwards; }
+@keyframes hero-title-in {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ═══ SCROLL ANIMATIONS AVANCÉES ════════════════════════════ */
+.reveal-3d {
+  opacity: 0;
+  transform: perspective(900px) rotateX(10deg) translateY(35px);
+  transition: opacity 0.85s cubic-bezier(0.16,1,0.3,1), transform 0.85s cubic-bezier(0.16,1,0.3,1);
+}
+.reveal-3d.visible {
+  opacity: 1;
+  transform: perspective(900px) rotateX(0deg) translateY(0);
+}
+.reveal-scale {
+  opacity: 0;
+  transform: scale(0.9) translateY(20px);
+  transition: opacity 0.75s cubic-bezier(0.16,1,0.3,1), transform 0.75s cubic-bezier(0.16,1,0.3,1);
+}
+.reveal-scale.visible { opacity: 1; transform: scale(1) translateY(0); }
+.reveal-delay-05 { transition-delay: 0.05s; }
+.reveal-delay-15 { transition-delay: 0.15s; }
+.reveal-delay-25 { transition-delay: 0.25s; }
+.reveal-delay-35 { transition-delay: 0.35s; }
+.reveal-delay-45 { transition-delay: 0.45s; }
+
+/* Section parallax title effect */
+.section-title-wrap { overflow: hidden; }
+
+/* ═══ PRICING — ANIMATIONS VIVANTES ═════════════════════════ */
+/* Featured card : float continu + glow pulsé */
+@keyframes featured-card-life {
+  0%, 100% {
+    transform: translateY(0px);
+    box-shadow: 0 0 50px rgba(99,102,241,0.12), 0 0 0 1px rgba(99,102,241,0.3), 0 20px 60px rgba(0,0,0,0.4);
+  }
+  50% {
+    transform: translateY(-8px);
+    box-shadow: 0 0 70px rgba(99,102,241,0.22), 0 0 0 1px rgba(99,102,241,0.55), 0 28px 70px rgba(0,0,0,0.5);
+  }
+}
+.lp-price-card.featured {
+  animation: featured-card-life 4.5s ease-in-out infinite !important;
+  position: relative;
+}
+.lp-price-card.featured:hover {
+  animation-play-state: paused !important;
+  transform: translateY(-10px) scale(1.02) !important;
+  box-shadow: 0 0 80px rgba(99,102,241,0.3), 0 0 0 1px rgba(99,102,241,0.7), 0 32px 80px rgba(0,0,0,0.5) !important;
+  transition: transform 0.3s ease, box-shadow 0.3s ease !important;
+}
+
+/* Shimmer effect on featured card top border */
+.lp-price-card.featured::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, transparent 0%, rgba(99,102,241,0.8) 30%, rgba(139,92,246,1) 50%, rgba(99,102,241,0.8) 70%, transparent 100%);
+  background-size: 300% 100%;
+  animation: shimmer-top 2.5s linear infinite;
+  border-radius: 16px 16px 0 0;
+  z-index: 2;
+}
+@keyframes shimmer-top {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Pricing cards: 3D tilt via JS (classe ajoutée par JS) */
+.lp-price-card {
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+.lp-price-card:not(.featured) {
+  transition: transform 0.2s ease, box-shadow 0.2s ease !important;
+}
+.lp-price-card:not(.featured):hover {
+  box-shadow: 0 20px 50px rgba(0,0,0,0.35), 0 0 0 1px rgba(255,255,255,0.08) !important;
+}
+
+/* Prix qui pulse subtilement */
+.lp-price-val {
+  animation: price-pulse 4s ease-in-out infinite;
+}
+@keyframes price-pulse {
+  0%, 100% { text-shadow: none; }
+  50% { text-shadow: 0 0 20px rgba(99,102,241,0.3); }
+}
+.lp-price-card.lp-price-dubai .lp-price-val {
+  animation: price-pulse-gold 4s ease-in-out infinite;
+}
+@keyframes price-pulse-gold {
+  0%, 100% { text-shadow: none; }
+  50% { text-shadow: 0 0 20px rgba(245,158,11,0.4); }
+}
+
+/* Particules flottantes dans le featured card */
+.price-particles {
+  position: absolute; inset: 0; overflow: hidden;
+  pointer-events: none; z-index: 0; border-radius: 16px;
+}
+.price-particles span {
+  position: absolute; bottom: -8px; width: 4px; height: 4px;
+  border-radius: 50%; background: rgba(99,102,241,0.6);
+  animation: particle-rise linear infinite;
+}
+.price-particles span:nth-child(1) { left: 20%; animation-duration: 4s; animation-delay: 0s; width: 3px; height: 3px; }
+.price-particles span:nth-child(2) { left: 45%; animation-duration: 5.5s; animation-delay: 1.2s; width: 5px; height: 5px; opacity: 0.5; }
+.price-particles span:nth-child(3) { left: 70%; animation-duration: 4.8s; animation-delay: 2.4s; width: 3px; height: 3px; }
+.price-particles span:nth-child(4) { left: 85%; animation-duration: 6s; animation-delay: 0.8s; width: 2px; height: 2px; opacity: 0.4; }
+.price-particles span:nth-child(5) { left: 10%; animation-duration: 5s; animation-delay: 1.8s; width: 4px; height: 4px; opacity: 0.7; }
+@keyframes particle-rise {
+  0% { transform: translateY(0) scale(1); opacity: 0.8; }
+  70% { opacity: 0.5; }
+  100% { transform: translateY(-120px) scale(0.2); opacity: 0; }
 }
 
 /* ═══ APP DIVIDER — PREMIUM ══════════════════════════════════════ */
@@ -2559,7 +2711,8 @@ body.view-avis #landing-wrap { display: none !important; }
 <!-- ═══ HERO ═══════════════════════════════════════════════════ -->
 <section id="hero" class="lp-hero">
   <canvas id="heroGLCanvas"></canvas>
-  <div class="lp-container">
+  <div class="hero-cursor-glow" id="heroCursorGlow"></div>
+  <div class="lp-container" id="heroTextWrap">
     <div class="lp-hero-eyebrow">
       <span class="lp-pulse-dot"></span>
       Scanner actif · <span id="hlvCycle">847</span> cycles · Solana Mainnet
@@ -2592,10 +2745,10 @@ body.view-avis #landing-wrap { display: none !important; }
 <!-- ═══ FEATURES ════════════════════════════════════════════════ -->
 <section class="lp-features" id="features">
   <div class="lp-container">
-    <div class="lp-section-label">Infrastructure</div>
-    <h2 class="lp-section-title">L'edge technique que<br>les autres n'ont pas.</h2>
+    <div class="lp-section-label reveal">Infrastructure</div>
+    <h2 class="lp-section-title reveal reveal-delay-1">L'edge technique que<br>les autres n'ont pas.</h2>
     <div class="lp-features-grid">
-      <div class="lp-feat-card accent-violet">
+      <div class="lp-feat-card accent-violet reveal-3d reveal-delay-05">
         <div class="lp-feat-icon-wrap violet">
           <svg viewBox="0 0 24 24" fill="none" stroke="#a5b4fc" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
         </div>
@@ -2604,7 +2757,7 @@ body.view-avis #landing-wrap { display: none !important; }
         <p class="lp-feat-desc">Algo propre qui tourne toutes les 45s. 12 sources DexScreener + Helius en parallèle. Score 150 pts sur chaque token. Tu reçois les calls avant le marché.</p>
         <div class="lp-feat-pills"><span>150 pts scoring</span><span>15 filtres</span><span>45s cycle</span></div>
       </div>
-      <div class="lp-feat-card accent-green">
+      <div class="lp-feat-card accent-green reveal-3d reveal-delay-15">
         <div class="lp-feat-icon-wrap green">
           <svg viewBox="0 0 24 24" fill="none" stroke="#00ff88" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
         </div>
@@ -2613,7 +2766,7 @@ body.view-avis #landing-wrap { display: none !important; }
         <p class="lp-feat-desc">Détection des rugs en temps réel. Staircase patterns, sell pressure massive, pump & dump — alertes avant que ça crash. Score danger 0-12.</p>
         <div class="lp-feat-pills"><span>Temps réel</span><span>Score danger</span><span>Pump.fun</span></div>
       </div>
-      <div class="lp-feat-card accent-gold">
+      <div class="lp-feat-card accent-gold reveal-3d reveal-delay-25">
         <div class="lp-feat-icon-wrap gold">
           <svg viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
         </div>
@@ -2622,7 +2775,7 @@ body.view-avis #landing-wrap { display: none !important; }
         <p class="lp-feat-desc">Simule des trades automatiques sur chaque call. Capital fictif, ROI réel. Mesure la performance de l'algo sans risquer un seul SOL.</p>
         <div class="lp-feat-pills"><span>Auto-trading</span><span>PnL tracker</span><span>Equity curve</span></div>
       </div>
-      <div class="lp-feat-card accent-blue">
+      <div class="lp-feat-card accent-blue reveal-3d reveal-delay-35">
         <div class="lp-feat-icon-wrap blue">
           <svg viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
         </div>
@@ -2639,7 +2792,7 @@ body.view-avis #landing-wrap { display: none !important; }
 <section class="lp-smartmoney" id="smartmoney">
   <div class="lp-container">
     <div class="lp-sm-inner">
-      <div class="lp-sm-left">
+      <div class="lp-sm-left reveal-left">
         <div class="lp-section-label">Wallet Tracker Intelligence</div>
         <h2 class="lp-section-title">Suis les wallets<br>qui font +10x.</h2>
         <p class="lp-sm-desc">Notre base de données contient 1 064 wallets profitables trackés en temps réel. Quand l'un d'eux entre sur un token — le score monte automatiquement.</p>
@@ -2649,7 +2802,7 @@ body.view-avis #landing-wrap { display: none !important; }
           <div class="lp-sm-stat"><div class="lp-sm-stat-val">10min</div><div class="lp-sm-stat-lbl">Cache live</div></div>
         </div>
       </div>
-      <div class="lp-sm-right">
+      <div class="lp-sm-right reveal-right">
         <div class="lp-wallet-card">
           <div class="lp-wc-header">
             <span class="lp-wc-dot"></span>
@@ -2690,10 +2843,10 @@ body.view-avis #landing-wrap { display: none !important; }
 <!-- ═══ PRICING ══════════════════════════════════════════════════ -->
 <section class="lp-pricing-preview" id="pricing-preview">
   <div class="lp-container">
-    <div class="lp-section-label" style="text-align:center">Accès</div>
-    <h2 class="lp-section-title" style="text-align:center">Simple. Transparent.<br><span style="font-size:1.1rem;font-weight:500;color:var(--lp-muted)">Pas de frais cachés.</span></h2>
+    <div class="lp-section-label reveal" style="text-align:center">Accès</div>
+    <h2 class="lp-section-title reveal reveal-delay-1" style="text-align:center">Simple. Transparent.<br><span style="font-size:1.1rem;font-weight:500;color:var(--lp-muted)">Pas de frais cachés.</span></h2>
     <div class="lp-pricing-grid">
-      <div class="lp-price-card lp-price-base">
+      <div class="lp-price-card lp-price-base reveal-scale reveal-delay-05">
         <div class="lp-price-tier">STARTER</div>
         <div class="lp-price-tagline">Pour tester l'algo sans risque</div>
         <div class="lp-price-val">$19<span class="lp-price-period">/mois</span></div>
@@ -2713,7 +2866,8 @@ body.view-avis #landing-wrap { display: none !important; }
         </ul>
         <button class="lp-price-btn outline" onclick="openCode()">Commencer</button>
       </div>
-      <div class="lp-price-card featured">
+      <div class="lp-price-card featured reveal-scale reveal-delay-15">
+        <div class="price-particles"><span></span><span></span><span></span><span></span><span></span></div>
         <div class="lp-price-badge-top">⭐ POPULAIRE</div>
         <div class="lp-price-tier">ALPHA</div>
         <div class="lp-price-tagline">L'edge que les autres n'ont pas</div>
@@ -2734,7 +2888,7 @@ body.view-avis #landing-wrap { display: none !important; }
         </ul>
         <button class="lp-price-btn primary" onclick="openCode()">Prendre ALPHA</button>
       </div>
-      <div class="lp-price-card lp-price-dubai">
+      <div class="lp-price-card lp-price-dubai reveal-scale reveal-delay-25">
         <div class="lp-price-badge-top dubai-badge">PRO</div>
         <div class="lp-price-tier">ELITE</div>
         <div class="lp-price-tagline">Accès complet, zéro limite</div>
@@ -10511,9 +10665,30 @@ window.addEventListener('DOMContentLoaded',()=>{
 </div>
 <div id="solTip" style="position:fixed;bottom:88px;right:16px;z-index:900;background:rgba(10,5,25,0.96);border:1px solid rgba(99,102,241,0.35);border-radius:10px;padding:6px 12px;font-size:0.72rem;color:#a5b4fc;font-family:'Space Mono',monospace;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity 0.3s;">Scanner live ↓</div>
 
-<!-- ═══ WEBGL HERO SHADER ════════════════════════════════════════ -->
+<!-- ═══ WEBGL HERO SHADER — MOUSE REACTIVE ═══════════════════════ -->
 <script>
 (function() {
+  // ── Mouse position tracker ──────────────────────────────────────
+  let heroMouseX = 0.5, heroMouseY = 0.5; // normalized 0–1
+  let heroMouseTargetX = 0.5, heroMouseTargetY = 0.5;
+
+  const heroEl = document.getElementById('hero');
+
+  function onHeroMouseMove(e) {
+    const rect = heroEl ? heroEl.getBoundingClientRect() : {left:0,top:0,width:window.innerWidth,height:window.innerHeight};
+    heroMouseTargetX = (e.clientX - rect.left) / rect.width;
+    heroMouseTargetY = 1.0 - (e.clientY - rect.top) / rect.height;
+
+    // Move the CSS cursor glow
+    const glow = document.getElementById('heroCursorGlow');
+    if (glow) {
+      glow.style.left = (e.clientX - rect.left) + 'px';
+      glow.style.top  = (e.clientY - rect.top)  + 'px';
+    }
+  }
+
+  document.addEventListener('mousemove', onHeroMouseMove);
+
   function initHeroShader() {
     const canvas = document.getElementById('heroGLCanvas');
     if (!canvas) return;
@@ -10531,15 +10706,54 @@ window.addEventListener('DOMContentLoaded',()=>{
     const fs = gl.createShader(gl.FRAGMENT_SHADER);
     gl.shaderSource(fs, `
       precision highp float;
-      uniform vec2 res; uniform float t;
+      uniform vec2 res;
+      uniform float t;
+      uniform vec2 mouse;   /* normalized 0..1 */
+
       void main(){
-        vec2 p=(gl_FragCoord.xy*2.-res)/min(res.x,res.y);
-        float d=length(p)*0.07;
-        float r=0.035/abs(p.y+sin((p.x*(1.+d)+t)*1.1)*0.3);
-        float g=0.03/abs(p.y+sin((p.x+t)*1.1)*0.3);
-        float b=0.045/abs(p.y+sin((p.x*(1.-d)+t)*1.1)*0.3);
-        float br=clamp(r*0.5+g*0.4+b*1.2,0.,1.);
-        gl_FragColor=vec4(clamp(r*0.5,0.,1.),clamp(g*0.4,0.,1.),clamp(b*1.2,0.,1.),br);
+        vec2 uv = gl_FragCoord.xy / res;
+        vec2 p  = (gl_FragCoord.xy * 2.0 - res) / min(res.x, res.y);
+
+        /* Mouse in centered coords */
+        vec2 m = (mouse * 2.0 - 1.0) * vec2(res.x / min(res.x,res.y), res.y / min(res.x,res.y));
+
+        /* Distance to mouse → magnetic distortion */
+        float mDist   = length(p - m);
+        float mPull   = 0.18 / (mDist * mDist + 0.35);
+        vec2  toMouse = (mDist > 0.001) ? normalize(m - p) * mPull * 0.28 : vec2(0.0);
+        p += toMouse;
+
+        /* Chromatic split driven by distance from mouse */
+        float d  = length(p - m * 0.15) * 0.075 + mPull * 0.04;
+
+        /* Frequency and amplitude modulated by mouse X/Y */
+        float freq = 1.08 + m.x * 0.12;
+        float amp  = 0.28 + m.y * 0.06;
+        float tAmp = t * 0.9;
+
+        float r = 0.038 / (abs(p.y + sin((p.x * (1.0 + d) + tAmp) * freq) * amp) + 0.001);
+        float g = 0.030 / (abs(p.y + sin((p.x              + tAmp) * freq) * amp) + 0.001);
+        float b = 0.050 / (abs(p.y + sin((p.x * (1.0 - d) + tAmp) * freq) * amp) + 0.001);
+
+        /* Subtle glow halo near the mouse cursor */
+        float glowR = mPull * 0.06;
+        r += glowR * 0.4;
+        g += glowR * 0.25;
+        b += glowR * 0.9;
+
+        /* Extra diffused ripple rings from mouse */
+        float rings  = sin(mDist * 14.0 - t * 3.5) * 0.5 + 0.5;
+        float rMask  = exp(-mDist * 2.8) * rings * 0.018;
+        b += rMask * 1.8;
+        r += rMask * 0.5;
+
+        float br = clamp(r * 0.5 + g * 0.4 + b * 1.2, 0.0, 1.0);
+        gl_FragColor = vec4(
+          clamp(r * 0.52, 0.0, 1.0),
+          clamp(g * 0.40, 0.0, 1.0),
+          clamp(b * 1.20, 0.0, 1.0),
+          br
+        );
       }
     `);
     gl.compileShader(fs);
@@ -10550,27 +10764,36 @@ window.addEventListener('DOMContentLoaded',()=>{
 
     const buf = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, buf);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1,0,1,-1,0,-1,1,0,1,-1,0,-1,1,0,1,1,0]), gl.STATIC_DRAW);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1,0, 1,-1,0, -1,1,0, 1,-1,0, -1,1,0, 1,1,0]), gl.STATIC_DRAW);
     const loc = gl.getAttribLocation(prog, 'p');
     gl.enableVertexAttribArray(loc);
     gl.vertexAttribPointer(loc, 3, gl.FLOAT, false, 0, 0);
 
-    const resU = gl.getUniformLocation(prog, 'res');
-    const tU = gl.getUniformLocation(prog, 't');
+    const resU   = gl.getUniformLocation(prog, 'res');
+    const tU     = gl.getUniformLocation(prog, 't');
+    const mouseU = gl.getUniformLocation(prog, 'mouse');
 
     let time = 0;
     function resize() {
       const hero = document.getElementById('hero');
       if (!hero) return;
-      canvas.width = hero.offsetWidth; canvas.height = hero.offsetHeight;
-      gl.viewport(0,0,canvas.width,canvas.height);
+      canvas.width  = hero.offsetWidth;
+      canvas.height = hero.offsetHeight;
+      gl.viewport(0, 0, canvas.width, canvas.height);
       gl.uniform2f(resU, canvas.width, canvas.height);
     }
 
     function tick() {
-      time += 0.006;
+      time += 0.0055;
+
+      /* Smooth mouse position with spring interpolation */
+      const spring = 0.07;
+      heroMouseX += (heroMouseTargetX - heroMouseX) * spring;
+      heroMouseY += (heroMouseTargetY - heroMouseY) * spring;
+
       gl.clear(gl.COLOR_BUFFER_BIT);
       gl.uniform1f(tU, time);
+      gl.uniform2f(mouseU, heroMouseX, heroMouseY);
       gl.drawArrays(gl.TRIANGLES, 0, 6);
       requestAnimationFrame(tick);
     }
@@ -10584,6 +10807,86 @@ window.addEventListener('DOMContentLoaded',()=>{
     document.addEventListener('DOMContentLoaded', initHeroShader);
   } else {
     setTimeout(initHeroShader, 100);
+  }
+})();
+</script>
+
+<!-- ═══ MOUSE TILT — Pricing cards & hero parallax ══════════════ -->
+<script>
+(function(){
+  // ── 3D Tilt on pricing cards ───────────────────────────────────
+  function initPricingTilt() {
+    const cards = document.querySelectorAll('.lp-price-card:not(.featured)');
+    cards.forEach(card => {
+      card.addEventListener('mousemove', (e) => {
+        const rect = card.getBoundingClientRect();
+        const cx = rect.left + rect.width  / 2;
+        const cy = rect.top  + rect.height / 2;
+        const rx = ((e.clientY - cy) / (rect.height / 2)) * -8; // degrees
+        const ry = ((e.clientX - cx) / (rect.width  / 2)) *  8;
+        card.style.transform = `perspective(800px) rotateX(${rx}deg) rotateY(${ry}deg) translateY(-4px)`;
+      });
+      card.addEventListener('mouseleave', () => {
+        card.style.transform = '';
+      });
+    });
+
+    // Featured card: pause float on hover (handled by CSS)
+    const featured = document.querySelector('.lp-price-card.featured');
+    if (featured) {
+      featured.addEventListener('mousemove', (e) => {
+        const rect = featured.getBoundingClientRect();
+        const cx = rect.left + rect.width  / 2;
+        const cy = rect.top  + rect.height / 2;
+        const rx = ((e.clientY - cy) / (rect.height / 2)) * -6;
+        const ry = ((e.clientX - cx) / (rect.width  / 2)) *  6;
+        featured.style.transform = `perspective(800px) rotateX(${rx}deg) rotateY(${ry}deg) translateY(-10px) scale(1.02)`;
+      });
+      featured.addEventListener('mouseleave', () => {
+        featured.style.transform = '';
+        // Resume animation
+        featured.style.animationPlayState = 'running';
+      });
+    }
+  }
+
+  // ── Hero text parallax on scroll ──────────────────────────────
+  function initHeroParallax() {
+    const wrap = document.getElementById('heroTextWrap');
+    if (!wrap) return;
+    window.addEventListener('scroll', () => {
+      const scrollY = window.scrollY;
+      const heroH   = document.getElementById('hero')?.offsetHeight || 800;
+      if (scrollY > heroH) return;
+      const pct = scrollY / heroH;
+      wrap.style.transform  = `translateY(${pct * 60}px)`;
+      wrap.style.opacity    = String(Math.max(0, 1 - pct * 2.2));
+    }, { passive: true });
+  }
+
+  // ── Extend scroll reveal to cover new classes ──────────────────
+  function extendReveal() {
+    const obs = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          obs.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.1, rootMargin: '0px 0px -30px 0px' });
+
+    document.querySelectorAll('.reveal-3d, .reveal-scale').forEach(el => {
+      if (el.closest('#hero')) { el.classList.add('visible'); return; }
+      obs.observe(el);
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+      setTimeout(() => { initPricingTilt(); initHeroParallax(); extendReveal(); }, 400);
+    });
+  } else {
+    setTimeout(() => { initPricingTilt(); initHeroParallax(); extendReveal(); }, 400);
   }
 })();
 </script>
