@@ -8779,6 +8779,7 @@ async function renderHistory(force=false){
   const allAddrs=entries.map(([,v])=>v.addr||v.address||'').filter(Boolean);
   // liveMap stocke {now, athEst} — now = mcap actuel, athEst = ATH estimé depuis DexScreener
   let liveMap={};
+  let histImageMap={};
   for(let i=0;i<allAddrs.length;i+=20){
     try{
       const chunk=allAddrs.slice(i,i+20);
@@ -8791,6 +8792,8 @@ async function renderHistory(force=false){
         if(!bestPair[a]||(p.volume?.h24||0)>(bestPair[a].volume?.h24||0))bestPair[a]=p;
       });
       Object.entries(bestPair).forEach(([a,p])=>{
+        const img=p.info?.imageUrl||p.info?.header||p.baseToken?.info?.imageUrl||'';
+        if(img)histImageMap[a]=img;
         const now=p.marketCap||p.fdv||0;
         if(!now)return;
         // ATH estimé depuis priceChange — avec plafond anti-MEV bot
@@ -8878,7 +8881,7 @@ async function renderHistory(force=false){
     const scoreEmoji=savedScore>=130?'☢️':savedScore>=110?'💎':savedScore>=95?'🚀':savedScore>=80?'👁':'📡';
     const badgeCls=savedScore>=130?'nuclear':savedScore>=110?'diamond':savedScore>=95?'runner':savedScore>=80?'watchlist':'radar';
     const labelTxt=savedScore>=130?'☢️ NUCLEAR':savedScore>=110?'💎 DIAMOND':savedScore>=95?'🚀 RUNNER':savedScore>=80?'📋 CALL':'📡 RADAR';
-    const _hImgUrl = v.raw?.info?.imageUrl || '';
+    const _hImgUrl = histImageMap[addr] || v.raw?.info?.imageUrl || v.raw?.info?.header || v.raw?.baseToken?.info?.imageUrl || '';
     const _hTwRaw = v.raw?.info?.socials?.find(s=>s.type==='twitter')?.url || '';
     const _hTwHandle = _hTwRaw ? '@'+_hTwRaw.replace(/\/+$/,'').split('/').pop() : '';
     const _hXNow = (isLive && callMcap>0) ? curMcap/callMcap : null;
@@ -9639,6 +9642,7 @@ async function renderTokenTable(tokens){
   // Fetch prix live pour tous les tokens du Live — même fiabilité que Historique
   const liveAddrs=tokens.map(t=>t.addr).filter(Boolean).slice(0,20);
   let livePriceMap={};
+  let liveImageMap={};
   if(liveAddrs.length){
     try{
       const res=await fetch(`https://api.dexscreener.com/latest/dex/tokens/${liveAddrs.join(',')}`,
@@ -9649,6 +9653,8 @@ async function renderTokenTable(tokens){
         if(!best[a]||(p.volume?.h24||0)>(best[a].volume?.h24||0))best[a]=p;
       });
       Object.entries(best).forEach(([a,p])=>{
+        const img=p.info?.imageUrl||p.info?.header||p.baseToken?.info?.imageUrl||'';
+        if(img)liveImageMap[a]=img;
         const mcap=p.marketCap||p.fdv||0;
         if(!mcap){livePriceMap[a]={now:0,athEst:0};return;}
         const c24=p.priceChange?.h24||0,c6=p.priceChange?.h6||0,c1=p.priceChange?.h1||0;
@@ -9804,7 +9810,7 @@ async function renderTokenTable(tokens){
         ? `<span class="sc-pvp-badge pvp-l">⚔️ PVP LOSE</span>`
         : '';
     // ── V2 card extra vars ──
-    const _imageUrl = t.raw?.info?.imageUrl || '';
+    const _imageUrl = liveImageMap[t.addr] || t.raw?.info?.imageUrl || t.raw?.info?.header || t.raw?.baseToken?.info?.imageUrl || '';
     const _twRaw = t.raw?.info?.socials?.find(s=>s.type==='twitter')?.url || '';
     const _twHandle = _twRaw ? '@'+_twRaw.replace(/\/+$/,'').split('/').pop() : '';
     const _xNow = callMcap>0 ? (nowMcap||t.mcap)/callMcap : 1;
