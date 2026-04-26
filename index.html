@@ -1356,22 +1356,36 @@ footer{border-top:1px solid var(--border);}
 .pnl-btn-dl:hover{transform:translateY(-2px);box-shadow:0 6px 24px rgba(97,86,217,.35);}
 .pnl-btn-close{padding:.65rem 1rem;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);color:rgba(255,255,255,.4);border-radius:10px;font-family:var(--font);font-size:.82rem;cursor:pointer;transition:.25s;}
 .pnl-btn-close:hover{border-color:rgba(97,86,217,.3);color:var(--purple2);}
-/* PNL card TC redesign */
-.pnl-tc-img-wrap{position:relative;width:100%;height:145px;overflow:hidden;background:#1a1f2e;flex-shrink:0;}
-.pnl-tc-img{width:100%;height:100%;object-fit:cover;display:block;}
-.pnl-tc-img-fallback{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:3rem;background:linear-gradient(135deg,#1a1f2e,#2d3348);}
-.pnl-tc-overlay{position:absolute;inset:0;background:linear-gradient(to bottom,rgba(0,0,0,0) 30%,rgba(0,0,0,.75) 100%);}
-.pnl-tc-sym-wrap{position:absolute;bottom:10px;left:14px;right:14px;}
-.pnl-tc-stars{font-size:.72rem;color:#f5c542;margin-top:.1rem;letter-spacing:.05em;}
-.pnl-tc-progress-wrap{margin:.2rem 0 .6rem;}
-.pnl-tc-progress-bg{height:5px;background:rgba(255,255,255,.08);border-radius:3px;overflow:hidden;margin-bottom:.3rem;}
-.pnl-tc-progress-fill{height:100%;background:linear-gradient(90deg,#f5c542,#ffe066);border-radius:3px;transition:width .5s ease;}
-.pnl-tc-progress-footer{display:flex;justify-content:space-between;}
-.pnl-tc-marks{display:flex;gap:.7rem;}
-.pnl-tc-marks span{font-size:.56rem;color:rgba(255,255,255,.22);font-family:'Space Mono',monospace;}
-.pnl-tc-mc-row{display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin:.2rem 0 .6rem;}
-.pnl-tc-mc-cell{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:8px;padding:.45rem .6rem;text-align:center;}
-.pnl-tc-mc-lbl{font-size:.58rem;color:rgba(255,255,255,.3);margin-bottom:.15rem;text-transform:uppercase;letter-spacing:.04em;}
+/* ── PNL CARD — IMAGE HERO + BOTTOM INFO ── */
+/* Restructure la pnl-card en flex colonne */
+#pnlCard{display:flex;flex-direction:column;overflow:hidden;}
+#pnlCard .pnl-card-inner{display:none;} /* masqué — on utilise pnl-bottom */
+/* IMAGE HERO : occupe 55% de la carte */
+.pnl-img-hero{position:relative;width:100%;height:210px;overflow:hidden;background:#0a0a12;flex-shrink:0;}
+.pnl-img-hero-img{width:100%;height:100%;object-fit:cover;object-position:center top;display:block;}
+.pnl-img-hero-fallback{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:5rem;background:linear-gradient(135deg,#0d1117,#1a1f2e);}
+/* Dégradé fondu bas de l'image vers le fond sombre */
+.pnl-img-hero-grad{position:absolute;inset:0;background:linear-gradient(to bottom,transparent 40%,rgba(0,0,0,.95) 100%);}
+/* BOTTOM SECTION */
+.pnl-bottom{flex:1;padding:.8rem 1.4rem .5rem;display:flex;flex-direction:column;gap:.15rem;text-align:center;position:relative;z-index:3;}
+.pnl-bottom-top{display:flex;align-items:center;justify-content:center;gap:.5rem;margin-bottom:.1rem;}
+.pnl-bottom-top .pnl-sym{font-family:'Space Grotesk',sans-serif;font-size:1rem;font-weight:800;color:#fff;margin:0;}
+.pnl-tc-stars{font-size:.7rem;color:#f5c542;letter-spacing:.06em;}
+/* MC line : $16K ──── $30M ATH */
+.pnl-mc-line{display:flex;align-items:center;justify-content:center;gap:.4rem;margin:.1rem 0 .05rem;}
+.pnl-mc-call{font-size:.78rem;font-weight:700;color:rgba(255,170,68,.9);font-family:'Space Mono',monospace;}
+.pnl-mc-arrow{font-size:.6rem;color:rgba(255,255,255,.2);letter-spacing:-.05em;}
+.pnl-mc-ath{font-size:.78rem;font-weight:700;color:rgba(0,255,136,.9);font-family:'Space Mono',monospace;}
+.pnl-mc-label{font-size:.62rem;color:rgba(255,255,255,.3);font-weight:600;letter-spacing:.06em;text-transform:uppercase;}
+/* MULTIPLIER GÉANT */
+#pnlCard .pnl-mult{font-family:'Space Grotesk',sans-serif;font-size:4.8rem;font-weight:900;line-height:1;
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  margin:.1rem 0 .15rem;transition:font-size .3s;letter-spacing:-.03em;}
+#pnlCard .pnl-mult.big-mult{font-size:5.6rem;}
+/* Footer ligne */
+.pnl-bottom-footer{display:flex;align-items:center;justify-content:space-between;margin-top:.3rem;}
+.pnl-bottom-footer .pnl-sub{font-size:.6rem;color:rgba(255,255,255,.28);text-align:left;}
+.pnl-footer-brand{font-size:.6rem;color:rgba(255,255,255,.22);font-family:'Space Mono',monospace;}
 
 /* ── SCANNER CARDS — Cyberpunk Degen Style ─────────────────────── */
 .scanner-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:1.2rem;padding:.5rem 0;}
@@ -4768,36 +4782,29 @@ body.view-avis #landing-wrap { display: none !important; }
     <div id="pnlSparkles"></div>
     <div class="pnl-badcall" id="pnlBadCall">BAD CALL</div>
     <div class="pnl-candles" id="pnlCandles"></div>
-    <!-- Image header en dehors du padding de pnl-card-inner -->
-    <div class="pnl-tc-img-wrap">
-      <img id="pnlImg" class="pnl-tc-img" src="" alt="" style="display:none" onerror="this.style.display='none';document.getElementById('pnlImgFallback').style.display='flex'">
-      <div class="pnl-tc-img-fallback" id="pnlImgFallback">🐸</div>
-      <div class="pnl-tc-overlay"></div>
-      <div class="pnl-tc-sym-wrap">
-        <div class="pnl-sym" id="pnlSym" style="font-size:1.05rem;text-shadow:0 1px 6px rgba(0,0,0,.9)">TOKEN</div>
+    <!-- IMAGE DOMINANTE — remplit le haut de la card -->
+    <div class="pnl-img-hero">
+      <img id="pnlImg" class="pnl-img-hero-img" src="" alt="" style="display:none" onerror="this.style.display='none';document.getElementById('pnlImgFallback').style.display='flex'">
+      <div class="pnl-img-hero-fallback" id="pnlImgFallback">🐸</div>
+      <div class="pnl-img-hero-grad"></div>
+    </div>
+    <!-- BOTTOM INFO -->
+    <div class="pnl-bottom">
+      <div class="pnl-bottom-top">
+        <div class="pnl-sym" id="pnlSym">TOKEN</div>
         <div class="pnl-tc-stars" id="pnlStars">★★★</div>
       </div>
-    </div>
-    <div class="pnl-card-inner" style="padding-top:1rem">
+      <div class="pnl-mc-line">
+        <span id="pnlCallVal" class="pnl-mc-call">$—</span>
+        <span class="pnl-mc-arrow">────</span>
+        <span id="pnlAthVal" class="pnl-mc-ath">$—</span>
+        <span class="pnl-mc-label">ATH</span>
+      </div>
       <div class="pnl-mult" id="pnlMult">0.00x</div>
-      <div class="pnl-sub" id="pnlSub">ATH depuis le call</div>
-      <div class="pnl-tc-progress-wrap">
-        <div class="pnl-tc-progress-bg"><div class="pnl-tc-progress-fill" id="pnlProgressFill" style="width:0%"></div></div>
-        <div class="pnl-tc-progress-footer">
-          <div class="pnl-tc-marks"><span>x1</span><span>x1.5</span><span>x2</span><span>x2.5+</span></div>
-        </div>
+      <div class="pnl-bottom-footer">
+        <span class="pnl-sub" id="pnlSub">ATH depuis le call</span>
+        <span class="pnl-footer-brand">MemeScanner 🐸</span>
       </div>
-      <div class="pnl-tc-mc-row">
-        <div class="pnl-tc-mc-cell">
-          <div class="pnl-tc-mc-lbl">MC Initial</div>
-          <div class="pnl-mcap-val" style="color:#ffaa44" id="pnlCallVal">$—</div>
-        </div>
-        <div class="pnl-tc-mc-cell">
-          <div class="pnl-tc-mc-lbl">MC Max</div>
-          <div class="pnl-mcap-val" style="color:#00ff88" id="pnlAthVal">$—</div>
-        </div>
-      </div>
-      <div class="pnl-footer-txt">DYOR · NFA 🐸 MemeScanner</div>
     </div>
     <div class="pnl-actions">
       <button class="pnl-btn-dl" onclick="downloadPnl()">⬇ Image</button>
@@ -10200,7 +10207,7 @@ function openScannerPnl(addr,sym,callMcap,athMcap,score,imgUrl=''){
   multEl.style['-webkit-text-fill-color']='transparent';
   multEl.className='pnl-mult'+(xAth>=5?' big-mult':'');
 
-  document.getElementById('pnlSym').textContent=rarity.emoji+' '+sym;
+  document.getElementById('pnlSym').textContent=sym;
   document.getElementById('pnlCallVal').textContent='$'+fmtNum(callMcap);
   document.getElementById('pnlAthVal').textContent='$'+fmtNum(athMcap);
   document.getElementById('pnlSub').textContent='ATH depuis le call · '+new Date().toLocaleDateString('fr-FR');
