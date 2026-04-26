@@ -2813,9 +2813,220 @@ body.view-avis #landing-wrap { display: none !important; }
   .cs-device-outer { width: 95%; }
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   FIX STICKY — overflow:hidden brise position:sticky
+   On remplace par overflow:clip qui clips visuellement
+   sans créer de scroll container
+═══════════════════════════════════════════════════════════════ */
+#landing-wrap { overflow: clip !important; }
+.lp-cs-wrap   { overflow: clip !important; }
+
+/* ═══════════════════════════════════════════════════════════════
+   LANDING — THÈME SOMBRE INTÉGRAL
+   Toute la landing passe en dark pour éviter le contraste brutal
+═══════════════════════════════════════════════════════════════ */
+
+/* Redéfinir les variables dark — ces déclarations sont plus tardives
+   que celles du thème clair (lignes ~115), elles gagnent la cascade */
+#landing-wrap {
+  --lp-bg:     #030308;
+  --lp-bg2:    #06060f;
+  --lp-bg3:    #0b0b1a;
+  --lp-card:   #0d0d1c;
+  --lp-border: rgba(255,255,255,0.07);
+  --lp-text:   #e8e8ff;
+  --lp-muted:  rgba(200,200,255,0.45);
+  --lp-subtle: rgba(200,200,255,0.25);
+  background: #030308 !important;
+  color: #e8e8ff !important;
+}
+
+/* ── Nav dark ──────────────────────────────────────────────────── */
+#mainNav {
+  background: rgba(3,3,8,0.75) !important;
+  border-bottom-color: rgba(255,255,255,0.07) !important;
+  backdrop-filter: blur(18px) saturate(1.4) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(1.4) !important;
+}
+#mainNav .logo-text             { color: #f0f0ff !important; }
+#mainNav .nav-links a,
+#mainNav .nav-link-plain,
+#mainNav .nav-dd-trigger        { color: rgba(220,220,255,0.5) !important; }
+#mainNav .nav-links a:hover,
+#mainNav .nav-link-plain:hover,
+#mainNav .nav-dd-trigger:hover  { color: #f0f0ff !important; }
+#mainNav .nav-dd-panel          {
+  background: rgba(8,8,20,0.97) !important;
+  border-color: rgba(255,255,255,0.08) !important;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.6) !important;
+}
+#mainNav .nav-dd-title  { color: #e8e8ff !important; }
+#mainNav .nav-dd-desc   { color: rgba(200,200,255,0.45) !important; }
+#mainNav .nav-dd-sep    { background: rgba(255,255,255,0.06) !important; }
+#mainNav .nav-btn       {
+  background: transparent !important;
+  border-color: rgba(255,255,255,0.15) !important;
+  color: rgba(220,220,255,0.6) !important;
+}
+#mainNav .nav-btn:hover { border-color: rgba(255,255,255,0.35) !important; color: #fff !important; }
+#mainNav.scrolled       { background: rgba(3,3,8,0.92) !important; }
+
+/* ── Sections — fonds alternés sombres ────────────────────────── */
+.lp-features        { background: #050510 !important; position: relative; }
+.lp-smartmoney      { background: #030308 !important; position: relative; }
+.lp-scoring         { background: #050510 !important; position: relative; }
+.lp-pricing-preview { background: #030308 !important; position: relative; }
+.lp-comparison      { background: #050510 !important; position: relative; }
+.lp-testimonials    { background: #030308 !important; position: relative; }
+
+/* ── Titres & labels sections ─────────────────────────────────── */
+#landing-wrap .lp-section-title { color: #e8e8ff !important; }
+#landing-wrap .lp-section-label {
+  color: #818cf8 !important;
+  background: rgba(99,102,241,0.1) !important;
+  border-color: rgba(129,140,248,0.25) !important;
+}
+
+/* ── Feature cards ────────────────────────────────────────────── */
+#landing-wrap .lp-feat-card {
+  background: rgba(255,255,255,0.028) !important;
+  border-color: rgba(255,255,255,0.07) !important;
+  transition: transform 0.5s cubic-bezier(0.16,1,0.3,1),
+              border-color 0.3s,
+              box-shadow 0.3s !important;
+}
+#landing-wrap .lp-feat-card:hover {
+  border-color: rgba(129,140,248,0.22) !important;
+  box-shadow: 0 0 40px rgba(99,102,241,0.07), 0 20px 60px rgba(0,0,0,0.3) !important;
+}
+#landing-wrap .lp-feat-card h3  { color: #e8e8ff !important; }
+#landing-wrap .lp-feat-card p   { color: rgba(200,200,255,0.5) !important; }
+#landing-wrap .lp-feat-badge {
+  background: rgba(129,140,248,0.14) !important;
+  color: #a5b4fc !important;
+  border: none !important;
+}
+#landing-wrap .lp-feat-pills span {
+  background: rgba(255,255,255,0.05) !important;
+  color: rgba(200,200,255,0.55) !important;
+  border-color: rgba(255,255,255,0.08) !important;
+}
+
+/* ── Smart Money ──────────────────────────────────────────────── */
+#landing-wrap .lp-sm-stat-val { color: #e8e8ff !important; }
+#landing-wrap .lp-sm-stat-lbl { color: rgba(200,200,255,0.45) !important; }
+#landing-wrap .lp-sm-desc     { color: rgba(200,200,255,0.55) !important; }
+#landing-wrap .lp-wallet-card {
+  background: rgba(255,255,255,0.03) !important;
+  border-color: rgba(255,255,255,0.07) !important;
+}
+
+/* ── Scoring cats ─────────────────────────────────────────────── */
+#landing-wrap .lp-score-cat {
+  background: rgba(255,255,255,0.025) !important;
+  border-color: rgba(255,255,255,0.07) !important;
+  cursor: default;
+}
+#landing-wrap .lp-score-cat:hover {
+  border-color: rgba(129,140,248,0.22) !important;
+  box-shadow: 0 0 30px rgba(99,102,241,0.07) !important;
+}
+#landing-wrap .lp-score-cat-name { color: rgba(200,200,255,0.75) !important; }
+
+/* ── Pricing ──────────────────────────────────────────────────── */
+#landing-wrap .lp-price-card:not(.featured) {
+  background: rgba(255,255,255,0.025) !important;
+  border-color: rgba(255,255,255,0.07) !important;
+  transition: transform 0.5s cubic-bezier(0.16,1,0.3,1),
+              border-color 0.3s,
+              box-shadow 0.3s !important;
+}
+#landing-wrap .lp-price-card:not(.featured):hover {
+  border-color: rgba(129,140,248,0.22) !important;
+  box-shadow: 0 0 40px rgba(99,102,241,0.06), 0 20px 60px rgba(0,0,0,0.3) !important;
+}
+#landing-wrap .lp-price-tier    { color: rgba(200,200,255,0.45) !important; }
+#landing-wrap .lp-price-tagline { color: rgba(200,200,255,0.5) !important; }
+#landing-wrap .lp-price-val     { color: #e8e8ff !important; }
+#landing-wrap .lp-price-period  { color: rgba(200,200,255,0.4) !important; }
+#landing-wrap .lp-price-list li { color: rgba(200,200,255,0.72) !important; }
+#landing-wrap .lp-price-list li.dim { color: rgba(200,200,255,0.25) !important; }
+#landing-wrap .lp-price-trend   { color: rgba(200,200,255,0.45) !important; }
+
+/* ── Comparison ───────────────────────────────────────────────── */
+#landing-wrap .lp-cmp-table     { border-color: rgba(255,255,255,0.07) !important; }
+#landing-wrap .lp-cmp-table th {
+  color: rgba(200,200,255,0.45) !important;
+  border-color: rgba(255,255,255,0.07) !important;
+  background: rgba(255,255,255,0.02) !important;
+}
+#landing-wrap .lp-cmp-table td {
+  color: rgba(200,200,255,0.78) !important;
+  border-color: rgba(255,255,255,0.07) !important;
+}
+#landing-wrap .lp-cmp-table tr:hover td { background: rgba(255,255,255,0.025) !important; }
+#landing-wrap .feature-name     { color: rgba(200,200,255,0.8) !important; }
+
+/* ── Testimonials ─────────────────────────────────────────────── */
+#landing-wrap .lp-testi-card {
+  background: rgba(255,255,255,0.025) !important;
+  border-color: rgba(255,255,255,0.07) !important;
+  transition: transform 0.5s cubic-bezier(0.16,1,0.3,1),
+              border-color 0.3s,
+              box-shadow 0.3s !important;
+}
+#landing-wrap .lp-testi-card:hover {
+  border-color: rgba(129,140,248,0.2) !important;
+  box-shadow: 0 0 30px rgba(99,102,241,0.06) !important;
+}
+
+/* ── Orb curseur global — suit la souris avec inertie ─────────── */
+#landingOrb {
+  position: fixed;
+  width: 720px; height: 720px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(99,102,241,0.09) 0%, rgba(139,92,246,0.04) 35%, transparent 68%);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 1;
+  mix-blend-mode: screen;
+  will-change: left, top;
+  transition: background 1.2s ease;
+  display: none; /* activé par JS quand la souris entre dans le landing */
+}
+
+/* ── Glow ambient par section (élément injecté par JS) ───────── */
+.sec-ambient {
+  position: absolute;
+  width: 800px; height: 450px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0;
+  transition: opacity 0.5s;
+  mix-blend-mode: screen;
+  will-change: left, top, opacity;
+}
+.lp-features .sec-ambient        { background: radial-gradient(circle, rgba(129,140,248,0.08) 0%, transparent 70%); }
+.lp-smartmoney .sec-ambient       { background: radial-gradient(circle, rgba(52,211,153,0.07)  0%, transparent 70%); }
+.lp-scoring .sec-ambient          { background: radial-gradient(circle, rgba(245,158,11,0.07)  0%, transparent 70%); }
+.lp-pricing-preview .sec-ambient  { background: radial-gradient(circle, rgba(139,92,246,0.08)  0%, transparent 70%); }
+.lp-comparison .sec-ambient       { background: radial-gradient(circle, rgba(96,165,250,0.07)  0%, transparent 70%); }
+.lp-testimonials .sec-ambient     { background: radial-gradient(circle, rgba(167,139,250,0.08) 0%, transparent 70%); }
+
+/* ── Responsive dark ──────────────────────────────────────────── */
+@media (max-width: 768px) {
+  #landingOrb { width: 400px; height: 400px; }
+  .sec-ambient { width: 400px; height: 300px; }
+}
+
 </style>
 </head>
 <body>
+
+<!-- Orb curseur global landing -->
+<div id="landingOrb"></div>
 
 <!-- ===== BOOT SCREEN ===== -->
 
@@ -11316,6 +11527,205 @@ window.addEventListener('DOMContentLoaded',()=>{
     document.addEventListener('DOMContentLoaded', () => setTimeout(initExtraReveals, 600));
   } else {
     setTimeout(initExtraReveals, 600);
+  }
+
+})();
+</script>
+
+<!-- ═══ LANDING INTERACTIVITÉ — orb, glow, tilt magnétique, parallax ═══ -->
+<script>
+(function(){
+
+  const orb = document.getElementById('landingOrb');
+
+  // ── 1. Orb curseur global (spring-lerp 6%) ──────────────────────
+  let ox = window.innerWidth  * 0.5;
+  let oy = window.innerHeight * 0.5;
+  let tx = ox, ty = oy;
+  let orbActive = false;
+
+  document.addEventListener('mousemove', e => {
+    tx = e.clientX; ty = e.clientY;
+    if (!orbActive && orb) {
+      orb.style.display = 'block';
+      orbActive = true;
+    }
+  });
+
+  // Couleurs de l'orb selon la section survolée
+  const ORB_COLORS = {
+    hero:             'rgba(99,102,241,0.09)',
+    features:         'rgba(129,140,248,0.09)',
+    smartmoney:       'rgba(52,211,153,0.07)',
+    scoring:          'rgba(245,158,11,0.07)',
+    'pricing-preview':'rgba(139,92,246,0.09)',
+    vs:               'rgba(96,165,250,0.07)',
+    testimonials:     'rgba(167,139,250,0.09)',
+  };
+  let lastOrbSection = '';
+
+  function getSectionAtCenter() {
+    const cx = window.innerWidth  / 2;
+    const cy = window.innerHeight / 2;
+    const el = document.elementFromPoint(cx, cy);
+    if (!el) return 'hero';
+    const sec = el.closest('[id]');
+    return sec ? sec.id : 'hero';
+  }
+
+  let orbColorTimer = 0;
+  function tickOrb() {
+    ox += (tx - ox) * 0.055;
+    oy += (ty - oy) * 0.055;
+    if (orb && orbActive) {
+      orb.style.left = ox + 'px';
+      orb.style.top  = oy + 'px';
+    }
+    // Update color every ~30 frames
+    if (orb && ++orbColorTimer % 30 === 0) {
+      const secId = getSectionAtCenter();
+      if (secId !== lastOrbSection) {
+        lastOrbSection = secId;
+        const col = ORB_COLORS[secId] || ORB_COLORS.hero;
+        orb.style.background =
+          `radial-gradient(circle, ${col} 0%, transparent 68%)`;
+      }
+    }
+    requestAnimationFrame(tickOrb);
+  }
+  tickOrb();
+
+  // ── 2. Glow ambient par section ─────────────────────────────────
+  const SECTION_SELECTORS = [
+    '.lp-features', '.lp-smartmoney', '.lp-scoring',
+    '.lp-pricing-preview', '.lp-comparison', '.lp-testimonials'
+  ];
+
+  function initSectionGlows() {
+    SECTION_SELECTORS.forEach(sel => {
+      const sec = document.querySelector(sel);
+      if (!sec) return;
+
+      const glow = document.createElement('div');
+      glow.className = 'sec-ambient';
+      sec.appendChild(glow);
+
+      let gx = 0, gy = 0, gtx = 0, gty = 0;
+      let glowRAF = null;
+
+      function tickGlow() {
+        gx += (gtx - gx) * 0.1;
+        gy += (gty - gy) * 0.1;
+        glow.style.left = gx + 'px';
+        glow.style.top  = gy + 'px';
+        glowRAF = requestAnimationFrame(tickGlow);
+      }
+
+      sec.addEventListener('mouseenter', () => {
+        glow.style.opacity = '1';
+        if (!glowRAF) tickGlow();
+      });
+      sec.addEventListener('mouseleave', () => {
+        glow.style.opacity = '0';
+        if (glowRAF) { cancelAnimationFrame(glowRAF); glowRAF = null; }
+      });
+      sec.addEventListener('mousemove', e => {
+        const rect = sec.getBoundingClientRect();
+        gtx = e.clientX - rect.left;
+        gty = e.clientY - rect.top;
+        // Init position on first enter (no lag)
+        if (glow.style.opacity === '0') { gx = gtx; gy = gty; }
+      });
+    });
+  }
+
+  // ── 3. Tilt magnétique — toutes les cartes landing ──────────────
+  const CARD_SEL = [
+    '.lp-feat-card',
+    '.lp-price-card:not(.featured)',
+    '.lp-score-cat',
+    '.lp-testi-card',
+  ].join(', ');
+
+  let cardCache = null;
+  let cardCacheTimer = 0;
+
+  document.addEventListener('mousemove', e => {
+    // Refresh card cache every 120 frames (~2s) for perf
+    if (!cardCache || ++cardCacheTimer % 120 === 0) {
+      cardCache = Array.from(document.querySelectorAll(CARD_SEL));
+    }
+
+    const mx = e.clientX, my = e.clientY;
+    cardCache.forEach(card => {
+      // Skip cards still in entrance animation
+      const isRevealing = card.matches('.reveal-3d:not(.visible), .reveal-scale:not(.visible)');
+      if (isRevealing) return;
+
+      const rect = card.getBoundingClientRect();
+      // Only compute if mouse is within 2× card width/height for perf
+      const nearX = mx > rect.left - rect.width  && mx < rect.right  + rect.width;
+      const nearY = my > rect.top  - rect.height && my < rect.bottom + rect.height;
+      if (!nearX || !nearY) {
+        if (card._tilted) {
+          card.style.transform = '';
+          card.style.boxShadow = '';
+          card._tilted = false;
+        }
+        return;
+      }
+
+      const cx = rect.left + rect.width  / 2;
+      const cy = rect.top  + rect.height / 2;
+      const dx = (mx - cx) / (rect.width  / 2);
+      const dy = (my - cy) / (rect.height / 2);
+      const dist = Math.sqrt(dx*dx + dy*dy);
+
+      if (dist < 1.4) {
+        const intensity = Math.max(0, 1 - dist / 1.4);
+        const ry =  dx * 7 * intensity;
+        const rx = -dy * 7 * intensity;
+        const lift = 6 * intensity;
+        card.style.transform = `translateY(-${lift.toFixed(1)}px) rotateX(${rx.toFixed(2)}deg) rotateY(${ry.toFixed(2)}deg)`;
+        card.style.transition = 'transform .06s';
+        card.style.boxShadow  = `0 ${(10 + lift*2).toFixed(0)}px ${(40 + lift*4).toFixed(0)}px rgba(0,0,0,0.35)`;
+        card._tilted = true;
+      } else if (card._tilted) {
+        card.style.transform  = '';
+        card.style.boxShadow  = '';
+        card.style.transition = 'transform .5s cubic-bezier(0.16,1,0.3,1), box-shadow .5s';
+        card._tilted = false;
+      }
+    });
+  });
+
+  // ── 4. Parallax scroll — titres de section dérivent légèrement ──
+  function tickSectionParallax() {
+    const titleEls = document.querySelectorAll(
+      '.lp-features .lp-section-title, .lp-smartmoney .lp-section-title, ' +
+      '.lp-scoring .lp-section-title, .lp-pricing-preview .lp-section-title, ' +
+      '.lp-comparison .lp-section-title'
+    );
+    titleEls.forEach(el => {
+      if (!el.classList.contains('visible')) return;
+      const rect   = el.getBoundingClientRect();
+      const center = rect.top + rect.height / 2;
+      const offset = (center - window.innerHeight / 2) * 0.035;
+      el.style.transform = `translateY(${offset.toFixed(2)}px)`;
+    });
+    requestAnimationFrame(tickSectionParallax);
+  }
+
+  // ── Init ──────────────────────────────────────────────────────────
+  function init() {
+    initSectionGlows();
+    tickSectionParallax();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => setTimeout(init, 300));
+  } else {
+    setTimeout(init, 300);
   }
 
 })();
