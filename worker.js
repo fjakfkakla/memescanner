@@ -773,22 +773,19 @@ export async function runScanCycle() {
       if (!calledTokens.has(token.addr)) {
         calledTokens.set(token.addr, now);
         try {
-          // 1. Fetch mcap frais avant Discord (timeout 3s — fallback sur mcap scan si raté)
-          let callMcap = token.mcap;
-          try {
-            const freshData = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${token.addr}`,
-              { signal: AbortSignal.timeout(3000) }).then(r => r.json());
-            const freshPair = (freshData.pairs || []).find(p => p.chainId === 'solana');
-            const fm = freshPair?.marketCap || freshPair?.fdv || 0;
-            if (fm > 0) callMcap = fm;
-          } catch(e) { /* utilise mcap scan */ }
+          const callMcap = token.mcap;
 
-          // Mettre à jour liveTokens avec le vrai callMcap
+          // Mettre à jour liveTokens
           const liveEntry = liveTokens.get(token.addr);
           if (liveEntry) liveEntry.callMcap = callMcap;
 
-          // 2. Sauvegarder + notifier Discord avec le vrai callMcap
-          await saveCall({
+          // 1. Discord en priorité absolue — pas de fetch bloquant
+          console.log(`[Worker] CALL: ${token.symbol} score=${token.score} mcap=$${callMcap}`);
+          await sendDiscordCall(token);
+
+          // 2. Firebase + refresh mcap en background (sans bloquer le prochain cycle)
+          const gmgnSnap = gmgnRawMap.get(token.addr) || null;
+          saveCall({
             addr:       token.addr,
             symbol:     token.symbol,
             score:      token.score,
@@ -801,12 +798,21 @@ export async function runScanCycle() {
             debug:      token.debug,
             walletData: token.walletData,
             security:   token.raw?.security || null,
-            gmgn:       gmgnRawMap.get(token.addr) || null,
+            gmgn:       gmgnSnap,
             calledAt:   now,
-          });
-          token.mcap = callMcap;
-          console.log(`[Worker] CALL: ${token.symbol} score=${token.score} mcap=$${callMcap}`);
-          await sendDiscordCall(token);
+          }).then(async () => {
+            // Mettre à jour le callMcap dans Firebase avec valeur fraîche (fire & forget)
+            try {
+              const freshData = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${token.addr}`,
+                { signal: AbortSignal.timeout(3000) }).then(r => r.json());
+              const freshPair = (freshData.pairs || []).find(p => p.chainId === 'solana');
+              const fm = freshPair?.marketCap || freshPair?.fdv || 0;
+              if (fm > 0) {
+                if (liveEntry) liveEntry.callMcap = fm;
+                await saveCall({ addr: token.addr, mcap: fm, callMcap: fm });
+              }
+            } catch(e) { /* pas grave, le mcap scan suffit */ }
+          }).catch(e => console.warn('[Worker] saveCall error:', e.message));
         } catch (e) {
           console.warn('[Worker] saveCall error:', e.message);
         }
