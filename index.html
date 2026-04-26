@@ -1357,7 +1357,7 @@ footer{border-top:1px solid var(--border);}
 .pnl-btn-close{padding:.65rem 1rem;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);color:rgba(255,255,255,.4);border-radius:10px;font-family:var(--font);font-size:.82rem;cursor:pointer;transition:.25s;}
 .pnl-btn-close:hover{border-color:rgba(97,86,217,.3);color:var(--purple2);}
 /* PNL card TC redesign */
-.pnl-tc-img-wrap{position:relative;width:100%;height:140px;overflow:hidden;background:#1a1f2e;border-radius:0;margin:-1.8rem -1.6rem 1rem;width:calc(100% + 3.2rem);}
+.pnl-tc-img-wrap{position:relative;width:100%;height:145px;overflow:hidden;background:#1a1f2e;flex-shrink:0;}
 .pnl-tc-img{width:100%;height:100%;object-fit:cover;display:block;}
 .pnl-tc-img-fallback{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:3rem;background:linear-gradient(135deg,#1a1f2e,#2d3348);}
 .pnl-tc-overlay{position:absolute;inset:0;background:linear-gradient(to bottom,rgba(0,0,0,0) 30%,rgba(0,0,0,.75) 100%);}
@@ -4768,16 +4768,17 @@ body.view-avis #landing-wrap { display: none !important; }
     <div id="pnlSparkles"></div>
     <div class="pnl-badcall" id="pnlBadCall">BAD CALL</div>
     <div class="pnl-candles" id="pnlCandles"></div>
-    <div class="pnl-card-inner">
-      <div class="pnl-tc-img-wrap">
-        <img id="pnlImg" class="pnl-tc-img" src="" alt="" style="display:none" onerror="this.style.display='none';document.getElementById('pnlImgFallback').style.display='flex'">
-        <div class="pnl-tc-img-fallback" id="pnlImgFallback">🐸</div>
-        <div class="pnl-tc-overlay"></div>
-        <div class="pnl-tc-sym-wrap">
-          <div class="pnl-sym" id="pnlSym" style="font-size:1.1rem;text-shadow:0 1px 6px rgba(0,0,0,.9)">TOKEN</div>
-          <div class="pnl-tc-stars" id="pnlStars">★★★</div>
-        </div>
+    <!-- Image header en dehors du padding de pnl-card-inner -->
+    <div class="pnl-tc-img-wrap">
+      <img id="pnlImg" class="pnl-tc-img" src="" alt="" style="display:none" onerror="this.style.display='none';document.getElementById('pnlImgFallback').style.display='flex'">
+      <div class="pnl-tc-img-fallback" id="pnlImgFallback">🐸</div>
+      <div class="pnl-tc-overlay"></div>
+      <div class="pnl-tc-sym-wrap">
+        <div class="pnl-sym" id="pnlSym" style="font-size:1.05rem;text-shadow:0 1px 6px rgba(0,0,0,.9)">TOKEN</div>
+        <div class="pnl-tc-stars" id="pnlStars">★★★</div>
       </div>
+    </div>
+    <div class="pnl-card-inner" style="padding-top:1rem">
       <div class="pnl-mult" id="pnlMult">0.00x</div>
       <div class="pnl-sub" id="pnlSub">ATH depuis le call</div>
       <div class="pnl-tc-progress-wrap">
