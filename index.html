@@ -6351,6 +6351,7 @@ function checkPw(){
       document.getElementById('tabDebugCA').style.display='inline-block';
       refreshAI();
       loadSmartFiltersUI();
+      renderHistory();
     }else{document.getElementById('pwErr').style.display='block';document.getElementById('adminPwInp').value='';}
   }).catch(()=>{document.getElementById('pwErr').style.display='block';document.getElementById('adminPwInp').value='';});
 }
