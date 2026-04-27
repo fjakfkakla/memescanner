@@ -3457,6 +3457,8 @@ body.view-avis #landing-wrap { display: none !important; }
   <!-- Boutons droite -->
   <div class="nav-right">
     <button class="lang-switch" onclick="toggleLang()">🇫🇷 FR</button>
+    <button class="nav-btn btn-outline" onclick="openCode()">Se connecter</button>
+    <button class="nav-btn btn-primary" onclick="openCode()">Accès VIP →</button>
     <button class="nav-btn btn-outline" onclick="openAdmin()" id="adminBtn">⚙ Admin</button>
     <button id="notifBtn" onclick="handleNotifBtn()" title="Activer les alertes calls" style="background:transparent;border:1px solid #e5e7eb;color:#6b7280;padding:.4rem .75rem;border-radius:8px;cursor:pointer;font-size:.85rem;transition:.2s;font-family:'Space Mono',monospace;">🔔</button>
     <div id="streakBadge" style="display:flex;align-items:center;gap:4px;background:linear-gradient(135deg,rgba(255,170,0,.12),rgba(255,107,53,.08));border:1px solid rgba(255,170,0,.3);border-radius:10px;padding:5px 12px;cursor:default;" title="Jours de connexion consécutifs">
@@ -4440,7 +4442,17 @@ body.view-avis #landing-wrap { display: none !important; }
   </div>
 </footer>
 
-<!-- codeModal supprimé -->
+<!-- CODE MODAL -->
+<div class="modal-overlay" id="codeModal">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeCode()">✕</button>
+    <div class="modal-title">🔐 Code d'accès</div>
+    <div class="modal-sub" id="cm-sub">Entre ton code pour accéder au scanner.</div>
+    <input type="text" class="code-input" id="codeInput" placeholder="XXXX-XXXX-XXXX" maxlength="19" oninput="formatCode(this)" onkeydown="if(event.key==='Enter')submitCode()">
+    <div class="code-err" id="codeErr" style="display:none"></div>
+    <button class="code-submit" onclick="submitCode()">Accéder →</button>
+  </div>
+</div>
 
 <!-- ADMIN OVERLAY -->
 <div class="admin-overlay" id="adminOverlay">
@@ -5012,7 +5024,7 @@ const SOL_CA_RE      = /\b[1-9A-HJ-NP-Za-km-z]{43,44}\b/g;
 const NITTER_HOSTS   = ['https://nitter.poast.org','https://nitter.privacydev.net','https://nitter.cz'];
 const CORS_PROXY     = 'https://corsproxy.io/?';
 
-let isUnlocked = true; // accès libre — système de codes supprimé
+let isUnlocked = false;
 const _adminExpiry = parseInt(localStorage.getItem('ms_admin_expiry')||'0');
 let isAdminMode = _adminExpiry > Date.now(); // session admin persistée 24h
 let debugModeOn = false;
@@ -6259,7 +6271,9 @@ async function saveCodesFB(codes){try{localStorage.setItem(CODE_KEY,JSON.stringi
 function loadCodes(){try{const c=JSON.parse(localStorage.getItem(CODE_KEY));if(c?.length)return c;}catch(e){}return getDefaultCodes();}
 function saveCodes(c){localStorage.setItem(CODE_KEY,JSON.stringify(c));fetch(`${FB_URL}/codes.json`,{method:'PUT',body:JSON.stringify(c)}).catch(()=>{});}
 function getDefaultCodes(){return[{code:'CODE-DEMO-1234',plan:'alpha',used:false},{code:'BASE-TEST-0001',plan:'base',used:false},{code:'DUBA-MODE-9999',plan:'dubai',used:false}];}
-function checkSession(){ onUnlock('free'); } // accès direct
+function checkSession(){try{const s=JSON.parse(localStorage.getItem(SESSION_KEY));if(s&&s.expires>Date.now()){isUnlocked=true;onUnlock(s.plan);}}catch(e){}}
+// Auto-déconnexion à expiration de session
+setInterval(()=>{if(!isUnlocked)return;try{const s=JSON.parse(localStorage.getItem(SESSION_KEY));if(!s||s.expires<=Date.now()){isUnlocked=false;localStorage.removeItem(SESSION_KEY);location.reload();}}catch(e){}},30000);
 async function submitCode(){
   const val=document.getElementById('codeInput').value.trim().toUpperCase();
   const err=document.getElementById('codeErr');
@@ -11335,6 +11349,7 @@ function toggleMobSection(id) {
 window.addEventListener('DOMContentLoaded',()=>{
   try{
     checkSession();loadReviews();
+    document.getElementById('codeModal').addEventListener('click',e=>{if(e.target.id==='codeModal')closeCode();});
     initDailyBox();
     fetchKolMentions();
     setInterval(fetchKolMentions, KOL_CACHE_TTL);
