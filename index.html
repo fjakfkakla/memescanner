@@ -8984,7 +8984,7 @@ async function renderHistory(force=false){
     const _hBarW = tcBarWidth(xAth);
     const _hMult = tcMultDisp(xAth);
     const _hFallback = sym.slice(0,4).toUpperCase();
-    const _hAdminEdit = isAdminMode?`<button onclick="adminEditAth('${key}','${addr}','${sym}')" style="background:none;border:none;color:rgba(255,170,0,.5);font-size:.6rem;cursor:pointer;padding:0 .2rem;position:absolute;top:6px;right:6px;z-index:10">✏️</button>`:'';
+    const _hAdminEdit = isAdminMode?`<button onclick="adminEditAth('${key}','${addr}','${sym}')" style="position:absolute;bottom:8px;right:8px;z-index:10;background:rgba(0,0,0,.65);border:1px solid rgba(255,170,0,.6);color:#ffaa00;font-size:.75rem;cursor:pointer;padding:3px 7px;border-radius:6px;font-family:'Space Mono',monospace;font-weight:700;">✏️ ATH</button>`:'';
     cards.push(`<div class="tc-card" style="opacity:${isLive?1:.8}">
       <div class="tc-img-wrap">
         ${_hImgUrl
