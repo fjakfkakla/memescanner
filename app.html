@@ -7786,16 +7786,14 @@ function renderBacktest(){
 let _lastHistoryRender=0;
 async function renderHistory(force=false){
   const now=Date.now();
-  // Throttle : ne pas re-render si <60s sauf si switch de tab ou refresh manuel
   if(!force && _lastHistoryRender && (now-_lastHistoryRender)<60000) return;
   _lastHistoryRender=now;
   const container=document.getElementById('historyContent');
-  // Ne pas effacer si contenu déjà affiché — juste spinner discret en haut
   const hasContent=container.querySelector('.sc-card,.hist-card');
   if(!hasContent) container.innerHTML='<div class="hist-empty"><div class="hist-empty-icon">⏳</div><div style="color:var(--muted)">Chargement...</div></div>';
-  // Charger depuis Firebase + localStorage, garder le meilleur ATH des 2
+
   let calls={};
- try{const fb=await fetch(`${FB_URL}/calls.json`,{signal:AbortSignal.timeout(5000)}).then(r=>r.json());
+  try{const fb=await fetch(`${FB_URL}/calls.json`,{signal:AbortSignal.timeout(5000)}).then(r=>r.json());
     if(fb&&typeof fb==='object')Object.entries(fb).forEach(([k,v])=>{if(v&&v.callTime)calls[k]=v;});}catch(e){}
   try{const local=JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}');
     Object.entries(local).forEach(([addr,val])=>{
@@ -7804,7 +7802,7 @@ async function renderHistory(force=false){
       else{if(!calls[key].addr)calls[key].addr=addr;
         if((val.athMcap||0)>(calls[key].athMcap||0))calls[key].athMcap=val.athMcap;}
     });}catch(e){}
-  // Filtrer : l'utilisateur ne voit que les calls depuis son inscription (admin voit tout)
+
   let registeredAt=0;
   if(!isAdminMode){try{const sess=JSON.parse(localStorage.getItem(SESSION_KEY)||'null');if(sess?.registeredAt)registeredAt=sess.registeredAt;}catch(e){}}
   const entries=Object.entries(calls).filter(([,v])=>!registeredAt||(v.callTime||0)>=registeredAt);
@@ -7812,82 +7810,8 @@ async function renderHistory(force=false){
     const hc=document.getElementById('histCount');if(hc)hc.textContent='';
     container.innerHTML='<div class="hist-empty"><div class="hist-empty-icon">📭</div><div>Aucun call encore</div></div>';return;}
 
-  // Mettre à jour la bannière winrate dès le chargement initial
   updateWrStats(calls);
 
-  // Fetch prix live TOUS les tokens (par batch de 20 — DexScreener limite)
-  const allAddrs=entries.map(([,v])=>v.addr||v.address||'').filter(Boolean);
-  // liveMap stocke {now, athEst} — now = mcap actuel, athEst = ATH estimé depuis DexScreener
-  let liveMap={};
-  for(let i=0;i<allAddrs.length;i+=20){
-    try{
-      const chunk=allAddrs.slice(i,i+20);
-      const res=await fetch(`https://api.dexscreener.com/latest/dex/tokens/${chunk.join(',')}`,
-        {signal:AbortSignal.timeout(10000)}).then(r=>r.json());
-      // Grouper par token address, garder la paire avec le plus grand volume
-      const bestPair={};
-      (res.pairs||[]).forEach(p=>{
-        const a=p.baseToken?.address;if(!a)return;
-        if(!bestPair[a]||(p.volume?.h24||0)>(bestPair[a].volume?.h24||0))bestPair[a]=p;
-      });
-      Object.entries(bestPair).forEach(([a,p])=>{
-        const now=p.marketCap||p.fdv||0;
-        if(!now)return;
-        // ATH estimé depuis priceChange — avec plafond anti-MEV bot
-        // priceChange.hX = variation depuis il y a X heures
-        // Si négatif : le token était plus haut → on recalcule
-        // PLAFOND : max 50x le prix now pour éviter les spikes MEV aberrants
-        const c24=p.priceChange?.h24||0;
-        const c6=p.priceChange?.h6||0;
-        const c1=p.priceChange?.h1||0;
-        const MAX_MULT=500;
-        let athEst=now;
-        // Seuil abaissé à -3% : capture les dips récents même faibles
-        // Plafond anti-MEV : max now * MAX_MULT
-        const cap=now*MAX_MULT;
-        if(c24<-3){const est=now/Math.max(0.001,1+c24/100);if(est<cap)athEst=Math.max(athEst,est);}
-        if(c6 <-3){const est=now/Math.max(0.001,1+c6/100); if(est<cap)athEst=Math.max(athEst,est);}
-        if(c1 <-3){const est=now/Math.max(0.001,1+c1/100); if(est<cap)athEst=Math.max(athEst,est);}
-        liveMap[a]={now, athEst:Math.round(athEst), c24, c6, c1};
-      });
-    }catch(e){}
-  }
-
-  // Mettre a jour ATH via vrai ATH candles DexScreener (meme source GMGN/Axiom)
-  const athUpdates=[];
-  const sevenDaysAgo=Date.now()-7*24*3600000;
-  for(const [key,v] of entries){
-    const addr=v.addr||v.address||'';if(!addr)continue;
-    const live=liveMap[addr];
-    const callMcap=v.callMcap||0;
-    const nowMcap=live?.now||0;
-    const athEst=live?.athEst||0;
-    // ATH >= callMcap toujours — athEst retiré : priceChange.h24 ne connaît pas le callTime
-    // et inclut les pumps PRÉ-call → résultats gonflés. fetchRealAth (filtré par callTime) s'en charge.
-    let bestKnown=Math.max(nowMcap, v.athMcap||0, callMcap);
-
-    if(bestKnown>0&&bestKnown>(v.athMcap||0)){
-      v.athMcap=bestKnown;
-      athUpdates.push({key,addr,athMcap:bestKnown});
-    }
-  }
-  // Sauvegarder les nouveaux ATH en Firebase en batch (non bloquant)
-  if(athUpdates.length){
-    athUpdates.forEach(({key,athMcap})=>{
-      fetch(`${FB_URL}/calls/${key}.json`,{method:'PATCH',body:JSON.stringify({athMcap})}).catch(()=>{});
-    });
-    // Mettre à jour localStorage aussi
-    try{
-      const local=JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}');
-      athUpdates.forEach(({addr,athMcap})=>{if(local[addr])local[addr].athMcap=athMcap;});
-      localStorage.setItem(STORAGE_KEY,JSON.stringify(local));
-    }catch(e){}
-  }
-
-  // Refresh bannière winrate avec ATH mis à jour
-  updateWrStats(calls);
-
-  // Trier selon le mode actuel
   let sorted=[...entries];
   if(currentHistSort==='recent') sorted.sort((a,b)=>(b[1].callTime||0)-(a[1].callTime||0));
   else if(currentHistSort==='old') sorted.sort((a,b)=>(a[1].callTime||0)-(b[1].callTime||0));
@@ -7899,6 +7823,7 @@ async function renderHistory(force=false){
     });
   }
 
+  // Render immediately with stored data — prix live mis à jour en background
   const cards=[];
   for(const [key,v] of sorted){
     const addr=v.addr||v.address||'';if(!addr)continue;
@@ -7906,24 +7831,20 @@ async function renderHistory(force=false){
     const athMcap=v.athMcap||callMcap;
     const callTime=v.callTime||0;
     const sym=(v.symbol||key.slice(0,8).toUpperCase());
-    const curMcap=(liveMap[addr]?.now)||0;
-    const isLive=curMcap>0;
-    // xATH = ATH / call (le vrai multiple)
     const xAth=callMcap>0?Math.max(athMcap/callMcap,1):1;
     const xColor=xAth>=5?'#00ff88':xAth>=3?'#88ff44':xAth>=2?'#ffcc44':'#ff8866';
-    const nowColor=curMcap<=0?'rgba(255,255,255,.3)':curMcap>callMcap?'#44ff88':curMcap<callMcap*0.7?'#ff5577':'#ffcc44';
     const callHeure=fmtTimeSeconds(callTime);
     const addrShort=addr.slice(0,6)+'...'+addr.slice(-4);
     const savedScore=v.score||0;
     const scoreEmoji=savedScore>=130?'☢️':savedScore>=110?'💎':savedScore>=95?'🚀':savedScore>=80?'👁':'📡';
     const badgeCls=savedScore>=130?'nuclear':savedScore>=110?'diamond':savedScore>=95?'runner':savedScore>=80?'watchlist':'radar';
     const labelTxt=savedScore>=130?'☢️ NUCLEAR':savedScore>=110?'💎 DIAMOND':savedScore>=95?'🚀 RUNNER':savedScore>=80?'📋 CALL':'📡 RADAR';
-    cards.push(`<div class="sc-card" style="opacity:${isLive?1:.8}">
+    cards.push(`<div class="sc-card" id="hist-card-${key}" style="opacity:.85">
       <div class="sc-header">
         <span style="font-size:1.2rem;flex-shrink:0">${scoreEmoji}</span>
         <span class="sc-sym">${sym}</span>
         <div style="display:flex;gap:.3rem;align-items:center;flex-shrink:0">
-          <span class="hist-badge ${isLive?'hist-badge-live':'hist-badge-dead'}">${isLive?'🟢 LIVE':'⚫ PASSÉ'}</span>
+          <span class="hist-badge hist-badge-dead" id="live-badge-${key}">⚫ PASSÉ</span>
           ${savedScore?`<span class="sc-badge ${badgeCls}">${labelTxt} ${savedScore}</span>`:''}
         </div>
       </div>
@@ -7939,7 +7860,7 @@ async function renderHistory(force=false){
         </div>
         <div class="sc-stat">
           <div class="sc-stat-lbl">⏰ NOW</div>
-          <div class="sc-stat-val" style="color:${nowColor}">$${fmtNum(curMcap||0)}</div>
+          <div class="sc-stat-val" id="now-val-${key}" style="color:rgba(255,255,255,.3)">—</div>
         </div>
         <div class="sc-stat">
           <div class="sc-stat-lbl">🏆 ATH${isAdminMode?` <button onclick="adminEditAth('${key}','${addr}','${sym}')" style="background:rgba(255,170,0,.15);border:1px solid rgba(255,170,0,.3);color:#ffaa00;border-radius:3px;font-size:.55rem;padding:.08rem .28rem;cursor:pointer;vertical-align:middle">✏️</button>`:''}</div>
@@ -7963,6 +7884,67 @@ async function renderHistory(force=false){
   }
   const hc=document.getElementById('histCount');if(hc)hc.textContent=cards.length?`(${cards.length})`:'';
   container.innerHTML=`<div class="scanner-grid">${cards.join('')}</div>`;
+
+  // Mise à jour prix live en background (non-bloquant)
+  _updateHistoryPrices(sorted, entries, calls);
+}
+
+async function _updateHistoryPrices(sorted, entries, calls){
+  const allAddrs=entries.map(([,v])=>v.addr||v.address||'').filter(Boolean);
+  const addrToKey={};
+  sorted.forEach(([key,v])=>{const a=v.addr||v.address||'';if(a)addrToKey[a]=key;});
+  const athUpdates=[];
+  for(let i=0;i<allAddrs.length;i+=20){
+    try{
+      const chunk=allAddrs.slice(i,i+20);
+      const res=await fetch(`https://api.dexscreener.com/latest/dex/tokens/${chunk.join(',')}`,
+        {signal:AbortSignal.timeout(10000)}).then(r=>r.json());
+      const bestPair={};
+      (res.pairs||[]).forEach(p=>{
+        const a=p.baseToken?.address;if(!a)return;
+        if(!bestPair[a]||(p.volume?.h24||0)>(bestPair[a].volume?.h24||0))bestPair[a]=p;
+      });
+      Object.entries(bestPair).forEach(([a,p])=>{
+        const nowMcap=p.marketCap||p.fdv||0;if(!nowMcap)return;
+        const key=addrToKey[a];if(!key)return;
+        const v=calls[key]||{};
+        const callMcap=v.callMcap||0;
+        const c24=p.priceChange?.h24||0,c6=p.priceChange?.h6||0,c1=p.priceChange?.h1||0;
+        const MAX_MULT=500,cap=nowMcap*MAX_MULT;
+        let athEst=nowMcap;
+        if(c24<-3){const est=nowMcap/Math.max(0.001,1+c24/100);if(est<cap)athEst=Math.max(athEst,est);}
+        if(c6 <-3){const est=nowMcap/Math.max(0.001,1+c6/100); if(est<cap)athEst=Math.max(athEst,est);}
+        if(c1 <-3){const est=nowMcap/Math.max(0.001,1+c1/100); if(est<cap)athEst=Math.max(athEst,est);}
+        let bestKnown=Math.max(nowMcap,v.athMcap||0,callMcap);
+        if(bestKnown>0&&bestKnown>(v.athMcap||0)){v.athMcap=bestKnown;athUpdates.push({key,addr:a,athMcap:bestKnown});}
+        // Mettre à jour les éléments de la card
+        const nowColor=nowMcap>callMcap?'#44ff88':nowMcap<callMcap*0.7?'#ff5577':'#ffcc44';
+        const nowEl=document.getElementById(`now-val-${key}`);
+        if(nowEl){nowEl.textContent='$'+fmtNum(nowMcap);nowEl.style.color=nowColor;}
+        const badgeEl=document.getElementById(`live-badge-${key}`);
+        if(badgeEl){badgeEl.className='hist-badge hist-badge-live';badgeEl.textContent='🟢 LIVE';}
+        const cardEl=document.getElementById(`hist-card-${key}`);
+        if(cardEl)cardEl.style.opacity='1';
+        const athEl=document.getElementById(`ath-val-${key}`);
+        if(athEl&&bestKnown>0)athEl.textContent='$'+fmtNum(bestKnown);
+        const xAth=callMcap>0?Math.max(bestKnown/callMcap,1):1;
+        const xColor=xAth>=5?'#00ff88':xAth>=3?'#88ff44':xAth>=2?'#ffcc44':'#ff8866';
+        const xEl=document.getElementById(`xath-val-${key}`);
+        if(xEl){xEl.textContent=xAth.toFixed(2)+'x';xEl.style.color=xColor;}
+      });
+    }catch(e){}
+  }
+  if(athUpdates.length){
+    athUpdates.forEach(({key,athMcap})=>{
+      fetch(`${FB_URL}/calls/${key}.json`,{method:'PATCH',body:JSON.stringify({athMcap})}).catch(()=>{});
+    });
+    try{
+      const local=JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}');
+      athUpdates.forEach(({addr,athMcap})=>{if(local[addr])local[addr].athMcap=athMcap;});
+      localStorage.setItem(STORAGE_KEY,JSON.stringify(local));
+    }catch(e){}
+  }
+  updateWrStats(calls);
 }
 
 // ============================================================
