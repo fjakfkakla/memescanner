@@ -9917,7 +9917,10 @@ async function renderTokenTable(tokens){
     const mult=callMcap>0?t.mcap/callMcap:1;
     const athMult=callMcap>0?athMcap/callMcap:1;
     const d=t.debug;
-    callScoreData.set(t.addr, {score: t.score, sym: t.symbol, d});
+    // Utiliser le debug sauvegardé au moment du call (Firebase) en priorité
+    const _callDebug = callData?.debug || d;
+    const _callScore = callData?.score || t.score;
+    callScoreData.set(t.addr, {score: _callScore, sym: t.symbol, d: _callDebug});
     // ── Données supplémentaires pour l'affichage enrichi ──
     const c1h=+(d.c1h||0); const m5v=+(d.m5||0);
     const buyRatio=+(d.buyRatio||0.5);
