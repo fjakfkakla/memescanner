@@ -1582,6 +1582,29 @@ footer{border-top:1px solid var(--border);}
 .tc-platform-badge{background:rgba(0,200,100,.1);border:1px solid rgba(0,200,100,.22);color:#00cc64;font-size:.62rem;font-weight:700;padding:.18rem .5rem;border-radius:20px;display:flex;align-items:center;gap:.22rem;}
 .tc-pnl-btn{background:rgba(97,86,217,.1);border:1px solid rgba(97,86,217,.25);color:#a99cff;font-size:.62rem;font-weight:700;padding:.18rem .55rem;border-radius:20px;cursor:pointer;transition:.15s;font-family:'Inter',sans-serif;}
 .tc-pnl-btn:hover{background:rgba(97,86,217,.22);color:#c5bcff;}
+.tc-score-call-row{display:flex;align-items:center;gap:.4rem;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:8px;padding:.3rem .55rem;cursor:pointer;transition:.15s;}
+.tc-score-call-row:hover{background:rgba(97,86,217,.1);border-color:rgba(97,86,217,.3);}
+.tc-sco-lbl{font-size:.6rem;color:rgba(255,255,255,.32);white-space:nowrap;flex-shrink:0;}
+.tc-sco-val{font-family:'Space Mono',monospace;font-size:.75rem;font-weight:800;flex:1;}
+.tc-sco-hint{font-size:.55rem;color:rgba(255,255,255,.2);white-space:nowrap;}
+/* Score breakdown modal */
+.scb-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(6px);z-index:9999;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:.2s;}
+.scb-overlay.open{opacity:1;pointer-events:all;}
+.scb-box{background:#161b27;border:1px solid rgba(97,86,217,.3);border-radius:18px;padding:1.4rem 1.5rem;width:90%;max-width:360px;position:relative;transform:scale(.95) translateY(8px);transition:.25s;box-shadow:0 20px 60px rgba(0,0,0,.7);}
+.scb-overlay.open .scb-box{transform:scale(1) translateY(0);}
+.scb-close{position:absolute;top:.9rem;right:1rem;background:none;border:none;color:rgba(255,255,255,.3);cursor:pointer;font-size:1.1rem;line-height:1;transition:.15s;}
+.scb-close:hover{color:#fff;}
+.scb-title{font-family:'Space Grotesk',sans-serif;font-size:1rem;font-weight:800;color:#fff;margin-bottom:.2rem;}
+.scb-total{font-family:'Space Mono',monospace;font-size:2rem;font-weight:900;line-height:1;margin-bottom:1rem;}
+.scb-row{display:flex;align-items:center;gap:.5rem;padding:.35rem 0;border-bottom:1px solid rgba(255,255,255,.04);}
+.scb-row:last-child{border-bottom:none;}
+.scb-cat{font-size:.72rem;color:rgba(255,255,255,.6);min-width:80px;flex-shrink:0;}
+.scb-bar-wrap{flex:1;height:4px;background:rgba(255,255,255,.07);border-radius:2px;overflow:hidden;}
+.scb-bar-fill{height:100%;border-radius:2px;transition:width .4s ease;}
+.scb-pts{font-family:'Space Mono',monospace;font-size:.68rem;font-weight:700;min-width:36px;text-align:right;flex-shrink:0;}
+.scb-sub{display:none;padding:.3rem .4rem .1rem;font-size:.62rem;line-height:1.65;color:rgba(255,255,255,.55);background:rgba(0,0,0,.3);border-radius:6px;margin-top:.25rem;width:100%;}
+.scb-cat-row{cursor:pointer;flex-wrap:wrap;}
+.scb-cat-row:hover .scb-cat{color:#c5bcff;}
 
 /* ── PAPER BOT ──────────────────────────────────────────────── */
 /* ===== PAPER TRADING BOT UI ===== */
@@ -4786,6 +4809,15 @@ body.view-avis #landing-wrap { display: none !important; }
 </div>
 
 <!-- PnL Share Modal -->
+<div class="scb-overlay" id="scbOverlay" onclick="if(event.target===this)closeScoreBreakdown()">
+  <div class="scb-box">
+    <button class="scb-close" onclick="closeScoreBreakdown()">✕</button>
+    <div class="scb-title" id="scbTitle">Score au call</div>
+    <div class="scb-total" id="scbTotal">—</div>
+    <div id="scbRows"></div>
+  </div>
+</div>
+
 <div class="pnl-overlay" id="pnlOverlay" onclick="if(event.target===this)closePnl()">
   <div class="pnl-card-wrap" id="pnlCardWrap">
   <div class="pnl-card rarity-common" id="pnlCard" onmousemove="tiltCard(event)" onmouseleave="resetTilt()">
@@ -5032,6 +5064,7 @@ let lastScored = [];
 let refreshTimer = null;
 // dipTracker : addr → { peakMcap, callMcap, firstSeenAt }
 const dipTracker = new Map();
+const callScoreData = new Map();
 let rugRefreshTimer = null;
 let currentLang = 'fr';
 let currentRsTab = 'token';
@@ -9878,6 +9911,7 @@ async function renderTokenTable(tokens){
     const mult=callMcap>0?t.mcap/callMcap:1;
     const athMult=callMcap>0?athMcap/callMcap:1;
     const d=t.debug;
+    callScoreData.set(t.addr, {score: t.score, sym: t.symbol, d});
     // ── Données supplémentaires pour l'affichage enrichi ──
     const c1h=+(d.c1h||0); const m5v=+(d.m5||0);
     const buyRatio=+(d.buyRatio||0.5);
@@ -9995,6 +10029,11 @@ async function renderTokenTable(tokens){
           <span class="tc-signal-icon">⏱</span>
           <span class="tc-signal-lbl">Signal détecté:</span>
           <span class="tc-signal-time">${fmtSignalDate(callTime)}</span>
+        </div>
+        <div class="tc-score-call-row" onclick="showScoreBreakdown('${t.addr}')">
+          <span class="tc-sco-lbl">Score au call</span>
+          <span class="tc-sco-val" style="color:${t.score>=130?'#ffd700':t.score>=100?'#00ff88':t.score>=70?'#a99cff':'#ffaa44'}">${t.score} pts</span>
+          <span class="tc-sco-hint">▸ détail</span>
         </div>
         <div class="tc-perf-row">
           <span class="tc-perf-lbl">Performance</span>
@@ -10172,6 +10211,74 @@ function launchExplosions(){
     },b*400);
   }
 }
+
+function showScoreBreakdown(addr){
+  const data = callScoreData.get(addr);
+  if(!data) return;
+  const {score, sym, d} = data;
+  const wg = d.byGroup || {};
+  const kolPts  = (wg['KOL']||0) * 4;
+  const trdPts  = (wg['gros trader']||0) * 3;
+  const devPts  = (wg['DEV']||0) * 5;
+  const frmPts  = (wg['farmer']||0) * (-3);
+  const scoreColor = score>=130?'#ffd700':score>=100?'#00ff88':score>=70?'#a99cff':'#ffaa44';
+  document.getElementById('scbTitle').textContent = `Score au call — ${sym}`;
+  const totalEl = document.getElementById('scbTotal');
+  totalEl.textContent = score + ' pts';
+  totalEl.style.color = scoreColor;
+  const cats = [
+    {
+      name:'🎯 Wallet',
+      val: d.walletScore||d.traderScore||0, max:50,
+      sub:`KOL: ${wg['KOL']||0} → +${kolPts}pts<br>Trader: ${wg['gros trader']||0} → +${trdPts}pts<br>DEV: ${wg['DEV']||0} → +${devPts}pts<br>Farmer: ${wg['farmer']||0} → ${frmPts}pts`
+    },
+    {
+      name:'🐦 Social',
+      val: d.socialScore||0, max:48,
+      sub:`Twitter: ${d.social?.twitterPts!=null?'+'+d.social.twitterPts+'pts':d.c1h!=null?'—':'—'}<br>TG/Web/GitHub/Cashback inclus`
+    },
+    {
+      name:'👥 Holders',
+      val: d.holderScore||0, max:25,
+      sub:`Top10: ${(d.top10pct||0).toFixed(1)}%${d.holders?.top10Score!=null?' → +'+d.holders.top10Score+'pts':''}<br>Pro traders dans top50: ${(d.kolCount||0)+(d.traderCount||0)}`
+    },
+    {
+      name:'🪙 Token',
+      val: d.platformScore||0, max:15,
+      sub:`DEX Paid: ${(d.platformScore||0)>0?'✅ oui':'❌ non'}`
+    },
+    {
+      name:'💰 MCAP',
+      val: d.mcapScore||0, max:20,
+      sub:`Score MCAP: ${(d.mcapScore||0)>=0?'+':''}${d.mcapScore||0}pts`
+    },
+    {
+      name:'⏱ Âge',
+      val: d.ageScore||0, max:20,
+      sub:`Âge: ${((d.ageH||0)*60).toFixed(0)}min → +${d.ageScore||0}pts`
+    },
+    {
+      name:'📊 Activité',
+      val: d.patternScore||0, max:45,
+      sub:`Liquidité: $${fmtNum(d.pattern?.liq||0)} → ${d.pattern?.liqScore||0}pts<br>Volume H1: $${fmtNum(d.pattern?.volH1||0)} → ${d.pattern?.volH1Score||0}pts<br>Buy ratio: ${((d.buyRatio||0.5)*100).toFixed(0)}%`
+    },
+  ];
+  const rowsHtml = cats.map((c,i)=>{
+    const v = c.val||0;
+    const pct = Math.max(0, Math.min(100, Math.abs(v)/c.max*100));
+    const col = v<0?'#ff5577':v>=c.max*.7?'#00ff88':v>=c.max*.35?'#ffcc44':'#8888aa';
+    const rowId = 'scbrow_'+i;
+    return `<div class="scb-row scb-cat-row" onclick="const e=document.getElementById('${rowId}');e.style.display=e.style.display==='block'?'none':'block'">
+      <span class="scb-cat">${c.name}</span>
+      <div class="scb-bar-wrap"><div class="scb-bar-fill" style="width:${pct}%;background:${col}"></div></div>
+      <span class="scb-pts" style="color:${col}">${v>=0?'+':''}${v}</span>
+      <div class="scb-sub" id="${rowId}">${c.sub}</div>
+    </div>`;
+  }).join('');
+  document.getElementById('scbRows').innerHTML = rowsHtml;
+  document.getElementById('scbOverlay').classList.add('open');
+}
+function closeScoreBreakdown(){document.getElementById('scbOverlay').classList.remove('open');}
 
 function openScannerPnl(addr,sym,callMcap,athMcap,score,imgUrl=''){
   const xAth=callMcap>0?(athMcap/callMcap):1;
