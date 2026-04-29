@@ -49,17 +49,19 @@ export async function saveCall(token) {
       debug:      token.debug,
       lastSeenAt: Date.now(),
     };
-    // Ne jamais écraser un callMcap déjà enregistré (protège contre restart Railway)
+    // Ne jamais écraser callMcap ni callScore (score figé au moment du premier call)
     if (token.callMcap !== undefined && !existing.callMcap) updates.callMcap = token.callMcap;
+    if (!existing.callScore) updates.callScore = existing.score || token.score;
     await ref.update(updates);
     return key;
   }
   // Nouveau call
   await ref.set({
     ...token,
-    callMcap: token.mcap,
-    savedAt:  Date.now(),
-    callTime: Date.now(),
+    callMcap:  token.mcap,
+    callScore: token.score,
+    savedAt:   Date.now(),
+    callTime:  Date.now(),
   });
   return key;
 }

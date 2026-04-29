@@ -8364,7 +8364,7 @@ function showDebug(idx){
 // PERSISTENT CALLS
 // ============================================================
 async function saveCall(addr,callMcap,callTime,symbol='',score=0,pairAddress=''){
-  const entry={callMcap,callTime,athMcap:callMcap,addr,symbol,score,pairAddress};
+  const entry={callMcap,callTime,athMcap:callMcap,addr,symbol,score,callScore:score,pairAddress};
   let saved=false;
   try{const all=JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}');if(!all[addr]){all[addr]=entry;localStorage.setItem(STORAGE_KEY,JSON.stringify(all));saved=true;}}catch(e){}
   try{const key=addr.replace(/[.#$\/\[\]]/g,'_');const ex=await fetch(`${FB_URL}/calls/${key}.json`).then(r=>r.json()).catch(()=>null);if(!ex)await fetch(`${FB_URL}/calls/${key}.json`,{method:'PUT',body:JSON.stringify(entry)});}catch(e){}
@@ -9006,11 +9006,13 @@ async function renderHistory(force=false){
     const nowColor=curMcap<=0?'rgba(255,255,255,.3)':curMcap>callMcap?'#44ff88':curMcap<callMcap*0.7?'#ff5577':'#ffcc44';
     const callHeure=fmtTimeSeconds(callTime);
     const addrShort=addr.slice(0,6)+'...'+addr.slice(-4);
-    const savedScore=v.score||0;
+    const savedScore=v.callScore||v.score||0;
     const scoreEmoji=savedScore>=130?'☢️':savedScore>=110?'💎':savedScore>=95?'🚀':savedScore>=80?'👁':'📡';
     const badgeCls=savedScore>=130?'nuclear':savedScore>=110?'diamond':savedScore>=95?'runner':savedScore>=80?'watchlist':'radar';
     const labelTxt=savedScore>=130?'☢️ NUCLEAR':savedScore>=110?'💎 DIAMOND':savedScore>=95?'🚀 RUNNER':savedScore>=80?'📋 CALL':'📡 RADAR';
     if(v.debug)callScoreData.set(addr,{score:savedScore,sym,d:v.debug});
+    const _hScoreCol=savedScore>=130?'#ffd700':savedScore>=100?'#00ff88':savedScore>=70?'#a99cff':'#ffaa44';
+    const _hScoreRow=savedScore>0?`<div class="tc-score-call-row" onclick="showScoreBreakdown('${addr}')"><span class="tc-sco-lbl">Score au call</span><span class="tc-sco-val" style="color:${_hScoreCol}">${savedScore} pts</span><span class="tc-sco-hint">${v.debug?'▸ détail':'—'}</span></div>`:'';
     const _hImgUrl = histImageMap[addr] || v.raw?.info?.imageUrl || v.raw?.info?.header || v.raw?.baseToken?.info?.imageUrl || '';
     const _hTwRaw = v.raw?.info?.socials?.find(s=>s.type==='twitter')?.url || '';
     const _hWebUrl = v.raw?.info?.websites?.[0]?.url || '';
@@ -9046,11 +9048,7 @@ async function renderHistory(force=false){
           <span class="tc-signal-lbl">Signal détecté:</span>
           <span class="tc-signal-time">${fmtSignalDate(callTime)}</span>
         </div>
-        ${savedScore>0?`<div class="tc-score-call-row" onclick="showScoreBreakdown('${addr}')">
-          <span class="tc-sco-lbl">Score au call</span>
-          <span class="tc-sco-val" style="color:${savedScore>=130?'#ffd700':savedScore>=100?'#00ff88':savedScore>=70?'#a99cff':'#ffaa44'}">${savedScore} pts</span>
-          <span class="tc-sco-hint">${v.debug?'▸ détail':'—'}</span>
-        </div>`:''}
+        ${_hScoreRow}
         <div class="tc-perf-row">
           <span class="tc-perf-lbl">Performance</span>
           <span class="tc-perf-val">${tcPerfPct(xAth)}</span>
@@ -9759,8 +9757,8 @@ async function fetchTokens(){
     // PVP loser → affiché en UI mais jamais sauvegardé comme call
     if(t.pvp==='loser'){t._callTime=_now5;continue;}
     const existing=existingMap[t.addr]||null;
-    if(!existing){ const saved=await saveCall(t.addr,t.mcap,_now5,t.symbol,t.score||0,t.raw?.pairAddress||''); t._callTime=_now5; if(saved)onNewCall(t); }
-    else{ if(t.mcap>(existing.athMcap||0)){await updateAth(t.addr,t.mcap); const xAth=t.mcap/(existing.callMcap||t.mcap); if(xAth>=2)onX2Call(t,xAth);} t._callTime=existing.callTime||_now5; }
+    if(!existing){ const saved=await saveCall(t.addr,t.mcap,_now5,t.symbol,t.score||0,t.raw?.pairAddress||''); t._callTime=_now5; t._callScore=t.score; if(saved)onNewCall(t); }
+    else{ if(t.mcap>(existing.athMcap||0)){await updateAth(t.addr,t.mcap); const xAth=t.mcap/(existing.callMcap||t.mcap); if(xAth>=2)onX2Call(t,xAth);} t._callTime=existing.callTime||_now5; t._callScore=t._callScore||existing.callScore||existing.score||t.score; }
   }
   const newAddrs=new Set(finalScored.map(t=>t.addr));
   for(const prev of lastScored){
@@ -9919,7 +9917,7 @@ async function renderTokenTable(tokens){
     const d=t.debug;
     // Utiliser le debug sauvegardé au moment du call (Firebase) en priorité
     const _callDebug = callData?.debug || d;
-    const _callScore = callData?.score || t.score;
+    const _callScore = t._callScore || callData?.callScore || t.score;
     callScoreData.set(t.addr, {score: _callScore, sym: t.symbol, d: _callDebug});
     // ── Données supplémentaires pour l'affichage enrichi ──
     const c1h=+(d.c1h||0); const m5v=+(d.m5||0);
@@ -10012,6 +10010,8 @@ async function renderTokenTable(tokens){
     const _tcBarW = tcBarWidth(xAth);
     const _tcMult = tcMultDisp(xAth);
     const _tcFallback = t.symbol.slice(0,4).toUpperCase();
+    const _scoreCol = _callScore>=130?'#ffd700':_callScore>=100?'#00ff88':_callScore>=70?'#a99cff':'#ffaa44';
+    const _scoreRow = `<div class="tc-score-call-row" onclick="showScoreBreakdown('${t.addr}')"><span class="tc-sco-lbl">Score au call</span><span class="tc-sco-val" style="color:${_scoreCol}">${_callScore} pts</span><span class="tc-sco-hint">▸ détail</span></div>`;
     cards.push(`<div class="tc-card" data-live-addr="${t.addr}" data-call-mcap="${callMcap}">
       <div class="tc-img-wrap">
         ${_imageUrl
@@ -10039,11 +10039,7 @@ async function renderTokenTable(tokens){
           <span class="tc-signal-lbl">Signal détecté:</span>
           <span class="tc-signal-time">${fmtSignalDate(callTime)}</span>
         </div>
-        <div class="tc-score-call-row" onclick="showScoreBreakdown('${t.addr}')">
-          <span class="tc-sco-lbl">Score au call</span>
-          <span class="tc-sco-val" style="color:${t.score>=130?'#ffd700':t.score>=100?'#00ff88':t.score>=70?'#a99cff':'#ffaa44'}">${t.score} pts</span>
-          <span class="tc-sco-hint">▸ détail</span>
-        </div>
+        ${_scoreRow}
         <div class="tc-perf-row">
           <span class="tc-perf-lbl">Performance</span>
           <span class="tc-perf-val">${tcPerfPct(xAth)}</span>
