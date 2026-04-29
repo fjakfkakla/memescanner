@@ -9010,6 +9010,7 @@ async function renderHistory(force=false){
     const scoreEmoji=savedScore>=130?'☢️':savedScore>=110?'💎':savedScore>=95?'🚀':savedScore>=80?'👁':'📡';
     const badgeCls=savedScore>=130?'nuclear':savedScore>=110?'diamond':savedScore>=95?'runner':savedScore>=80?'watchlist':'radar';
     const labelTxt=savedScore>=130?'☢️ NUCLEAR':savedScore>=110?'💎 DIAMOND':savedScore>=95?'🚀 RUNNER':savedScore>=80?'📋 CALL':'📡 RADAR';
+    if(v.debug)callScoreData.set(addr,{score:savedScore,sym,d:v.debug});
     const _hImgUrl = histImageMap[addr] || v.raw?.info?.imageUrl || v.raw?.info?.header || v.raw?.baseToken?.info?.imageUrl || '';
     const _hTwRaw = v.raw?.info?.socials?.find(s=>s.type==='twitter')?.url || '';
     const _hWebUrl = v.raw?.info?.websites?.[0]?.url || '';
@@ -9045,6 +9046,11 @@ async function renderHistory(force=false){
           <span class="tc-signal-lbl">Signal détecté:</span>
           <span class="tc-signal-time">${fmtSignalDate(callTime)}</span>
         </div>
+        ${savedScore>0?`<div class="tc-score-call-row" onclick="showScoreBreakdown('${addr}')">
+          <span class="tc-sco-lbl">Score au call</span>
+          <span class="tc-sco-val" style="color:${savedScore>=130?'#ffd700':savedScore>=100?'#00ff88':savedScore>=70?'#a99cff':'#ffaa44'}">${savedScore} pts</span>
+          <span class="tc-sco-hint">${v.debug?'▸ détail':'—'}</span>
+        </div>`:''}
         <div class="tc-perf-row">
           <span class="tc-perf-lbl">Performance</span>
           <span class="tc-perf-val">${tcPerfPct(xAth)}</span>
