@@ -5065,6 +5065,7 @@ let refreshTimer = null;
 // dipTracker : addr → { peakMcap, callMcap, firstSeenAt }
 const dipTracker = new Map();
 const callScoreData = new Map();
+const frozenCallScore = new Map(); // addr → score figé au moment du 1er call, jamais écrasé
 let rugRefreshTimer = null;
 let currentLang = 'fr';
 let currentRsTab = 'token';
@@ -9757,8 +9758,8 @@ async function fetchTokens(){
     // PVP loser → affiché en UI mais jamais sauvegardé comme call
     if(t.pvp==='loser'){t._callTime=_now5;continue;}
     const existing=existingMap[t.addr]||null;
-    if(!existing){ const saved=await saveCall(t.addr,t.mcap,_now5,t.symbol,t.score||0,t.raw?.pairAddress||''); t._callTime=_now5; t._callScore=t.score; if(saved)onNewCall(t); }
-    else{ if(t.mcap>(existing.athMcap||0)){await updateAth(t.addr,t.mcap); const xAth=t.mcap/(existing.callMcap||t.mcap); if(xAth>=2)onX2Call(t,xAth);} t._callTime=existing.callTime||_now5; t._callScore=t._callScore||existing.callScore||existing.score||t.score; }
+    if(!existing){ const saved=await saveCall(t.addr,t.mcap,_now5,t.symbol,t.score||0,t.raw?.pairAddress||''); t._callTime=_now5; frozenCallScore.set(t.addr,t.score); if(saved)onNewCall(t); }
+    else{ if(t.mcap>(existing.athMcap||0)){await updateAth(t.addr,t.mcap); const xAth=t.mcap/(existing.callMcap||t.mcap); if(xAth>=2)onX2Call(t,xAth);} t._callTime=existing.callTime||_now5; if(!frozenCallScore.has(t.addr))frozenCallScore.set(t.addr,existing.callScore||existing.score||t.score); }
   }
   const newAddrs=new Set(finalScored.map(t=>t.addr));
   for(const prev of lastScored){
@@ -9917,7 +9918,7 @@ async function renderTokenTable(tokens){
     const d=t.debug;
     // Utiliser le debug sauvegardé au moment du call (Firebase) en priorité
     const _callDebug = callData?.debug || d;
-    const _callScore = t._callScore || callData?.callScore || t.score;
+    const _callScore = frozenCallScore.get(t.addr) || callData?.callScore || t.score;
     callScoreData.set(t.addr, {score: _callScore, sym: t.symbol, d: _callDebug});
     // ── Données supplémentaires pour l'affichage enrichi ──
     const c1h=+(d.c1h||0); const m5v=+(d.m5||0);
