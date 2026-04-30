@@ -10241,7 +10241,7 @@ function showScoreBreakdown(addr){
     {
       name:'🐦 Social',
       val: d.socialScore||0, max:48,
-      sub:`Twitter: ${d.social?.twitterPts!=null?'+'+d.social.twitterPts+'pts':d.c1h!=null?'—':'—'}<br>TG/Web/GitHub/Cashback inclus`
+      sub:`Twitter: ${d.social?.gotX?`+${d.social.twitterPts}pts`:'—'}<br>${d.social?([d.social.gotTG&&'TG',d.social.gotWEB&&'Web',d.social.gotGH&&'GitHub',d.social.hasCashback&&'Cashback DX'].filter(Boolean).join(' · ')||'Aucun autre social détecté'):'—'}`
     },
     {
       name:'👥 Holders',

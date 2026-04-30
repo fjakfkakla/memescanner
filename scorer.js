@@ -147,13 +147,8 @@ export function scoreTokenV2(p, walletData = { count: 0, byGroup: { KOL: 0, 'gro
   const gotWEB = hasWEB || dexWEB;
   const gotGH  = dexSocials.some(s => (s.type || '').toLowerCase().includes('github') || (s.url || '').includes('github.com'));
   const hasCashback = !!(p.profile?.icon || p.profile?.banner || p.info?.imageUrl);
-  let socialScore = 0;
-  // Twitter: dans la minute +10, dans l'heure +5, sinon +2
-  if (gotX) {
-    if (ageMin <= 1) socialScore += 15;
-    else if (ageH < 1) socialScore += 5;
-    else socialScore += 2;
-  }
+  const twitterPts = gotX ? (ageMin <= 1 ? 15 : ageH < 1 ? 5 : 2) : 0;
+  let socialScore = twitterPts;
   if (gotTG || gotWEB) socialScore += 10;
   if (gotX && (gotTG || gotWEB)) socialScore += 8;
   if (gotGH || hasCashback) socialScore += 8;
@@ -231,6 +226,7 @@ export function scoreTokenV2(p, walletData = { count: 0, byGroup: { KOL: 0, 'gro
     debug: {
       traderScore, socialScore, holderScore, platformScore,
       mcapScore, ageScore, patternScore,
+      social: { gotX, gotTG, gotWEB, gotGH, hasCashback, twitterPts },
       pattern: {
         liq, liqScore: patternResult.liqScore,
         volH1: vol1, volH1Score: patternResult.volH1Score
