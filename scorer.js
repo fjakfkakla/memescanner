@@ -21,7 +21,7 @@ function calculatePatternScore(p) {
   const mcap    = p.marketCap || p.fdv || 1;
   const volH1   = p.volume?.h1 || 0;
   const volM5   = p.volume?.m5 || 0;
-  const liq     = p.liquidity?.usd || 0;
+  const liq     = p.liquidity?.usd || (p.liquidity?.base || 0) * (p.priceNative || 0) || 0;
   const totalTxH1 = buysH1 + sellsH1 || 1;
   const buyRatioM5 = buysM5 / ((buysM5 + sellsM5) || 1);
   const volMcapH1  = volH1 / mcap;
