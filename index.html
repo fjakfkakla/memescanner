@@ -8620,7 +8620,7 @@ function onX2Call(token, xAth) {
 // ============================================================
 // HELPERS
 // ============================================================
-function fmtNum(n){if(!n||isNaN(n))return'?';if(n>=1e6)return(n/1e6).toFixed(1)+'M';if(n>=1e3)return(n/1e3).toFixed(1)+'K';return n.toFixed(0);}
+function fmtNum(n){if(n==null||isNaN(n))return'?';if(n>=1e6)return(n/1e6).toFixed(1)+'M';if(n>=1e3)return(n/1e3).toFixed(1)+'K';return n.toFixed(0);}
 function timeAgo(ts){const d=Math.floor((Date.now()-ts)/1000);if(d<60)return d+'s';if(d<3600)return Math.floor(d/60)+'m';if(d<86400)return Math.floor(d/3600)+'h'+Math.floor((d%3600)/60)+'m';return Math.floor(d/86400)+'j';}
 function fmtTime(ts){const d=new Date(ts);return d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0');}
 function fmtTimeSeconds(ts){const d=new Date(ts);return d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0')+':'+d.getSeconds().toString().padStart(2,'0');}
