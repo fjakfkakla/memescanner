@@ -159,7 +159,7 @@ body { background: var(--lp-bg); color: var(--lp-text); font-family: var(--font)
 #landing-wrap .lp-price-feature { color: #374151; }
 
 /* ═══ LANDING WRAPPER ════════════════════════════════════════════ */
-#landing-wrap{background:var(--lp-bg);position:relative;overflow:hidden;}
+#landing-wrap{background:#000;position:relative;overflow:hidden;}
 
 /* NAV */
 nav {
@@ -3334,6 +3334,391 @@ body.view-avis #landing-wrap { display: none !important; }
   animation:twBlink 0.75s steps(1) infinite;padding-right:2px;}
 @keyframes twBlink{50%{border-color:transparent;}}
 
+/* ═══════════════════════════════════════════════════════════════
+   NEW NAV — DARK TRANSPARENT → SOLID ON SCROLL
+═══════════════════════════════════════════════════════════════ */
+#mainNav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+  display: flex; align-items: center; height: 68px;
+  padding: 0 2.5rem;
+  background: transparent;
+  border-bottom: 1px solid transparent;
+  transition: background .35s ease, border-color .35s ease, box-shadow .35s ease;
+}
+#mainNav.nav-scrolled {
+  background: rgba(5,5,5,0.92);
+  border-color: rgba(255,255,255,0.07);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow: 0 2px 30px rgba(0,0,0,0.5);
+}
+/* hide old nav children that we don't want */
+#mainNav .nav-links,
+#mainNav .lang-switch,
+#mainNav #adminBtn,
+#mainNav #notifBtn,
+#mainNav #streakBadge,
+#mainNav .nav-hamburger { display: none !important; }
+
+#mainNav .nav-logo .logo-text { color: #fff; }
+#mainNav .nav-logo .logo-text span { color: #6366f1; }
+
+#mainNav .nav-right {
+  margin-left: auto;
+  display: flex; align-items: center; gap: .75rem;
+}
+#mainNav .btn-outline {
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.18);
+  color: rgba(255,255,255,0.85);
+  font-size: .875rem; font-weight: 600;
+  padding: .5rem 1.2rem; border-radius: 8px;
+  cursor: pointer; font-family: 'Inter', sans-serif;
+  transition: all .2s;
+}
+#mainNav .btn-outline:hover {
+  border-color: rgba(255,255,255,0.4);
+  color: #fff;
+}
+#mainNav .btn-primary {
+  background: #6366f1;
+  border: none; color: #fff;
+  font-size: .875rem; font-weight: 700;
+  padding: .5rem 1.3rem; border-radius: 8px;
+  cursor: pointer; font-family: 'Inter', sans-serif;
+  transition: all .2s;
+  box-shadow: 0 0 18px rgba(99,102,241,0.45);
+}
+#mainNav .btn-primary:hover {
+  background: #4f46e5;
+  transform: translateY(-1px);
+  box-shadow: 0 0 28px rgba(99,102,241,0.6);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   NEW HERO — FULL SCREEN DARK CENTERED
+═══════════════════════════════════════════════════════════════ */
+#hero.hero-v2 {
+  min-height: 100vh;
+  background: #000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 100px 2rem 5rem;
+  position: relative;
+  overflow: hidden;
+  text-align: center;
+}
+.hero-v2-bg {
+  position: absolute; inset: 0; pointer-events: none;
+  background: radial-gradient(ellipse 80% 50% at 50% 0%, rgba(99,102,241,0.15) 0%, transparent 70%),
+              radial-gradient(ellipse 50% 40% at 80% 80%, rgba(139,92,246,0.08) 0%, transparent 60%);
+}
+.hero-v2-eyebrow {
+  display: inline-flex; align-items: center; gap: .5rem;
+  background: rgba(99,102,241,0.1);
+  border: 1px solid rgba(99,102,241,0.3);
+  color: #a5b4fc;
+  font-size: .72rem; font-weight: 600; letter-spacing: .1em;
+  padding: .35rem 1rem; border-radius: 30px;
+  margin-bottom: 1.8rem; text-transform: uppercase;
+  position: relative; z-index: 1;
+}
+.hero-v2-title {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: clamp(2.8rem, 6vw, 5.5rem);
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  color: #fff;
+  line-height: 1.05;
+  margin-bottom: 1.4rem;
+  position: relative; z-index: 1;
+  max-width: 900px;
+}
+.hero-v2-title .grad {
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a78bfa 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.hero-v2-sub {
+  font-size: 1.1rem; color: rgba(255,255,255,0.45);
+  max-width: 560px; line-height: 1.7;
+  margin-bottom: 2.5rem;
+  position: relative; z-index: 1;
+}
+.hero-v2-cta {
+  display: flex; gap: 1rem; justify-content: center;
+  flex-wrap: wrap; margin-bottom: 3.5rem;
+  position: relative; z-index: 1;
+}
+.hero-v2-btn-primary {
+  padding: .9rem 2.2rem;
+  background: #6366f1; color: #fff;
+  border: none; border-radius: 10px;
+  font-size: 1rem; font-weight: 700;
+  cursor: pointer; font-family: 'Inter', sans-serif;
+  transition: all .25s;
+  box-shadow: 0 0 30px rgba(99,102,241,0.45);
+}
+.hero-v2-btn-primary:hover {
+  background: #4f46e5; transform: translateY(-2px);
+  box-shadow: 0 0 50px rgba(99,102,241,0.6);
+}
+.hero-v2-btn-ghost {
+  padding: .9rem 2rem;
+  background: transparent; color: rgba(255,255,255,0.65);
+  border: 1px solid rgba(255,255,255,0.15); border-radius: 10px;
+  font-size: 1rem; font-weight: 600;
+  cursor: pointer; font-family: 'Inter', sans-serif;
+  transition: all .25s;
+}
+.hero-v2-btn-ghost:hover {
+  border-color: rgba(255,255,255,0.35); color: #fff;
+}
+/* Video placeholder */
+.hero-v2-video-wrap {
+  width: 100%; max-width: 960px;
+  position: relative; z-index: 1;
+  border-radius: 18px; overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.1);
+  box-shadow: 0 40px 100px rgba(0,0,0,0.7), 0 0 0 1px rgba(99,102,241,0.15);
+  background: #0a0a0a;
+  aspect-ratio: 16/9;
+  display: flex; align-items: center; justify-content: center;
+}
+.hero-v2-video-inner {
+  display: flex; flex-direction: column; align-items: center; gap: 1rem;
+  color: rgba(255,255,255,0.25);
+}
+.hero-v2-play-btn {
+  width: 64px; height: 64px; border-radius: 50%;
+  background: rgba(99,102,241,0.2); border: 1px solid rgba(99,102,241,0.4);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: all .25s;
+}
+.hero-v2-play-btn:hover { background: rgba(99,102,241,0.4); transform: scale(1.08); }
+.hero-v2-play-btn svg { margin-left: 4px; }
+.hero-v2-video-label { font-size: .8rem; font-family: 'Space Mono', monospace; letter-spacing: .08em; }
+
+/* ═══════════════════════════════════════════════════════════════
+   TOOLS SECTION — AXIOM STYLE
+═══════════════════════════════════════════════════════════════ */
+#tools-section {
+  background: #000;
+  padding: 7rem 2rem;
+  border-top: 1px solid rgba(255,255,255,0.06);
+}
+.tools-inner { max-width: 1200px; margin: 0 auto; }
+.tools-header { text-align: center; margin-bottom: 4rem; }
+.tools-label {
+  font-size: .7rem; font-weight: 700; letter-spacing: .14em;
+  text-transform: uppercase; color: #6366f1;
+  margin-bottom: .6rem; display: block;
+}
+.tools-main-title {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: clamp(2rem, 4vw, 3.2rem);
+  font-weight: 800; letter-spacing: -0.03em;
+  color: #fff; margin-bottom: .8rem;
+}
+.tools-main-sub { color: rgba(255,255,255,0.4); font-size: .97rem; }
+
+/* Tab row */
+.tools-tabs-row {
+  display: flex; gap: 0;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+  margin-bottom: 3rem;
+  overflow-x: auto;
+}
+.tools-tab {
+  flex: 0 0 auto;
+  padding: 0 2rem 1.5rem;
+  background: transparent; border: none;
+  text-align: left; cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition: all .2s;
+}
+.tools-tab.active { border-bottom-color: #fff; }
+.tools-tab-name {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 1.05rem; font-weight: 700;
+  color: rgba(255,255,255,0.4);
+  transition: color .2s; display: block; margin-bottom: .3rem;
+}
+.tools-tab.active .tools-tab-name { color: #fff; }
+.tools-tab-sub {
+  font-size: .8rem; color: rgba(255,255,255,0.25);
+  transition: color .2s;
+}
+.tools-tab.active .tools-tab-sub { color: rgba(255,255,255,0.5); }
+
+/* Panel */
+.tools-panel { display: none; }
+.tools-panel.active { display: grid; grid-template-columns: 380px 1fr; gap: 2rem; align-items: start; }
+@media(max-width:860px) { .tools-panel.active { grid-template-columns: 1fr; } }
+
+/* Left: subcategory list */
+.tools-subcats { display: flex; flex-direction: column; gap: 0; }
+.tools-subcat {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 12px;
+  padding: 1.1rem 1.2rem;
+  cursor: pointer;
+  transition: all .2s;
+  margin-bottom: 8px;
+  position: relative;
+}
+.tools-subcat:hover { background: rgba(255,255,255,0.05); }
+.tools-subcat.active {
+  background: rgba(99,102,241,0.06);
+  border-color: rgba(99,102,241,0.25);
+}
+.tools-subcat-hd {
+  display: flex; align-items: center; gap: .8rem;
+}
+.tools-subcat-icon {
+  width: 28px; height: 28px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1rem;
+}
+.tools-subcat-name {
+  font-size: .97rem; font-weight: 600;
+  color: rgba(255,255,255,0.6);
+  transition: color .2s;
+  flex: 1;
+}
+.tools-subcat.active .tools-subcat-name { color: #fff; }
+.tools-subcat-body {
+  display: none; padding-top: 1rem;
+  padding-left: 2.6rem;
+}
+.tools-subcat.active .tools-subcat-body { display: block; }
+.tools-subcat-desc {
+  font-size: .875rem; color: rgba(255,255,255,0.4);
+  line-height: 1.7;
+}
+
+/* Right: screenshot area */
+.tools-screenshot {
+  border-radius: 16px;
+  background: #0a0a0a;
+  border: 1px solid rgba(255,255,255,0.08);
+  overflow: hidden;
+  min-height: 380px;
+  display: flex; align-items: center; justify-content: center;
+  position: relative;
+}
+.tools-screenshot-placeholder {
+  display: flex; flex-direction: column; align-items: center; gap: .8rem;
+  color: rgba(255,255,255,0.15);
+  font-family: 'Space Mono', monospace; font-size: .75rem;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   MODALS — LOGIN & SIGNUP
+═══════════════════════════════════════════════════════════════ */
+.modal-overlay {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(0,0,0,0.85);
+  backdrop-filter: blur(8px);
+  display: none; align-items: center; justify-content: center;
+  padding: 1rem;
+  animation: fadeIn .2s ease;
+}
+.modal-overlay.open { display: flex; }
+@keyframes fadeIn { from{opacity:0} to{opacity:1} }
+
+.modal-box {
+  background: #0d0d0d;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 20px;
+  padding: 2.5rem;
+  width: 100%; max-width: 440px;
+  position: relative;
+  animation: slideUp .25s ease;
+}
+@keyframes slideUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+.modal-box-wide { max-width: 860px; }
+
+.modal-close {
+  position: absolute; top: 1.2rem; right: 1.2rem;
+  background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 8px; width: 32px; height: 32px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; color: rgba(255,255,255,0.5); font-size: 1rem;
+  transition: all .2s;
+}
+.modal-close:hover { background: rgba(255,255,255,0.12); color: #fff; }
+
+.modal-logo { display: flex; align-items: center; gap: .6rem; margin-bottom: 1.8rem; }
+.modal-logo-text { font-family: 'Space Grotesk', sans-serif; font-size: 1rem; font-weight: 800; color: #fff; }
+.modal-logo-text span { color: #6366f1; }
+.modal-title { font-family: 'Space Grotesk', sans-serif; font-size: 1.5rem; font-weight: 800; color: #fff; margin-bottom: .4rem; }
+.modal-sub { font-size: .875rem; color: rgba(255,255,255,0.4); margin-bottom: 2rem; }
+
+.modal-field { margin-bottom: 1rem; }
+.modal-label { font-size: .78rem; font-weight: 600; color: rgba(255,255,255,0.5); margin-bottom: .4rem; display: block; letter-spacing: .05em; text-transform: uppercase; }
+.modal-input {
+  width: 100%; padding: .75rem 1rem;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 10px; color: #fff;
+  font-size: .925rem; font-family: 'Inter', sans-serif;
+  transition: all .2s; outline: none;
+}
+.modal-input:focus { border-color: #6366f1; background: rgba(99,102,241,0.06); box-shadow: 0 0 0 3px rgba(99,102,241,0.15); }
+.modal-input::placeholder { color: rgba(255,255,255,0.2); }
+
+.modal-btn-primary {
+  width: 100%; padding: .85rem;
+  background: #6366f1; color: #fff;
+  border: none; border-radius: 10px;
+  font-size: .97rem; font-weight: 700;
+  cursor: pointer; font-family: 'Inter', sans-serif;
+  transition: all .25s; margin-top: .5rem;
+  box-shadow: 0 0 24px rgba(99,102,241,0.35);
+}
+.modal-btn-primary:hover { background: #4f46e5; transform: translateY(-1px); box-shadow: 0 0 36px rgba(99,102,241,0.5); }
+
+.modal-switch-link {
+  text-align: center; margin-top: 1.4rem;
+  font-size: .83rem; color: rgba(255,255,255,0.35);
+}
+.modal-switch-link a { color: #a5b4fc; cursor: pointer; text-decoration: none; font-weight: 600; }
+.modal-switch-link a:hover { color: #6366f1; }
+
+/* Pricing modal */
+.pricing-tabs-modal { display: flex; gap: .5rem; margin-bottom: 2rem; background: rgba(255,255,255,0.04); padding: .4rem; border-radius: 10px; }
+.ptab { flex: 1; padding: .6rem; text-align: center; background: transparent; border: none; border-radius: 8px; color: rgba(255,255,255,0.4); font-size: .85rem; font-weight: 600; cursor: pointer; font-family: 'Inter', sans-serif; transition: all .2s; }
+.ptab.active { background: rgba(255,255,255,0.1); color: #fff; }
+
+.pricing-cards-modal { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 2rem; }
+@media(max-width:700px){ .pricing-cards-modal { grid-template-columns: 1fr; } }
+.pcard-modal {
+  background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 16px; padding: 1.5rem;
+  cursor: pointer; transition: all .2s; position: relative;
+}
+.pcard-modal:hover { border-color: rgba(99,102,241,0.3); background: rgba(99,102,241,0.04); }
+.pcard-modal.selected { border-color: #6366f1; background: rgba(99,102,241,0.08); }
+.pcard-modal.popular::before {
+  content: 'Populaire'; position: absolute; top: -.7rem; left: 50%; transform: translateX(-50%);
+  background: #6366f1; color: #fff; font-size: .65rem; font-weight: 800;
+  padding: .2rem .75rem; border-radius: 20px; letter-spacing: .08em; text-transform: uppercase;
+}
+.pcard-name { font-size: .8rem; font-weight: 700; color: rgba(255,255,255,0.45); text-transform: uppercase; letter-spacing: .08em; margin-bottom: .5rem; }
+.pcard-price { font-family: 'Space Grotesk', sans-serif; font-size: 2rem; font-weight: 800; color: #fff; margin-bottom: .2rem; }
+.pcard-price span { font-size: .9rem; font-weight: 400; color: rgba(255,255,255,0.3); }
+.pcard-desc { font-size: .78rem; color: rgba(255,255,255,0.3); margin-bottom: 1rem; }
+.pcard-feature { font-size: .8rem; color: rgba(255,255,255,0.5); padding: .25rem 0; display: flex; gap: .5rem; }
+.pcard-feature::before { content: '✓'; color: #6366f1; font-weight: 700; flex-shrink: 0; }
+
+.signup-form-step { display: none; }
+.signup-form-step.active { display: block; }
+
 </style>
 </head>
 <body>
@@ -3377,7 +3762,7 @@ body.view-avis #landing-wrap { display: none !important; }
 <div class="cursor-glow" id="cursorGlow"></div>
 
 <nav id="mainNav">
-  <a class="nav-logo" href="#hero">
+  <a class="nav-logo" href="#hero" onclick="showView('home')">
     <svg viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
       <circle cx="30" cy="30" r="29" fill="#0a0612" stroke="#6156d9" stroke-width="1.5"/>
       <circle cx="30" cy="30" r="24" fill="#150f22"/>
@@ -3396,182 +3781,221 @@ body.view-avis #landing-wrap { display: none !important; }
       <circle cx="45" cy="20" r="3" fill="#ffd700"/>
       <circle cx="30" cy="30" r="28" stroke="#7c6aff" stroke-width=".5" opacity=".3"/>
     </svg>
-    <div>
-      <div class="logo-text">Memecoin<span>Scanner</span></div>
-      <div class="logo-tagline">Analyse. Comprends. Décide.</div>
-    </div>
+    <div class="logo-text">Memecoin<span>Scanner</span></div>
   </a>
-  <!-- NAV LINKS (desktop) -->
-  <div class="nav-links" id="navLinks">
 
-    <!-- 1. Accueil -->
-    <a href="#hero" class="nav-link-plain" onclick="showView('home')">Accueil</a>
-
-    <!-- 2. Décryptage -->
-    <div class="nav-dd" id="dd-decryptage">
-      <button class="nav-dd-trigger" onclick="toggleDD('dd-decryptage')">
-        Décryptage
-        <svg class="nav-dd-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-      </button>
-      <div class="nav-dd-panel">
-        <a href="#features" class="nav-dd-item">
-          <div class="nav-dd-icon">🔬</div>
-          <div><div class="nav-dd-title">Comment ça marche</div><div class="nav-dd-desc">L'algorithme de détection expliqué</div></div>
-        </a>
-        <a href="#smartmoney" class="nav-dd-item">
-          <div class="nav-dd-icon">🧠</div>
-          <div><div class="nav-dd-title">Smart Money</div><div class="nav-dd-desc">1 064 wallets KOL trackés en live</div></div>
-        </a>
-        <a href="#scoring" class="nav-dd-item">
-          <div class="nav-dd-icon">📊</div>
-          <div><div class="nav-dd-title">Le Scoring</div><div class="nav-dd-desc">Chaque token noté sur 200 points</div></div>
-        </a>
-        <div class="nav-dd-sep"></div>
-        <a href="#vs" class="nav-dd-item">
-          <div class="nav-dd-icon">⚔️</div>
-          <div><div class="nav-dd-title">Vs Concurrents</div><div class="nav-dd-desc">Pourquoi MemeScanner domine</div></div>
-        </a>
-      </div>
-    </div>
-
-    <!-- 3. Outils -->
-    <div class="nav-dd" id="dd-outils">
-      <button class="nav-dd-trigger" onclick="toggleDD('dd-outils')">
-        Outils
-        <svg class="nav-dd-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-      </button>
-      <div class="nav-dd-panel">
-        <a href="#scanner" class="nav-dd-item" onclick="showView('outils')">
-          <div class="nav-dd-icon">📡</div>
-          <div><div class="nav-dd-title">Scanner Live</div><div class="nav-dd-desc">Détection tokens en temps réel</div></div>
-        </a>
-        <a href="#rugsnip" class="nav-dd-item" onclick="showView('outils')">
-          <div class="nav-dd-icon">🛡️</div>
-          <div><div class="nav-dd-title">Anti-Rug</div><div class="nav-dd-desc">Snipers, bundlers & rugs détectés</div></div>
-        </a>
-        <div class="nav-dd-sep"></div>
-        <a href="#pricing-preview" class="nav-dd-item">
-          <div class="nav-dd-icon">💎</div>
-          <div><div class="nav-dd-title">Plans & Accès</div><div class="nav-dd-desc">Rejoindre la communauté alpha</div></div>
-        </a>
-      </div>
-    </div>
-
-    <!-- 4. Avis -->
-    <div class="nav-dd" id="dd-avis">
-      <button class="nav-dd-trigger" onclick="toggleDD('dd-avis')">
-        Avis
-        <svg class="nav-dd-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-      </button>
-      <div class="nav-dd-panel">
-        <a href="#reviews" class="nav-dd-item" onclick="showView('avis')">
-          <div class="nav-dd-icon">⭐</div>
-          <div><div class="nav-dd-title">Témoignages</div><div class="nav-dd-desc">Ce que disent nos membres</div></div>
-        </a>
-        <a href="#pricing-preview" class="nav-dd-item">
-          <div class="nav-dd-icon">🚀</div>
-          <div><div class="nav-dd-title">Rejoindre</div><div class="nav-dd-desc">Commencer dès maintenant</div></div>
-        </a>
-      </div>
-    </div>
-
-  </div><!-- /nav-links -->
-
-  <!-- Boutons droite -->
+  <!-- Boutons droite uniquement -->
   <div class="nav-right">
-    <button class="lang-switch" onclick="toggleLang()">🇫🇷 FR</button>
-    <button class="nav-btn btn-outline" onclick="openCode()">Se connecter</button>
-    <button class="nav-btn btn-primary" onclick="openCode()">Accès VIP →</button>
-    <button class="nav-btn btn-outline" onclick="openAdmin()" id="adminBtn">⚙ Admin</button>
-    <button id="notifBtn" onclick="handleNotifBtn()" title="Activer les alertes calls" style="background:transparent;border:1px solid #e5e7eb;color:#6b7280;padding:.4rem .75rem;border-radius:8px;cursor:pointer;font-size:.85rem;transition:.2s;font-family:'Space Mono',monospace;">🔔</button>
-    <div id="streakBadge" style="display:flex;align-items:center;gap:4px;background:linear-gradient(135deg,rgba(255,170,0,.12),rgba(255,107,53,.08));border:1px solid rgba(255,170,0,.3);border-radius:10px;padding:5px 12px;cursor:default;" title="Jours de connexion consécutifs">
-      <span style="font-size:1.1rem;">🔥</span>
-      <span id="streakNum" style="font-size:1rem;font-weight:800;color:#d97706;">0</span>
-    </div>
+    <button class="nav-btn btn-outline" onclick="openLoginModal()">Se connecter</button>
+    <button class="nav-btn btn-primary" onclick="openSignupModal()">S'inscrire →</button>
   </div>
-
-  <!-- Hamburger mobile -->
-  <button class="nav-hamburger" id="navHamburger" onclick="toggleMobileMenu()" aria-label="Menu">
-    <span></span><span></span><span></span>
-  </button>
 </nav>
-
-<!-- ── MOBILE MENU ──────────────────────────────────────────── -->
-<div class="nav-mobile-menu" id="navMobileMenu">
-
-  <a href="#hero" class="mob-simple-link" onclick="showView('home'); closeMobileMenu()">Accueil</a>
-
-  <div class="mob-section" id="mob-decryptage">
-    <div class="mob-section-hd" onclick="toggleMobSection('mob-decryptage')">
-      Décryptage
-      <svg class="mob-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
-    </div>
-    <div class="mob-sub">
-      <a href="#features"   class="mob-sub-item" onclick="closeMobileMenu()"><span class="mob-sub-icon">🔬</span>Comment ça marche</a>
-      <a href="#smartmoney" class="mob-sub-item" onclick="closeMobileMenu()"><span class="mob-sub-icon">🧠</span>Smart Money</a>
-      <a href="#scoring"    class="mob-sub-item" onclick="closeMobileMenu()"><span class="mob-sub-icon">📊</span>Le Scoring</a>
-      <a href="#vs"         class="mob-sub-item" onclick="closeMobileMenu()"><span class="mob-sub-icon">⚔️</span>Vs Concurrents</a>
-    </div>
-  </div>
-
-  <div class="mob-section" id="mob-outils">
-    <div class="mob-section-hd" onclick="toggleMobSection('mob-outils')">
-      Outils
-      <svg class="mob-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
-    </div>
-    <div class="mob-sub">
-      <a href="#scanner"       class="mob-sub-item" onclick="showView('outils'); closeMobileMenu()"><span class="mob-sub-icon">📡</span>Scanner Live</a>
-      <a href="#rugsnip"       class="mob-sub-item" onclick="showView('outils'); closeMobileMenu()"><span class="mob-sub-icon">🛡️</span>Anti-Rug</a>
-      <a href="#pricing-preview" class="mob-sub-item" onclick="closeMobileMenu()"><span class="mob-sub-icon">💎</span>Plans & Accès</a>
-    </div>
-  </div>
-
-  <div class="mob-section" id="mob-avis">
-    <div class="mob-section-hd" onclick="toggleMobSection('mob-avis')">
-      Avis
-      <svg class="mob-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
-    </div>
-    <div class="mob-sub">
-      <a href="#reviews"         class="mob-sub-item" onclick="showView('avis'); closeMobileMenu()"><span class="mob-sub-icon">⭐</span>Témoignages</a>
-      <a href="#pricing-preview" class="mob-sub-item" onclick="closeMobileMenu()"><span class="mob-sub-icon">🚀</span>Rejoindre</a>
-    </div>
-  </div>
-
-</div>
 
 <div id="landing-wrap">
 
-<!-- ═══ HERO ═══════════════════════════════════════════════════ -->
-<section id="hero" class="lp-hero">
-  <canvas id="heroGLCanvas"></canvas>
+<!-- ═══ HERO v2 — FULL SCREEN DARK ══════════════════════════════ -->
+<section id="hero" class="hero-v2">
+  <div class="hero-v2-bg"></div>
+  <canvas id="heroGLCanvas" style="display:none"></canvas>
   <div class="hero-cursor-glow" id="heroCursorGlow"></div>
-  <div class="lp-container" id="heroTextWrap">
-    <div class="lp-hero-eyebrow">
-      <span class="lp-pulse-dot"></span>
-      Scanner actif · <span id="hlvCycle">847</span> cycles · Solana Mainnet
+
+  <!-- Hidden stubs pour compatibilité JS -->
+  <span id="hlvCycle" style="display:none">847</span>
+  <span id="heroStatWr" style="display:none">68%</span>
+  <span id="heroTextWrap" style="display:none"></span>
+  <span id="heroTw" style="display:none"></span>
+
+  <div class="hero-v2-eyebrow">
+    <span class="lp-pulse-dot"></span>
+    Scanner actif · Solana Mainnet · 1 064 wallets suivis
+  </div>
+
+  <h1 class="hero-v2-title">
+    Le meilleur outil<br>
+    <span class="grad">web3 memecoin</span>
+  </h1>
+
+  <p class="hero-v2-sub">
+    Le seul scanner de memecoins dont vous aurez jamais besoin.
+    Algorithme propriétaire 24/7, Smart Money Tracker, alertes en temps réel.
+  </p>
+
+  <div class="hero-v2-cta">
+    <button class="hero-v2-btn-primary" onclick="openSignupModal()">Commencer maintenant →</button>
+    <button class="hero-v2-btn-ghost" onclick="document.getElementById('tools-section').scrollIntoView({behavior:'smooth'})">Voir les outils ↓</button>
+  </div>
+
+  <!-- Vidéo démo -->
+  <div class="hero-v2-video-wrap">
+    <div class="hero-v2-video-inner">
+      <div class="hero-v2-play-btn">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="white"><polygon points="5,3 19,12 5,21"/></svg>
+      </div>
+      <span class="hero-v2-video-label">Démo disponible prochainement</span>
     </div>
-    <h1 class="lp-hero-title">
-      Détecte les<br>
-      <span class="lp-hero-grad">opportunités 100x</span><br>
-      avant tout le monde.
-    </h1>
-    <p class="lp-hero-sub">
-      Algorithme propriétaire 24/7 — Smart Money Wallet Tracker, 15 signaux, scoring 150 pts.<br>
-      Les calls arrivent avant la foule. Tu entres au bon moment.
-    </p>
-    <div class="lp-hero-cta">
-      <button class="lp-btn-primary" onclick="openCode()">Accès immédiat →</button>
-      <button class="lp-btn-ghost" onclick="document.getElementById('scanner').scrollIntoView({behavior:'smooth'})">Scanner live ↓</button>
+  </div>
+</section>
+
+<!-- ═══ TOOLS SECTION — AXIOM STYLE ═════════════════════════════ -->
+<section id="tools-section">
+  <div class="tools-inner">
+    <div class="tools-header">
+      <span class="tools-label">Nos outils</span>
+      <h2 class="tools-main-title">Les meilleurs outils pour trade</h2>
+      <p class="tools-main-sub">De l'analyse algorithmique aux alertes en temps réel, on a tout ce qu'il vous faut.</p>
     </div>
-    <div class="lp-hero-stats">
-      <div class="lp-hstat"><span class="lp-hstat-val green" id="heroStatWr">68%</span><span class="lp-hstat-lbl">Winrate</span></div>
-      <div class="lp-hstat-sep"></div>
-      <div class="lp-hstat"><span class="lp-hstat-val">95%</span><span class="lp-hstat-lbl">Rugs bloqués</span></div>
-      <div class="lp-hstat-sep"></div>
-      <div class="lp-hstat"><span class="lp-hstat-val violet">45s</span><span class="lp-hstat-lbl">Cycle scan</span></div>
-      <div class="lp-hstat-sep"></div>
-      <div class="lp-hstat"><span class="lp-hstat-val">1 064</span><span class="lp-hstat-lbl">Wallets suivis</span></div>
+
+    <!-- Tabs -->
+    <div class="tools-tabs-row">
+      <button class="tools-tab active" onclick="switchTool('scanner', this)">
+        <span class="tools-tab-name">Algorithme Scanner</span>
+        <span class="tools-tab-sub">Détectez avant tout le monde.</span>
+      </button>
+      <button class="tools-tab" onclick="switchTool('rug', this)">
+        <span class="tools-tab-name">Rug Sniping</span>
+        <span class="tools-tab-sub">Entrez au bon moment.</span>
+      </button>
+      <button class="tools-tab" onclick="switchTool('checker', this)">
+        <span class="tools-tab-name">Scam Checker</span>
+        <span class="tools-tab-sub">Ne tombez plus dans les pièges.</span>
+      </button>
     </div>
+
+    <!-- Panel : Algorithme Scanner -->
+    <div class="tools-panel active" id="tool-scanner">
+      <div class="tools-subcats">
+
+        <div class="tools-subcat active" onclick="switchSubcat(this, 'scanner')">
+          <div class="tools-subcat-hd">
+            <div class="tools-subcat-icon">⚡</div>
+            <span class="tools-subcat-name">Algorithme de scoring</span>
+          </div>
+          <div class="tools-subcat-body">
+            <p class="tools-subcat-desc">
+              Notre algorithme propriétaire analyse chaque token sur 150 points en temps réel. Il s'appuie sur des données on-chain (liquidité, holders, volume), les mouvements Smart Money, et 12 signaux comportementaux pour vous donner un score de confiance précis avant que le marché ne réagisse.
+            </p>
+          </div>
+        </div>
+
+        <div class="tools-subcat" onclick="switchSubcat(this, 'scanner')">
+          <div class="tools-subcat-hd">
+            <div class="tools-subcat-icon">🧠</div>
+            <span class="tools-subcat-name">Wallet & KOL Analysis</span>
+          </div>
+          <div class="tools-subcat-body">
+            <p class="tools-subcat-desc">
+              Suivez en direct les achats et ventes de 1 064 wallets d'influenceurs (KOL) et de gros traders. Dès qu'un wallet Smart Money entre sur un token, vous êtes alerté en premier. Copiez les meilleurs, évitez les pièges.
+            </p>
+          </div>
+        </div>
+
+        <div class="tools-subcat" onclick="switchSubcat(this, 'scanner')">
+          <div class="tools-subcat-hd">
+            <div class="tools-subcat-icon">🔔</div>
+            <span class="tools-subcat-name">Informations en temps réel</span>
+          </div>
+          <div class="tools-subcat-body">
+            <p class="tools-subcat-desc">
+              Recevez une notification à chaque call validé par l'algorithme — market cap, liquidité, score, wallets impliqués. Données précises et actualisées toutes les 45 secondes sur Solana Mainnet.
+            </p>
+          </div>
+        </div>
+
+      </div>
+      <div class="tools-screenshot">
+        <div class="tools-screenshot-placeholder">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" opacity=".4"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+          <span>Aperçu de l'interface scanner</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Panel : Rug Sniping -->
+    <div class="tools-panel" id="tool-rug">
+      <div class="tools-subcats">
+
+        <div class="tools-subcat active" onclick="switchSubcat(this, 'rug')">
+          <div class="tools-subcat-hd">
+            <div class="tools-subcat-icon">📊</div>
+            <span class="tools-subcat-name">Les meilleures infos pour les meilleurs profits</span>
+          </div>
+          <div class="tools-subcat-body">
+            <p class="tools-subcat-desc">
+              Accédez aux données les plus fraîches du marché : score de rug, concentration des holders, liquidité lockée, activité des wallets créateurs. Prenez vos décisions avec les informations que les autres n'ont pas.
+            </p>
+          </div>
+        </div>
+
+        <div class="tools-subcat" onclick="switchSubcat(this, 'rug')">
+          <div class="tools-subcat-hd">
+            <div class="tools-subcat-icon">🎯</div>
+            <span class="tools-subcat-name">Sniper dès le départ du rug</span>
+          </div>
+          <div class="tools-subcat-body">
+            <p class="tools-subcat-desc">
+              Notre détection identifie les signaux de rug en amont — dump coordonné, retrait de liquidité, wallets bundlers actifs. Positionnez-vous au bon moment, sortez avant les autres.
+            </p>
+          </div>
+        </div>
+
+        <div class="tools-subcat" onclick="switchSubcat(this, 'rug')">
+          <div class="tools-subcat-hd">
+            <div class="tools-subcat-icon">💰</div>
+            <span class="tools-subcat-name">Profit & Stop Loss personnalisables</span>
+          </div>
+          <div class="tools-subcat-body">
+            <p class="tools-subcat-desc">
+              Définissez vos niveaux de sortie selon votre stratégie. Vendez automatiquement à votre cible de profit ou déclenchez votre stop loss sans délai. Vous gardez le contrôle total de votre position, à tout moment.
+            </p>
+          </div>
+        </div>
+
+      </div>
+      <div class="tools-screenshot">
+        <div class="tools-screenshot-placeholder">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" opacity=".4"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+          <span>Aperçu du Rug Sniping</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Panel : Scam Checker -->
+    <div class="tools-panel" id="tool-checker">
+      <div class="tools-subcats">
+
+        <div class="tools-subcat active" onclick="switchSubcat(this, 'checker')">
+          <div class="tools-subcat-hd">
+            <div class="tools-subcat-icon">🔍</div>
+            <span class="tools-subcat-name">Analyser les memecoins</span>
+          </div>
+          <div class="tools-subcat-body">
+            <p class="tools-subcat-desc">
+              Collez l'adresse d'un token et notre outil l'analyse en profondeur : contrat, team wallets, historique on-chain, lp lock, holders distribution. Comprenez en secondes si vous avez affaire à un scam ou à une opportunité réelle.
+            </p>
+          </div>
+        </div>
+
+        <div class="tools-subcat" onclick="switchSubcat(this, 'checker')">
+          <div class="tools-subcat-hd">
+            <div class="tools-subcat-icon">🛡️</div>
+            <span class="tools-subcat-name">Base de données de ruggeurs connus</span>
+          </div>
+          <div class="tools-subcat-body">
+            <p class="tools-subcat-desc">
+              Notre base de données répertorie les adresses de ruggeurs identifiés, les patterns de scam récurrents et les signatures de contrats malveillants. Si le créateur a déjà rugué, vous le saurez avant d'entrer.
+            </p>
+          </div>
+        </div>
+
+      </div>
+      <div class="tools-screenshot">
+        <div class="tools-screenshot-placeholder">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" opacity=".4"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          <span>Aperçu du Scam Checker</span>
+        </div>
+      </div>
+    </div>
+
   </div>
 </section>
 
@@ -12657,6 +13081,111 @@ if(document.readyState==='loading'){
 })();
 </script>
 
+<!-- ═══ MODAL LOGIN ════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="loginModal" onclick="closeModalOnBg(event,'loginModal')">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal('loginModal')">✕</button>
+    <div class="modal-logo">
+      <svg width="28" height="28" viewBox="0 0 60 60" fill="none"><circle cx="30" cy="30" r="29" fill="#0a0612" stroke="#6156d9" stroke-width="1.5"/><ellipse cx="30" cy="33" rx="11" ry="9" fill="#6156d9"/><circle cx="23" cy="24" r="4" fill="#7c6aff"/><circle cx="37" cy="24" r="4" fill="#7c6aff"/><circle cx="23" cy="24" r="2" fill="#0a0612"/><circle cx="37" cy="24" r="2" fill="#0a0612"/></svg>
+      <span class="modal-logo-text">Memecoin<span>Scanner</span></span>
+    </div>
+    <h2 class="modal-title">Se connecter</h2>
+    <p class="modal-sub">Accédez à votre espace avec l'email de votre compte.</p>
+    <div class="modal-field">
+      <label class="modal-label">Email</label>
+      <input type="email" class="modal-input" id="loginEmail" placeholder="vous@exemple.com">
+    </div>
+    <div class="modal-field">
+      <label class="modal-label">Mot de passe</label>
+      <input type="password" class="modal-input" id="loginPassword" placeholder="••••••••">
+    </div>
+    <button class="modal-btn-primary" onclick="handleLogin()">Se connecter →</button>
+    <div class="modal-switch-link">
+      Pas encore de compte ? <a onclick="closeModal('loginModal'); openSignupModal()">S'inscrire</a>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MODAL SIGNUP ══════════════════════════════════════════════ -->
+<div class="modal-overlay" id="signupModal" onclick="closeModalOnBg(event,'signupModal')">
+  <div class="modal-box modal-box-wide">
+    <button class="modal-close" onclick="closeModal('signupModal')">✕</button>
+
+    <!-- Step 1: Choix du plan -->
+    <div class="signup-form-step active" id="signupStep1">
+      <div class="modal-logo">
+        <svg width="28" height="28" viewBox="0 0 60 60" fill="none"><circle cx="30" cy="30" r="29" fill="#0a0612" stroke="#6156d9" stroke-width="1.5"/><ellipse cx="30" cy="33" rx="11" ry="9" fill="#6156d9"/><circle cx="23" cy="24" r="4" fill="#7c6aff"/><circle cx="37" cy="24" r="4" fill="#7c6aff"/><circle cx="23" cy="24" r="2" fill="#0a0612"/><circle cx="37" cy="24" r="2" fill="#0a0612"/></svg>
+        <span class="modal-logo-text">Memecoin<span>Scanner</span></span>
+      </div>
+      <h2 class="modal-title">Choisissez votre plan</h2>
+      <p class="modal-sub" style="margin-bottom:1.5rem">Commencez maintenant, annulez à tout moment.</p>
+
+      <div class="pricing-tabs-modal">
+        <button class="ptab active" onclick="switchPricingTab('monthly',this)">Mensuel</button>
+        <button class="ptab" onclick="switchPricingTab('yearly',this)">Annuel <span style="font-size:.7rem;color:#a5b4fc;font-weight:400">−20%</span></button>
+      </div>
+
+      <div class="pricing-cards-modal">
+        <div class="pcard-modal" onclick="selectPlan(this,'starter')" id="plan-starter">
+          <div class="pcard-name">Starter</div>
+          <div class="pcard-price" id="price-starter">29€<span>/mois</span></div>
+          <div class="pcard-desc">Pour débuter sur les memecoins Solana.</div>
+          <div class="pcard-feature">Scanner live (limité)</div>
+          <div class="pcard-feature">Notifications Discord</div>
+          <div class="pcard-feature">50 scans/jour</div>
+        </div>
+        <div class="pcard-modal popular" onclick="selectPlan(this,'pro')" id="plan-pro">
+          <div class="pcard-name">Pro</div>
+          <div class="pcard-price" id="price-pro">59€<span>/mois</span></div>
+          <div class="pcard-desc">L'outil complet pour les traders actifs.</div>
+          <div class="pcard-feature">Scanner illimité</div>
+          <div class="pcard-feature">KOL & Wallet Tracker</div>
+          <div class="pcard-feature">Rug Checker avancé</div>
+          <div class="pcard-feature">Alertes temps réel</div>
+        </div>
+        <div class="pcard-modal" onclick="selectPlan(this,'elite')" id="plan-elite">
+          <div class="pcard-name">Elite</div>
+          <div class="pcard-price" id="price-elite">99€<span>/mois</span></div>
+          <div class="pcard-desc">Accès total + support prioritaire.</div>
+          <div class="pcard-feature">Tout le plan Pro</div>
+          <div class="pcard-feature">Paper Bot illimité</div>
+          <div class="pcard-feature">Support Discord prioritaire</div>
+          <div class="pcard-feature">Accès beta fonctionnalités</div>
+        </div>
+      </div>
+
+      <button class="modal-btn-primary" onclick="goToSignupStep2()">Continuer avec ce plan →</button>
+      <div class="modal-switch-link">
+        Déjà un compte ? <a onclick="closeModal('signupModal'); openLoginModal()">Se connecter</a>
+      </div>
+    </div>
+
+    <!-- Step 2: Créer le compte -->
+    <div class="signup-form-step" id="signupStep2" style="max-width:400px;margin:0 auto;">
+      <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:1.5rem">
+        <button onclick="backToStep1()" style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:.4rem .8rem;color:rgba(255,255,255,0.5);cursor:pointer;font-size:.82rem;font-family:'Inter',sans-serif">← Retour</button>
+        <span style="font-size:.82rem;color:rgba(255,255,255,0.3)" id="selectedPlanLabel">Plan Pro</span>
+      </div>
+      <h2 class="modal-title">Créer votre compte</h2>
+      <p class="modal-sub">Vous serez redirigé vers le paiement après.</p>
+      <div class="modal-field">
+        <label class="modal-label">Prénom</label>
+        <input type="text" class="modal-input" id="signupName" placeholder="Votre prénom">
+      </div>
+      <div class="modal-field">
+        <label class="modal-label">Email</label>
+        <input type="email" class="modal-input" id="signupEmail" placeholder="vous@exemple.com">
+      </div>
+      <div class="modal-field">
+        <label class="modal-label">Mot de passe</label>
+        <input type="password" class="modal-input" id="signupPassword" placeholder="Minimum 8 caractères">
+      </div>
+      <button class="modal-btn-primary" onclick="handleSignup()">Créer mon compte & payer →</button>
+    </div>
+
+  </div>
+</div>
+
 <!-- Solana web3.js — chargé en différé, utilisé uniquement par le Real Bot -->
 <script src="https://cdn.jsdelivr.net/npm/@solana/web3.js@1.98.0/lib/index.iife.min.js" defer></script>
 
@@ -12667,6 +13196,109 @@ function showView(view) {
   if (view !== 'home') document.body.classList.add('view-' + view);
   window.scrollTo(0, 0);
 }
+
+/* ── NAV scroll transparency ─────────────────────────────────── */
+(function(){
+  const nav = document.getElementById('mainNav');
+  if(!nav) return;
+  function updateNav(){
+    nav.classList.toggle('nav-scrolled', window.scrollY > 40);
+  }
+  window.addEventListener('scroll', updateNav, {passive:true});
+  updateNav();
+})();
+
+/* ── Tools tabs ──────────────────────────────────────────────── */
+function switchTool(id, btn){
+  document.querySelectorAll('.tools-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tools-tab').forEach(t => t.classList.remove('active'));
+  const panel = document.getElementById('tool-' + id);
+  if(panel) panel.classList.add('active');
+  if(btn) btn.classList.add('active');
+}
+function switchSubcat(el, toolId){
+  const panel = document.getElementById('tool-' + toolId);
+  if(!panel) return;
+  panel.querySelectorAll('.tools-subcat').forEach(s => s.classList.remove('active'));
+  el.classList.add('active');
+}
+
+/* ── Modals ──────────────────────────────────────────────────── */
+let selectedPlan = 'pro';
+function openLoginModal(){
+  document.getElementById('loginModal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function openSignupModal(){
+  document.getElementById('signupModal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  // reset to step 1
+  document.getElementById('signupStep1').classList.add('active');
+  document.getElementById('signupStep2').classList.remove('active');
+}
+function closeModal(id){
+  document.getElementById(id).classList.remove('open');
+  document.body.style.overflow = '';
+}
+function closeModalOnBg(e, id){
+  if(e.target.id === id) closeModal(id);
+}
+document.addEventListener('keydown', e => {
+  if(e.key === 'Escape'){
+    closeModal('loginModal'); closeModal('signupModal');
+  }
+});
+
+function handleLogin(){
+  const email = document.getElementById('loginEmail').value.trim();
+  const pw = document.getElementById('loginPassword').value;
+  if(!email || !pw){ alert('Renseignez votre email et mot de passe.'); return; }
+  alert('Connexion en cours — fonctionnalité à brancher sur Firebase Auth.');
+}
+function handleSignup(){
+  const name = document.getElementById('signupName').value.trim();
+  const email = document.getElementById('signupEmail').value.trim();
+  const pw = document.getElementById('signupPassword').value;
+  if(!name || !email || !pw){ alert('Renseignez tous les champs.'); return; }
+  alert(`Compte créé pour ${email} (plan ${selectedPlan}) — redirection paiement à brancher.`);
+}
+
+/* Pricing tabs */
+const prices = {
+  monthly: { starter:'29€', pro:'59€', elite:'99€' },
+  yearly:  { starter:'23€', pro:'47€', elite:'79€' }
+};
+function switchPricingTab(period, btn){
+  document.querySelectorAll('.ptab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  const p = prices[period];
+  document.getElementById('price-starter').innerHTML = p.starter + '<span>/mois</span>';
+  document.getElementById('price-pro').innerHTML    = p.pro    + '<span>/mois</span>';
+  document.getElementById('price-elite').innerHTML  = p.elite  + '<span>/mois</span>';
+}
+function selectPlan(el, name){
+  document.querySelectorAll('.pcard-modal').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedPlan = name;
+}
+/* auto-select Pro on open */
+document.addEventListener('DOMContentLoaded', ()=>{
+  const pro = document.getElementById('plan-pro');
+  if(pro) selectPlan(pro,'pro');
+});
+
+function goToSignupStep2(){
+  document.getElementById('signupStep1').classList.remove('active');
+  document.getElementById('signupStep2').classList.add('active');
+  document.getElementById('selectedPlanLabel').textContent = 'Plan ' + selectedPlan.charAt(0).toUpperCase() + selectedPlan.slice(1);
+}
+function backToStep1(){
+  document.getElementById('signupStep2').classList.remove('active');
+  document.getElementById('signupStep1').classList.add('active');
+}
+
+/* compat stub — openCode() redirige vers signup */
+function openCode(){ openSignupModal(); }
 </script></body>
 </html>
 
