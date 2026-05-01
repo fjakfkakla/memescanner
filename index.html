@@ -2974,6 +2974,16 @@ body.view-avis #landing-wrap { display: none !important; }
   color: #e8e8ff !important;
 }
 
+/* ── Auth / app visibility ──────────────────────────────────────── */
+/* Par défaut : sections app cachées (accès gated) */
+#app-top, #scanner, #rugsnip { display: none; }
+/* Landing masquée quand connecté */
+body.ms-logged-in #landing-wrap { display: none !important; }
+/* Sections app visibles quand connecté */
+body.ms-logged-in #app-top,
+body.ms-logged-in #scanner,
+body.ms-logged-in #rugsnip    { display: block; }
+
 /* ── Nav auth bar ──────────────────────────────────────────────── */
 .nav-auth-bar { display:flex; align-items:center; gap:1rem; }
 .nav-tool-link { color:rgba(200,200,255,0.65); font-size:.85rem; cursor:pointer; transition:color .2s; text-decoration:none; font-family:'Space Mono',monospace; }
@@ -13301,7 +13311,7 @@ async function handleLogin(){
 
     closeModal('loginModal');
     updateNavAuth(subData.email);
-    scrollToSection('scanner');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
 
   } catch(e) {
     showModalError('loginModal', e.message);
@@ -13397,6 +13407,7 @@ function updateNavAuth(email){
   const auth  = document.getElementById('navAuth');
   if(guest) guest.style.display = 'none';
   if(auth)  auth.style.display  = 'flex';
+  document.body.classList.add('ms-logged-in');
 }
 
 function logout(){
@@ -13406,6 +13417,7 @@ function logout(){
   const auth  = document.getElementById('navAuth');
   if(guest) guest.style.display = '';
   if(auth)  auth.style.display  = 'none';
+  document.body.classList.remove('ms-logged-in');
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
