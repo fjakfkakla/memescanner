@@ -13432,7 +13432,7 @@ function scrollToSection(id){
   if(el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
-/* Restaurer l'état auth au chargement */
+/* Restaurer le nav auth au chargement (onUnlock sera appelé par checkSession à DOMContentLoaded) */
 (function restoreAuth(){
   try {
     const raw = localStorage.getItem('ms_user');
@@ -13440,10 +13440,11 @@ function scrollToSection(id){
     const u = JSON.parse(raw);
     if(!u || !u.email) return;
     updateNavAuth(u.email);
-    // Si checkSession() n'a pas encore lancé onUnlock (SESSION_KEY absent/expiré)
-    if (!window.isUnlocked) {
-      window.isUnlocked = true;
-      if (typeof onUnlock === 'function') onUnlock(u.plan || 'pro');
+    // S'assurer que SESSION_KEY existe pour que checkSession() lance onUnlock
+    const sess = JSON.parse(localStorage.getItem('ms_session_v1') || 'null');
+    if(!sess || sess.expires <= Date.now()){
+      const expires = Date.now() + 365 * 24 * 3600 * 1000;
+      localStorage.setItem('ms_session_v1', JSON.stringify({ plan: u.plan || 'pro', expires }));
     }
   } catch(e) {}
 })();
