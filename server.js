@@ -2,15 +2,31 @@ import express from 'express';
 import cors    from 'cors';
 import { randomUUID } from 'crypto';
 import fetch from 'node-fetch';
+import admin from 'firebase-admin';
 import { getCalls, getHistory } from './firebase.js';
 import { runScanCycle, getLiveTokens, checkTokenSecurityExport, checkAxiomWalletsExport, getHeliusStats } from './worker.js';
 import { trackOutcomes, autoAdjust, loadWeights, getAIPanel, getWinrateStats, deepAnalyze, buildSmartFilters, loadSmartFilters, checkSmartFilters, smartFilters } from './aiEngine.js';
 import { startPaperTrader, getPaperConfig, setPaperConfig, getPaperTrades, getPaperEquity, closePaperTrade, resetPaperBot } from './paperTrader.js';
+import { createCheckoutSession, handleStripeWebhook, getUserSubscription } from './stripe.js';
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(cors());
+
+// Webhook Stripe — body brut avant express.json
+app.post('/stripe-webhook', express.raw({ type: 'application/json' }), async (req, res) => {
+  const sig = req.headers['stripe-signature'];
+  if (!sig) return res.status(400).json({ error: 'stripe-signature manquant' });
+  try {
+    const result = await handleStripeWebhook(req.body, sig);
+    res.json(result);
+  } catch (e) {
+    console.error('[Stripe Webhook]', e.message);
+    res.status(400).json({ error: e.message });
+  }
+});
+
 app.use(express.json());
 
 // ── ENDPOINTS ────────────────────────────────────────────────────
@@ -222,6 +238,49 @@ app.post('/paper/close', async (req, res) => {
 app.post('/paper/reset', async (_req, res) => {
   try { await resetPaperBot(); res.json({ ok: true }); }
   catch (e) { res.status(500).json({ ok: false, error: e.message }); }
+});
+
+// ── STRIPE & AUTH ────────────────────────────────────────────────
+
+const ADMIN_EMAILS = new Set((process.env.ADMIN_EMAILS || '').split(',').map(e => e.trim()).filter(Boolean));
+
+app.post('/create-checkout', async (req, res) => {
+  const { email, password, plan, period } = req.body || {};
+  if (!email || !password || !plan) return res.status(400).json({ ok: false, error: 'email, password et plan requis' });
+  if (password.length < 6) return res.status(400).json({ ok: false, error: 'Mot de passe minimum 6 caractères' });
+  try {
+    const result = await createCheckoutSession({ email, password, plan, period: period || 'monthly' });
+    res.json({ ok: true, ...result });
+  } catch (e) {
+    console.error('[Checkout]', e.message);
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+app.post('/login', async (req, res) => {
+  const { idToken } = req.body || {};
+  if (!idToken) return res.status(400).json({ ok: false, error: 'idToken manquant' });
+  try {
+    const decoded = await admin.auth().verifyIdToken(idToken);
+    if (ADMIN_EMAILS.has(decoded.email)) {
+      return res.json({ ok: true, uid: decoded.uid, email: decoded.email, plan: 'elite', status: 'active', isAdmin: true });
+    }
+    const sub = await getUserSubscription(decoded.uid);
+    if (!sub || sub.status !== 'active') return res.status(403).json({ ok: false, error: 'Abonnement inactif' });
+    res.json({ ok: true, uid: decoded.uid, email: decoded.email, plan: sub.plan, status: sub.status });
+  } catch (e) {
+    res.status(401).json({ ok: false, error: 'Token invalide' });
+  }
+});
+
+app.get('/subscription/:uid', async (req, res) => {
+  try {
+    const sub = await getUserSubscription(req.params.uid);
+    if (!sub) return res.status(404).json({ ok: false, error: 'Utilisateur introuvable' });
+    res.json({ ok: true, ...sub });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
 });
 
 // ── DÉMARRAGE ────────────────────────────────────────────────────
