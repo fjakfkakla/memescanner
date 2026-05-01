@@ -13306,11 +13306,18 @@ async function handleLogin(){
     if(!subData.ok) throw new Error(subData.error || 'Abonnement inactif.');
 
     // 3. Stocker la session
+    const plan = subData.plan || 'pro';
     localStorage.setItem('ms_token', authData.idToken);
-    localStorage.setItem('ms_user', JSON.stringify({ email: subData.email, plan: subData.plan, uid: subData.uid }));
+    localStorage.setItem('ms_user', JSON.stringify({ email: subData.email, plan, uid: subData.uid }));
+    // Compatibilité avec l'ancien système de session (pour checkSession au reload)
+    const expires = Date.now() + 365 * 24 * 3600 * 1000;
+    localStorage.setItem('ms_session_v1', JSON.stringify({ plan, expires }));
 
     closeModal('loginModal');
     updateNavAuth(subData.email);
+    // Lancer le scanner comme l'ancien onUnlock()
+    if (typeof isUnlocked !== 'undefined') window.isUnlocked = true;
+    if (typeof onUnlock === 'function') onUnlock(plan);
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
   } catch(e) {
@@ -13413,6 +13420,8 @@ function updateNavAuth(email){
 function logout(){
   localStorage.removeItem('ms_token');
   localStorage.removeItem('ms_user');
+  localStorage.removeItem('ms_session_v1');
+  window.isUnlocked = false;
   const guest = document.getElementById('navGuest');
   const auth  = document.getElementById('navAuth');
   if(guest) guest.style.display = '';
@@ -13432,7 +13441,13 @@ function scrollToSection(id){
     const raw = localStorage.getItem('ms_user');
     if(!raw) return;
     const u = JSON.parse(raw);
-    if(u && u.email) updateNavAuth(u.email);
+    if(!u || !u.email) return;
+    updateNavAuth(u.email);
+    // Si checkSession() n'a pas encore lancé onUnlock (SESSION_KEY absent/expiré)
+    if (!window.isUnlocked) {
+      window.isUnlocked = true;
+      if (typeof onUnlock === 'function') onUnlock(u.plan || 'pro');
+    }
   } catch(e) {}
 })();
 </script></body>
