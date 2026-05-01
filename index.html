@@ -2974,15 +2974,12 @@ body.view-avis #landing-wrap { display: none !important; }
   color: #e8e8ff !important;
 }
 
-/* ── Auth / app visibility ──────────────────────────────────────── */
-/* Par défaut : sections app cachées (accès gated) */
-#app-top, #scanner, #rugsnip { display: none; }
-/* Landing masquée quand connecté */
-body.ms-logged-in #landing-wrap { display: none !important; }
-/* Sections app visibles quand connecté */
-body.ms-logged-in #app-top,
-body.ms-logged-in #scanner,
-body.ms-logged-in #rugsnip    { display: block; }
+/* ── App divider visibility ─────────────────────────────────────── */
+/* #app-top caché par défaut, montré en mode app */
+#app-top { display: none; }
+body.view-outils #app-top { display: block; }
+/* Footer landing caché en mode app */
+body.view-outils .lp-footer { display: none !important; }
 
 /* ── Nav auth bar ──────────────────────────────────────────────── */
 .nav-auth-bar { display:flex; align-items:center; gap:1rem; }
@@ -13414,7 +13411,7 @@ function updateNavAuth(email){
   const auth  = document.getElementById('navAuth');
   if(guest) guest.style.display = 'none';
   if(auth)  auth.style.display  = 'flex';
-  document.body.classList.add('ms-logged-in');
+  document.body.classList.add('view-outils');
 }
 
 function logout(){
@@ -13426,7 +13423,7 @@ function logout(){
   const auth  = document.getElementById('navAuth');
   if(guest) guest.style.display = '';
   if(auth)  auth.style.display  = 'none';
-  document.body.classList.remove('ms-logged-in');
+  document.body.classList.remove('view-outils');
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
