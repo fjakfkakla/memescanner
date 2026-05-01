@@ -2974,6 +2974,12 @@ body.view-avis #landing-wrap { display: none !important; }
   color: #e8e8ff !important;
 }
 
+/* ── Nav auth bar ──────────────────────────────────────────────── */
+.nav-auth-bar { display:flex; align-items:center; gap:1rem; }
+.nav-tool-link { color:rgba(200,200,255,0.65); font-size:.85rem; cursor:pointer; transition:color .2s; text-decoration:none; font-family:'Space Mono',monospace; }
+.nav-tool-link:hover { color:#a5b4fc; }
+.nav-user-badge { background:rgba(97,86,217,0.15); border:1px solid rgba(97,86,217,0.3); border-radius:20px; padding:.25rem .75rem; font-size:.75rem; color:#a5b4fc; font-family:'Space Mono',monospace; white-space:nowrap; max-width:160px; overflow:hidden; text-overflow:ellipsis; }
+
 /* ── Nav dark ──────────────────────────────────────────────────── */
 #mainNav {
   background: rgba(3,3,8,0.75) !important;
@@ -3784,10 +3790,17 @@ body.view-avis #landing-wrap { display: none !important; }
     <div class="logo-text">Memecoin<span>Scanner</span></div>
   </a>
 
-  <!-- Boutons droite uniquement -->
-  <div class="nav-right">
+  <!-- Boutons guest -->
+  <div class="nav-right" id="navGuest">
     <button class="nav-btn btn-outline" onclick="openLoginModal()">Se connecter</button>
     <button class="nav-btn btn-primary" onclick="openSignupModal()">S'inscrire →</button>
+  </div>
+  <!-- Boutons auth (connecté) -->
+  <div class="nav-right nav-auth-bar" id="navAuth" style="display:none">
+    <a class="nav-tool-link" onclick="scrollToSection('scanner')">Scanner</a>
+    <a class="nav-tool-link" onclick="scrollToSection('rugsnip')">Rug Sniping</a>
+    <span class="nav-user-badge" id="navUserEmail"></span>
+    <button class="nav-btn btn-outline" onclick="logout()">Déconnexion</button>
   </div>
 </nav>
 
@@ -13287,8 +13300,8 @@ async function handleLogin(){
     localStorage.setItem('ms_user', JSON.stringify({ email: subData.email, plan: subData.plan, uid: subData.uid }));
 
     closeModal('loginModal');
-    showView('home'); // redirige vers l'app — adapter selon ta logique
-    window.location.href = '#scanner';
+    updateNavAuth(subData.email);
+    scrollToSection('scanner');
 
   } catch(e) {
     showModalError('loginModal', e.message);
@@ -13375,6 +13388,41 @@ function backToStep1(){
 
 /* compat stub — openCode() redirige vers signup */
 function openCode(){ openSignupModal(); }
+
+/* ── Auth nav helpers ───────────────────────────────────────────── */
+function updateNavAuth(email){
+  const el = document.getElementById('navUserEmail');
+  if(el) el.textContent = email;
+  const guest = document.getElementById('navGuest');
+  const auth  = document.getElementById('navAuth');
+  if(guest) guest.style.display = 'none';
+  if(auth)  auth.style.display  = 'flex';
+}
+
+function logout(){
+  localStorage.removeItem('ms_token');
+  localStorage.removeItem('ms_user');
+  const guest = document.getElementById('navGuest');
+  const auth  = document.getElementById('navAuth');
+  if(guest) guest.style.display = '';
+  if(auth)  auth.style.display  = 'none';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function scrollToSection(id){
+  const el = document.getElementById(id);
+  if(el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+/* Restaurer l'état auth au chargement */
+(function restoreAuth(){
+  try {
+    const raw = localStorage.getItem('ms_user');
+    if(!raw) return;
+    const u = JSON.parse(raw);
+    if(u && u.email) updateNavAuth(u.email);
+  } catch(e) {}
+})();
 </script></body>
 </html>
 
