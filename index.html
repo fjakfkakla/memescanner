@@ -13249,18 +13249,95 @@ document.addEventListener('keydown', e => {
   }
 });
 
-function handleLogin(){
+/* ── Config backend ─────────────────────────────────────────── */
+const BACKEND_URL = 'https://memescanner-backend.up.railway.app'; // à mettre à jour si l'URL change
+const FIREBASE_WEB_API_KEY = 'REMPLACER_PAR_CLE_WEB_FIREBASE'; // Project Settings → General → Web API Key
+
+/* ── Login ──────────────────────────────────────────────────── */
+async function handleLogin(){
   const email = document.getElementById('loginEmail').value.trim();
-  const pw = document.getElementById('loginPassword').value;
-  if(!email || !pw){ alert('Renseignez votre email et mot de passe.'); return; }
-  alert('Connexion en cours — fonctionnalité à brancher sur Firebase Auth.');
+  const pw    = document.getElementById('loginPassword').value;
+  if(!email || !pw){ showModalError('loginModal','Renseignez votre email et mot de passe.'); return; }
+
+  const btn = document.querySelector('#loginModal .modal-btn-primary');
+  btn.textContent = 'Connexion…'; btn.disabled = true;
+
+  try {
+    // 1. Firebase Auth REST API — signInWithPassword
+    const authRes = await fetch(
+      `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${FIREBASE_WEB_API_KEY}`,
+      { method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ email, password: pw, returnSecureToken: true }) }
+    );
+    const authData = await authRes.json();
+    if(!authRes.ok){
+      const msg = authData.error?.message || 'Identifiants incorrects';
+      throw new Error(msg === 'INVALID_PASSWORD' || msg === 'EMAIL_NOT_FOUND' ? 'Email ou mot de passe incorrect.' : msg);
+    }
+
+    // 2. Vérifier l'abonnement côté backend
+    const subRes  = await fetch(`${BACKEND_URL}/login`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ idToken: authData.idToken })
+    });
+    const subData = await subRes.json();
+    if(!subData.ok) throw new Error(subData.error || 'Abonnement inactif.');
+
+    // 3. Stocker la session
+    localStorage.setItem('ms_token', authData.idToken);
+    localStorage.setItem('ms_user', JSON.stringify({ email: subData.email, plan: subData.plan, uid: subData.uid }));
+
+    closeModal('loginModal');
+    showView('home'); // redirige vers l'app — adapter selon ta logique
+    window.location.href = '#scanner';
+
+  } catch(e) {
+    showModalError('loginModal', e.message);
+  } finally {
+    btn.textContent = 'Se connecter →'; btn.disabled = false;
+  }
 }
-function handleSignup(){
-  const name = document.getElementById('signupName').value.trim();
+
+/* ── Signup → Stripe Checkout ───────────────────────────────── */
+async function handleSignup(){
   const email = document.getElementById('signupEmail').value.trim();
-  const pw = document.getElementById('signupPassword').value;
-  if(!name || !email || !pw){ alert('Renseignez tous les champs.'); return; }
-  alert(`Compte créé pour ${email} (plan ${selectedPlan}) — redirection paiement à brancher.`);
+  const pw    = document.getElementById('signupPassword').value;
+  const name  = document.getElementById('signupName').value.trim();
+  if(!name || !email || !pw){ showModalError('signupModal','Renseignez tous les champs.'); return; }
+  if(pw.length < 6){ showModalError('signupModal','Mot de passe minimum 6 caractères.'); return; }
+  if(!email.includes('@')){ showModalError('signupModal','Email invalide.'); return; }
+
+  const btn = document.querySelector('#signupStep2 .modal-btn-primary');
+  btn.textContent = 'Création du compte…'; btn.disabled = true;
+
+  try {
+    const period = document.querySelector('.ptab.active')?.textContent?.toLowerCase().includes('annuel') ? 'yearly' : 'monthly';
+    const res  = await fetch(`${BACKEND_URL}/create-checkout`, {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ email, password: pw, plan: selectedPlan, period })
+    });
+    const data = await res.json();
+    if(!data.ok) throw new Error(data.error || 'Erreur serveur');
+    // Redirect vers Stripe Checkout
+    window.location.href = data.url;
+  } catch(e) {
+    showModalError('signupModal', e.message);
+    btn.textContent = 'Créer mon compte & payer →'; btn.disabled = false;
+  }
+}
+
+function showModalError(modalId, msg){
+  const modal = document.getElementById(modalId);
+  let err = modal.querySelector('.modal-error');
+  if(!err){
+    err = document.createElement('div');
+    err.className = 'modal-error';
+    err.style.cssText = 'background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:8px;padding:.6rem .9rem;font-size:.8rem;color:#fca5a5;margin-bottom:.75rem;';
+    const btn = modal.querySelector('.modal-btn-primary');
+    btn.parentNode.insertBefore(err, btn);
+  }
+  err.textContent = msg;
+  setTimeout(()=>{ if(err.parentNode) err.parentNode.removeChild(err); }, 5000);
 }
 
 /* Pricing tabs */
