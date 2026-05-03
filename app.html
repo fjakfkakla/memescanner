@@ -8693,7 +8693,7 @@ async function renderTokenTable(tokens){
     const callData=await getCallData(t.addr);
     const callMcap=callData?.callMcap||t._callMcap||t.mcap;
     const callTime=t._callTime||callData?.callTime||Date.now();
-    if(Date.now()-callTime>10*60*1000)continue; // expire après 10 min
+    // expiry géré par le backend (/live ne retourne que les tokens actifs + 5min après drop)
     // nowMcap = prix live (DexScreener) ou fallback sur mcap du scan
     const liveEntry=livePriceMap[t.addr]||{now:0,athEst:0};
     const nowMcap=liveEntry.now||t.mcap||0;

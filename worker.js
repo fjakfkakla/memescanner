@@ -617,200 +617,164 @@ export async function runScanCycle() {
 
     console.log(`[Worker] ${preFiltered.length} après pré-filtre`);
 
-    // 3. Vérifications Helius en batch de 3 (rate limiting)
-    // Si le token est déjà dans gmgnWalletMap (renowned≥1 + smart_degen≥1),
-    // on skip checkAxiomWallets → économie Helius
-    const parallelResults = [];
-    for (let i = 0; i < preFiltered.length; i += 3) {
-      const batch = preFiltered.slice(i, i + 3);
-      const batchRes = await Promise.allSettled(
+    // 3. Vérifications Helius + scoring immédiat — liveTokens mis à jour dès qu'un token qualifie
+    const finalScored = [];
+    const now = Date.now();
+    for (let i = 0; i < preFiltered.length; i += 5) {
+      const batch = preFiltered.slice(i, i + 5);
+      await Promise.allSettled(
         batch.map(async p => {
           const addr     = p.baseToken.address;
           const pairAddr = p.pairAddress || null;
-          const [sec, wData] = await Promise.allSettled([
+          const [secRes, wDataRes] = await Promise.allSettled([
             checkTokenSecurity(addr, pairAddr),
             checkAxiomWallets(addr, pairAddr),
           ]);
-          return {
-            p,
-            sec:   sec.status   === 'fulfilled' ? sec.value   : null,
-            wData: wData.status === 'fulfilled' ? wData.value : { count: 0, wallets: [], clustered: false },
-          };
+          const sec   = secRes.status   === 'fulfilled' ? secRes.value   : null;
+          const wData = wDataRes.status === 'fulfilled' ? wDataRes.value : { count: 0, wallets: [], clustered: false };
+
+          try {
+            // Filtres sécurité
+            if (sec) {
+              if (sec.mintAuthority   !== null) { rejected['mint authority']   = (rejected['mint authority']   || 0) + 1; return; }
+              if (sec.freezeAuthority !== null) { rejected['freeze authority'] = (rejected['freeze authority'] || 0) + 1; return; }
+              if (parseFloat(sec.top1Pct)  > 20) { rejected[`top1 ${sec.top1Pct}%`]  = (rejected[`top1 ${sec.top1Pct}%`]  || 0) + 1; return; }
+              if (parseFloat(sec.top5Pct)  > 55) { rejected[`top5 ${sec.top5Pct}%`]  = (rejected[`top5 ${sec.top5Pct}%`]  || 0) + 1; return; }
+              p.security = sec;
+            }
+
+            // Marquer les tokens dex paid (profil ou boost payé sur DexScreener)
+            const tokenAddr = p.baseToken?.address || '';
+            if (paidTokens.has(tokenAddr)) p._isPaid = true;
+            if (p.info?.imageUrl || p.profile?.icon || p.profile?.header) p._isPaid = true;
+
+            // Merge GMGN + Helius wallet data
+            const gmgnWD = gmgnWalletMap.get(tokenAddr);
+            let effectiveWData = wData;
+            if (gmgnWD && gmgnWD.count > (wData.count || 0)) {
+              effectiveWData = {
+                count:          gmgnWD.count,
+                byGroup:        wData.byGroup || { KOL: 0, 'gros trader': 0, DEV: 0, farmer: 0 },
+                wallets:        wData.wallets || [],
+                walletsByGroup: wData.walletsByGroup || { KOL: [], 'gros trader': [], DEV: [], farmer: [] },
+                clustered:      wData.clustered || gmgnWD.clustered,
+                source:         'gmgn+helius',
+              };
+            }
+
+            const gmgnRaw = gmgnRawMap.get(tokenAddr) || {};
+            const scored = scoreTokenV2(p, effectiveWData, gmgnRaw);
+
+            // Hard rejects GMGN (wash trading, rug extrême, bundler massif)
+            if (scored._minFail?.startsWith('gmgn_')) {
+              rejected[scored._minFail] = (rejected[scored._minFail] || 0) + 1;
+              return;
+            }
+
+            // Sticky Axiom
+            const hist        = scoreHistory.get(scored.addr) || {};
+            const stickyAxiom = Math.max(scored.debug.traderScore, hist.maxAxiom || 0);
+            if (stickyAxiom > scored.debug.traderScore) {
+              scored.score += stickyAxiom - scored.debug.traderScore;
+              scored.debug.traderScore = stickyAxiom;
+            }
+            scoreHistory.set(scored.addr, { maxAxiom: Math.max(hist.maxAxiom || 0, scored.debug.axiomCount) });
+
+            // HARD FILTER 0 — Axiom obligatoire (bypass si DexScreener boost/paid)
+            if ((effectiveWData.count || 0) < 1 && !p._isPaid) { rejected['no_axiom'] = (rejected['no_axiom'] || 0) + 1; return; }
+
+            // HARD FILTER 1 — Platform Pump/Bonk/Raydium/Bags
+            const dexId   = (p.dexId || '').toLowerCase();
+            const pairUrl = (p.url   || '').toLowerCase();
+            const isPump     = dexId.includes('pump') || pairUrl.includes('pump');
+            const isBonk     = dexId.includes('bonk') || dexId.includes('launchlab');
+            const isRay      = dexId.includes('raydium') || dexId.includes('cpmm') || dexId.includes('clmm');
+            const isPumpSwap = dexId.includes('pumpswap') || pairUrl.includes('pumpswap');
+            const isBags     = dexId.includes('bags');
+            const isMeteora  = dexId.includes('meteora') || dexId.includes('dlmm');
+            if (!isPump && !isBonk && !isRay && !isPumpSwap && !isBags && !isMeteora) { rejected['platform'] = (rejected['platform'] || 0) + 1; return; }
+
+            // HARD FILTER 2 — Mcap min
+            if (scored.mcap < 15000) { rejected['mcap<15K'] = (rejected['mcap<15K'] || 0) + 1; return; }
+
+            if (scored.score >= 80) {
+              finalScored.push(scored);
+
+              // ── Mise à jour immédiate de liveTokens dès qualification ──
+              let existing = liveTokens.get(scored.addr);
+              if (!existing) {
+                try {
+                  const fbCall = await getCallByAddr(scored.addr);
+                  if (fbCall) existing = { calledAt: fbCall.calledAt || fbCall.callTime || fbCall.savedAt, callMcap: fbCall.callMcap || fbCall.mcap };
+                } catch (e) {}
+              }
+              liveTokens.set(scored.addr, {
+                addr:       scored.addr,
+                symbol:     scored.symbol,
+                score:      scored.score,
+                mcap:       scored.mcap,
+                liq:        scored.liq,
+                rugRisk:    scored.rugRisk,
+                socials:    scored.socials,
+                pairUrl:    scored.pairUrl,
+                debug:      scored.debug,
+                walletData: scored.walletData,
+                emoji:      scored.emoji,
+                raw:        scored.raw,
+                callMcap:   existing?.callMcap || scored.mcap,
+                calledAt:   existing?.calledAt || now,
+                lastSeenAt: now,
+                droppedAt:  null,
+              });
+
+              if (!calledTokens.has(scored.addr)) {
+                calledTokens.set(scored.addr, now);
+                try {
+                  const callMcap = scored.mcap;
+                  const liveEntry = liveTokens.get(scored.addr);
+                  if (liveEntry) liveEntry.callMcap = callMcap;
+                  console.log(`[Worker] CALL: ${scored.symbol} score=${scored.score} mcap=$${callMcap}`);
+                  const gmgnSnap = gmgnRawMap.get(scored.addr) || null;
+                  await saveCall({
+                    addr:       scored.addr,
+                    symbol:     scored.symbol,
+                    score:      scored.score,
+                    mcap:       callMcap,
+                    callMcap:   callMcap,
+                    liq:        scored.liq,
+                    rugRisk:    scored.rugRisk,
+                    socials:    scored.socials,
+                    pairUrl:    scored.pairUrl,
+                    debug:      scored.debug,
+                    walletData: scored.walletData,
+                    security:   scored.raw?.security || null,
+                    gmgn:       gmgnSnap,
+                    calledAt:   now,
+                  });
+                  sendDiscordCall(scored).catch(e => console.warn('[Discord] error:', e.message));
+                } catch (e) {
+                  console.warn('[Worker] saveCall error:', e.message);
+                }
+              } else {
+                try { await saveCall({ addr: scored.addr, score: scored.score, mcap: scored.mcap, liq: scored.liq, debug: scored.debug }); } catch(e) {}
+              }
+            } else {
+              rejected[`score<80 (${scored.score})`] = (rejected[`score<80 (${scored.score})`] || 0) + 1;
+            }
+          } catch (e) {
+            console.warn('[Worker] Scoring error:', e.message);
+          }
         })
       );
-      parallelResults.push(...batchRes);
-      if (i + 3 < preFiltered.length) await new Promise(r => setTimeout(r, 600));
-    }
-
-    // 4. Score + hard filters
-    const finalScored = [];
-    for (const res of parallelResults) {
-      if (res.status !== 'fulfilled') continue;
-      const { p, sec, wData } = res.value;
-      try {
-        // Filtres sécurité
-        if (sec) {
-          if (sec.mintAuthority   !== null) { rejected['mint authority']   = (rejected['mint authority']   || 0) + 1; continue; }
-          if (sec.freezeAuthority !== null) { rejected['freeze authority'] = (rejected['freeze authority'] || 0) + 1; continue; }
-          if (parseFloat(sec.top1Pct)  > 20) { rejected[`top1 ${sec.top1Pct}%`]  = (rejected[`top1 ${sec.top1Pct}%`]  || 0) + 1; continue; }
-          if (parseFloat(sec.top5Pct)  > 55) { rejected[`top5 ${sec.top5Pct}%`]  = (rejected[`top5 ${sec.top5Pct}%`]  || 0) + 1; continue; }
-          p.security = sec;
-        }
-
-        // Marquer les tokens dex paid (profil ou boost payé sur DexScreener)
-        const tokenAddr = p.baseToken?.address || '';
-        if (paidTokens.has(tokenAddr)) p._isPaid = true;
-        if (p.info?.imageUrl || p.profile?.icon || p.profile?.header) p._isPaid = true;
-
-        // Merge GMGN + Helius wallet data — GMGN couvre les achats pump.fun pré-migration
-        // que Helius ne voit pas sur le pair pumpswap.
-        // byGroup vient UNIQUEMENT de Helius (notre WALLET_TRACKER) — les compteurs GMGN
-        // (renowned/smart_degen) sont leur propre liste, pas la nôtre, donc on les ignore.
-        const gmgnWD = gmgnWalletMap.get(tokenAddr);
-        let effectiveWData = wData;
-        if (gmgnWD && gmgnWD.count > (wData.count || 0)) {
-          effectiveWData = {
-            count:          gmgnWD.count,
-            byGroup:        wData.byGroup || { KOL: 0, 'gros trader': 0, DEV: 0, farmer: 0 },
-            wallets:        wData.wallets || [],
-            walletsByGroup: wData.walletsByGroup || { KOL: [], 'gros trader': [], DEV: [], farmer: [] },
-            clustered:      wData.clustered || gmgnWD.clustered,
-            source:         'gmgn+helius',
-          };
-        }
-
-        const gmgnRaw = gmgnRawMap.get(tokenAddr) || {};
-        const scored = scoreTokenV2(p, effectiveWData, gmgnRaw);
-
-        // Hard rejects GMGN (wash trading, rug extrême, bundler massif)
-        if (scored._minFail?.startsWith('gmgn_')) {
-          rejected[scored._minFail] = (rejected[scored._minFail] || 0) + 1;
-          continue;
-        }
-
-        // Sticky Axiom
-        const hist      = scoreHistory.get(scored.addr) || {};
-        const stickyAxiom = Math.max(scored.debug.traderScore, hist.maxAxiom || 0);
-        if (stickyAxiom > scored.debug.traderScore) {
-          scored.score += stickyAxiom - scored.debug.traderScore;
-          scored.debug.traderScore = stickyAxiom;
-        }
-
-        scoreHistory.set(scored.addr, { maxAxiom: Math.max(hist.maxAxiom || 0, scored.debug.axiomCount) });
-
-        // HARD FILTER 0 — Axiom obligatoire (bypass si DexScreener boost/paid)
-        // Les tokens DS paid ont payé $100-500 → signal de commitment réel
-        // Ils passent sans Axiom mais doivent encore scorer ≥80 + tous les autres filtres
-        if ((effectiveWData.count || 0) < 1 && !p._isPaid) { rejected['no_axiom'] = (rejected['no_axiom'] || 0) + 1; continue; }
-
-        // HARD FILTER 1 — Platform Pump/Bonk/Raydium/Bags
-        const dexId  = (p.dexId || '').toLowerCase();
-        const pairUrl = (p.url  || '').toLowerCase();
-        const isPump     = dexId.includes('pump') || pairUrl.includes('pump');
-        const isBonk     = dexId.includes('bonk') || dexId.includes('launchlab');
-        const isRay      = dexId.includes('raydium') || dexId.includes('cpmm') || dexId.includes('clmm');
-        const isPumpSwap = dexId.includes('pumpswap') || pairUrl.includes('pumpswap');
-        const isBags     = dexId.includes('bags');
-        const isMeteora  = dexId.includes('meteora') || dexId.includes('dlmm');
-        if (!isPump && !isBonk && !isRay && !isPumpSwap && !isBags && !isMeteora) { rejected['platform'] = (rejected['platform'] || 0) + 1; continue; }
-
-        // HARD FILTER 2 — Mcap min
-        if (scored.mcap < 15000) { rejected['mcap<15K'] = (rejected['mcap<15K'] || 0) + 1; continue; }
-
-
-        if (scored.score >= 80) {
-          finalScored.push(scored);
-        } else {
-          rejected[`score<80 (${scored.score})`] = (rejected[`score<80 (${scored.score})`] || 0) + 1;
-        }
-      } catch (e) {
-        console.warn('[Worker] Scoring error:', e.message);
-      }
+      if (i + 5 < preFiltered.length) await new Promise(r => setTimeout(r, 250));
     }
 
     finalScored.sort((a, b) => b.score - a.score);
     const gmgnHits = [...gmgnWalletMap.keys()].filter(a => preFiltered.some(p => p.baseToken?.address === a)).length;
     console.log(`[Worker] ${finalScored.length} calls | helius today: ${heliusCalls.today} | gmgn hits: ${gmgnHits} | rejected:`, JSON.stringify(rejected));
 
-    // 5. Save calls + update liveTokens
-    const now = Date.now();
+    // 4. Marquer les tokens qui ne qualifient plus + purger après 5 min
     const qualifyingAddrs = new Set(finalScored.map(t => t.addr));
-
-    for (const token of finalScored) {
-      let existing = liveTokens.get(token.addr);
-
-      // Si pas en mémoire, vérifier Firebase (survit aux redémarrages)
-      if (!existing) {
-        try {
-          const fbCall = await getCallByAddr(token.addr);
-          if (fbCall) {
-            existing = { calledAt: fbCall.calledAt || fbCall.callTime || fbCall.savedAt, callMcap: fbCall.callMcap || fbCall.mcap };
-          }
-        } catch (e) { /* pas grave */ }
-      }
-
-      // Mettre à jour liveTokens
-      liveTokens.set(token.addr, {
-        addr:      token.addr,
-        symbol:    token.symbol,
-        score:     token.score,
-        mcap:      token.mcap,
-        liq:       token.liq,
-        rugRisk:   token.rugRisk,
-        socials:   token.socials,
-        pairUrl:   token.pairUrl,
-        debug:     token.debug,
-        walletData: token.walletData,
-        emoji:     token.emoji,
-        raw:       token.raw,
-        callMcap:  existing?.callMcap || token.mcap,
-        calledAt:  existing?.calledAt || now,
-        lastSeenAt: now,
-        droppedAt: null,
-      });
-
-      // Sauvegarder dans Firebase (saveCall gère le dedup)
-      if (!calledTokens.has(token.addr)) {
-        calledTokens.set(token.addr, now);
-        try {
-          const callMcap = token.mcap;
-
-          // Mettre à jour liveTokens
-          const liveEntry = liveTokens.get(token.addr);
-          if (liveEntry) liveEntry.callMcap = callMcap;
-
-          // 1. Firebase immédiatement — c'est ce que le frontend lit
-          console.log(`[Worker] CALL: ${token.symbol} score=${token.score} mcap=$${callMcap}`);
-          const gmgnSnap = gmgnRawMap.get(token.addr) || null;
-          await saveCall({
-            addr:       token.addr,
-            symbol:     token.symbol,
-            score:      token.score,
-            mcap:       callMcap,
-            callMcap:   callMcap,
-            liq:        token.liq,
-            rugRisk:    token.rugRisk,
-            socials:    token.socials,
-            pairUrl:    token.pairUrl,
-            debug:      token.debug,
-            walletData: token.walletData,
-            security:   token.raw?.security || null,
-            gmgn:       gmgnSnap,
-            calledAt:   now,
-          });
-
-          // 2. Discord fire & forget — ne bloque plus rien
-          sendDiscordCall(token).catch(e => console.warn('[Discord] error:', e.message));
-        } catch (e) {
-          console.warn('[Worker] saveCall error:', e.message);
-        }
-      } else {
-        // Mettre à jour le score/mcap dans Firebase sans toucher calledAt
-        try { await saveCall({ addr: token.addr, score: token.score, mcap: token.mcap, liq: token.liq, debug: token.debug }); } catch(e) {}
-      }
-    }
-
-    // Marquer les tokens qui ne qualifient plus + purger après 5 min
     for (const [addr, data] of liveTokens) {
       if (!qualifyingAddrs.has(addr)) {
         if (!data.droppedAt) {
