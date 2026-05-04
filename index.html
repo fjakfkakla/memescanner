@@ -4097,7 +4097,18 @@ body.view-outils .lp-footer { display: none !important; }
 /* ── FOOTER: reste dark ─────────────────────────────────────────── */
 .lp-footer { background: #0f1117 !important; border-top: none !important; }
 .lp-footer::before { background: linear-gradient(90deg, transparent, rgba(99,102,241,0.3), transparent) !important; }
-.lp-footer-logo, .lp-footer-logo span { /* garder couleurs existantes */ }
+
+/* ── LANDING-WRAP BASE ──────────────────────────────────────────── */
+#landing-wrap { background: #ffffff !important; }
+
+/* ── CS-WRAP "L'algo tourne pendant que tu dors" ───────────────── */
+.lp-cs-wrap { background: #f8f9fc !important; }
+.cs-header-text .cs-big-title { color: #0f1117 !important; }
+.cs-header-text .cs-sub       { color: #6b7280 !important; }
+.cs-device-outer {
+  box-shadow: 0 24px 80px rgba(0,0,0,0.15), 0 0 0 1px rgba(0,0,0,0.06) !important;
+}
+/* Le device intérieur reste dark — c'est un mockup UI, le contraste est voulu */
 
 </style>
 </head>
