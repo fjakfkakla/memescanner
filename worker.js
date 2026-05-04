@@ -62,6 +62,8 @@ const swCache       = new Map(); // addr → { ts, result }
 const heliusCache   = new Map(); // addr → { ts, data }
 const scoreHistory  = new Map(); // addr → { maxAxiom }
 const liveTokens    = new Map(); // addr → { token data, calledAt, lastSeenAt, droppedAt }
+// Dip & recovery watchlist : tokens qualifiés en attente de confirmation d'entrée
+const watchPending  = new Map(); // addr → { firstSeenAt, firstMcap, peakMcap, minMcap, dipReached }
 
 // Compteur d'appels Helius + hard limit journalier
 const HELIUS_DAILY_LIMIT = parseInt(process.env.HELIUS_DAILY_LIMIT || '200000'); // 200k crédits/jour par défaut
@@ -728,32 +730,88 @@ export async function runScanCycle() {
               });
 
               if (!calledTokens.has(scored.addr)) {
-                calledTokens.set(scored.addr, now);
-                try {
-                  const callMcap = scored.mcap;
-                  const liveEntry = liveTokens.get(scored.addr);
-                  if (liveEntry) liveEntry.callMcap = callMcap;
-                  console.log(`[Worker] CALL: ${scored.symbol} score=${scored.score} mcap=$${callMcap}`);
-                  const gmgnSnap = gmgnRawMap.get(scored.addr) || null;
-                  await saveCall({
-                    addr:       scored.addr,
-                    symbol:     scored.symbol,
-                    score:      scored.score,
-                    mcap:       callMcap,
-                    callMcap:   callMcap,
-                    liq:        scored.liq,
-                    rugRisk:    scored.rugRisk,
-                    socials:    scored.socials,
-                    pairUrl:    scored.pairUrl,
-                    debug:      scored.debug,
-                    walletData: scored.walletData,
-                    security:   scored.raw?.security || null,
-                    gmgn:       gmgnSnap,
-                    calledAt:   now,
+                // ── Dip & Recovery filter ──
+                // On ne call pas immédiatement : on attend de voir si le token dip puis rebondit
+                const watch = watchPending.get(scored.addr);
+                const currentMcap = scored.mcap;
+
+                if (!watch) {
+                  // Premier passage : mise en watchlist, pas de call encore
+                  watchPending.set(scored.addr, {
+                    firstSeenAt: now,
+                    firstMcap:   currentMcap,
+                    peakMcap:    currentMcap,
+                    minMcap:     currentMcap,
+                    dipReached:  false,
                   });
-                  sendDiscordCall(scored).catch(e => console.warn('[Discord] error:', e.message));
-                } catch (e) {
-                  console.warn('[Worker] saveCall error:', e.message);
+                  console.log(`[Worker] WATCH: ${scored.symbol} score=${scored.score} mcap=$${currentMcap} — attente confirmation`);
+                  try { await saveCall({ addr: scored.addr, score: scored.score, mcap: currentMcap, liq: scored.liq, debug: scored.debug }); } catch(e) {}
+                } else {
+                  // Mise à jour peak / dip
+                  if (currentMcap > watch.peakMcap) watch.peakMcap = currentMcap;
+                  if (currentMcap < watch.minMcap) {
+                    watch.minMcap    = currentMcap;
+                    watch.dipReached = true;
+                  }
+
+                  const dropFromFirst   = (watch.firstMcap - currentMcap) / watch.firstMcap;
+                  const dipFromPeak     = (watch.peakMcap  - watch.minMcap) / watch.peakMcap;
+                  const recoveryFromDip = watch.dipReached ? (currentMcap - watch.minMcap) / watch.minMcap : 0;
+                  const waitMs          = now - watch.firstSeenAt;
+
+                  let shouldCall  = false;
+                  let shouldSkip  = false;
+
+                  if (dropFromFirst >= 0.40) {
+                    // Dump trop fort depuis la détection → on ignore définitivement
+                    shouldSkip = true;
+                    console.log(`[Worker] REJECT DIP: ${scored.symbol} -${(dropFromFirst*100).toFixed(0)}% depuis détection`);
+                  } else if (watch.dipReached && dipFromPeak >= 0.10 && recoveryFromDip >= 0.10) {
+                    // Dip 10%+ puis rebond 10%+ → meilleure entrée confirmée
+                    shouldCall = true;
+                    console.log(`[Worker] CALL DIP+RECOVERY: ${scored.symbol} dip=${(dipFromPeak*100).toFixed(0)}% rebond=${(recoveryFromDip*100).toFixed(0)}% mcap=$${currentMcap}`);
+                  } else if (waitMs >= 3 * 60 * 1000) {
+                    // Timeout 3 min sans dump majeur → call normal
+                    shouldCall = true;
+                    console.log(`[Worker] CALL TIMEOUT: ${scored.symbol} confirmé après ${Math.round(waitMs/1000)}s mcap=$${currentMcap}`);
+                  } else {
+                    // Encore en attente
+                    console.log(`[Worker] WATCHING: ${scored.symbol} peak=$${watch.peakMcap} dip=$${watch.minMcap} cur=$${currentMcap}`);
+                    try { await saveCall({ addr: scored.addr, score: scored.score, mcap: currentMcap, liq: scored.liq, debug: scored.debug }); } catch(e) {}
+                  }
+
+                  if (shouldSkip) {
+                    watchPending.delete(scored.addr);
+                    // pas de call
+                  } else if (shouldCall) {
+                    watchPending.delete(scored.addr);
+                    calledTokens.set(scored.addr, now);
+                    try {
+                      const callMcap  = currentMcap;
+                      const liveEntry = liveTokens.get(scored.addr);
+                      if (liveEntry) liveEntry.callMcap = callMcap;
+                      const gmgnSnap = gmgnRawMap.get(scored.addr) || null;
+                      await saveCall({
+                        addr:       scored.addr,
+                        symbol:     scored.symbol,
+                        score:      scored.score,
+                        mcap:       callMcap,
+                        callMcap:   callMcap,
+                        liq:        scored.liq,
+                        rugRisk:    scored.rugRisk,
+                        socials:    scored.socials,
+                        pairUrl:    scored.pairUrl,
+                        debug:      scored.debug,
+                        walletData: scored.walletData,
+                        security:   scored.raw?.security || null,
+                        gmgn:       gmgnSnap,
+                        calledAt:   now,
+                      });
+                      sendDiscordCall(scored).catch(e => console.warn('[Discord] error:', e.message));
+                    } catch (e) {
+                      console.warn('[Worker] saveCall error:', e.message);
+                    }
+                  }
                 }
               } else {
                 try { await saveCall({ addr: scored.addr, score: scored.score, mcap: scored.mcap, liq: scored.liq, debug: scored.debug }); } catch(e) {}
