@@ -4731,29 +4731,29 @@ body.view-outils .lp-footer { display: none !important; }
         <div class="lp-price-tagline">Compose ton accès idéal</div>
 
         <div class="custom-plan-price">
-          $<span id="customTotal">25</span>
+          $<span id="customTotal">40</span>
           <span class="lp-price-period">/mois</span>
         </div>
 
         <div class="custom-plan-modules">
 
-          <div class="cpm locked active">
+          <div class="cpm active" data-price="40" onclick="toggleCpm(this)">
             <div class="cpm-left">
               <span class="cpm-icon">⚡</span>
               <div>
-                <div class="cpm-name">Algo Scanner</div>
-                <div class="cpm-price">inclus — $25</div>
+                <div class="cpm-name">Scoring Algo</div>
+                <div class="cpm-price">+$40/mois</div>
               </div>
             </div>
-            <div class="cpm-toggle on locked"></div>
+            <div class="cpm-toggle on"></div>
           </div>
 
-          <div class="cpm" data-price="15" onclick="toggleCpm(this)">
+          <div class="cpm" data-price="60" onclick="toggleCpm(this)">
             <div class="cpm-left">
               <span class="cpm-icon">🛡️</span>
               <div>
                 <div class="cpm-name">Rug Sniping</div>
-                <div class="cpm-price">+$15/mois</div>
+                <div class="cpm-price">+$60/mois</div>
               </div>
             </div>
             <div class="cpm-toggle"></div>
@@ -4770,23 +4770,23 @@ body.view-outils .lp-footer { display: none !important; }
             <div class="cpm-toggle"></div>
           </div>
 
-          <div class="cpm" data-price="20" onclick="toggleCpm(this)">
+          <div class="cpm" data-price="15" onclick="toggleCpm(this)">
             <div class="cpm-left">
               <span class="cpm-icon">🐋</span>
               <div>
-                <div class="cpm-name">Wallet & Whales</div>
-                <div class="cpm-price">+$20/mois</div>
+                <div class="cpm-name">Wallet Tracker</div>
+                <div class="cpm-price">+$15/mois</div>
               </div>
             </div>
             <div class="cpm-toggle"></div>
           </div>
 
-          <div class="cpm" data-price="19" onclick="toggleCpm(this)">
+          <div class="cpm" data-price="20" onclick="toggleCpm(this)">
             <div class="cpm-left">
               <span class="cpm-icon">🎓</span>
               <div>
                 <div class="cpm-name">Formation</div>
-                <div class="cpm-price">+$19/mois</div>
+                <div class="cpm-price">+$20/mois</div>
               </div>
             </div>
             <div class="cpm-toggle"></div>
@@ -13963,7 +13963,7 @@ function toggleCpm(el) {
   updateCustomTotal();
 }
 function updateCustomTotal() {
-  const BASE = 25;
+  const BASE = 0;
   let total = BASE;
   document.querySelectorAll('.cpm.active:not(.locked)').forEach(el => {
     total += parseInt(el.dataset.price || 0);
