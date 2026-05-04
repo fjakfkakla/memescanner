@@ -4105,6 +4105,99 @@ body.view-outils .lp-footer { display: none !important; }
 .lp-footer-col a:hover{ color: #0f1117 !important; }
 .lp-footer-bottom     { color: #9ca3af !important; border-top-color: #e5e7eb !important; }
 
+/* ── PRICING GRID: 4 colonnes ───────────────────────────────────── */
+.lp-pricing-grid {
+  grid-template-columns: repeat(4, 1fr) !important;
+  gap: 0.9rem !important;
+  align-items: start !important;
+}
+@media (max-width: 1100px) { .lp-pricing-grid { grid-template-columns: repeat(2, 1fr) !important; } }
+@media (max-width: 600px)  { .lp-pricing-grid { grid-template-columns: 1fr !important; } }
+
+/* ── CUSTOM PLAN CARD ───────────────────────────────────────────── */
+.lp-price-card.custom-plan {
+  position: relative; z-index: 1; isolation: isolate;
+  background: #ffffff !important;
+  border: none !important;
+  overflow: visible !important;
+  box-shadow: none !important;
+}
+.lp-price-card.custom-plan::before {
+  content: ''; position: absolute; inset: -1.5px; border-radius: 21px; z-index: -1;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 20%, #ec4899 45%, #f59e0b 65%, #34d399 85%, #6366f1 100%);
+  background-size: 400% 400%;
+  animation: custom-plan-border 5s linear infinite;
+}
+@keyframes custom-plan-border {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+.custom-plan-badge {
+  background: linear-gradient(135deg, #6366f1, #ec4899) !important;
+  color: #fff !important;
+  box-shadow: 0 0 14px rgba(139,92,246,0.4) !important;
+}
+.custom-plan-price {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 1.9rem; font-weight: 800; letter-spacing: -0.04em;
+  margin-bottom: 1.2rem;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6, #ec4899);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+}
+#customTotal {
+  display: inline-block;
+  transition: transform 0.2s cubic-bezier(0.34,1.56,0.64,1);
+}
+
+/* Modules */
+.custom-plan-modules { display: flex; flex-direction: column; gap: 0.45rem; margin-bottom: 1.4rem; }
+.cpm {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0.6rem 0.8rem; border-radius: 10px;
+  border: 1px solid #f0f0f5; background: #fafafe;
+  cursor: pointer; transition: all 0.18s; user-select: none;
+}
+.cpm:hover:not(.locked)  { border-color: rgba(99,102,241,0.3); background: rgba(99,102,241,0.04); }
+.cpm.active:not(.locked) { border-color: rgba(99,102,241,0.25); background: rgba(99,102,241,0.05); }
+.cpm.locked { cursor: default; }
+.cpm-left   { display: flex; align-items: center; gap: 0.6rem; }
+.cpm-icon   { font-size: 1rem; width: 24px; text-align: center; flex-shrink: 0; }
+.cpm-name   { font-size: 0.82rem; font-weight: 600; color: #374151; }
+.cpm-price  { font-size: 0.68rem; color: #9ca3af; font-family: 'Space Mono', monospace; }
+.cpm.active .cpm-price { color: #6366f1; }
+
+/* Toggle switch */
+.cpm-toggle {
+  width: 34px; height: 18px; border-radius: 9px; flex-shrink: 0;
+  background: #e5e7eb; position: relative; transition: background 0.22s;
+}
+.cpm-toggle::after {
+  content: ''; position: absolute;
+  width: 12px; height: 12px; border-radius: 50%; background: #fff;
+  top: 3px; left: 3px;
+  transition: transform 0.25s cubic-bezier(0.34,1.56,0.64,1);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+.cpm-toggle.on, .cpm-toggle.locked.on {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+}
+.cpm-toggle.on::after, .cpm-toggle.locked.on::after { transform: translateX(16px); }
+
+/* CTA Button */
+.custom-plan-btn {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6, #ec4899) !important;
+  background-size: 200% 200% !important;
+  color: #fff !important; border: none !important;
+  animation: custom-btn-shift 3s ease-in-out infinite !important;
+  letter-spacing: 0.02em !important;
+}
+@keyframes custom-btn-shift {
+  0%, 100% { background-position: 0% 50%; }
+  50%       { background-position: 100% 50%; }
+}
+.custom-plan-btn:hover { transform: translateY(-2px) !important; box-shadow: 0 8px 24px rgba(99,102,241,0.35) !important; }
+
 /* ── LANDING-WRAP BASE ──────────────────────────────────────────── */
 #landing-wrap { background: #ffffff !important; }
 
@@ -4630,6 +4723,80 @@ body.view-outils .lp-footer { display: none !important; }
         </ul>
         <button class="lp-price-btn dubai" onclick="openCode()">Accès ELITE</button>
       </div>
+
+      <!-- ── CARD CUSTOM ─────────────────────────────────────── -->
+      <div class="lp-price-card custom-plan reveal-scale reveal-delay-35">
+        <div class="lp-price-badge-top custom-plan-badge">✦ SUR MESURE</div>
+        <div class="lp-price-tier" style="color:#8b5cf6">CUSTOM</div>
+        <div class="lp-price-tagline">Compose ton accès idéal</div>
+
+        <div class="custom-plan-price">
+          $<span id="customTotal">25</span>
+          <span class="lp-price-period">/mois</span>
+        </div>
+
+        <div class="custom-plan-modules">
+
+          <div class="cpm locked active">
+            <div class="cpm-left">
+              <span class="cpm-icon">⚡</span>
+              <div>
+                <div class="cpm-name">Algo Scanner</div>
+                <div class="cpm-price">inclus — $25</div>
+              </div>
+            </div>
+            <div class="cpm-toggle on locked"></div>
+          </div>
+
+          <div class="cpm" data-price="15" onclick="toggleCpm(this)">
+            <div class="cpm-left">
+              <span class="cpm-icon">🛡️</span>
+              <div>
+                <div class="cpm-name">Rug Sniping</div>
+                <div class="cpm-price">+$15/mois</div>
+              </div>
+            </div>
+            <div class="cpm-toggle"></div>
+          </div>
+
+          <div class="cpm" data-price="15" onclick="toggleCpm(this)">
+            <div class="cpm-left">
+              <span class="cpm-icon">🧠</span>
+              <div>
+                <div class="cpm-name">KOL Tracker</div>
+                <div class="cpm-price">+$15/mois</div>
+              </div>
+            </div>
+            <div class="cpm-toggle"></div>
+          </div>
+
+          <div class="cpm" data-price="20" onclick="toggleCpm(this)">
+            <div class="cpm-left">
+              <span class="cpm-icon">🐋</span>
+              <div>
+                <div class="cpm-name">Wallet & Whales</div>
+                <div class="cpm-price">+$20/mois</div>
+              </div>
+            </div>
+            <div class="cpm-toggle"></div>
+          </div>
+
+          <div class="cpm" data-price="19" onclick="toggleCpm(this)">
+            <div class="cpm-left">
+              <span class="cpm-icon">🎓</span>
+              <div>
+                <div class="cpm-name">Formation</div>
+                <div class="cpm-price">+$19/mois</div>
+              </div>
+            </div>
+            <div class="cpm-toggle"></div>
+          </div>
+
+        </div>
+
+        <button class="lp-price-btn custom-plan-btn" onclick="openCode()">Composer mon plan →</button>
+      </div>
+
     </div>
   </div>
 </section>
@@ -13787,6 +13954,26 @@ function backToStep1(){
 
 /* compat stub — openCode() redirige vers signup */
 function openCode(){ openSignupModal(); }
+
+/* ── CUSTOM PLAN TOGGLES ─────────────────────────────────────────── */
+function toggleCpm(el) {
+  if (el.classList.contains('locked')) return;
+  const isActive = el.classList.toggle('active');
+  el.querySelector('.cpm-toggle').classList.toggle('on', isActive);
+  updateCustomTotal();
+}
+function updateCustomTotal() {
+  const BASE = 25;
+  let total = BASE;
+  document.querySelectorAll('.cpm.active:not(.locked)').forEach(el => {
+    total += parseInt(el.dataset.price || 0);
+  });
+  const span = document.getElementById('customTotal');
+  if (!span) return;
+  span.style.transform = 'scale(1.2)';
+  span.textContent = total;
+  setTimeout(() => { span.style.transform = 'scale(1)'; }, 220);
+}
 
 /* ── Auth nav helpers ───────────────────────────────────────────── */
 function updateNavAuth(email){
