@@ -3732,6 +3732,189 @@ body.view-outils .lp-footer { display: none !important; }
 .signup-form-step { display: none; }
 .signup-form-step.active { display: block; }
 
+/* ═══════════════════════════════════════════════════════════════════
+   ✨ PREMIUM DESIGN ENHANCEMENTS
+═══════════════════════════════════════════════════════════════════ */
+
+/* ── 1. HERO BACKGROUND — GRID + UPGRADED GRADIENTS ────────────── */
+.hero-v2-bg {
+  background:
+    radial-gradient(ellipse 90% 55% at 50% -5%, rgba(99,102,241,0.26) 0%, transparent 65%),
+    radial-gradient(ellipse 45% 45% at 92% 95%, rgba(0,255,136,0.07) 0%, transparent 55%),
+    radial-gradient(ellipse 38% 30% at 4% 84%, rgba(139,92,246,0.09) 0%, transparent 55%),
+    linear-gradient(rgba(99,102,241,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(99,102,241,0.04) 1px, transparent 1px) !important;
+  background-size: auto, auto, auto, 72px 72px, 72px 72px !important;
+}
+
+/* ── 2. HERO GREEN ORB FLOATING BOTTOM-LEFT ─────────────────────── */
+#hero.hero-v2::after {
+  content: '';
+  position: absolute; bottom: -210px; left: -110px;
+  width: 540px; height: 540px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(0,255,136,0.065) 0%, transparent 65%);
+  pointer-events: none; z-index: 0;
+  animation: premium-orb-drift 10s ease-in-out infinite;
+}
+@keyframes premium-orb-drift {
+  0%, 100% { transform: translate(0,0) scale(1); }
+  40%       { transform: translate(44px,-28px) scale(1.04); }
+  70%       { transform: translate(-20px,24px) scale(0.97); }
+}
+
+/* ── 3. HERO TITLE DEPTH ────────────────────────────────────────── */
+.hero-v2-title {
+  text-shadow: 0 0 90px rgba(99,102,241,0.2) !important;
+}
+.hero-v2-title .grad {
+  background: linear-gradient(135deg, #818cf8 0%, #a78bfa 40%, #34d399 100%) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  background-clip: text !important;
+  filter: drop-shadow(0 0 22px rgba(99,102,241,0.35));
+}
+
+/* ── 4. EYEBROW BREATHING GLOW ──────────────────────────────────── */
+.hero-v2-eyebrow {
+  animation: premium-eyebrow-breathe 3.5s ease-in-out infinite;
+}
+@keyframes premium-eyebrow-breathe {
+  0%, 100% { box-shadow: none; border-color: rgba(99,102,241,0.3); }
+  50%       { box-shadow: 0 0 18px rgba(99,102,241,0.2), 0 0 0 3px rgba(99,102,241,0.07); border-color: rgba(99,102,241,0.55); }
+}
+
+/* ── 5. PRIMARY BUTTON — SHINE SWEEP ───────────────────────────── */
+.hero-v2-btn-primary {
+  position: relative; overflow: hidden !important;
+  letter-spacing: .025em !important;
+}
+.hero-v2-btn-primary::after {
+  content: ''; position: absolute; top: 0; left: -120%;
+  width: 55%; height: 100%;
+  background: linear-gradient(105deg, transparent 20%, rgba(255,255,255,0.16) 50%, transparent 80%);
+  transform: skewX(-15deg); transition: left .55s ease; pointer-events: none;
+}
+.hero-v2-btn-primary:hover::after { left: 160%; }
+
+/* ── 6. VIDEO — SCANLINES + VIGNETTE ───────────────────────────── */
+.hero-v2-video-wrap { position: relative; }
+.hero-v2-video-wrap::before {
+  content: ''; position: absolute; inset: 0; z-index: 2; border-radius: 18px; pointer-events: none;
+  background: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,0.07) 3px, rgba(0,0,0,0.07) 4px);
+}
+.hero-v2-video-wrap::after {
+  content: ''; position: absolute; inset: 0; z-index: 1; border-radius: 18px; pointer-events: none;
+  background: radial-gradient(ellipse 60% 60% at 50% 50%, transparent 35%, rgba(0,0,0,0.55) 100%);
+}
+.hero-v2-video-inner { position: relative; z-index: 3; }
+
+/* ── 7. SECTION GRADIENT SEPARATORS (remplacent border-top) ──────── */
+#tools-section,
+.lp-features, .lp-smartmoney, .lp-scoring,
+.lp-testimonials, .lp-pricing-preview, .lp-comparison,
+.lp-discord-cta { position: relative; border-top: none !important; }
+#tools-section::before,
+.lp-features::before, .lp-smartmoney::before, .lp-scoring::before,
+.lp-testimonials::before, .lp-pricing-preview::before,
+.lp-comparison::before, .lp-discord-cta::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px; z-index: 1;
+  background: linear-gradient(90deg, transparent 0%, rgba(99,102,241,0.35) 35%, rgba(52,211,153,0.12) 65%, transparent 100%);
+}
+
+/* ── 8. TOOLS SECTION BG ────────────────────────────────────────── */
+#tools-section {
+  background: radial-gradient(ellipse 70% 50% at 50% 100%, rgba(99,102,241,0.055) 0%, transparent 75%), #000 !important;
+}
+
+/* ── 9. TOOLS TAB + SUBCAT GLOW ─────────────────────────────────── */
+.tools-tab.active .tools-tab-name { text-shadow: 0 0 14px rgba(99,102,241,0.45); }
+.tools-subcat.active {
+  box-shadow: inset 3px 0 0 #6366f1, 0 0 22px rgba(99,102,241,0.07) !important;
+}
+.tools-subcat.active .tools-subcat-name { text-shadow: 0 0 12px rgba(99,102,241,0.3); }
+
+/* ── 10. FEATURE CARDS — GLINT + COLOR-MATCHED HOVER ───────────── */
+#landing-wrap .lp-feat-card { position: relative; overflow: hidden !important; }
+#landing-wrap .lp-feat-card::after {
+  content: ''; position: absolute; top: 0; left: -130%; width: 50%; height: 100%;
+  background: linear-gradient(105deg, transparent 25%, rgba(255,255,255,0.045) 50%, transparent 75%);
+  transform: skewX(-15deg); transition: left .5s ease; pointer-events: none; z-index: 5;
+}
+#landing-wrap .lp-feat-card:hover::after { left: 145%; }
+#landing-wrap .lp-feat-card.accent-violet:hover { border-color: rgba(99,102,241,0.32) !important; box-shadow: 0 20px 50px rgba(0,0,0,0.5), 0 0 26px rgba(99,102,241,0.09) !important; }
+#landing-wrap .lp-feat-card.accent-green:hover  { border-color: rgba(52,211,153,0.24) !important;  box-shadow: 0 20px 50px rgba(0,0,0,0.5), 0 0 26px rgba(52,211,153,0.07) !important; }
+#landing-wrap .lp-feat-card.accent-gold:hover   { border-color: rgba(245,158,11,0.24) !important;  box-shadow: 0 20px 50px rgba(0,0,0,0.5), 0 0 26px rgba(245,158,11,0.07) !important; }
+#landing-wrap .lp-feat-card.accent-blue:hover   { border-color: rgba(96,165,250,0.24) !important;  box-shadow: 0 20px 50px rgba(0,0,0,0.5), 0 0 26px rgba(96,165,250,0.07) !important; }
+
+/* ── 11. SCORE CATS — SPRINGY HOVER ────────────────────────────── */
+#landing-wrap .lp-score-cat {
+  transition: transform .28s cubic-bezier(.34,1.56,.64,1), border-color .25s, box-shadow .25s !important;
+}
+#landing-wrap .lp-score-cat:hover {
+  transform: translateY(-5px) !important;
+  border-color: rgba(129,140,248,0.32) !important;
+  box-shadow: 0 14px 32px rgba(0,0,0,0.4), 0 0 18px rgba(99,102,241,0.1) !important;
+}
+
+/* ── 12. FEATURED PRICING — ANIMATED GRADIENT BORDER ───────────── */
+#landing-wrap .lp-price-card.featured {
+  isolation: isolate; z-index: 1;
+  border: none !important;
+  background: linear-gradient(160deg, #0c0c18 0%, #070710 100%) !important;
+  overflow: visible !important;
+}
+#landing-wrap .lp-price-card.featured::before {
+  content: ''; position: absolute; inset: -1px; border-radius: 21px; z-index: -1;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 35%, #34d399 65%, #6366f1 100%);
+  background-size: 300% 300%;
+  animation: featured-border-anim 4s linear infinite;
+}
+@keyframes featured-border-anim {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+#landing-wrap .lp-price-card.featured .lp-price-badge-top {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6) !important;
+  box-shadow: 0 0 18px rgba(99,102,241,0.55) !important;
+}
+#landing-wrap .lp-price-card.featured:hover {
+  transform: translateY(-6px) !important;
+  box-shadow: 0 24px 60px rgba(99,102,241,0.15) !important;
+}
+
+/* ── 13. SECTION LABELS + STAT VALUE GLOWS ─────────────────────── */
+#landing-wrap .lp-section-label {
+  text-shadow: 0 0 16px rgba(99,102,241,0.45) !important;
+  letter-spacing: .16em !important;
+}
+.lp-hstat-val.green  { text-shadow: 0 0 22px rgba(0,255,136,0.4); }
+.lp-hstat-val.violet { text-shadow: 0 0 22px rgba(165,180,252,0.4); }
+#landing-wrap .lp-sm-stat-val { text-shadow: 0 0 14px rgba(99,102,241,0.28) !important; }
+
+/* ── 14. COMPARISON YES GLOW ────────────────────────────────────── */
+.lp-cmp-yes { text-shadow: 0 0 12px rgba(52,211,153,0.55) !important; }
+
+/* ── 15. FOOTER GRADIENT BORDER ────────────────────────────────── */
+.lp-footer { position: relative; border-top: none !important; }
+.lp-footer::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(99,102,241,0.3), transparent);
+}
+
+/* ── 16. WALLET HIT ROW HOVER ───────────────────────────────────── */
+.lp-wc-row.hit { transition: background .2s; cursor: default; }
+.lp-wc-row.hit:hover { background: rgba(99,102,241,0.1) !important; }
+
+/* ── 17. FILM GRAIN OVERLAY (texture premium subtile) ───────────── */
+#landing-wrap::after {
+  content: '';
+  position: fixed; inset: 0; z-index: 9997; pointer-events: none;
+  opacity: 0.022;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 160px 160px;
+}
+
 </style>
 </head>
 <body>
