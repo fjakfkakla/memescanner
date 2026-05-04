@@ -7327,6 +7327,13 @@ function onUnlock(plan){
   // Paper bot positions gérées côté serveur Railway — polling UI toutes les 7s
   setInterval(async ()=>{ await ptLoadFromServer(); if(currentTab==='paperbot') ptRender(); const cnt=document.getElementById('ptOpenCount'); if(cnt){ const n=_ptTradesCache.filter(t=>t.status==='open').length; cnt.textContent=n?`(${n})`:''; } }, 7000);
   ptLoadFromServer().then(()=>{ ptRender(); });
+  // Restaurer le tab Debug CA si session admin encore valide
+  if(isAdminMode){
+    const tabEl=document.getElementById('tabDebugCA');
+    const dbgBtn=document.getElementById('debugToggleBtn');
+    if(tabEl) tabEl.style.display='inline-block';
+    if(dbgBtn) dbgBtn.style.display='inline-block';
+  }
 }
 function formatCode(input){let v=input.value.replace(/[^A-Za-z0-9]/g,'').toUpperCase();let out='';for(let i=0;i<v.length&&i<12;i++){if(i>0&&i%4===0)out+='-';out+=v[i];}input.value=out;}
 
