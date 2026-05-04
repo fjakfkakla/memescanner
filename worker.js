@@ -773,7 +773,7 @@ export async function runScanCycle() {
                   let shouldSkip  = false;
                   let callReason  = '';
 
-                  if (dropFromFirst >= 0.40) {
+                  if (dropFromFirst >= 0.60) {
                     // Dump trop fort depuis la détection → on ignore définitivement
                     shouldSkip = true;
                     console.log(`[Worker] REJECT DIP: ${scored.symbol} -${(dropFromFirst*100).toFixed(0)}% depuis détection`);
