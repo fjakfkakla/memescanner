@@ -735,16 +735,21 @@ export async function runScanCycle() {
                 const watch = watchPending.get(scored.addr);
                 const currentMcap = scored.mcap;
 
+                const initKOL        = scored.walletData?.byGroup?.KOL          || 0;
+                const initBigTrader  = scored.walletData?.byGroup?.['gros trader'] || 0;
+
                 if (!watch) {
                   // Premier passage : mise en watchlist, pas de call encore
                   watchPending.set(scored.addr, {
-                    firstSeenAt: now,
-                    firstMcap:   currentMcap,
-                    peakMcap:    currentMcap,
-                    minMcap:     currentMcap,
-                    dipReached:  false,
+                    firstSeenAt:    now,
+                    firstMcap:      currentMcap,
+                    peakMcap:       currentMcap,
+                    minMcap:        currentMcap,
+                    dipReached:     false,
+                    initKOL,
+                    initBigTrader,
                   });
-                  console.log(`[Worker] WATCH: ${scored.symbol} score=${scored.score} mcap=$${currentMcap} — attente confirmation`);
+                  console.log(`[Worker] WATCH: ${scored.symbol} score=${scored.score} mcap=$${currentMcap} KOL=${initKOL} bigTrader=${initBigTrader} — attente confirmation`);
                   try { await saveCall({ addr: scored.addr, score: scored.score, mcap: currentMcap, liq: scored.liq, debug: scored.debug }); } catch(e) {}
                 } else {
                   // Mise à jour peak / dip
@@ -759,24 +764,37 @@ export async function runScanCycle() {
                   const recoveryFromDip = watch.dipReached ? (currentMcap - watch.minMcap) / watch.minMcap : 0;
                   const waitMs          = now - watch.firstSeenAt;
 
+                  // Nouveaux KOL / gros traders depuis la première détection
+                  const newKOL       = initKOL       - watch.initKOL;
+                  const newBigTrader = initBigTrader  - watch.initBigTrader;
+                  const freshWhale   = newKOL > 0 || newBigTrader > 0;
+
                   let shouldCall  = false;
                   let shouldSkip  = false;
+                  let callReason  = '';
 
                   if (dropFromFirst >= 0.40) {
                     // Dump trop fort depuis la détection → on ignore définitivement
                     shouldSkip = true;
                     console.log(`[Worker] REJECT DIP: ${scored.symbol} -${(dropFromFirst*100).toFixed(0)}% depuis détection`);
+                  } else if (freshWhale) {
+                    // Nouveau KOL ou gros trader entré pendant la watch → signal fort
+                    shouldCall = true;
+                    callReason = `KOL+${newKOL} bigTrader+${newBigTrader}`;
+                    console.log(`[Worker] CALL WHALE: ${scored.symbol} nouveau KOL/trader détecté mcap=$${currentMcap}`);
                   } else if (watch.dipReached && dipFromPeak >= 0.10 && recoveryFromDip >= 0.10) {
                     // Dip 10%+ puis rebond 10%+ → meilleure entrée confirmée
                     shouldCall = true;
-                    console.log(`[Worker] CALL DIP+RECOVERY: ${scored.symbol} dip=${(dipFromPeak*100).toFixed(0)}% rebond=${(recoveryFromDip*100).toFixed(0)}% mcap=$${currentMcap}`);
+                    callReason = `dip+recovery dip=${(dipFromPeak*100).toFixed(0)}% rebond=${(recoveryFromDip*100).toFixed(0)}%`;
+                    console.log(`[Worker] CALL DIP+RECOVERY: ${scored.symbol} ${callReason} mcap=$${currentMcap}`);
                   } else if (waitMs >= 3 * 60 * 1000) {
                     // Timeout 3 min sans dump majeur → call normal
                     shouldCall = true;
+                    callReason = `timeout ${Math.round(waitMs/1000)}s`;
                     console.log(`[Worker] CALL TIMEOUT: ${scored.symbol} confirmé après ${Math.round(waitMs/1000)}s mcap=$${currentMcap}`);
                   } else {
                     // Encore en attente
-                    console.log(`[Worker] WATCHING: ${scored.symbol} peak=$${watch.peakMcap} dip=$${watch.minMcap} cur=$${currentMcap}`);
+                    console.log(`[Worker] WATCHING: ${scored.symbol} peak=$${watch.peakMcap} dip=$${watch.minMcap} cur=$${currentMcap} KOL=${initKOL}/${watch.initKOL}`);
                     try { await saveCall({ addr: scored.addr, score: scored.score, mcap: currentMcap, liq: scored.liq, debug: scored.debug }); } catch(e) {}
                   }
 
