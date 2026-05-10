@@ -1387,6 +1387,47 @@ footer{border-top:1px solid var(--border);}
 .pnl-bottom-footer .pnl-sub{font-size:.6rem;color:rgba(255,255,255,.28);text-align:left;}
 .pnl-footer-brand{font-size:.6rem;color:rgba(255,255,255,.22);font-family:'Space Mono',monospace;}
 
+/* ── PNL info section ── */
+.pnl-card-wrap{max-height:90vh;overflow-y:auto;scrollbar-width:none;}
+.pnl-card-wrap::-webkit-scrollbar{display:none;}
+.pnl-info-section{padding:.4rem 1.2rem .6rem;display:flex;flex-direction:column;gap:.55rem;position:relative;z-index:3;}
+.pnl-addr-row{display:flex;align-items:center;gap:.5rem;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:9px;padding:.42rem .75rem;font-family:'Space Mono',monospace;font-size:.63rem;}
+.pnl-addr-lbl{color:rgba(255,255,255,.25);flex-shrink:0;font-size:.6rem;text-transform:uppercase;letter-spacing:.05em;}
+.pnl-addr-val{flex:1;color:rgba(255,255,255,.55);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.pnl-addr-copy{background:transparent;border:none;cursor:pointer;padding:0 0 0 .3rem;opacity:.45;transition:.15s;flex-shrink:0;font-size:.85rem;}
+.pnl-addr-copy:hover{opacity:1;transform:scale(1.15);}
+.pnl-stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:.45rem;}
+.pnl-stat-cell{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:10px;padding:.5rem .75rem;}
+.pnl-stat-lbl{font-size:.58rem;color:rgba(255,255,255,.28);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.18rem;}
+.pnl-stat-val{font-family:'Space Mono',monospace;font-size:.86rem;font-weight:700;color:#fff;}
+.pnl-stat-perf{color:#00ff88;}
+.pnl-detect-row{display:flex;align-items:center;gap:.4rem;font-size:.7rem;color:rgba(255,255,255,.35);padding:.1rem 0;}
+.pnl-detect-icon{flex-shrink:0;}
+.pnl-detect-lbl{flex:1;}
+.pnl-detect-val{color:rgba(255,255,255,.65);font-family:'Space Mono',monospace;font-size:.68rem;}
+.pnl-prog-wrap{display:flex;flex-direction:column;gap:.28rem;}
+.pnl-prog-bar-bg{height:5px;background:rgba(255,255,255,.06);border-radius:3px;overflow:hidden;}
+.pnl-prog-bar-fill{height:100%;background:linear-gradient(90deg,#5599ff 0%,#00ff88 50%,#ffcc00 80%,#ff6600 100%);border-radius:3px;transition:width .6s cubic-bezier(.34,1.56,.64,1);}
+.pnl-prog-marks{display:flex;justify-content:space-between;font-size:.57rem;color:rgba(255,255,255,.2);font-family:'Space Mono',monospace;}
+.pnl-prog-current{text-align:right;font-size:.7rem;font-family:'Space Mono',monospace;color:#ffcc44;font-weight:700;}
+.pnl-dyor-section{display:flex;flex-direction:column;gap:.38rem;}
+.pnl-dyor-warn{font-size:.63rem;color:rgba(255,200,0,.55);text-align:center;letter-spacing:.02em;}
+.pnl-dyor-links{display:flex;gap:.38rem;flex-wrap:wrap;justify-content:center;}
+.pnl-dyor-btn{display:inline-flex;align-items:center;gap:.28rem;padding:.38rem .65rem;border-radius:8px;font-size:.7rem;font-weight:600;border:1px solid;cursor:pointer;text-decoration:none;transition:all .2s;font-family:var(--font);}
+.pnl-dyor-btn:hover{transform:translateY(-2px);filter:brightness(1.15);}
+.pnl-dyor-btn.axiom{background:rgba(97,86,217,.12);border-color:rgba(97,86,217,.3);color:#a99cff;}
+.pnl-dyor-btn.gmgn{background:rgba(0,255,136,.07);border-color:rgba(0,255,136,.22);color:#00dd77;}
+.pnl-dyor-btn.dex{background:rgba(255,170,0,.08);border-color:rgba(255,170,0,.22);color:#ffaa44;}
+.pnl-dyor-btn.sol{background:rgba(150,100,255,.09);border-color:rgba(150,100,255,.22);color:#9b6dff;}
+.pnl-social-row,.pnl-launchpad-row{display:flex;align-items:center;gap:.6rem;}
+.pnl-social-lbl{font-size:.6rem;color:rgba(255,255,255,.22);text-transform:uppercase;letter-spacing:.05em;flex-shrink:0;}
+.pnl-social-btns{display:flex;gap:.38rem;flex-wrap:wrap;}
+.pnl-social-link{display:inline-flex;align-items:center;gap:.25rem;padding:.3rem .6rem;border-radius:7px;font-size:.7rem;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);color:rgba(255,255,255,.5);text-decoration:none;transition:.2s;}
+.pnl-social-link:hover{background:rgba(255,255,255,.09);color:#fff;transform:translateY(-1px);}
+.pnl-launchpad-badge{display:inline-flex;align-items:center;gap:.35rem;padding:.28rem .75rem;border-radius:20px;font-size:.7rem;font-weight:600;background:rgba(0,200,50,.1);border:1px solid rgba(0,200,50,.25);color:#00cc44;text-decoration:none;transition:.2s;}
+.pnl-launchpad-badge:hover{filter:brightness(1.2);}
+.pnl-disclaimer{font-size:.56rem;color:rgba(255,255,255,.15);text-align:center;line-height:1.55;padding:.1rem 0 .3rem;}
+
 /* ── SCANNER CARDS — Cyberpunk Degen Style ─────────────────────── */
 .scanner-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:1.2rem;padding:.5rem 0;}
 .sc-card{
@@ -5823,7 +5864,7 @@ body.view-outils .lp-footer { display: none !important; }
       <div class="pnl-img-hero-fallback" id="pnlImgFallback">🐸</div>
       <div class="pnl-img-hero-grad"></div>
     </div>
-    <!-- BOTTOM INFO -->
+    <!-- BOTTOM INFO — garde l'existant intact -->
     <div class="pnl-bottom">
       <div class="pnl-bottom-top">
         <div class="pnl-sym" id="pnlSym">TOKEN</div>
@@ -5840,6 +5881,59 @@ body.view-outils .lp-footer { display: none !important; }
         <span class="pnl-sub" id="pnlSub">ATH depuis le call</span>
         <span class="pnl-footer-brand">MemeScanner 🐸</span>
       </div>
+    </div>
+    <!-- NEW INFO SECTION -->
+    <div class="pnl-info-section">
+      <div class="pnl-addr-row">
+        <span class="pnl-addr-lbl">Contrat</span>
+        <span class="pnl-addr-val" id="pnlAddrVal">—</span>
+        <button class="pnl-addr-copy" id="pnlAddrCopy" onclick="pnlCopyAddr()" title="Copier l'adresse">📋</button>
+      </div>
+      <div class="pnl-stats-grid">
+        <div class="pnl-stat-cell">
+          <div class="pnl-stat-lbl">Performance</div>
+          <div class="pnl-stat-val pnl-stat-perf" id="pnlPerfVal">+0%</div>
+        </div>
+        <div class="pnl-stat-cell">
+          <div class="pnl-stat-lbl">MC Initial</div>
+          <div class="pnl-stat-val" id="pnlCallVal2">$—</div>
+        </div>
+        <div class="pnl-stat-cell">
+          <div class="pnl-stat-lbl">MC Max analysé</div>
+          <div class="pnl-stat-val" id="pnlAthVal2">$—</div>
+        </div>
+        <div class="pnl-stat-cell">
+          <div class="pnl-stat-lbl">Axiom Wallets</div>
+          <div class="pnl-stat-val" id="pnlAxiomVal">—</div>
+        </div>
+      </div>
+      <div class="pnl-detect-row">
+        <span class="pnl-detect-icon">🕐</span>
+        <span class="pnl-detect-lbl">Détecté le (UTC):</span>
+        <span class="pnl-detect-val" id="pnlDetectTime">—</span>
+      </div>
+      <div class="pnl-prog-wrap">
+        <div class="pnl-prog-bar-bg">
+          <div class="pnl-prog-bar-fill" id="pnlProgressFill" style="width:0%"></div>
+        </div>
+        <div class="pnl-prog-marks">
+          <span>x1</span><span>x1.5</span><span>x2</span><span>x2.5+</span>
+        </div>
+        <div class="pnl-prog-current" id="pnlProgCurrent">—</div>
+      </div>
+      <div class="pnl-dyor-section">
+        <div class="pnl-dyor-warn">⚠ DYOR — Faites vos propres recherches</div>
+        <div class="pnl-dyor-links" id="pnlDyorLinks"></div>
+      </div>
+      <div class="pnl-social-row" id="pnlSocialRow" style="display:none">
+        <span class="pnl-social-lbl">Links</span>
+        <div class="pnl-social-btns" id="pnlSocialBtns"></div>
+      </div>
+      <div class="pnl-launchpad-row" id="pnlLaunchpadRow" style="display:none">
+        <span class="pnl-social-lbl">Launchpad</span>
+        <div class="pnl-launchpad-badge" id="pnlLaunchpadBadge"></div>
+      </div>
+      <div class="pnl-disclaimer">Ce signal est généré par un système interne et ne constitue pas un conseil financier. Vous êtes seul responsable de vos décisions.</div>
     </div>
     <div class="pnl-actions">
       <button class="pnl-btn-dl" onclick="downloadPnl()">⬇ Image</button>
@@ -10382,6 +10476,7 @@ async function fetchTokens(){
       emoji: c.emoji || '📡',
       walletData: c.walletData || {count:0,byGroup:{KOL:0,'gros trader':0,DEV:0,farmer:0},wallets:[],clustered:false},
       _callTime: c.calledAt || c.savedAt || Date.now(),
+      _firstDetectedAt: c.firstDetectedAt || c.calledAt || c.savedAt || Date.now(),
       _callMcap: c.callMcap || c.mcap || 0,
       debug: c.debug || {walletScore:0,socialScore:0,holderScore:0,platformScore:0,mcapScore:0,ageScore:0,patternScore:0,gmgnScore:0},
       raw: c.raw || {},
@@ -10925,6 +11020,15 @@ async function renderTokenTable(tokens){
     const nowMult=callMcap>0?(nowMcap||t.mcap)/callMcap:1;
     const nowMultColor=nowMult>=2?'#00ff88':nowMult>=1.3?'#88ff44':nowMult>=0.8?'#ffcc44':'#ff5577';
     const callHeure=fmtTimeSeconds(callTime);
+    const firstDetectedAt = t._firstDetectedAt || callTime;
+    const detectionDelaySec = Math.round((callTime - firstDetectedAt) / 1000);
+    const detectionDelayHtml = detectionDelaySec >= 5
+      ? `<div class="tc-signal-row" style="opacity:.7">
+           <span class="tc-signal-icon">⚡</span>
+           <span class="tc-signal-lbl">Délai détection → call:</span>
+           <span class="tc-signal-time" style="color:#ffaa44">${detectionDelaySec < 60 ? detectionDelaySec + 's' : Math.floor(detectionDelaySec/60) + 'min ' + (detectionDelaySec%60) + 's'}</span>
+         </div>`
+      : '';
     const scoreEmoji=getScoreEmoji(t.score);
     const badgeCls=t.score>=130?'nuclear':t.score>=110?'diamond':t.score>=95?'runner':t.score>=80?'watchlist':'radar';
     // Couleur Now selon perf
@@ -11038,6 +11142,7 @@ async function renderTokenTable(tokens){
           <span class="tc-signal-lbl">Signal détecté:</span>
           <span class="tc-signal-time">${fmtSignalDate(callTime)}</span>
         </div>
+        ${detectionDelayHtml}
         ${_scoreRow}
         <div class="tc-perf-row">
           <span class="tc-perf-lbl">Performance</span>
@@ -11339,6 +11444,57 @@ function openScannerPnl(addr,sym,callMcap,athMcap,score,imgUrl=''){
   document.getElementById('pnlCallVal').textContent='$'+fmtNum(callMcap);
   document.getElementById('pnlAthVal').textContent='$'+fmtNum(athMcap);
   document.getElementById('pnlSub').textContent='ATH depuis le call · '+new Date().toLocaleDateString('fr-FR');
+
+  // ── Infos enrichies ──
+  window._pnlCurrentAddr = addr;
+  const _pnlToken = (typeof lastScored !== 'undefined' ? lastScored : []).find(t => t.addr === addr) || {};
+  const _pnlCallTime = _pnlToken._callTime || Date.now();
+  const _pnlWD = _pnlToken.walletData || {};
+  const _pnlRaw = _pnlToken.raw || {};
+  const _pnlPairUrl = _pnlToken.pairUrl || `https://dexscreener.com/solana/${addr}`;
+  const _pnlDexId = (_pnlRaw.dexId || _pnlRaw.pairAddress || _pnlPairUrl || '').toLowerCase();
+
+  // Addr
+  const _addrEl = document.getElementById('pnlAddrVal');
+  if(_addrEl) _addrEl.textContent = addr.slice(0,14)+'...'+addr.slice(-8);
+
+  // Stats
+  const _perfPct = ((xAth - 1) * 100);
+  const _perfEl = document.getElementById('pnlPerfVal');
+  if(_perfEl){ _perfEl.textContent=(xAth>=1?'+':'')+_perfPct.toFixed(0)+'%'; _perfEl.style.color=xAth>=2?'#00ff88':xAth>=1.2?'#88ff44':xAth>=0.8?'#ffcc44':'#ff5577'; }
+  const _cv2=document.getElementById('pnlCallVal2'); if(_cv2)_cv2.textContent='$'+fmtNum(callMcap);
+  const _av2=document.getElementById('pnlAthVal2');  if(_av2)_av2.textContent='$'+fmtNum(athMcap);
+  const _axEl=document.getElementById('pnlAxiomVal');
+  if(_axEl){ const n=_pnlWD.count||0; _axEl.textContent=n+(n>1?' wallets':' wallet'); _axEl.style.color=n>=3?'#ffcc44':n>=1?'#a99cff':'rgba(255,255,255,.35)'; }
+
+  // Detection time
+  const _dtEl=document.getElementById('pnlDetectTime');
+  if(_dtEl && _pnlCallTime){ const d=new Date(_pnlCallTime); _dtEl.textContent=d.toLocaleDateString('fr-FR',{day:'2-digit',month:'long',year:'numeric'})+', '+d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}); }
+
+  // Progress bar
+  const _pf=document.getElementById('pnlProgressFill'); if(_pf)_pf.style.width=tcBarWidth(xAth)+'%';
+  const _pc=document.getElementById('pnlProgCurrent');  if(_pc)_pc.textContent=xAth.toFixed(2)+'x ⚡';
+
+  // DYOR links
+  const _dl=document.getElementById('pnlDyorLinks');
+  if(_dl) _dl.innerHTML=`<a class="pnl-dyor-btn axiom" href="https://axiom.trade/meme/${addr}" target="_blank" rel="noopener">🎯 Axiom</a><a class="pnl-dyor-btn gmgn" href="https://gmgn.ai/sol/token/${addr}" target="_blank" rel="noopener">🟢 GMGN</a><a class="pnl-dyor-btn dex" href="${_pnlPairUrl}" target="_blank" rel="noopener">📊 DexScreener</a><a class="pnl-dyor-btn sol" href="https://solscan.io/token/${addr}" target="_blank" rel="noopener">🔍 Solscan</a>`;
+
+  // Social links
+  const _twUrl=_pnlRaw?.info?.socials?.find(s=>s.type==='twitter')?.url||'';
+  const _webUrl=_pnlRaw?.info?.websites?.[0]?.url||'';
+  const _sRow=document.getElementById('pnlSocialRow'); const _sBtns=document.getElementById('pnlSocialBtns');
+  if(_sRow&&_sBtns){ const _links=[]; if(_twUrl)_links.push(`<a class="pnl-social-link" href="${_twUrl}" target="_blank" rel="noopener">𝕏 Twitter</a>`); if(_webUrl)_links.push(`<a class="pnl-social-link" href="${_webUrl}" target="_blank" rel="noopener">🌐 Site web</a>`); if(_links.length){_sBtns.innerHTML=_links.join('');_sRow.style.display='flex';}else{_sRow.style.display='none';} }
+
+  // Launchpad
+  const _lpRow=document.getElementById('pnlLaunchpadRow'); const _lpBadge=document.getElementById('pnlLaunchpadBadge');
+  if(_lpRow&&_lpBadge){
+    const _isPump=_pnlDexId.includes('pump'); const _isBonk=_pnlDexId.includes('bonk')||_pnlDexId.includes('launchlab'); const _isRay=_pnlDexId.includes('raydium')||_pnlDexId.includes('cpmm');
+    if(_isPump){_lpBadge.innerHTML='🟢 Pump.fun';_lpBadge.style.cssText='display:inline-flex;align-items:center;gap:.35rem;padding:.28rem .75rem;border-radius:20px;font-size:.7rem;font-weight:600;background:rgba(0,200,50,.1);border:1px solid rgba(0,200,50,.25);color:#00cc44;';_lpRow.style.display='flex';}
+    else if(_isBonk){_lpBadge.innerHTML='🟡 Bonk / LaunchLab';_lpBadge.style.cssText='display:inline-flex;align-items:center;gap:.35rem;padding:.28rem .75rem;border-radius:20px;font-size:.7rem;font-weight:600;background:rgba(255,200,0,.1);border:1px solid rgba(255,200,0,.25);color:#ffcc00;';_lpRow.style.display='flex';}
+    else if(_isRay){_lpBadge.innerHTML='🔵 Raydium';_lpBadge.style.cssText='display:inline-flex;align-items:center;gap:.35rem;padding:.28rem .75rem;border-radius:20px;font-size:.7rem;font-weight:600;background:rgba(0,100,255,.1);border:1px solid rgba(0,100,255,.25);color:#4488ff;';_lpRow.style.display='flex';}
+    else{_lpRow.style.display='none';}
+  }
+
   document.getElementById('pnlOverlay').classList.add('open');
   card.style.transform='rotateX(0) rotateY(0)';
 
@@ -12063,6 +12219,14 @@ function openRugPnl(addr,sym,callMcap,athMcap){
   openScannerPnl(addr,sym,callMcap,athMcap,0);
 }
 function closePnl(){document.getElementById('pnlOverlay').classList.remove('open');}
+function pnlCopyAddr(){
+  const a=window._pnlCurrentAddr; if(!a)return;
+  navigator.clipboard.writeText(a).then(()=>{
+    const btn=document.getElementById('pnlAddrCopy');
+    if(btn){btn.textContent='✅';setTimeout(()=>btn.textContent='📋',1500);}
+    if(typeof showToast==='function')showToast('✅ Adresse copiée','info');
+  }).catch(()=>{ if(typeof showToast==='function')showToast('❌ Erreur copie',''); });
+}
 // ── PNL CARD CANVAS RENDERER — Reproduit la vraie carte avec effets rarity ──
 function renderPnlCanvas(){
   const sym=document.getElementById('pnlSym').textContent;
