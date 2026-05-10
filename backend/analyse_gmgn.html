@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GMGN Analysis — Good vs Bad Calls</title>
+<style>
+  :root {
+    --bg: #0d0f14;
+    --bg2: #13161e;
+    --bg3: #1a1d28;
+    --border: #2a2d3a;
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --green: #22c55e;
+    --red: #ef4444;
+    --yellow: #eab308;
+    --blue: #3b82f6;
+    --purple: #a855f7;
+    --cyan: #06b6d4;
+    --accent: #00ff99;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'SF Mono', 'Fira Code', monospace; font-size: 13px; }
+
+  .header {
+    background: linear-gradient(135deg, #0d0f14 0%, #13161e 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 24px 32px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .header h1 { font-size: 20px; font-weight: 700; color: var(--accent); letter-spacing: 1px; }
+  .header .subtitle { color: var(--muted); font-size: 12px; margin-top: 4px; }
+  .header .meta { text-align: right; color: var(--muted); font-size: 11px; }
+  .header .meta span { color: var(--text); font-weight: 600; }
+
+  .container { max-width: 1400px; margin: 0 auto; padding: 24px 32px; }
+
+  /* Stats cards row */
+  .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px; }
+  .stat-card {
+    background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 16px 20px;
+  }
+  .stat-card .label { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .5px; }
+  .stat-card .value { font-size: 28px; font-weight: 700; margin-top: 4px; }
+  .stat-card .sub { color: var(--muted); font-size: 11px; margin-top: 2px; }
+  .stat-card.green .value { color: var(--green); }
+  .stat-card.red .value { color: var(--red); }
+  .stat-card.blue .value { color: var(--blue); }
+  .stat-card.yellow .value { color: var(--yellow); }
+
+  /* Threshold selector */
+  .controls {
+    background: var(--bg2); border: 1px solid var(--border); border-radius: 10px;
+    padding: 14px 20px; margin-bottom: 20px;
+    display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+  }
+  .controls label { color: var(--muted); font-size: 12px; }
+  .controls select, .controls input[type=range] {
+    background: var(--bg3); border: 1px solid var(--border); border-radius: 6px;
+    color: var(--text); padding: 4px 10px; font-size: 12px; font-family: inherit; cursor: pointer;
+  }
+  .controls input[type=range] { padding: 0; width: 120px; accent-color: var(--accent); }
+  .controls .thresh-val { color: var(--accent); font-weight: 700; min-width: 40px; }
+  .controls button {
+    background: var(--accent); color: #000; border: none; border-radius: 6px;
+    padding: 6px 14px; font-size: 12px; font-weight: 700; cursor: pointer;
+    font-family: inherit;
+  }
+  .controls button:hover { opacity: .85; }
+
+  /* Main comparison table */
+  .section-title {
+    font-size: 13px; font-weight: 700; color: var(--text); text-transform: uppercase;
+    letter-spacing: 1px; margin-bottom: 12px; padding-left: 4px;
+    border-left: 3px solid var(--accent); padding-left: 10px;
+  }
+
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; }
+  thead th {
+    background: var(--bg3); color: var(--muted); font-size: 11px; text-transform: uppercase;
+    letter-spacing: .5px; padding: 10px 14px; text-align: left; border-bottom: 2px solid var(--border);
+    white-space: nowrap; position: sticky; top: 0;
+  }
+  thead th.col-good { color: var(--green); }
+  thead th.col-bad  { color: var(--red); }
+  thead th.col-ratio { color: var(--yellow); }
+
+  tbody tr { border-bottom: 1px solid var(--border); }
+  tbody tr:hover { background: rgba(255,255,255,.03); }
+  tbody td { padding: 9px 14px; white-space: nowrap; }
+  .field-name { color: var(--cyan); font-weight: 600; font-size: 12px; }
+  .field-desc { color: var(--muted); font-size: 11px; display: block; margin-top: 1px; }
+  td.good-val { color: var(--green); font-weight: 700; }
+  td.bad-val  { color: var(--red); font-weight: 700; }
+  td.neutral  { color: var(--text); }
+
+  .bar-wrap { display: flex; align-items: center; gap: 8px; }
+  .bar-track { width: 80px; height: 6px; background: var(--bg3); border-radius: 3px; overflow: hidden; flex-shrink: 0; }
+  .bar-fill { height: 100%; border-radius: 3px; transition: width .3s; }
+  .bar-fill.green { background: var(--green); }
+  .bar-fill.red   { background: var(--red); }
+  .bar-fill.blue  { background: var(--blue); }
+  .bar-fill.yellow{ background: var(--yellow); }
+  .bar-fill.purple{ background: var(--purple); }
+
+  .ratio-badge {
+    display: inline-block; padding: 2px 8px; border-radius: 12px;
+    font-size: 11px; font-weight: 700;
+  }
+  .ratio-good  { background: rgba(34,197,94,.15); color: var(--green); }
+  .ratio-bad   { background: rgba(239,68,68,.15);  color: var(--red); }
+  .ratio-neut  { background: rgba(100,116,139,.15); color: var(--muted); }
+
+  .signal-dot {
+    display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+    margin-right: 6px; flex-shrink: 0;
+  }
+  .sig-good  { background: var(--green); }
+  .sig-bad   { background: var(--red); }
+  .sig-neut  { background: var(--muted); }
+
+  /* Section spacing */
+  .section { margin-bottom: 32px; }
+
+  /* Insight cards */
+  .insights { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 28px; }
+  .insight-card {
+    background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 16px;
+  }
+  .insight-card .ins-label { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .5px; }
+  .insight-card .ins-field { color: var(--cyan); font-size: 13px; font-weight: 700; margin-top: 6px; }
+  .insight-card .ins-values { display: flex; gap: 12px; margin-top: 8px; align-items: flex-end; }
+  .insight-card .ins-val { font-size: 22px; font-weight: 800; }
+  .insight-card .ins-val.g { color: var(--green); }
+  .insight-card .ins-val.b { color: var(--red); }
+  .insight-card .ins-sub { font-size: 10px; color: var(--muted); }
+  .insight-card .ins-ratio { margin-top: 8px; font-size: 11px; }
+
+  /* Loading */
+  .loading {
+    text-align: center; padding: 60px; color: var(--muted); font-size: 14px;
+  }
+  .loading .spinner {
+    width: 32px; height: 32px; border: 3px solid var(--border); border-top-color: var(--accent);
+    border-radius: 50%; animation: spin .8s linear infinite; margin: 0 auto 16px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .error { background: rgba(239,68,68,.1); border: 1px solid var(--red); border-radius: 8px; padding: 16px; color: var(--red); }
+
+  /* Scatter mini chart */
+  .mini-chart { background: var(--bg3); border-radius: 8px; padding: 12px; margin-top: 12px; }
+  canvas { display: block; width: 100%; }
+
+  /* Distribution section */
+  .dist-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .dist-card {
+    background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 14px;
+  }
+  .dist-card .d-title { font-size: 11px; color: var(--cyan); font-weight: 700; margin-bottom: 10px; }
+  .dist-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+  .dist-row .d-label { color: var(--muted); font-size: 10px; min-width: 50px; }
+  .dist-row .d-bar-wrap { flex: 1; height: 4px; background: var(--bg3); border-radius: 2px; }
+  .dist-row .d-bar { height: 100%; border-radius: 2px; }
+  .dist-row .d-count { font-size: 10px; color: var(--muted); min-width: 24px; text-align: right; }
+
+  /* null badge */
+  .null-badge { color: var(--muted); font-size: 11px; font-style: italic; }
+
+  /* sort arrows */
+  thead th[data-sort] { cursor: pointer; user-select: none; }
+  thead th[data-sort]:hover { color: var(--text); }
+
+  .badge-count {
+    display: inline-block; background: var(--bg3); border: 1px solid var(--border);
+    border-radius: 4px; padding: 1px 6px; font-size: 10px; color: var(--muted); margin-left: 6px;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <h1>GMGN ANALYSIS — GOOD vs BAD CALLS</h1>
+    <div class="subtitle">Moyennes des champs GMGN pour calls rentables vs perdants</div>
+  </div>
+  <div class="meta">
+    Données: <span id="meta-count">—</span> calls analysés<br>
+    Seuil: <span id="meta-thresh">—</span>x pour "good"<br>
+    <span id="meta-date">—</span><br>
+    Refresh dans <span id="refresh-countdown" style="color:var(--accent);font-weight:700;">60s</span>
+    <button id="refresh-btn" onclick="triggerRefresh()" style="margin-left:8px;background:var(--bg3);color:var(--accent);border:1px solid var(--accent);border-radius:5px;padding:2px 8px;font-size:11px;cursor:pointer;font-family:inherit;">↻ Now</button>
+  </div>
+</div>
+
+<div class="container">
+
+  <div id="loading" class="loading">
+    <div class="spinner"></div>
+    Chargement des données depuis Railway…
+  </div>
+
+  <div id="content" style="display:none">
+
+    <!-- Controls -->
+    <div class="controls">
+      <label>Seuil "good" ≥</label>
+      <input type="range" id="thresh-slider" min="1.1" max="3.0" step="0.1" value="1.3">
+      <span class="thresh-val" id="thresh-display">1.3x</span>
+      <label style="margin-left:8px">Filtrer champs avec données ≥</label>
+      <input type="range" id="min-data-slider" min="0" max="20" step="1" value="3">
+      <span class="thresh-val" id="min-data-display">3</span>
+      <label>calls</label>
+      <button onclick="rebuild()">Recalculer</button>
+      <label style="margin-left:8px">Tri par:</label>
+      <select id="sort-select" onchange="rebuild()">
+        <option value="ratio">Ratio (impact)</option>
+        <option value="field">Nom du champ</option>
+        <option value="good">Valeur Good</option>
+        <option value="bad">Valeur Bad</option>
+      </select>
+    </div>
+
+    <!-- Stats row -->
+    <div class="stats-row">
+      <div class="stat-card green">
+        <div class="label">Calls "Good" (≥ seuil)</div>
+        <div class="value" id="stat-good">—</div>
+        <div class="sub" id="stat-good-pct">—</div>
+      </div>
+      <div class="stat-card red">
+        <div class="label">Calls "Bad" (< seuil)</div>
+        <div class="value" id="stat-bad">—</div>
+        <div class="sub" id="stat-bad-pct">—</div>
+      </div>
+      <div class="stat-card blue">
+        <div class="label">Calls avec données GMGN</div>
+        <div class="value" id="stat-gmgn">—</div>
+        <div class="sub" id="stat-gmgn-pct">—</div>
+      </div>
+      <div class="stat-card yellow">
+        <div class="label">Champs GMGN analysés</div>
+        <div class="value" id="stat-fields">—</div>
+        <div class="sub">avec ≥ seuil min données</div>
+      </div>
+    </div>
+
+    <!-- Key insights -->
+    <div class="section">
+      <div class="section-title">Signaux clés</div>
+      <div class="insights" id="insights-grid"></div>
+    </div>
+
+    <!-- Main table -->
+    <div class="section">
+      <div class="section-title">Toutes les moyennes GMGN <span class="badge-count" id="field-count-badge">—</span></div>
+      <div class="table-wrap">
+        <table id="main-table">
+          <thead>
+            <tr>
+              <th>Champ GMGN</th>
+              <th class="col-good" data-sort="good">Moy. Good ↕</th>
+              <th class="col-good">N Good</th>
+              <th class="col-bad" data-sort="bad">Moy. Bad ↕</th>
+              <th class="col-bad">N Bad</th>
+              <th class="col-ratio" data-sort="ratio">Ratio G/B ↕</th>
+              <th>Signal</th>
+              <th>Distribution</th>
+            </tr>
+          </thead>
+          <tbody id="table-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Distribution section -->
+    <div class="section">
+      <div class="section-title">Distribution détaillée</div>
+      <div class="dist-grid" id="dist-grid"></div>
+    </div>
+
+    <!-- Raw calls table -->
+    <div class="section">
+      <div class="section-title">Calls bruts <span class="badge-count" id="raw-count-badge">—</span></div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Symbole</th>
+              <th>Score</th>
+              <th>X actuel</th>
+              <th>KOL</th>
+              <th>Smart Degen</th>
+              <th>Rug ratio</th>
+              <th>Bundler MHR</th>
+              <th>Insider hold</th>
+              <th>Top10 hold</th>
+              <th>Top70 sniper</th>
+              <th>Dev hold</th>
+              <th>Entrapment</th>
+              <th>Rat trader</th>
+              <th>Fresh wallet</th>
+              <th>TG calls</th>
+              <th>X followers</th>
+              <th>CTO</th>
+              <th>Wash</th>
+              <th>Img dup</th>
+              <th>Holders</th>
+              <th>Date</th>
+              <th>Lien</th>
+            </tr>
+          </thead>
+          <tbody id="raw-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div>
+
+<script>
+const BACKEND = 'https://memescanner-production-342a.up.railway.app';
+
+// Field metadata: [label, description, format, lowerIsBetter]
+// Keys match exactly what worker.js stores in gmgnRawMap → Firebase → /history
+const FIELD_META = {
+  // ── Wallet signals ──────────────────────────────────────────────────────────
+  renowned_count:              ['KOL count',              'Wallets KOL (traders connus) qui ont acheté',       'count', false],
+  smart_degen_count:           ['Smart Degen count',      'Wallets gros traders actifs qui ont acheté',        'count', false],
+  bot_degen_count:             ['Bot Degen count',        'Bots degen détectés sur le token',                  'count', false],
+  bot_degen_rate:              ['Bot Degen rate',         'Taux de bots degen parmi les acheteurs',            'pct',   true],
+  sniper_count:                ['Sniper count',           'Nb de snipers dès le lancement',                    'count', true],
+  tg_call_count:               ['TG call count',          'Nb d\'appels Telegram pour ce token',               'count', false],
+  visiting_count:              ['Visiting count',         'Nb de visites de wallets connus (sans achat)',       'count', false],
+  // ── Risk rates ──────────────────────────────────────────────────────────────
+  rug_ratio:                   ['Rug ratio',              'Taux de rugs historique du dev (→ hard reject >85%)', 'pct', true],
+  bundler_mhr:                 ['Bundler MHR',            'Taux de bundled buys max par heure (→ hard reject >75%)', 'pct', true],
+  bundler_trader_amount_rate:  ['Bundler trader rate',    '% du volume total venant de bundlers',              'pct',   true],
+  suspected_insider_hold_rate: ['Insider hold rate',      'Taux d\'insiders qui hold encore',                  'pct',   true],
+  top_10_holder_rate:          ['Top10 holder rate',      '% supply dans le top 10 holders',                   'pct',   true],
+  top70_sniper_hold_rate:      ['Top70 sniper hold',      '% des snipers dans top70 qui hold encore',          'pct',   true],
+  fresh_wallet_rate:           ['Fresh wallet rate',      '% wallets frais (nouveaux, potentiels sybils)',      'pct',   true],
+  rat_trader_amount_rate:      ['Rat trader rate',        'Taux de rat traders (manipulateurs)',                'pct',   true],
+  entrapment_ratio:            ['Entrapment ratio',       '% de l\'offre piégée / non-liquide',                'pct',   true],
+  dev_team_hold_rate:          ['Dev hold rate',          '% de supply que l\'équipe dev tient encore',        'pct',   true],
+  private_vault_hold_rate:     ['Private vault hold',     '% de supply dans des vaults privés',                'pct',   true],
+  // ── Market ──────────────────────────────────────────────────────────────────
+  net_buy_24h:                 ['Net buy 24h',            'Achats nets (SOL) sur 24h — positif = bullish',     'num',   false],
+  volume_24h:                  ['Volume 24h',             'Volume de trading sur 24h (en SOL ou USD)',         'num',   false],
+  holder_count:                ['Holders',                'Nb de holders uniques',                             'count', false],
+  // ── Creator / social ────────────────────────────────────────────────────────
+  creator_created_count:       ['Creator deploys',        'Nb total de tokens lancés par ce créateur',         'count', false],
+  creator_created_open_ratio:  ['Creator success ratio',  '% de ses tokens qui sont encore ouverts / vivants', 'pct',   false],
+  creator_token_status:        ['Creator status',         'Statut du token selon le créateur',                 'str',   false],
+  twitter_rename_count:        ['Twitter renames',        'Nb de fois où le compte Twitter a changé de nom',   'count', true],
+  x_user_follower:             ['X followers',            'Nb de followers du compte X/Twitter du projet',     'count', false],
+  // ── Flags booléens ──────────────────────────────────────────────────────────
+  is_wash_trading:             ['Wash trading',           'Wash trading détecté (→ hard reject)',               'bool',  true],
+  cto_flag:                    ['CTO flag',               'Community TakeOver — signe d\'organicité',           'bool',  false],
+  image_dup:                   ['Image dupliquée',        'Logo dupliqué d\'un autre token (arnaque)',          'bool',  true],
+  has_at_least_one_social:     ['A un social',            'A au moins un compte social (Twitter/TG/site)',      'bool',  false],
+  dexscr_ad:                   ['DexScreener Ad',         'A payé une pub DexScreener (engagement réel)',       'bool',  false],
+  complete_cost_time:          ['Bonding curve speed (s)','Temps en secondes pour remplir la bonding curve',   'num',   false],
+};
+
+let allCalls = [];
+
+async function loadData() {
+  try {
+    const r = await fetch(`${BACKEND}/history?limit=500`, { signal: AbortSignal.timeout(20000) });
+    const d = await r.json();
+    allCalls = (d.data || []);
+    document.getElementById('meta-date').textContent = new Date().toLocaleString('fr-FR');
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('content').style.display = '';
+    rebuild();
+  } catch(e) {
+    document.getElementById('loading').innerHTML = `<div class="error">Erreur de chargement: ${e.message}<br>Backend: ${BACKEND}/history</div>`;
+  }
+}
+
+function getThresh() {
+  return parseFloat(document.getElementById('thresh-slider').value);
+}
+function getMinData() {
+  return parseInt(document.getElementById('min-data-slider').value);
+}
+
+function getCurrentX(c) {
+  const callMcap = c.callMcap || c.mcap || 0;
+  const curMcap  = c.mcap || 0;
+  if (!callMcap || !curMcap) return null;
+  return curMcap / callMcap;
+}
+
+function fmt(v, type) {
+  if (v === null || v === undefined || (typeof v === 'number' && isNaN(v))) return '—';
+  switch(type) {
+    case 'pct':   return (v * (Math.abs(v) < 2 ? 100 : 1)).toFixed(2) + '%';
+    case 'usd':   return '$' + (v >= 1000 ? (v/1000).toFixed(1)+'K' : v.toFixed(0));
+    case 'count': return v % 1 === 0 ? v.toString() : v.toFixed(2);
+    case 'bool':  return v > 0.5 ? 'oui' : 'non';
+    case 'min':   return v.toFixed(1) + 'min';
+    case 'num':   return typeof v === 'number' ? (Math.abs(v) >= 1000 ? (v/1000).toFixed(1)+'K' : v.toFixed(2)) : String(v);
+    case 'str':   return String(v);
+    default:      return typeof v === 'number' ? v.toFixed(3) : String(v);
+  }
+}
+
+function fmtPct(v, type) {
+  // For percentage fields stored as 0-1 or 0-100
+  if (type !== 'pct') return fmt(v, type);
+  const raw = Math.abs(v);
+  if (raw <= 2) return (v * 100).toFixed(2) + '%';
+  return v.toFixed(2) + '%';
+}
+
+function extractNum(gmgn, key) {
+  if (!gmgn || gmgn[key] === undefined || gmgn[key] === null) return null;
+  // Special case: open_timestamp → convert to minutes ago from callTime
+  if (key === 'open_timestamp') {
+    const ts = gmgn[key];
+    if (!ts) return null;
+    return null; // skip timestamp conversion for now
+  }
+  const v = parseFloat(gmgn[key]);
+  return isNaN(v) ? null : v;
+}
+
+function computeAvg(arr) {
+  const valid = arr.filter(v => v !== null && !isNaN(v));
+  if (!valid.length) return { avg: null, n: 0, min: null, max: null, median: null };
+  valid.sort((a,b) => a-b);
+  const sum = valid.reduce((s,v) => s+v, 0);
+  const median = valid[Math.floor(valid.length/2)];
+  return { avg: sum/valid.length, n: valid.length, min: valid[0], max: valid[valid.length-1], median };
+}
+
+function rebuild() {
+  const thresh = getThresh();
+  const minData = getMinData();
+  document.getElementById('thresh-display').textContent = thresh.toFixed(1) + 'x';
+  document.getElementById('min-data-display').textContent = minData;
+  document.getElementById('meta-thresh').textContent = thresh.toFixed(1);
+
+  // Split calls
+  const withGmgn = allCalls.filter(c => c.gmgn && typeof c.gmgn === 'object');
+  const withX    = withGmgn.filter(c => getCurrentX(c) !== null);
+  const good     = withX.filter(c => getCurrentX(c) >= thresh);
+  const bad      = withX.filter(c => getCurrentX(c) < thresh);
+
+  document.getElementById('meta-count').textContent = withX.length;
+  document.getElementById('stat-good').textContent = good.length;
+  document.getElementById('stat-good-pct').textContent = withX.length ? ((good.length/withX.length*100).toFixed(0) + '% des calls avec GMGN') : '';
+  document.getElementById('stat-bad').textContent = bad.length;
+  document.getElementById('stat-bad-pct').textContent = withX.length ? ((bad.length/withX.length*100).toFixed(0) + '% des calls avec GMGN') : '';
+  document.getElementById('stat-gmgn').textContent = withGmgn.length;
+  document.getElementById('stat-gmgn-pct').textContent = allCalls.length ? ((withGmgn.length/allCalls.length*100).toFixed(0) + '% du total (' + allCalls.length + ')') : '';
+
+  // Compute all field averages
+  const allKeys = new Set();
+  withGmgn.forEach(c => Object.keys(c.gmgn).forEach(k => allKeys.add(k)));
+  // Remove non-numeric / meta fields
+  const skipKeys = new Set(['address','token_address','chain','name','logo','website','twitter','telegram','description','symbol','launchpad']);
+  const numericKeys = [...allKeys].filter(k => !skipKeys.has(k));
+
+  const rows = [];
+  for (const key of numericKeys) {
+    const goodVals = good.map(c => extractNum(c.gmgn, key));
+    const badVals  = bad.map(c => extractNum(c.gmgn, key));
+    const gStat = computeAvg(goodVals);
+    const bStat = computeAvg(badVals);
+    if (gStat.n < minData && bStat.n < minData) continue;
+    if (gStat.avg === null && bStat.avg === null) continue;
+
+    const ratio = (gStat.avg !== null && bStat.avg !== null && bStat.avg !== 0)
+      ? gStat.avg / bStat.avg : null;
+
+    const meta = FIELD_META[key] || [key, key, '', 'num', false];
+    rows.push({ key, meta, gStat, bStat, ratio });
+  }
+
+  document.getElementById('stat-fields').textContent = rows.length;
+  document.getElementById('field-count-badge').textContent = rows.length + ' champs';
+
+  // Sort
+  const sortBy = document.getElementById('sort-select').value;
+  rows.sort((a, b) => {
+    if (sortBy === 'ratio') {
+      const ra = a.ratio !== null ? Math.abs(Math.log(a.ratio)) : 0;
+      const rb = b.ratio !== null ? Math.abs(Math.log(b.ratio)) : 0;
+      return rb - ra;
+    }
+    if (sortBy === 'field') return a.key.localeCompare(b.key);
+    if (sortBy === 'good')  return (b.gStat.avg||0) - (a.gStat.avg||0);
+    if (sortBy === 'bad')   return (b.bStat.avg||0) - (a.bStat.avg||0);
+    return 0;
+  });
+
+  // Render insights (top 6 signals by ratio)
+  const topSignals = [...rows]
+    .filter(r => r.ratio !== null && r.gStat.n >= 2 && r.bStat.n >= 2)
+    .sort((a,b) => Math.abs(Math.log(b.ratio)) - Math.abs(Math.log(a.ratio)))
+    .slice(0, 6);
+  renderInsights(topSignals, thresh);
+
+  // Render main table
+  renderTable(rows, thresh);
+
+  // Render distribution
+  renderDist(rows.slice(0, 9), good, bad);
+
+  // Render raw calls
+  renderRaw(withX, thresh);
+}
+
+function signalClass(row) {
+  if (row.ratio === null) return 'sig-neut';
+  const meta = row.meta;
+  const lowerBetter = meta[4];
+  const r = row.ratio;
+  if (lowerBetter) {
+    if (r < 0.7) return 'sig-good'; // lower in good = good signal
+    if (r > 1.3) return 'sig-bad';
+  } else {
+    if (r > 1.3) return 'sig-good'; // higher in good = good signal
+    if (r < 0.7) return 'sig-bad';
+  }
+  return 'sig-neut';
+}
+
+function renderInsights(topSignals, thresh) {
+  const grid = document.getElementById('insights-grid');
+  grid.innerHTML = '';
+  for (const row of topSignals) {
+    const meta = row.meta;
+    const type = meta[2] || 'num';
+    const lowerBetter = meta[4];
+    const r = row.ratio;
+    const goodIsHigher = row.gStat.avg > row.bStat.avg;
+    const isPositiveSignal = lowerBetter ? !goodIsHigher : goodIsHigher;
+
+    const ratioLabel = r !== null
+      ? (r > 1 ? `Good est ${r.toFixed(2)}× plus élevé` : `Good est ${(1/r).toFixed(2)}× plus bas`)
+      : '';
+
+    grid.innerHTML += `
+      <div class="insight-card">
+        <div class="ins-label">${isPositiveSignal ? '✅ Bon signal' : '⚠️ Signal d\'alerte'}</div>
+        <div class="ins-field">${meta[0]}</div>
+        <div class="ins-values">
+          <div>
+            <div class="ins-val g">${fmtPct(row.gStat.avg, type)}</div>
+            <div class="ins-sub">Good (${row.gStat.n})</div>
+          </div>
+          <div style="color:var(--muted);font-size:18px;padding-bottom:4px">vs</div>
+          <div>
+            <div class="ins-val b">${fmtPct(row.bStat.avg, type)}</div>
+            <div class="ins-sub">Bad (${row.bStat.n})</div>
+          </div>
+        </div>
+        <div class="ins-ratio" style="color:${isPositiveSignal ? 'var(--green)' : 'var(--red)'}">${ratioLabel}</div>
+        <div class="ins-ratio" style="color:var(--muted);font-size:10px;margin-top:3px">${meta[1]}</div>
+      </div>`;
+  }
+}
+
+function renderTable(rows, thresh) {
+  const tbody = document.getElementById('table-body');
+  tbody.innerHTML = '';
+
+  // Find max values for bar scaling
+  const maxG = Math.max(...rows.map(r => r.gStat.avg || 0).filter(v => isFinite(v)), 1);
+  const maxB = Math.max(...rows.map(r => r.bStat.avg || 0).filter(v => isFinite(v)), 1);
+
+  for (const row of rows) {
+    const meta = row.meta;
+    const type = meta[2] || 'num';
+    const lowerBetter = meta[4];
+    const r = row.ratio;
+
+    let ratioHtml = '<span class="null-badge">—</span>';
+    if (r !== null) {
+      const goodIsHigher = row.gStat.avg > row.bStat.avg;
+      const isPositive = lowerBetter ? !goodIsHigher : goodIsHigher;
+      const cls = isPositive ? 'ratio-good' : (Math.abs(r-1) > 0.15 ? 'ratio-bad' : 'ratio-neut');
+      const label = r > 1 ? `${r.toFixed(2)}×` : `÷${(1/r).toFixed(2)}`;
+      ratioHtml = `<span class="ratio-badge ${cls}">${label}</span>`;
+    }
+
+    const sigCls = signalClass(row);
+    const gBar = row.gStat.avg !== null ? Math.min(100, (row.gStat.avg / (maxG||1)) * 100) : 0;
+    const bBar = row.bStat.avg !== null ? Math.min(100, (row.bStat.avg / (maxG||1)) * 100) : 0;
+
+    tbody.innerHTML += `<tr>
+      <td>
+        <span class="field-name">${meta[0]}</span>
+        <span class="field-desc">${meta[1]}</span>
+      </td>
+      <td class="good-val">${fmtPct(row.gStat.avg, type)}
+        ${row.gStat.n > 0 ? '' : ''}</td>
+      <td><span class="badge-count">${row.gStat.n}</span></td>
+      <td class="bad-val">${fmtPct(row.bStat.avg, type)}</td>
+      <td><span class="badge-count">${row.bStat.n}</span></td>
+      <td>${ratioHtml}</td>
+      <td>
+        <span class="signal-dot ${sigCls}"></span>
+        ${sigCls === 'sig-good' ? 'Positif' : sigCls === 'sig-bad' ? 'Négatif' : 'Neutre'}
+      </td>
+      <td>
+        <div class="bar-wrap">
+          <div style="width:60px;font-size:10px;color:var(--green);text-align:right">G</div>
+          <div class="bar-track">
+            <div class="bar-fill green" style="width:${gBar.toFixed(0)}%"></div>
+          </div>
+        </div>
+        <div class="bar-wrap" style="margin-top:3px">
+          <div style="width:60px;font-size:10px;color:var(--red);text-align:right">B</div>
+          <div class="bar-track">
+            <div class="bar-fill red" style="width:${bBar.toFixed(0)}%"></div>
+          </div>
+        </div>
+      </td>
+    </tr>`;
+  }
+}
+
+function renderDist(rows, good, bad) {
+  const grid = document.getElementById('dist-grid');
+  grid.innerHTML = '';
+  for (const row of rows) {
+    const meta = row.meta;
+    const type = meta[2] || 'num';
+
+    const allVals = [...good, ...bad].map(c => extractNum(c.gmgn, row.key)).filter(v => v !== null);
+    if (!allVals.length) continue;
+
+    allVals.sort((a,b)=>a-b);
+    const min = allVals[0], max = allVals[allVals.length-1];
+    const range = max - min || 1;
+    const buckets = 5;
+    const bucketSize = range / buckets;
+
+    const goodVals = good.map(c => extractNum(c.gmgn, row.key)).filter(v => v !== null);
+    const badVals  = bad.map(c => extractNum(c.gmgn, row.key)).filter(v => v !== null);
+
+    let distHtml = `<div class="dist-card"><div class="d-title">${meta[0]}</div>`;
+    for (let i = 0; i < buckets; i++) {
+      const lo = min + i * bucketSize;
+      const hi = lo + bucketSize;
+      const label = `${fmtPct(lo, type)}`;
+      const gc = goodVals.filter(v => v >= lo && (i === buckets-1 ? v <= hi : v < hi)).length;
+      const bc = badVals.filter(v => v >= lo && (i === buckets-1 ? v <= hi : v < hi)).length;
+      const maxC = Math.max(gc+bc, 1);
+      const gW = ((gc/maxC)*100).toFixed(0);
+      const bW = ((bc/maxC)*100).toFixed(0);
+      distHtml += `
+        <div class="dist-row">
+          <div class="d-label">${label}</div>
+          <div class="d-bar-wrap"><div class="d-bar" style="width:${gW}%;background:var(--green)"></div></div>
+          <div class="d-count" style="color:var(--green)">${gc}</div>
+          <div class="d-bar-wrap"><div class="d-bar" style="width:${bW}%;background:var(--red)"></div></div>
+          <div class="d-count" style="color:var(--red)">${bc}</div>
+        </div>`;
+    }
+    distHtml += '</div>';
+    grid.innerHTML += distHtml;
+  }
+}
+
+function renderRaw(calls, thresh) {
+  const tbody = document.getElementById('raw-body');
+  document.getElementById('raw-count-badge').textContent = calls.length + ' calls';
+
+  const sorted = [...calls].sort((a,b) => (b.calledAt || b.savedAt || 0) - (a.calledAt || a.savedAt || 0));
+
+  const pct  = v => v === undefined || v === null ? '<span class="null-badge">—</span>' : ((parseFloat(v)||0)*100).toFixed(1)+'%';
+  const num  = v => v === undefined || v === null ? '<span class="null-badge">—</span>' : (parseFloat(v)||0).toFixed(0);
+  const bool = v => v === true ? '<span style="color:var(--green)">oui</span>' : v === false ? '<span style="color:var(--muted)">non</span>' : '<span class="null-badge">—</span>';
+
+  tbody.innerHTML = '';
+  for (const c of sorted) {
+    const x = getCurrentX(c);
+    const isGood = x !== null && x >= thresh;
+    const g = c.gmgn || {};
+    const xStr = x !== null ? x.toFixed(2) + 'x' : '—';
+    const xColor = x === null ? 'var(--muted)' : x >= thresh ? 'var(--green)' : x < 0.85 ? 'var(--red)' : 'var(--yellow)';
+
+    tbody.innerHTML += `<tr>
+      <td style="color:${isGood?'var(--green)':'var(--muted)'};font-weight:700">${c.symbol || '?'}</td>
+      <td>${c.score ?? '—'}</td>
+      <td style="color:${xColor};font-weight:700">${xStr}</td>
+      <td>${g.renowned_count ?? '<span class="null-badge">—</span>'}</td>
+      <td>${g.smart_degen_count ?? '<span class="null-badge">—</span>'}</td>
+      <td>${pct(g.rug_ratio)}</td>
+      <td>${pct(g.bundler_mhr)}</td>
+      <td>${pct(g.suspected_insider_hold_rate)}</td>
+      <td>${pct(g.top_10_holder_rate)}</td>
+      <td>${pct(g.top70_sniper_hold_rate)}</td>
+      <td>${pct(g.dev_team_hold_rate)}</td>
+      <td>${pct(g.entrapment_ratio)}</td>
+      <td>${pct(g.rat_trader_amount_rate)}</td>
+      <td>${pct(g.fresh_wallet_rate)}</td>
+      <td>${g.tg_call_count ?? '<span class="null-badge">—</span>'}</td>
+      <td>${num(g.x_user_follower)}</td>
+      <td>${bool(g.cto_flag)}</td>
+      <td>${g.is_wash_trading === true ? '<span style="color:var(--red);font-weight:700">OUI</span>' : bool(g.is_wash_trading)}</td>
+      <td>${bool(g.image_dup)}</td>
+      <td>${num(g.holder_count)}</td>
+      <td style="color:var(--muted);font-size:10px">${c.calledAt ? new Date(c.calledAt).toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}) : '—'}</td>
+      <td>${c.pairUrl ? `<a href="${c.pairUrl}" target="_blank" style="color:var(--cyan);text-decoration:none">Dex ↗</a>` : '—'}</td>
+    </tr>`;
+  }
+}
+
+// Init
+document.getElementById('thresh-slider').addEventListener('input', () => {
+  document.getElementById('thresh-display').textContent = parseFloat(document.getElementById('thresh-slider').value).toFixed(1)+'x';
+});
+document.getElementById('min-data-slider').addEventListener('input', () => {
+  document.getElementById('min-data-display').textContent = document.getElementById('min-data-slider').value;
+});
+
+// Auto-refresh toutes les 60s
+const REFRESH_INTERVAL = 60;
+let refreshTimer = REFRESH_INTERVAL;
+let refreshInterval = null;
+
+function startRefreshCountdown() {
+  if (refreshInterval) clearInterval(refreshInterval);
+  refreshTimer = REFRESH_INTERVAL;
+  document.getElementById('refresh-countdown').textContent = refreshTimer + 's';
+  refreshInterval = setInterval(() => {
+    refreshTimer--;
+    const el = document.getElementById('refresh-countdown');
+    if (el) el.textContent = refreshTimer + 's';
+    if (refreshTimer <= 0) {
+      refreshTimer = REFRESH_INTERVAL;
+      loadData();
+    }
+  }, 1000);
+}
+
+async function triggerRefresh() {
+  refreshTimer = REFRESH_INTERVAL;
+  await loadData();
+}
+
+loadData().then(() => startRefreshCountdown());
+</script>
+</body>
+</html>
