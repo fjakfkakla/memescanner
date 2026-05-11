@@ -1183,7 +1183,7 @@ section{scroll-margin-top:64px;}
 .pnl-card.rarity-common{--r1:rgba(255,40,60,.5);--r2:rgba(180,20,40,.15);
   background:linear-gradient(160deg,rgba(30,5,8,.98),rgba(40,8,12,.95));
   border-color:rgba(255,50,70,.3);}
-.pnl-card.rarity-common .pnl-rarity-badge{background:rgba(255,40,60,.3);color:#ff4466;border-color:rgba(255,40,60,.4);}
+.pnl-card.rarity-common .pnl-rarity-badge{background:rgba(255,255,255,.05);color:rgba(255,255,255,.4);border-color:rgba(255,255,255,.1);}
 .pnl-badcall{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-15deg) scale(0);
   font-family:var(--font-head);font-size:2.8rem;font-weight:900;color:#ff2244;
   text-shadow:0 0 30px rgba(255,30,60,.6),0 0 60px rgba(255,30,60,.3);
@@ -1223,7 +1223,7 @@ section{scroll-margin-top:64px;}
 .pnl-card.rarity-legendary .pnl-holo{opacity:.5 !important;
   background:linear-gradient(135deg,rgba(255,200,0,.15),rgba(255,150,50,.1),rgba(255,220,100,.12));
   animation:pnl-holo-shift 3s ease infinite;}
-.pnl-card.rarity-legendary .pnl-rarity-badge{background:linear-gradient(135deg,rgba(255,200,0,.3),rgba(255,150,0,.2));color:#ffcc00;border-color:rgba(255,200,0,.5);text-shadow:0 0 12px rgba(255,200,0,.4);font-weight:800;}
+.pnl-card.rarity-legendary .pnl-rarity-badge{background:rgba(255,180,0,.12);color:#ffcc00;border-color:rgba(255,180,0,.35);font-weight:700;}
 /* Coin falling effect */
 .pnl-coin{position:absolute;font-size:1.2rem;pointer-events:none;z-index:2;opacity:0;}
 .pnl-coin.fall{animation:coin-fall 2.5s ease-in forwards;}
@@ -1404,51 +1404,83 @@ footer{border-top:1px solid var(--border);}
 .pnl-launchpad-badge:hover{filter:brightness(1.2);}
 .pnl-disclaimer{font-size:.56rem;color:rgba(255,255,255,.15);text-align:center;line-height:1.55;padding:.1rem 0 .3rem;}
 
-/* ── PNL v2 — nouveau design ── */
+/* ══════════════════════════════════════════
+   PNL v2 — fond toujours noir, design v0
+   ══════════════════════════════════════════ */
+
+/* Fond noir uniforme — override toutes les raretés */
+#pnlCard,
+#pnlCard.rarity-common,
+#pnlCard.rarity-rare,
+#pnlCard.rarity-epic,
+#pnlCard.rarity-legendary,
+#pnlCard.rarity-mythic,
+#pnlCard.rarity-ultra{
+  background:#0d0d1a !important;
+  border:1px solid rgba(255,255,255,.08) !important;
+  box-shadow:0 24px 64px rgba(0,0,0,.7) !important;
+}
+/* Supprimer le border tournant */
+#pnlCard::before{display:none !important;}
+
+/* Width ajustée pour matcher v0 */
+.pnl-card-wrap{width:320px;}
+
 /* Close X */
 .pnl-close-x{position:absolute;top:10px;right:10px;z-index:10;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.45);width:26px;height:26px;border-radius:50%;cursor:pointer;font-size:.7rem;display:flex;align-items:center;justify-content:center;transition:.2s;line-height:1;}
 .pnl-close-x:hover{background:rgba(255,255,255,.14);color:#fff;}
-/* Circular image hero */
-#pnlCard .pnl-img-hero{height:140px;display:flex;align-items:center;justify-content:center;background:radial-gradient(ellipse at 50% 60%,#1e1535 0%,#0a0a12 70%);flex-shrink:0;position:relative;}
-#pnlCard .pnl-img-hero-img{width:82px;height:82px;object-fit:cover;border-radius:50%;border:2.5px solid rgba(255,255,255,.13);box-shadow:0 0 28px rgba(97,86,217,.4),0 0 60px rgba(97,86,217,.12);}
-#pnlCard .pnl-img-hero-fallback{width:82px;height:82px;border-radius:50%;font-size:2.5rem;border:2px solid rgba(255,255,255,.08);background:linear-gradient(135deg,#1a1430,#0d1117);}
+
+/* Image hero — circulaire centrée */
+#pnlCard .pnl-img-hero{height:150px;display:flex;align-items:center;justify-content:center;background:radial-gradient(ellipse at 50% 70%,#1a1235 0%,#080810 75%);flex-shrink:0;position:relative;}
+#pnlCard .pnl-img-hero-img{width:78px;height:78px;object-fit:cover;border-radius:50%;border:2px solid rgba(255,255,255,.12);box-shadow:0 0 24px rgba(130,100,255,.35);}
+#pnlCard .pnl-img-hero-fallback{width:78px;height:78px;border-radius:50%;font-size:2.4rem;border:2px solid rgba(255,255,255,.08);background:linear-gradient(135deg,#1a1230,#0d0d1a);}
+
 /* Hero token name */
-.pnl-hero-name-row{display:flex;align-items:center;justify-content:center;gap:.35rem;padding:.2rem 0 .1rem;}
-.pnl-hero-deco{font-size:.5rem;color:rgba(255,200,0,.35);}
-.pnl-hero-token-name{font-size:.68rem;color:rgba(255,255,255,.4);font-family:'Space Mono',monospace;letter-spacing:.1em;}
+.pnl-hero-name-row{display:flex;align-items:center;justify-content:center;gap:.35rem;padding:.25rem 0 .1rem;}
+.pnl-hero-deco{font-size:.45rem;color:rgba(255,200,80,.3);}
+.pnl-hero-token-name{font-size:.65rem;color:rgba(255,255,255,.38);font-family:'Space Mono',monospace;letter-spacing:.12em;}
+
 /* Info header */
-.pnl-info-header{display:flex;align-items:center;gap:.6rem;padding:.55rem 1.1rem .25rem;}
-.pnl-mini-wrap{flex-shrink:0;position:relative;}
-.pnl-mini-img{width:34px;height:34px;border-radius:50%;object-fit:cover;border:1.5px solid rgba(255,255,255,.1);}
-.pnl-mini-fall{width:34px;height:34px;border-radius:50%;background:#1a1a2e;border:1.5px solid rgba(255,255,255,.08);display:flex;align-items:center;justify-content:center;font-size:1.1rem;}
+.pnl-info-header{display:flex;align-items:center;gap:.55rem;padding:.5rem 1rem .2rem;}
+.pnl-mini-wrap{flex-shrink:0;}
+.pnl-mini-img{width:32px;height:32px;border-radius:50%;object-fit:cover;border:1.5px solid rgba(255,255,255,.1);}
+.pnl-mini-fall{width:32px;height:32px;border-radius:50%;background:#12122a;border:1.5px solid rgba(255,255,255,.07);display:flex;align-items:center;justify-content:center;font-size:1rem;}
 .pnl-info-header-text{flex:1;min-width:0;}
-#pnlCard .pnl-sym{font-family:'Space Grotesk',sans-serif;font-size:.95rem;font-weight:800;color:#fff;margin:0;letter-spacing:-.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.pnl-ticker-sub{font-size:.62rem;color:rgba(255,255,255,.38);font-family:'Space Mono',monospace;margin-top:.05rem;}
-.pnl-info-header-right{display:flex;align-items:center;gap:.35rem;flex-shrink:0;}
-/* Multiplier — compact badge */
-#pnlCard .pnl-mult{font-family:'Space Grotesk',sans-serif;font-size:1.05rem;font-weight:900;line-height:1;letter-spacing:-.02em;
-  padding:.22rem .55rem;border-radius:8px;border:1px solid rgba(255,200,0,.28);
-  background:linear-gradient(135deg,#ffcc00,#ff8800);-webkit-background-clip:text;-webkit-text-fill-color:transparent;
-  background-clip:text;margin:0;transition:font-size .2s;}
-#pnlCard .pnl-mult.big-mult{font-size:1.25rem;}
+#pnlCard .pnl-sym{font-family:'Space Grotesk',sans-serif;font-size:.92rem;font-weight:800;color:#fff;margin:0;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.pnl-ticker-sub{font-size:.6rem;color:rgba(255,255,255,.35);font-family:'Space Mono',monospace;margin-top:.04rem;}
+.pnl-info-header-right{display:flex;align-items:center;gap:.3rem;flex-shrink:0;}
+
+/* Multiplier badge compact (pas un géant) */
+#pnlCard .pnl-mult{font-family:'Space Grotesk',sans-serif;font-size:1rem;font-weight:900;line-height:1;
+  padding:.2rem .5rem;border-radius:7px;border:1px solid rgba(255,200,0,.22);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  margin:0;transition:font-size .15s;letter-spacing:-.01em;}
+#pnlCard .pnl-mult.big-mult{font-size:1.15rem;}
+
 /* HOT badge */
-.pnl-hot-badge{font-size:.6rem;font-weight:700;padding:.16rem .48rem;border-radius:6px;background:rgba(0,210,60,.12);border:1px solid rgba(0,210,60,.3);color:#00cc44;display:inline-flex;align-items:center;gap:.2rem;letter-spacing:.03em;}
+.pnl-hot-badge{font-size:.58rem;font-weight:700;padding:.15rem .45rem;border-radius:5px;
+  background:rgba(0,200,60,.1);border:1px solid rgba(0,200,60,.28);color:#00bb44;
+  display:inline-flex;align-items:center;gap:.15rem;letter-spacing:.02em;}
+
 /* Stars row */
-.pnl-stars-row{display:flex;align-items:center;gap:.4rem;padding:.05rem 1.1rem .38rem;}
-#pnlCard .pnl-tc-stars{font-size:.75rem;color:#f5c542;letter-spacing:.04em;}
-.pnl-fiabilite{font-size:.62rem;color:rgba(255,255,255,.32);font-family:var(--font);}
-/* Rarity badge — inline centered row */
-.pnl-rarity-wrap{display:flex;justify-content:flex-start;padding:.0rem 1.1rem .5rem;}
-#pnlCard .pnl-rarity-badge{position:static;display:inline-flex;align-items:center;gap:.3rem;font-size:.62rem;}
+.pnl-stars-row{display:flex;align-items:center;gap:.4rem;padding:.05rem 1rem .35rem;}
+#pnlCard .pnl-tc-stars{font-size:.72rem;color:#f5c542;letter-spacing:.05em;}
+.pnl-fiabilite{font-size:.6rem;color:rgba(255,255,255,.3);}
+
+/* Rarity badge — inline, left-aligned comme v0 */
+.pnl-rarity-wrap{padding:.0rem 1rem .45rem;}
+#pnlCard .pnl-rarity-badge{position:static !important;display:inline-flex;align-items:center;gap:.28rem;font-size:.6rem;padding:3px 9px;}
+
 /* Price cards */
-.pnl-price-row{display:grid;grid-template-columns:1fr 1fr;gap:.45rem;}
-.pnl-price-card{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:10px;padding:.55rem .75rem;}
-.pnl-price-card.pnl-price-peak{background:rgba(255,200,0,.04);border-color:rgba(255,200,0,.18);}
-.pnl-price-lbl{font-size:.56rem;color:rgba(255,255,255,.28);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.22rem;}
-.pnl-price-val{font-family:'Space Mono',monospace;font-size:.82rem;font-weight:700;color:#fff;}
-.pnl-price-peak-val{color:#ffd700;text-shadow:0 0 12px rgba(255,215,0,.3);}
-/* DYOR pill style */
-#pnlDyorLinks .pnl-dyor-btn::before{content:'+ ';opacity:.6;}
+.pnl-price-row{display:grid;grid-template-columns:1fr 1fr;gap:.4rem;}
+.pnl-price-card{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:9px;padding:.5rem .7rem;}
+.pnl-price-card.pnl-price-peak{background:rgba(255,200,0,.035);border-color:rgba(255,200,0,.15);}
+.pnl-price-lbl{font-size:.54rem;color:rgba(255,255,255,.26);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.2rem;}
+.pnl-price-val{font-family:'Space Mono',monospace;font-size:.78rem;font-weight:700;color:#fff;}
+.pnl-price-peak-val{color:#ffd700;text-shadow:0 0 10px rgba(255,215,0,.25);}
+
+/* DYOR pills avec ● */
+#pnlDyorLinks .pnl-dyor-btn::before{content:'● ';font-size:.5rem;opacity:.7;}
 
 /* ── SCANNER CARDS — Cyberpunk Degen Style ─────────────────────── */
 .scanner-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:1.2rem;padding:.5rem 0;}
@@ -11262,13 +11294,13 @@ function resetTilt(){
 
 // ── RARITY SYSTEM ──
 function getRarity(xAth){
-  if(xAth>=30) return{cls:'rarity-ultra',label:'🤑 ULTRA',emoji:'🤑'};
-  if(xAth>=10) return{cls:'rarity-mythic',label:'👻 MYTHIC',emoji:'👻'};
-  if(xAth>=5)  return{cls:'rarity-legendary',label:'👑 LEGENDARY',emoji:'👑'};
-  if(xAth>=2)  return{cls:'rarity-epic',label:'💎 EPIC',emoji:'💎'};
-  if(xAth>=1.2)return{cls:'rarity-rare',label:'🏆 RARE',emoji:'🏆'};
-  if(xAth>1)   return{cls:'rarity-common',label:'📊 CALL',emoji:'📊'};
-  return{cls:'rarity-common',label:'❌ BAD CALL',emoji:'❌'};
+  if(xAth>=30) return{cls:'rarity-ultra',label:'🤑 Ultra',emoji:'🤑'};
+  if(xAth>=10) return{cls:'rarity-mythic',label:'✨ Mythique',emoji:'✨'};
+  if(xAth>=5)  return{cls:'rarity-legendary',label:'⭐ Légendaire',emoji:'⭐'};
+  if(xAth>=2)  return{cls:'rarity-epic',label:'💎 Épique',emoji:'💎'};
+  if(xAth>=1.2)return{cls:'rarity-rare',label:'🔵 Rare',emoji:'🔵'};
+  if(xAth>1)   return{cls:'rarity-common',label:'📊 Call',emoji:'📊'};
+  return{cls:'rarity-common',label:'❌ Bad Call',emoji:'❌'};
 }
 
 // ── SPARKLE PARTICLES ──
