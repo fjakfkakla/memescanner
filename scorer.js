@@ -126,6 +126,7 @@ export function scoreTokenV2(p, walletData = { count: 0, byGroup: { KOL: 0, 'gro
     return {
       score: 0, _minFail: 'wallet',
       symbol: (p.baseToken?.symbol || 'UNKNOWN').toUpperCase().slice(0, 12),
+      name: (p.baseToken?.name || p.baseToken?.symbol || 'UNKNOWN').slice(0, 30),
       addr: p.baseToken?.address || '', mcap, liq,
       socials: hasSocials, rugRisk: 'HIGH', walletData,
       pairUrl: p.url || '',
@@ -215,11 +216,12 @@ export function scoreTokenV2(p, walletData = { count: 0, byGroup: { KOL: 0, 'gro
 
   const emoji = EMOJIS[Math.floor(Math.random() * EMOJIS.length)];
   const sym   = (p.baseToken?.symbol || 'UNKNOWN').toUpperCase().slice(0, 12);
+  const name  = (p.baseToken?.name   || sym).slice(0, 30);
   const addr  = p.baseToken?.address || '';
 
   return {
     score: finalScore,
-    symbol: sym, emoji, addr, mcap, liq,
+    symbol: sym, name, emoji, addr, mcap, liq,
     socials: hasSocials, rugRisk, walletData,
     pairUrl: p.url || `https://dexscreener.com/solana/${addr}`,
     raw: p,

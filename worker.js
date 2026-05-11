@@ -812,6 +812,7 @@ export async function runScanCycle() {
                       await saveCall({
                         addr:       scored.addr,
                         symbol:     scored.symbol,
+                        name:       scored.name,
                         score:      scored.score,
                         mcap:       callMcap,
                         callMcap:   callMcap,

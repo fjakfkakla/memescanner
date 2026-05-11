@@ -1356,36 +1356,12 @@ footer{border-top:1px solid var(--border);}
 .pnl-btn-dl:hover{transform:translateY(-2px);box-shadow:0 6px 24px rgba(97,86,217,.35);}
 .pnl-btn-close{padding:.65rem 1rem;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);color:rgba(255,255,255,.4);border-radius:10px;font-family:var(--font);font-size:.82rem;cursor:pointer;transition:.25s;}
 .pnl-btn-close:hover{border-color:rgba(97,86,217,.3);color:var(--purple2);}
-/* ── PNL CARD — IMAGE HERO + BOTTOM INFO ── */
-/* Restructure la pnl-card en flex colonne */
+/* ── PNL CARD v2 — image circulaire + info compacte ── */
 #pnlCard{display:flex;flex-direction:column;overflow:hidden;}
-#pnlCard .pnl-card-inner{display:none;} /* masqué — on utilise pnl-bottom */
-/* IMAGE HERO : occupe 55% de la carte */
-.pnl-img-hero{position:relative;width:100%;height:210px;overflow:hidden;background:#0a0a12;flex-shrink:0;}
-.pnl-img-hero-img{width:100%;height:100%;object-fit:cover;object-position:center top;display:block;}
-.pnl-img-hero-fallback{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:5rem;background:linear-gradient(135deg,#0d1117,#1a1f2e);}
-/* Dégradé fondu bas de l'image vers le fond sombre */
-.pnl-img-hero-grad{position:absolute;inset:0;background:linear-gradient(to bottom,transparent 40%,rgba(0,0,0,.95) 100%);}
-/* BOTTOM SECTION */
-.pnl-bottom{flex:1;padding:.8rem 1.4rem .5rem;display:flex;flex-direction:column;gap:.15rem;text-align:center;position:relative;z-index:3;}
-.pnl-bottom-top{display:flex;align-items:center;justify-content:center;gap:.5rem;margin-bottom:.1rem;}
-.pnl-bottom-top .pnl-sym{font-family:'Space Grotesk',sans-serif;font-size:1rem;font-weight:800;color:#fff;margin:0;}
-.pnl-tc-stars{font-size:.7rem;color:#f5c542;letter-spacing:.06em;}
-/* MC line : $16K ──── $30M ATH */
-.pnl-mc-line{display:flex;align-items:center;justify-content:center;gap:.4rem;margin:.1rem 0 .05rem;}
-.pnl-mc-call{font-size:.78rem;font-weight:700;color:rgba(255,170,68,.9);font-family:'Space Mono',monospace;}
-.pnl-mc-arrow{font-size:.6rem;color:rgba(255,255,255,.2);letter-spacing:-.05em;}
-.pnl-mc-ath{font-size:.78rem;font-weight:700;color:rgba(0,255,136,.9);font-family:'Space Mono',monospace;}
-.pnl-mc-label{font-size:.62rem;color:rgba(255,255,255,.3);font-weight:600;letter-spacing:.06em;text-transform:uppercase;}
-/* MULTIPLIER GÉANT */
-#pnlCard .pnl-mult{font-family:'Space Grotesk',sans-serif;font-size:4.8rem;font-weight:900;line-height:1;
-  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
-  margin:.1rem 0 .15rem;transition:font-size .3s;letter-spacing:-.03em;}
-#pnlCard .pnl-mult.big-mult{font-size:5.6rem;}
-/* Footer ligne */
-.pnl-bottom-footer{display:flex;align-items:center;justify-content:space-between;margin-top:.3rem;}
-.pnl-bottom-footer .pnl-sub{font-size:.6rem;color:rgba(255,255,255,.28);text-align:left;}
-.pnl-footer-brand{font-size:.6rem;color:rgba(255,255,255,.22);font-family:'Space Mono',monospace;}
+#pnlCard .pnl-card-inner{display:none;}
+#pnlCard .pnl-bottom{display:none;}
+/* compatibilité: masquer anciens éléments non utilisés */
+.pnl-mc-line,.pnl-mc-call,.pnl-mc-arrow,.pnl-mc-ath,.pnl-mc-label,.pnl-bottom-footer,.pnl-footer-brand{display:none;}
 
 /* ── PNL info section ── */
 .pnl-card-wrap{max-height:90vh;overflow-y:auto;scrollbar-width:none;}
@@ -1427,6 +1403,52 @@ footer{border-top:1px solid var(--border);}
 .pnl-launchpad-badge{display:inline-flex;align-items:center;gap:.35rem;padding:.28rem .75rem;border-radius:20px;font-size:.7rem;font-weight:600;background:rgba(0,200,50,.1);border:1px solid rgba(0,200,50,.25);color:#00cc44;text-decoration:none;transition:.2s;}
 .pnl-launchpad-badge:hover{filter:brightness(1.2);}
 .pnl-disclaimer{font-size:.56rem;color:rgba(255,255,255,.15);text-align:center;line-height:1.55;padding:.1rem 0 .3rem;}
+
+/* ── PNL v2 — nouveau design ── */
+/* Close X */
+.pnl-close-x{position:absolute;top:10px;right:10px;z-index:10;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.45);width:26px;height:26px;border-radius:50%;cursor:pointer;font-size:.7rem;display:flex;align-items:center;justify-content:center;transition:.2s;line-height:1;}
+.pnl-close-x:hover{background:rgba(255,255,255,.14);color:#fff;}
+/* Circular image hero */
+#pnlCard .pnl-img-hero{height:140px;display:flex;align-items:center;justify-content:center;background:radial-gradient(ellipse at 50% 60%,#1e1535 0%,#0a0a12 70%);flex-shrink:0;position:relative;}
+#pnlCard .pnl-img-hero-img{width:82px;height:82px;object-fit:cover;border-radius:50%;border:2.5px solid rgba(255,255,255,.13);box-shadow:0 0 28px rgba(97,86,217,.4),0 0 60px rgba(97,86,217,.12);}
+#pnlCard .pnl-img-hero-fallback{width:82px;height:82px;border-radius:50%;font-size:2.5rem;border:2px solid rgba(255,255,255,.08);background:linear-gradient(135deg,#1a1430,#0d1117);}
+/* Hero token name */
+.pnl-hero-name-row{display:flex;align-items:center;justify-content:center;gap:.35rem;padding:.2rem 0 .1rem;}
+.pnl-hero-deco{font-size:.5rem;color:rgba(255,200,0,.35);}
+.pnl-hero-token-name{font-size:.68rem;color:rgba(255,255,255,.4);font-family:'Space Mono',monospace;letter-spacing:.1em;}
+/* Info header */
+.pnl-info-header{display:flex;align-items:center;gap:.6rem;padding:.55rem 1.1rem .25rem;}
+.pnl-mini-wrap{flex-shrink:0;position:relative;}
+.pnl-mini-img{width:34px;height:34px;border-radius:50%;object-fit:cover;border:1.5px solid rgba(255,255,255,.1);}
+.pnl-mini-fall{width:34px;height:34px;border-radius:50%;background:#1a1a2e;border:1.5px solid rgba(255,255,255,.08);display:flex;align-items:center;justify-content:center;font-size:1.1rem;}
+.pnl-info-header-text{flex:1;min-width:0;}
+#pnlCard .pnl-sym{font-family:'Space Grotesk',sans-serif;font-size:.95rem;font-weight:800;color:#fff;margin:0;letter-spacing:-.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.pnl-ticker-sub{font-size:.62rem;color:rgba(255,255,255,.38);font-family:'Space Mono',monospace;margin-top:.05rem;}
+.pnl-info-header-right{display:flex;align-items:center;gap:.35rem;flex-shrink:0;}
+/* Multiplier — compact badge */
+#pnlCard .pnl-mult{font-family:'Space Grotesk',sans-serif;font-size:1.05rem;font-weight:900;line-height:1;letter-spacing:-.02em;
+  padding:.22rem .55rem;border-radius:8px;border:1px solid rgba(255,200,0,.28);
+  background:linear-gradient(135deg,#ffcc00,#ff8800);-webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  background-clip:text;margin:0;transition:font-size .2s;}
+#pnlCard .pnl-mult.big-mult{font-size:1.25rem;}
+/* HOT badge */
+.pnl-hot-badge{font-size:.6rem;font-weight:700;padding:.16rem .48rem;border-radius:6px;background:rgba(0,210,60,.12);border:1px solid rgba(0,210,60,.3);color:#00cc44;display:inline-flex;align-items:center;gap:.2rem;letter-spacing:.03em;}
+/* Stars row */
+.pnl-stars-row{display:flex;align-items:center;gap:.4rem;padding:.05rem 1.1rem .38rem;}
+#pnlCard .pnl-tc-stars{font-size:.75rem;color:#f5c542;letter-spacing:.04em;}
+.pnl-fiabilite{font-size:.62rem;color:rgba(255,255,255,.32);font-family:var(--font);}
+/* Rarity badge — inline centered row */
+.pnl-rarity-wrap{display:flex;justify-content:flex-start;padding:.0rem 1.1rem .5rem;}
+#pnlCard .pnl-rarity-badge{position:static;display:inline-flex;align-items:center;gap:.3rem;font-size:.62rem;}
+/* Price cards */
+.pnl-price-row{display:grid;grid-template-columns:1fr 1fr;gap:.45rem;}
+.pnl-price-card{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:10px;padding:.55rem .75rem;}
+.pnl-price-card.pnl-price-peak{background:rgba(255,200,0,.04);border-color:rgba(255,200,0,.18);}
+.pnl-price-lbl{font-size:.56rem;color:rgba(255,255,255,.28);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.22rem;}
+.pnl-price-val{font-family:'Space Mono',monospace;font-size:.82rem;font-weight:700;color:#fff;}
+.pnl-price-peak-val{color:#ffd700;text-shadow:0 0 12px rgba(255,215,0,.3);}
+/* DYOR pill style */
+#pnlDyorLinks .pnl-dyor-btn::before{content:'+ ';opacity:.6;}
 
 /* ── SCANNER CARDS — Cyberpunk Degen Style ─────────────────────── */
 .scanner-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:1.2rem;padding:.5rem 0;}
@@ -5854,35 +5876,47 @@ body.view-outils .lp-footer { display: none !important; }
   <div class="pnl-card-wrap" id="pnlCardWrap">
   <div class="pnl-card rarity-common" id="pnlCard" onmousemove="tiltCard(event)" onmouseleave="resetTilt()">
     <div class="pnl-holo" id="pnlHolo"></div>
-    <div class="pnl-rarity-badge" id="pnlRarityBadge">COMMON</div>
     <div id="pnlSparkles"></div>
     <div class="pnl-badcall" id="pnlBadCall">BAD CALL</div>
     <div class="pnl-candles" id="pnlCandles"></div>
-    <!-- IMAGE DOMINANTE — remplit le haut de la card -->
+    <!-- Close X -->
+    <button class="pnl-close-x" onclick="closePnl()">✕</button>
+    <!-- IMAGE HERO — circular floating -->
     <div class="pnl-img-hero">
       <img id="pnlImg" class="pnl-img-hero-img" src="" alt="" style="display:none" onerror="this.style.display='none';document.getElementById('pnlImgFallback').style.display='flex'">
       <div class="pnl-img-hero-fallback" id="pnlImgFallback">🐸</div>
-      <div class="pnl-img-hero-grad"></div>
     </div>
-    <!-- BOTTOM INFO — garde l'existant intact -->
-    <div class="pnl-bottom">
-      <div class="pnl-bottom-top">
+    <!-- Token name below image -->
+    <div class="pnl-hero-name-row">
+      <span class="pnl-hero-deco">✦</span>
+      <span class="pnl-hero-token-name" id="pnlHeroName">TOKEN</span>
+      <span class="pnl-hero-deco">✦</span>
+    </div>
+    <!-- Header row: mini avatar + name/ticker + mult + HOT -->
+    <div class="pnl-info-header">
+      <div class="pnl-mini-wrap">
+        <img class="pnl-mini-img" id="pnlMiniImg" src="" style="display:none" onerror="this.style.display='none';document.getElementById('pnlMinifall').style.display='flex'">
+        <div class="pnl-mini-fall" id="pnlMinifall">🐸</div>
+      </div>
+      <div class="pnl-info-header-text">
         <div class="pnl-sym" id="pnlSym">TOKEN</div>
-        <div class="pnl-tc-stars" id="pnlStars">★★★</div>
+        <div class="pnl-ticker-sub" id="pnlTickerSub">$TOKEN</div>
       </div>
-      <div class="pnl-mc-line">
-        <span id="pnlCallVal" class="pnl-mc-call">$—</span>
-        <span class="pnl-mc-arrow">────</span>
-        <span id="pnlAthVal" class="pnl-mc-ath">$—</span>
-        <span class="pnl-mc-label">ATH</span>
-      </div>
-      <div class="pnl-mult" id="pnlMult">0.00x</div>
-      <div class="pnl-bottom-footer">
-        <span class="pnl-sub" id="pnlSub">ATH depuis le call</span>
-        <span class="pnl-footer-brand">MemeScanner 🐸</span>
+      <div class="pnl-info-header-right">
+        <span class="pnl-mult" id="pnlMult">0.0x</span>
+        <span class="pnl-hot-badge" id="pnlHotBadge" style="display:none">🟢 HOT</span>
       </div>
     </div>
-    <!-- NEW INFO SECTION -->
+    <!-- Stars + fiabilité -->
+    <div class="pnl-stars-row">
+      <span class="pnl-tc-stars" id="pnlStars">★★★</span>
+      <span class="pnl-fiabilite" id="pnlFiabilite">— fiabilité</span>
+    </div>
+    <!-- Rarity badge centered -->
+    <div class="pnl-rarity-wrap">
+      <div class="pnl-rarity-badge" id="pnlRarityBadge">COMMON</div>
+    </div>
+    <!-- INFO SECTION -->
     <div class="pnl-info-section">
       <div class="pnl-addr-row">
         <span class="pnl-addr-lbl">Contrat</span>
@@ -5891,26 +5925,37 @@ body.view-outils .lp-footer { display: none !important; }
       </div>
       <div class="pnl-stats-grid">
         <div class="pnl-stat-cell">
-          <div class="pnl-stat-lbl">Performance</div>
+          <div class="pnl-stat-lbl">↗ Performance</div>
           <div class="pnl-stat-val pnl-stat-perf" id="pnlPerfVal">+0%</div>
         </div>
         <div class="pnl-stat-cell">
-          <div class="pnl-stat-lbl">MC Initial</div>
+          <div class="pnl-stat-lbl">⬆ MC Initial</div>
           <div class="pnl-stat-val" id="pnlCallVal2">$—</div>
         </div>
         <div class="pnl-stat-cell">
-          <div class="pnl-stat-lbl">MC Max analysé</div>
+          <div class="pnl-stat-lbl">⬆ MC Max analysé</div>
           <div class="pnl-stat-val" id="pnlAthVal2">$—</div>
         </div>
         <div class="pnl-stat-cell">
-          <div class="pnl-stat-lbl">Axiom Wallets</div>
-          <div class="pnl-stat-val" id="pnlAxiomVal">—</div>
+          <div class="pnl-stat-lbl">⬆ Volume 24h</div>
+          <div class="pnl-stat-val" id="pnlVol24Val">$—</div>
         </div>
       </div>
       <div class="pnl-detect-row">
-        <span class="pnl-detect-icon">🕐</span>
-        <span class="pnl-detect-lbl">Détecté le (UTC):</span>
+        <span class="pnl-detect-icon">📅</span>
+        <span class="pnl-detect-lbl">Détecté le (UTC)</span>
         <span class="pnl-detect-val" id="pnlDetectTime">—</span>
+      </div>
+      <!-- Price cards -->
+      <div class="pnl-price-row">
+        <div class="pnl-price-card">
+          <div class="pnl-price-lbl">Prix à la détection</div>
+          <div class="pnl-price-val" id="pnlCallPrice">$—</div>
+        </div>
+        <div class="pnl-price-card pnl-price-peak">
+          <div class="pnl-price-lbl">Prix peak</div>
+          <div class="pnl-price-val pnl-price-peak-val" id="pnlAthPrice">$—</div>
+        </div>
       </div>
       <div class="pnl-prog-wrap">
         <div class="pnl-prog-bar-bg">
@@ -5935,6 +5980,11 @@ body.view-outils .lp-footer { display: none !important; }
       </div>
       <div class="pnl-disclaimer">Ce signal est généré par un système interne et ne constitue pas un conseil financier. Vous êtes seul responsable de vos décisions.</div>
     </div>
+    <!-- hidden compat elements (used by JS) -->
+    <span id="pnlCallVal" style="display:none"></span>
+    <span id="pnlAthVal" style="display:none"></span>
+    <span id="pnlSub" style="display:none"></span>
+    <span id="pnlAxiomVal" style="display:none"></span>
     <div class="pnl-actions">
       <button class="pnl-btn-dl" onclick="downloadPnl()">⬇ Image</button>
       <button class="pnl-btn-dl" onclick="sharePnl()" style="background:rgba(97,86,217,.12);border-color:rgba(97,86,217,.2);color:var(--purple2);">📋 Copier</button>
@@ -10091,6 +10141,7 @@ async function renderHistory(force=false){
     const athMcap=v.athMcap||callMcap;
     const callTime=v.callTime||0;
     const sym=(v.symbol||key.slice(0,8).toUpperCase());
+    const tokenName=(v.name||v.raw?.baseToken?.name||sym).slice(0,30);
     const curMcap=(liveMap[addr]?.now)||0;
     const isLive=curMcap>0;
     // xATH = ATH / call (le vrai multiple)
@@ -10112,18 +10163,18 @@ async function renderHistory(force=false){
     const _hIsPump = (v.raw?.dexId||addr||'').toLowerCase().includes('pump');
     const _hBarW = tcBarWidth(xAth);
     const _hMult = tcMultDisp(xAth);
-    const _hFallback = sym.slice(0,4).toUpperCase();
+    const _hFallback = tokenName.slice(0,4).toUpperCase();
     const _hAdminEdit = isAdminMode?`<button onclick="adminEditAth('${key}','${addr}','${sym}')" style="position:absolute;bottom:8px;right:8px;z-index:10;background:rgba(0,0,0,.65);border:1px solid rgba(255,170,0,.6);color:#ffaa00;font-size:.75rem;cursor:pointer;padding:3px 7px;border-radius:6px;font-family:'Space Mono',monospace;font-weight:700;">✏️ ATH</button>`:'';
     cards.push(`<div class="tc-card" style="opacity:${isLive?1:.8}">
       <div class="tc-img-wrap">
         ${_hImgUrl
-          ? `<img class="tc-img" src="${_hImgUrl}" alt="${sym}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div class="tc-img-fallback" style="display:none">${_hFallback}</div>`
+          ? `<img class="tc-img" src="${_hImgUrl}" alt="${tokenName}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div class="tc-img-fallback" style="display:none">${_hFallback}</div>`
           : `<div class="tc-img-fallback">${_hFallback}</div>`}
         <div class="tc-img-overlay"></div>
         <div class="tc-mult-badge" id="xath-val-${key}">${_hMult} ⚡</div>
         ${_hAdminEdit}
         <div class="tc-img-info">
-          <div class="tc-sym">${sym}</div>
+          <div class="tc-sym">${tokenName}</div>
           <div class="tc-ticker-stars">
             <span class="tc-ticker">$${sym}</span>
             <span class="tc-stars">${tcStars(savedScore)}</span>
@@ -11112,7 +11163,7 @@ async function renderTokenTable(tokens){
     const _tcIsPump = (t.raw?.dexId||t.raw?.pairAddress||'').toLowerCase().includes('pump');
     const _tcBarW = tcBarWidth(xAth);
     const _tcMult = tcMultDisp(xAth);
-    const _tcFallback = t.symbol.slice(0,4).toUpperCase();
+    const _tcFallback = (t.name || t.symbol).slice(0,4).toUpperCase();
     const _scoreCol = _callScore>=130?'#ffd700':_callScore>=100?'#00ff88':_callScore>=70?'#a99cff':'#ffaa44';
     const _scoreRow = `<div class="tc-score-call-row" onclick="showScoreBreakdown('${t.addr}')"><span class="tc-sco-lbl">Score au call</span><span class="tc-sco-val" style="color:${_scoreCol}">${_callScore} pts</span><span class="tc-sco-hint">▸ détail</span></div>`;
     cards.push(`<div class="tc-card" data-live-addr="${t.addr}" data-call-mcap="${callMcap}">
@@ -11124,7 +11175,7 @@ async function renderTokenTable(tokens){
         ${_tcIsRecent?`<div class="tc-recent-badge">⏱ RÉCENT</div>`:''}
         <div class="tc-mult-badge" data-live-xath="${t.addr}"><span class="live-xath-val">${_tcMult}</span> ⚡</div>
         <div class="tc-img-info">
-          <div class="tc-sym">${t.symbol}</div>
+          <div class="tc-sym">${t.name || t.symbol}</div>
           <div class="tc-ticker-stars">
             <span class="tc-ticker">$${t.symbol}</span>
             <span class="tc-stars">${tcStars(t.score)}</span>
@@ -11441,9 +11492,10 @@ function openScannerPnl(addr,sym,callMcap,athMcap,score,imgUrl=''){
   multEl.className='pnl-mult'+(xAth>=5?' big-mult':'');
 
   document.getElementById('pnlSym').textContent=sym;
-  document.getElementById('pnlCallVal').textContent='$'+fmtNum(callMcap);
-  document.getElementById('pnlAthVal').textContent='$'+fmtNum(athMcap);
-  document.getElementById('pnlSub').textContent='ATH depuis le call · '+new Date().toLocaleDateString('fr-FR');
+  // hidden compat
+  const _cv=document.getElementById('pnlCallVal'); if(_cv)_cv.textContent='$'+fmtNum(callMcap);
+  const _av=document.getElementById('pnlAthVal');  if(_av)_av.textContent='$'+fmtNum(athMcap);
+  const _sb=document.getElementById('pnlSub');     if(_sb)_sb.textContent='ATH depuis le call';
 
   // ── Infos enrichies ──
   window._pnlCurrentAddr = addr;
@@ -11453,6 +11505,15 @@ function openScannerPnl(addr,sym,callMcap,athMcap,score,imgUrl=''){
   const _pnlRaw = _pnlToken.raw || {};
   const _pnlPairUrl = _pnlToken.pairUrl || `https://dexscreener.com/solana/${addr}`;
   const _pnlDexId = (_pnlRaw.dexId || _pnlRaw.pairAddress || _pnlPairUrl || '').toLowerCase();
+
+  // ── v2 elements ──
+  const _hn=document.getElementById('pnlHeroName'); if(_hn)_hn.textContent=(_pnlToken.name||sym);
+  const _miniImg=document.getElementById('pnlMiniImg'); const _miniFall=document.getElementById('pnlMinifall');
+  if(_miniImg&&_miniFall){ if(imgUrl){_miniImg.src=imgUrl;_miniImg.style.display='block';_miniFall.style.display='none';}else{_miniImg.style.display='none';_miniFall.style.display='flex';_miniFall.textContent='🐸';} }
+  const _ts=document.getElementById('pnlTickerSub'); if(_ts)_ts.textContent='$'+sym;
+  const _hot=document.getElementById('pnlHotBadge'); if(_hot)_hot.style.display=xAth>=2?'inline-flex':'none';
+  const _fib=document.getElementById('pnlFiabilite');
+  if(_fib){ const _s=score>=130?4:score>=100?3:score>=80?2:score>=50?1:0; _fib.textContent=_s+'/4 fiabilité'; }
 
   // Addr
   const _addrEl = document.getElementById('pnlAddrVal');
@@ -11464,12 +11525,21 @@ function openScannerPnl(addr,sym,callMcap,athMcap,score,imgUrl=''){
   if(_perfEl){ _perfEl.textContent=(xAth>=1?'+':'')+_perfPct.toFixed(0)+'%'; _perfEl.style.color=xAth>=2?'#00ff88':xAth>=1.2?'#88ff44':xAth>=0.8?'#ffcc44':'#ff5577'; }
   const _cv2=document.getElementById('pnlCallVal2'); if(_cv2)_cv2.textContent='$'+fmtNum(callMcap);
   const _av2=document.getElementById('pnlAthVal2');  if(_av2)_av2.textContent='$'+fmtNum(athMcap);
-  const _axEl=document.getElementById('pnlAxiomVal');
-  if(_axEl){ const n=_pnlWD.count||0; _axEl.textContent=n+(n>1?' wallets':' wallet'); _axEl.style.color=n>=3?'#ffcc44':n>=1?'#a99cff':'rgba(255,255,255,.35)'; }
+  // Volume 24h
+  const _v24=document.getElementById('pnlVol24Val'); if(_v24){ const _vol=_pnlRaw.volume?.h24||0; _v24.textContent=_vol>0?'$'+fmtNum(_vol):'$—'; }
 
   // Detection time
   const _dtEl=document.getElementById('pnlDetectTime');
   if(_dtEl && _pnlCallTime){ const d=new Date(_pnlCallTime); _dtEl.textContent=d.toLocaleDateString('fr-FR',{day:'2-digit',month:'long',year:'numeric'})+', '+d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}); }
+
+  // Prices (estimated from priceUsd in raw)
+  function _fmtP(p){ if(!p||p<=0)return'$—'; if(p>=1)return'$'+p.toFixed(2); if(p>=0.001)return'$'+p.toFixed(4); if(p>=0.000001)return'$'+p.toFixed(7); return'$'+p.toExponential(2); }
+  const _rawMcap=_pnlRaw.marketCap||_pnlRaw.fdv||callMcap||1;
+  const _rawPrice=parseFloat(_pnlRaw.priceUsd)||0;
+  const _callP=_rawPrice>0?_rawPrice*(callMcap/_rawMcap):0;
+  const _athP=_callP*xAth;
+  const _cpe=document.getElementById('pnlCallPrice'); if(_cpe)_cpe.textContent=_fmtP(_callP);
+  const _ape=document.getElementById('pnlAthPrice');  if(_ape)_ape.textContent=_fmtP(_athP);
 
   // Progress bar
   const _pf=document.getElementById('pnlProgressFill'); if(_pf)_pf.style.width=tcBarWidth(xAth)+'%';
@@ -11477,7 +11547,7 @@ function openScannerPnl(addr,sym,callMcap,athMcap,score,imgUrl=''){
 
   // DYOR links
   const _dl=document.getElementById('pnlDyorLinks');
-  if(_dl) _dl.innerHTML=`<a class="pnl-dyor-btn axiom" href="https://axiom.trade/meme/${addr}" target="_blank" rel="noopener">🎯 Axiom</a><a class="pnl-dyor-btn gmgn" href="https://gmgn.ai/sol/token/${addr}" target="_blank" rel="noopener">🟢 GMGN</a><a class="pnl-dyor-btn dex" href="${_pnlPairUrl}" target="_blank" rel="noopener">📊 DexScreener</a><a class="pnl-dyor-btn sol" href="https://solscan.io/token/${addr}" target="_blank" rel="noopener">🔍 Solscan</a>`;
+  if(_dl) _dl.innerHTML=`<a class="pnl-dyor-btn axiom" href="https://axiom.trade/meme/${addr}" target="_blank" rel="noopener">Axiom</a><a class="pnl-dyor-btn gmgn" href="https://gmgn.ai/sol/token/${addr}" target="_blank" rel="noopener">GMGN</a><a class="pnl-dyor-btn dex" href="${_pnlPairUrl}" target="_blank" rel="noopener">DexScreener</a><a class="pnl-dyor-btn sol" href="https://solscan.io/token/${addr}" target="_blank" rel="noopener">Solscan</a>`;
 
   // Social links
   const _twUrl=_pnlRaw?.info?.socials?.find(s=>s.type==='twitter')?.url||'';
