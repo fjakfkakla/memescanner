@@ -83,7 +83,7 @@ function calculatePatternScore(p) {
   return { score: total, liqScore, volH1Score, liq, volH1 };
 }
 
-export function scoreTokenV2(p, walletData = { count: 0, byGroup: { KOL: 0, 'gros trader': 0, DEV: 0, farmer: 0 }, wallets: [], clustered: false }) {
+export function scoreTokenV2(p, walletData = { count: 0, byGroup: { KOL: 0, 'gros trader': 0, DEV: 0, farmer: 0 }, wallets: [], clustered: false }, gmgnRaw = {}) {
   const ageMs  = Date.now() - (p.pairCreatedAt || 0);
   const ageH   = ageMs / 3600000;
   const ageMin = ageMs / 60000;
@@ -131,7 +131,7 @@ export function scoreTokenV2(p, walletData = { count: 0, byGroup: { KOL: 0, 'gro
       socials: hasSocials, rugRisk: 'HIGH', walletData,
       pairUrl: p.url || '',
       raw: p,
-      debug: { traderScore, kolCount, traderCount, devCount, farmerCount, byGroup, axiomCount, buyRatio: buyR, c1h, m5, ageH }
+      debug: { traderScore, kolCount, traderCount, devCount, farmerCount, byGroup, axiomCount, kolfiScore: 0, buyRatio: buyR, c1h, m5, ageH }
     };
   }
 
@@ -201,6 +201,10 @@ export function scoreTokenV2(p, walletData = { count: 0, byGroup: { KOL: 0, 'gro
   const patternScore = patternResult.score;
   score += patternScore;
 
+  // KOLFI — token callé par un top caller Telegram répertorié sur kolfi.com
+  const kolfiScore = p._isKolfi ? 20 : 0;
+  score += kolfiScore;
+
   const finalScore = Math.min(170, Math.max(0, Math.round(score)));
 
   // RUG RISK
@@ -223,11 +227,12 @@ export function scoreTokenV2(p, walletData = { count: 0, byGroup: { KOL: 0, 'gro
     score: finalScore,
     symbol: sym, name, emoji, addr, mcap, liq,
     socials: hasSocials, rugRisk, walletData,
+    isKolfi: !!p._isKolfi,
     pairUrl: p.url || `https://dexscreener.com/solana/${addr}`,
     raw: p,
     debug: {
       traderScore, socialScore, holderScore, platformScore,
-      mcapScore, ageScore, patternScore,
+      mcapScore, ageScore, patternScore, kolfiScore,
       social: { gotX, gotTG, gotWEB, gotGH, hasCashback, twitterPts },
       pattern: {
         liq, liqScore: patternResult.liqScore,

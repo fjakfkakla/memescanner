@@ -3,6 +3,7 @@ import { WALLET_TRACKER, AXIOM_WALLETS } from './axiomWallets.js';
 import { scoreTokenV2, hardFilterV2 } from './scorer.js';
 import { saveCall, getCallByAddr } from './firebase.js';
 import { gmgnFetchTrenches, gmgnToWalletData } from './gmgn.js';
+import { fetchKolfiTokens } from './kolfi.js';
 
 const HELIUS_KEY  = process.env.HELIUS_KEY;
 const HELIUS_RPC  = `https://mainnet.helius-rpc.com/?api-key=${HELIUS_KEY}`;
@@ -20,17 +21,19 @@ async function sendDiscordCall(token) {
 
   const axiomCount = token.walletData?.count || token.debug?.axiomCount || 0;
   const rugEmoji   = token.rugRisk === 'LOW' ? '🟢' : token.rugRisk === 'MEDIUM' ? '🟡' : '🔴';
+  const kolfiTag   = token.isKolfi ? ' • 📡 Kolfi' : '';
 
   const message = {
     username: "MemeScanner 🔬",
     embeds: [{
-      title: `${token.emoji || '🚨'} NEW CALL — ${token.symbol}`,
-      color: 0x00ff99,
+      title: `${token.emoji || '🚨'} NEW CALL — ${token.symbol}${kolfiTag}`,
+      color: token.isKolfi ? 0xffd700 : 0x00ff99,
       fields: [
         { name: "📊 Score",       value: `**${token.score}/170**`,         inline: true },
         { name: "💰 Mcap",        value: mcapStr,                           inline: true },
         { name: `${rugEmoji} Rug Risk`, value: token.rugRisk,              inline: true },
         { name: "👛 Axiom Wallets", value: `${axiomCount} wallet${axiomCount > 1 ? 's' : ''}`, inline: true },
+        ...(token.isKolfi ? [{ name: "📡 Kolfi", value: "[Voir sur Kolfi](https://www.kolfi.com/tokens)", inline: true }] : []),
         { name: "📋 CA",          value: `\`${token.addr}\``,              inline: false },
         { name: "🔗 DexScreener", value: `[Voir le chart](${token.pairUrl})`, inline: true },
         { name: "💊 Pump.fun",    value: `[Voir sur Pump](https://pump.fun/${token.addr})`, inline: true },
@@ -481,10 +484,14 @@ export async function runScanCycle() {
   const rejected = {};
 
   try {
-    // 1a. Collecte DexScreener
-    const dexResult = await fetchDexScreener();
+    // 1a. Collecte DexScreener + Kolfi en parallèle (kolfi: best-effort, pas bloquant)
+    const [dexResult, kolfiSet] = await Promise.all([
+      fetchDexScreener(),
+      fetchKolfiTokens().catch(e => { console.warn('[Kolfi] init error:', e.message); return new Set(); }),
+    ]);
     const allPairs = dexResult.pairs;
     const paidTokens = dexResult.paidTokens;
+    if (kolfiSet.size > 0) console.log(`[Kolfi] ${kolfiSet.size} tokens actifs`);
 
     // 1b. Découverte GMGN trenches (renowned≥1 + smart_degen≥1)
     // Construit aussi une Map addr→wData pour éviter les appels Helius sur ces tokens
@@ -649,6 +656,9 @@ export async function runScanCycle() {
             const tokenAddr = p.baseToken?.address || '';
             if (paidTokens.has(tokenAddr)) p._isPaid = true;
             if (p.info?.imageUrl || p.profile?.icon || p.profile?.header) p._isPaid = true;
+
+            // Marquer les tokens présents sur kolfi.com (top callers Telegram) → +20 pts
+            if (kolfiSet.size > 0 && kolfiSet.has(tokenAddr)) p._isKolfi = true;
 
             // Merge GMGN + Helius wallet data
             const gmgnWD = gmgnWalletMap.get(tokenAddr);
