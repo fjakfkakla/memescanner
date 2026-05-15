@@ -4308,7 +4308,7 @@ body.view-outils .lp-footer { display: none !important; }
 /* Le device intérieur reste dark — c'est un mockup UI, le contraste est voulu */
 
 /* ═══════════════════════════════════════════════════════════════
-   HALL OF FAME — CARD DECK CAROUSEL
+   HALL OF FAME — FAN CAROUSEL (4 cards all visible)
 ═══════════════════════════════════════════════════════════════ */
 .lp-hall {
   padding: 7rem 2rem 8rem;
@@ -4331,121 +4331,151 @@ body.view-outils .lp-footer { display: none !important; }
   margin-bottom: 0; margin-top: 0.5rem;
 }
 .hall-stage {
-  display: flex; flex-direction: column; align-items: center; gap: 3rem;
+  display: flex; flex-direction: column; align-items: center; gap: 2.5rem;
   margin-top: 4rem; position: relative;
 }
-/* 3D scene */
+/* 3D scene — wide so side cards are visible */
 .hall-scene {
-  perspective: 1400px;
-  perspective-origin: 50% 45%;
+  perspective: 1200px;
+  perspective-origin: 50% 50%;
   display: flex; justify-content: center; align-items: center;
-  height: 540px; width: 100%;
+  height: 520px; width: 100%;
   position: relative;
+  overflow: hidden;
 }
+/* Anchor point at center; cards transform outward */
 .hall-deck {
   position: relative;
-  width: 340px; height: 500px;
+  width: 300px; height: 460px;
   transform-style: preserve-3d;
+  flex-shrink: 0;
 }
 /* Individual cards */
 .hall-card {
   position: absolute; inset: 0;
-  border-radius: 22px;
+  border-radius: 20px;
   transform-style: preserve-3d;
-  transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1),
-              box-shadow 0.5s ease,
-              opacity 0.4s ease;
-  pointer-events: none;
+  transition: transform 0.55s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.55s ease,
+              filter 0.45s ease;
 }
-/* Active (front) card */
+/* ── Fan positions — all 4 fronts visible ── */
+/* Far left */
 .hall-card[data-pos="0"] {
-  transform: translate3d(0, 0, 0) rotateY(0deg) scale(1);
-  z-index: 4; pointer-events: auto;
-  box-shadow: 0 24px 60px rgba(0,0,0,0.12), 0 0 0 1px #e2e6ed;
+  transform: translateX(-400px) translateZ(-140px) rotateY(38deg) scale(0.72);
+  z-index: 2; cursor: pointer;
+  filter: brightness(0.80);
 }
-/* Back cards stacked in perspective */
+/* Left */
 .hall-card[data-pos="1"] {
-  transform: translate3d(26px, -14px, -50px) rotateY(-6deg) scale(0.96);
-  z-index: 3;
+  transform: translateX(-220px) translateZ(-70px) rotateY(22deg) scale(0.84);
+  z-index: 3; cursor: pointer;
+  filter: brightness(0.90);
 }
+/* Center (active) */
 .hall-card[data-pos="2"] {
-  transform: translate3d(48px, -26px, -100px) rotateY(-10deg) scale(0.92);
-  z-index: 2;
+  transform: translateX(0) translateZ(0) rotateY(0deg) scale(1);
+  z-index: 4;
+  box-shadow: 0 28px 72px rgba(0,0,0,0.18), 0 0 0 1px rgba(99,102,241,0.10);
 }
+/* Right */
 .hall-card[data-pos="3"] {
-  transform: translate3d(66px, -36px, -150px) rotateY(-13deg) scale(0.88);
-  z-index: 1;
-}
-/* Exit animation */
-.hall-card.hall-exit {
-  transform: translate3d(-380px, 20px, -60px) rotateY(40deg) rotateZ(-8deg) scale(0.8) !important;
-  opacity: 0 !important; z-index: 10 !important; pointer-events: none !important;
-  transition: transform 0.45s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.35s ease !important;
-}
-.hall-card.hall-enter {
-  animation: hallEnter 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-@keyframes hallEnter {
-  from { transform: translate3d(66px,-36px,-150px) rotateY(-13deg) scale(0.88); opacity: 0.5; }
-  to   { transform: translate3d(0,0,0) rotateY(0deg) scale(1); opacity: 1; }
+  transform: translateX(220px) translateZ(-70px) rotateY(-22deg) scale(0.84);
+  z-index: 3; cursor: pointer;
+  filter: brightness(0.90);
 }
 
-/* ── Card FRONT face (thème clair) ───────────────────────────── */
+/* ── Card FRONT face ─────────────────────────────────────────── */
 .hall-front {
   position: absolute; inset: 0;
   background: #ffffff;
   border: 1px solid #e2e6ed;
-  border-radius: 22px; overflow: hidden;
+  border-radius: 20px; overflow: hidden;
   display: flex; flex-direction: column;
 }
-.hall-card:not([data-pos="0"]) .hall-front { opacity: 0; pointer-events: none; }
-
-.hall-card-img-wrap { position: relative; height: 210px; flex-shrink: 0; overflow: hidden; }
-.hall-card-img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.hall-card-img-fallback {
-  width: 100%; height: 100%;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 5rem;
-  background: linear-gradient(135deg, #eff1f5, #e4e7ef);
-}
-/* gradient image → blanc pour transition propre */
-.hall-card-img-grad {
+/* Subtle wash on non-active cards to focus attention on center */
+.hall-card:not([data-pos="2"]) .hall-front::after {
+  content: '';
   position: absolute; inset: 0;
-  background: linear-gradient(to bottom, transparent 30%, rgba(0,0,0,0.55) 100%);
+  background: rgba(248,249,252,0.38);
+  border-radius: 20px;
+  pointer-events: none;
+  z-index: 5;
 }
-.hall-card-img-info {
-  position: absolute; bottom: 0; left: 0; right: 0;
-  padding: 0 18px 14px;
+
+/* Banner zone */
+.hall-banner-wrap {
+  position: relative;
+  height: 130px; flex-shrink: 0; overflow: hidden;
+  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+}
+.hall-banner-img {
+  width: 100%; height: 100%; object-fit: cover; display: block;
+}
+.hall-banner-fallback {
+  width: 100%; height: 100%;
+  background: linear-gradient(135deg, #818cf8 0%, #6366f1 50%, #4338ca 100%);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 3rem;
+}
+.hall-banner-grad {
+  position: absolute; inset: 0;
+  background: linear-gradient(to bottom, transparent 35%, rgba(0,0,0,0.48) 100%);
+  z-index: 1;
+}
+.hall-mult-badge {
+  position: absolute; top: 11px; right: 11px; z-index: 2;
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: #000; font-family: 'Space Mono', monospace;
+  font-weight: 800; font-size: 0.95rem;
+  padding: 0.22rem 0.6rem; border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(245,158,11,0.45);
+  white-space: nowrap;
+}
+
+/* PFP circle (sits at boundary of banner / body) */
+.hall-pfp-wrap {
+  position: relative; height: 0; overflow: visible; flex-shrink: 0;
+}
+.hall-pfp-img, .hall-pfp-fallback {
+  position: absolute;
+  top: -34px; left: 18px;
+  width: 64px; height: 64px;
+  border-radius: 50%;
+  border: 3px solid #fff;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.18);
+  object-fit: cover;
+  background: #eff1f5;
+}
+.hall-pfp-fallback {
+  background: linear-gradient(135deg, #6366f1, #4f46e5);
+  display: flex; align-items: center; justify-content: center;
+  color: #fff; font-family: 'Space Grotesk', sans-serif;
+  font-size: 1rem; font-weight: 800;
+}
+
+/* Card body */
+.hall-card-body {
+  flex: 1; padding: 36px 16px 14px;
+  display: flex; flex-direction: column; gap: 8px;
+  background: #ffffff; text-align: left;
 }
 .hall-card-name {
   font-family: 'Space Grotesk', sans-serif;
-  font-size: 1.45rem; font-weight: 800; color: #fff; line-height: 1.1;
+  font-size: 1.15rem; font-weight: 800; color: #0f1117; line-height: 1.1;
 }
 .hall-card-ticker {
-  font-size: 0.78rem; color: rgba(255,255,255,0.65);
-  font-family: 'Space Mono', monospace; margin-top: 2px;
-}
-.hall-mult-badge {
-  position: absolute; top: 14px; right: 14px;
-  background: linear-gradient(135deg, #f59e0b, #d97706);
-  color: #000; font-family: 'Space Mono', monospace;
-  font-weight: 800; font-size: 1.1rem;
-  padding: 0.3rem 0.75rem; border-radius: 9px;
-  box-shadow: 0 2px 12px rgba(245,158,11,0.4);
-  white-space: nowrap;
-}
-.hall-card-body {
-  flex: 1; padding: 14px 18px 18px;
-  display: flex; flex-direction: column; gap: 10px;
-  background: #ffffff;
+  font-size: 0.7rem; color: #9ca3af;
+  font-family: 'Space Mono', monospace; margin-top: 1px;
 }
 .hall-perf-lbl {
-  font-size: 0.65rem; color: #9ca3af;
+  font-size: 0.6rem; color: #9ca3af;
   text-transform: uppercase; letter-spacing: 0.09em; font-weight: 600;
+  margin-top: 5px;
 }
 .hall-perf-val {
   font-family: 'Space Grotesk', sans-serif;
-  font-size: 1.8rem; font-weight: 800; color: #059669; line-height: 1;
+  font-size: 1.5rem; font-weight: 800; color: #059669; line-height: 1.1;
 }
 .hall-progress {
   height: 4px; background: #f3f4f6;
@@ -4458,48 +4488,24 @@ body.view-outils .lp-footer { display: none !important; }
 }
 .hall-progress-marks {
   display: flex; justify-content: space-between;
-  font-size: 0.58rem; color: #d1d5db; margin-top: 3px;
+  font-size: 0.55rem; color: #d1d5db; margin-top: 3px;
   font-family: 'Space Mono', monospace;
 }
-.hall-mc-row { display: flex; gap: 14px; margin-top: 4px; }
+.hall-mc-row { display: flex; gap: 12px; margin-top: 2px; }
 .hall-mc-cell { flex: 1; }
 .hall-mc-lbl {
-  font-size: 0.62rem; color: #9ca3af;
+  font-size: 0.6rem; color: #9ca3af;
   text-transform: uppercase; letter-spacing: 0.08em;
 }
 .hall-mc-val {
   font-family: 'Space Mono', monospace;
-  font-size: 0.98rem; font-weight: 700; color: #0f1117; margin-top: 3px;
+  font-size: 0.88rem; font-weight: 700; color: #0f1117; margin-top: 3px;
 }
 .hall-card-score {
-  margin-top: auto; display: flex; align-items: center; gap: 6px;
-  font-size: 0.7rem; color: #9ca3af;
+  margin-top: auto; display: flex; align-items: center; gap: 5px;
+  font-size: 0.65rem; color: #9ca3af;
 }
 .hall-card-score-val { color: #4f46e5; font-weight: 700; font-family: 'Space Mono', monospace; }
-
-/* ── Card BACK face (thème clair) ────────────────────────────── */
-.hall-back {
-  position: absolute; inset: 0;
-  border-radius: 22px; overflow: hidden;
-  background: linear-gradient(145deg, #f0f1f8 0%, #e8eaf4 40%, #f0f1f8 100%);
-  border: 1px solid #dde0ec;
-  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
-}
-.hall-back::before {
-  content: ''; position: absolute; inset: 0;
-  background-image:
-    repeating-linear-gradient(0deg, rgba(99,102,241,0.06) 0px, rgba(99,102,241,0.06) 1px, transparent 1px, transparent 28px),
-    repeating-linear-gradient(90deg, rgba(99,102,241,0.06) 0px, rgba(99,102,241,0.06) 1px, transparent 1px, transparent 28px);
-  border-radius: 22px;
-}
-.hall-back-logo { position: relative; z-index: 1; opacity: 0.2; }
-.hall-back-label {
-  position: relative; z-index: 1;
-  font-family: 'Space Mono', monospace;
-  font-size: 0.65rem; letter-spacing: 0.2em;
-  color: rgba(99,102,241,0.35); text-transform: uppercase;
-}
-.hall-card[data-pos="0"] .hall-back { opacity: 0; }
 
 /* ── Navigation ──────────────────────────────────────────────── */
 .hall-nav { display: flex; align-items: center; gap: 1.8rem; }
@@ -4524,22 +4530,27 @@ body.view-outils .lp-footer { display: none !important; }
   background: #4f46e5; transform: scale(1.4);
   box-shadow: 0 0 8px rgba(79,70,229,0.4);
 }
-.hall-loading {
-  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
-  color: #9ca3af; font-size: 0.85rem; font-family: 'Space Mono', monospace;
-}
 /* Mobile */
 @media (max-width: 768px) {
-  .lp-hall { padding: 4rem 1rem 5rem; }
-  .hall-scene { height: 480px; perspective: 900px; }
-  .hall-deck { width: 290px; height: 450px; }
-  .hall-card[data-pos="1"] { transform: translate3d(18px,-10px,-40px) rotateY(-5deg) scale(0.96); }
-  .hall-card[data-pos="2"] { transform: translate3d(33px,-18px,-80px) rotateY(-8deg) scale(0.92); }
-  .hall-card[data-pos="3"] { transform: translate3d(46px,-25px,-120px) rotateY(-11deg) scale(0.88); }
-  .hall-card-img-wrap { height: 170px; }
-  .hall-card-name { font-size: 1.2rem; }
-  .hall-mult-badge { font-size: 0.95rem; }
-  .hall-perf-val { font-size: 1.5rem; }
+  .lp-hall { padding: 4rem 0.5rem 5rem; }
+  .hall-scene { height: 440px; perspective: 900px; }
+  .hall-deck { width: 240px; height: 380px; }
+  .hall-card[data-pos="0"] { transform: translateX(-245px) translateZ(-110px) rotateY(35deg) scale(0.66); filter: brightness(0.76); }
+  .hall-card[data-pos="1"] { transform: translateX(-148px) translateZ(-55px) rotateY(20deg) scale(0.79); }
+  .hall-card[data-pos="3"] { transform: translateX(148px) translateZ(-55px) rotateY(-20deg) scale(0.79); }
+  .hall-banner-wrap { height: 100px; }
+  .hall-card-name { font-size: 1rem; }
+  .hall-mult-badge { font-size: 0.82rem; }
+  .hall-perf-val { font-size: 1.25rem; }
+  .hall-pfp-img, .hall-pfp-fallback { width: 54px; height: 54px; top: -29px; }
+  .hall-card-body { padding: 30px 12px 12px; gap: 6px; }
+  .hall-mc-val { font-size: 0.78rem; }
+}
+@media (max-width: 480px) {
+  .hall-deck { width: 210px; height: 355px; }
+  .hall-card[data-pos="0"] { transform: translateX(-205px) translateZ(-90px) rotateY(32deg) scale(0.60); filter: brightness(0.72); }
+  .hall-card[data-pos="1"] { transform: translateX(-126px) translateZ(-44px) rotateY(18deg) scale(0.74); }
+  .hall-card[data-pos="3"] { transform: translateX(126px) translateZ(-44px) rotateY(-18deg) scale(0.74); }
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -13138,51 +13149,59 @@ function toggleMobSection(id) {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// HALL OF FAME — CARD DECK CAROUSEL
+// HALL OF FAME — FAN CAROUSEL (4 cards all visible simultaneously)
 // ═══════════════════════════════════════════════════════════════
-let _hallCards = [];    // [{name, symbol, xAth, callMcap, athMcap, score, imgUrl, perf}]
-let _hallActive = 0;    // index of front card in _hallCards
-let _hallAnimating = false;
+let _hallCards = [];
+let _hallActive = 0;
 
 function fmtHallNum(n){
-  if(!n)return '$0';
-  if(n>=1e6)return '$'+(n/1e6).toFixed(1)+'M';
-  if(n>=1e3)return '$'+(n/1e3).toFixed(1)+'K';
-  return '$'+Math.round(n);
+  if(!n) return '$0';
+  if(n >= 1e6) return '$' + (n/1e6).toFixed(1) + 'M';
+  if(n >= 1e3) return '$' + (n/1e3).toFixed(1) + 'K';
+  return '$' + Math.round(n);
 }
 
-function buildHallCardHTML(c, pos){
-  const xDisp = c.xAth>=1000 ? Math.round(c.xAth).toLocaleString('fr-FR')+'x' : c.xAth.toFixed(1)+'x';
-  const perf   = ((c.xAth-1)*100);
-  const perfStr= perf>=1000 ? '↗ +'+Math.round(perf).toLocaleString('fr-FR')+'%' : '↗ +'+perf.toFixed(0)+'%';
-  const barW   = Math.min(100,(c.xAth-1)/3*100).toFixed(0);
-  const fallback = (c.name||c.symbol).slice(0,3).toUpperCase();
-  const imgHtml = c.imgUrl
-    ? `<img class="hall-card-img" src="${c.imgUrl}" alt="${c.name}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`+
-      `<div class="hall-card-img-fallback" style="display:none">${fallback}</div>`
-    : `<div class="hall-card-img-fallback">${fallback}</div>`;
-  const scoreHtml = c.score>0
-    ? `<div class="hall-card-score">Score au call <span class="hall-card-score-val">${c.score} pts</span></div>` : '';
+function buildHallCardHTML(c, pos, cardIdx){
+  const xDisp   = c.xAth >= 1000 ? Math.round(c.xAth).toLocaleString('fr-FR') + 'x' : c.xAth.toFixed(1) + 'x';
+  const perf    = (c.xAth - 1) * 100;
+  const perfStr = perf >= 1000 ? '↗ +' + Math.round(perf).toLocaleString('fr-FR') + '%' : '↗ +' + perf.toFixed(0) + '%';
+  // Log scale bar: 1x → 0%, 10x → ~40%, 100x → ~77%, 400x → 100%
+  const barW  = Math.min(100, Math.max(2, (Math.log10(Math.max(c.xAth, 1.1)) / Math.log10(400)) * 100)).toFixed(0);
+  const fb    = (c.name || c.symbol).slice(0, 2).toUpperCase();
 
-  return `<div class="hall-card" data-pos="${pos}" data-idx="${_hallCards.indexOf(c)}">
+  const bannerHtml = c.bannerUrl
+    ? `<img class="hall-banner-img" src="${c.bannerUrl}" alt="" onerror="this.style.display='none'">`
+    : `<div class="hall-banner-fallback">🚀</div>`;
+
+  const pfpHtml = c.pfpUrl
+    ? `<img class="hall-pfp-img" src="${c.pfpUrl}" alt="${c.name||c.symbol}" onerror="this.outerHTML='<div class=\\'hall-pfp-fallback\\'>${fb}</div>'">`
+    : `<div class="hall-pfp-fallback">${fb}</div>`;
+
+  const scoreHtml = c.score > 0
+    ? `<div class="hall-card-score">Score <span class="hall-card-score-val">${c.score} pts</span></div>` : '';
+
+  const clickAttr = pos !== 2 ? `onclick="hallGoTo(${cardIdx})"` : '';
+
+  return `<div class="hall-card" data-pos="${pos}" data-idx="${cardIdx}" ${clickAttr}>
     <div class="hall-front">
-      <div class="hall-card-img-wrap">
-        ${imgHtml}
-        <div class="hall-card-img-grad"></div>
+      <div class="hall-banner-wrap">
+        ${bannerHtml}
+        <div class="hall-banner-grad"></div>
         <div class="hall-mult-badge">${xDisp} ⚡</div>
-        <div class="hall-card-img-info">
-          <div class="hall-card-name">${c.name||c.symbol}</div>
+      </div>
+      <div class="hall-pfp-wrap">${pfpHtml}</div>
+      <div class="hall-card-body">
+        <div>
+          <div class="hall-card-name">${c.name || c.symbol}</div>
           <div class="hall-card-ticker">$${c.symbol}</div>
         </div>
-      </div>
-      <div class="hall-card-body">
         <div>
           <div class="hall-perf-lbl">Performance</div>
           <div class="hall-perf-val">${perfStr}</div>
         </div>
         <div>
           <div class="hall-progress"><div class="hall-progress-fill" style="width:${barW}%"></div></div>
-          <div class="hall-progress-marks"><span>×1</span><span>×1.5</span><span>×2</span><span>×2.5+</span></div>
+          <div class="hall-progress-marks"><span>×1</span><span>×10</span><span>×100</span><span>×400+</span></div>
         </div>
         <div class="hall-mc-row">
           <div class="hall-mc-cell">
@@ -13190,144 +13209,115 @@ function buildHallCardHTML(c, pos){
             <div class="hall-mc-val">${fmtHallNum(c.callMcap)}</div>
           </div>
           <div class="hall-mc-cell">
-            <div class="hall-mc-lbl">MC Max</div>
+            <div class="hall-mc-lbl">MC Max (ATH)</div>
             <div class="hall-mc-val">${fmtHallNum(c.athMcap)}</div>
           </div>
         </div>
         ${scoreHtml}
       </div>
     </div>
-    <div class="hall-back">
-      <div class="hall-back-logo">
-        <svg width="52" height="52" viewBox="0 0 60 60" fill="none">
-          <circle cx="30" cy="30" r="29" fill="#0a0612" stroke="#6156d9" stroke-width="1.5"/>
-          <circle cx="30" cy="30" r="24" fill="#150f22"/>
-          <ellipse cx="30" cy="34" rx="13" ry="11" fill="#5a4fc7"/>
-          <ellipse cx="30" cy="33" rx="11" ry="9" fill="#6156d9"/>
-          <circle cx="23" cy="24" r="4" fill="#7c6aff"/>
-          <circle cx="37" cy="24" r="4" fill="#7c6aff"/>
-          <circle cx="23" cy="24" r="2" fill="#0a0612"/>
-          <circle cx="37" cy="24" r="2" fill="#0a0612"/>
-          <circle cx="24" cy="23" r=".8" fill="white"/>
-          <circle cx="38" cy="23" r=".8" fill="white"/>
-        </svg>
-      </div>
-      <div class="hall-back-label">MemeScanner</div>
-    </div>
   </div>`;
 }
 
 function renderHallDeck(){
   const deck = document.getElementById('hallDeck');
-  if(!deck||!_hallCards.length) return;
-  // 4 cards in the deck, starting from _hallActive
-  const htmls = [];
-  for(let pos=0;pos<4;pos++){
-    const idx = (_hallActive + pos) % _hallCards.length;
-    htmls.push(buildHallCardHTML(_hallCards[idx], pos));
-  }
-  deck.innerHTML = htmls.join('');
-  // Dots
+  if(!deck || !_hallCards.length) return;
+  const n = _hallCards.length;
+  // Fan layout left→right: [active-2, active-1, active, active+1] → visual pos [0,1,2,3]
+  const slots = [
+    ((_hallActive - 2) % n + n) % n,
+    ((_hallActive - 1) % n + n) % n,
+    _hallActive,
+    (_hallActive + 1) % n,
+  ];
+  deck.innerHTML = slots.map((cardIdx, pos) =>
+    buildHallCardHTML(_hallCards[cardIdx], pos, cardIdx)
+  ).join('');
   const dots = document.getElementById('hallDots');
   if(dots){
-    dots.innerHTML = _hallCards.map((_,i)=>
-      `<button class="hall-dot${i===_hallActive?' active':''}" onclick="hallGoTo(${i})" aria-label="Call ${i+1}"></button>`
+    dots.innerHTML = _hallCards.map((_, i) =>
+      `<button class="hall-dot${i === _hallActive ? ' active' : ''}" onclick="hallGoTo(${i})" aria-label="Call ${i+1}"></button>`
     ).join('');
   }
 }
 
 function hallCycle(dir){
-  if(_hallAnimating || _hallCards.length<2) return;
-  _hallAnimating = true;
-
-  if(dir>0){
-    // Next: active card exits, next card enters
-    const frontCard = document.querySelector('.hall-card[data-pos="0"]');
-    if(frontCard){
-      frontCard.classList.add('hall-exit');
-      // After exit anim, advance index and re-render
-      setTimeout(()=>{
-        _hallActive = (_hallActive + 1) % _hallCards.length;
-        renderHallDeck();
-        // Brief "enter" flash on new front card
-        const newFront = document.querySelector('.hall-card[data-pos="0"]');
-        if(newFront){ newFront.classList.add('hall-enter'); setTimeout(()=>newFront.classList.remove('hall-enter'),600); }
-        setTimeout(()=>{ _hallAnimating=false; },100);
-      }, 420);
-    } else { _hallAnimating=false; }
-  } else {
-    // Prev: go back one
-    _hallActive = (_hallActive - 1 + _hallCards.length) % _hallCards.length;
-    renderHallDeck();
-    const newFront = document.querySelector('.hall-card[data-pos="0"]');
-    if(newFront){ newFront.classList.add('hall-enter'); setTimeout(()=>newFront.classList.remove('hall-enter'),600); }
-    setTimeout(()=>{ _hallAnimating=false; },150);
-  }
+  if(_hallCards.length < 2) return;
+  _hallActive = ((_hallActive + dir) % _hallCards.length + _hallCards.length) % _hallCards.length;
+  renderHallDeck();
 }
 
 function hallGoTo(idx){
-  if(_hallAnimating || idx===_hallActive) return;
-  const dir = idx > _hallActive ? 1 : -1;
+  if(idx === _hallActive) return;
   _hallActive = idx;
   renderHallDeck();
-  const newFront = document.querySelector('.hall-card[data-pos="0"]');
-  if(newFront){ newFront.classList.add('hall-enter'); setTimeout(()=>newFront.classList.remove('hall-enter'),600); }
 }
 
 async function initHallOfFame(){
-  // Données hardcodées — affichage immédiat, pas d'attente réseau
   const HALL_STATIC = [
-    { name:'GOBLIN',    symbol:'GOBLIN',    xAth:398.8, callMcap:35200,  athMcap:14000000, score:108, imgUrl:'', addr:'' },
-    { name:'LASTMAN',   symbol:'LASTMAN',   xAth:172.8, callMcap:25300,  athMcap:4400000,  score:120, imgUrl:'', addr:'' },
-    { name:'HENRY',     symbol:'HENRY',     xAth:156.7, callMcap:26800,  athMcap:4200000,  score:146, imgUrl:'', addr:'' },
-    { name:'CHONKERS',  symbol:'CHONKERS',  xAth:99.8,  callMcap:19800,  athMcap:2000000,  score:130, imgUrl:'', addr:'' },
+    { name:'GOBLIN',   symbol:'GOBLIN',   xAth:398.8, callMcap:35200,  athMcap:14000000, score:108, pfpUrl:'', bannerUrl:'', addr:'' },
+    { name:'LASTMAN',  symbol:'LASTMAN',  xAth:172.8, callMcap:25300,  athMcap:4400000,  score:120, pfpUrl:'', bannerUrl:'', addr:'' },
+    { name:'HENRY',    symbol:'HENRY',    xAth:156.7, callMcap:26800,  athMcap:4200000,  score:146, pfpUrl:'', bannerUrl:'', addr:'' },
+    { name:'CHONKERS', symbol:'CHONKERS', xAth:99.8,  callMcap:19800,  athMcap:2000000,  score:130, pfpUrl:'', bannerUrl:'', addr:'' },
   ];
   _hallCards  = HALL_STATIC;
   _hallActive = 0;
   renderHallDeck();
 
-  // Swipe mobile
-  const deck = document.getElementById('hallDeck');
-  if(deck){
-    let startX=0;
-    deck.addEventListener('touchstart',e=>{ startX=e.touches[0].clientX; },{passive:true});
-    deck.addEventListener('touchend',e=>{
-      const dx=e.changedTouches[0].clientX-startX;
-      if(Math.abs(dx)>50) hallCycle(dx<0?1:-1);
-    },{passive:true});
+  // Swipe mobile on the whole scene (wider hit area)
+  const scene = document.querySelector('.hall-scene');
+  if(scene){
+    let _swipeX = 0;
+    scene.addEventListener('touchstart', e => { _swipeX = e.touches[0].clientX; }, {passive:true});
+    scene.addEventListener('touchend',   e => {
+      const dx = e.changedTouches[0].clientX - _swipeX;
+      if(Math.abs(dx) > 50) hallCycle(dx < 0 ? 1 : -1);
+    }, {passive:true});
   }
 
-  // Mise à jour async en arrière-plan : récupère les vraies données + images
+  // Async: replace with real data + images from Firebase
   try{
-    const res = await fetch(`${FB_URL}/calls.json`,{signal:AbortSignal.timeout(8000)}).then(r=>r.json());
-    if(!res||typeof res!=='object') return;
+    const res = await fetch(`${FB_URL}/calls.json`, {signal: AbortSignal.timeout(8000)}).then(r => r.json());
+    if(!res || typeof res !== 'object') return;
     const top4 = Object.entries(res)
-      .filter(([,v])=>v?.callMcap>0&&v?.athMcap>0)
-      .map(([,v])=>({
-        name:    v.name||v.symbol||'TOKEN',
-        symbol:  v.symbol||'???',
-        xAth:    v.athMcap/v.callMcap,
-        callMcap:v.callMcap,
-        athMcap: v.athMcap,
-        score:   v.callScore||v.score||0,
-        addr:    v.addr||v.address||'',
-        imgUrl:  v.raw?.info?.imageUrl||v.raw?.info?.header||'',
+      .filter(([, v]) => v?.callMcap > 0 && v?.athMcap > 0)
+      .map(([, v]) => ({
+        name:      v.name || v.symbol || 'TOKEN',
+        symbol:    v.symbol || '???',
+        xAth:      v.athMcap / v.callMcap,
+        callMcap:  v.callMcap,
+        athMcap:   v.athMcap,
+        score:     v.callScore || v.score || 0,
+        addr:      v.addr || v.address || '',
+        pfpUrl:    v.raw?.info?.imageUrl || '',
+        bannerUrl: v.raw?.info?.header || '',
       }))
-      .sort((a,b)=>b.xAth-a.xAth)
-      .slice(0,4);
+      .sort((a, b) => b.xAth - a.xAth)
+      .slice(0, 4);
     if(!top4.length) return;
-    // Fetch images manquantes
-    const noImg = top4.filter(c=>!c.imgUrl&&c.addr).map(c=>c.addr);
-    if(noImg.length){
+    // Fetch missing images from DexScreener
+    const needImg = top4.filter(c => (!c.pfpUrl || !c.bannerUrl) && c.addr).map(c => c.addr);
+    if(needImg.length){
       try{
-        const r2 = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${noImg.join(',')}`,
-          {signal:AbortSignal.timeout(6000)}).then(r=>r.json());
-        const imgMap={};
-        (r2.pairs||[]).forEach(p=>{ const a=p.baseToken?.address;if(!a)return; const img=p.info?.imageUrl||p.info?.header||'';if(img)imgMap[a]=img; });
-        top4.forEach(c=>{ if(imgMap[c.addr])c.imgUrl=imgMap[c.addr]; });
+        const r2 = await fetch(
+          `https://api.dexscreener.com/latest/dex/tokens/${needImg.join(',')}`,
+          {signal: AbortSignal.timeout(6000)}
+        ).then(r => r.json());
+        const imgMap = {};
+        (r2.pairs || []).forEach(p => {
+          const a = p.baseToken?.address; if(!a) return;
+          if(!imgMap[a]) imgMap[a] = {};
+          if(p.info?.imageUrl) imgMap[a].pfp    = p.info.imageUrl;
+          if(p.info?.header)   imgMap[a].banner = p.info.header;
+        });
+        top4.forEach(c => {
+          if(imgMap[c.addr]){
+            if(!c.pfpUrl    && imgMap[c.addr].pfp)    c.pfpUrl    = imgMap[c.addr].pfp;
+            if(!c.bannerUrl && imgMap[c.addr].banner) c.bannerUrl = imgMap[c.addr].banner;
+          }
+        });
       }catch(e){}
     }
-    // Mettre à jour silencieusement si les données diffèrent
     _hallCards = top4;
     renderHallDeck();
   }catch(e){}
