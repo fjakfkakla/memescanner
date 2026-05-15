@@ -5229,7 +5229,7 @@ body.view-outils .lp-footer { display: none !important; }
         </div>
         <button class="scan-btn scan-btn-outline" onclick="toggleBacktest()" style="font-size:.72rem">Backtest</button>
         <button class="btn-reset" onclick="resetHistory()">Vider</button>
-        <button class="scan-btn scan-btn-outline" onclick="renderHistory(true)" style="font-size:.72rem">↻ Refresh</button>
+        <button class="scan-btn scan-btn-outline" onclick="_histPage=1;_histLiveMap={};_histImageMap={};renderHistory(true)" style="font-size:.72rem">↻ Refresh</button>
       </div>
     </div>
     <!-- BACKTEST PANEL -->
@@ -9958,7 +9958,7 @@ function switchTab(tab){
   document.getElementById('tabPaperBot').classList.toggle('active',tab==='paperbot');
   document.getElementById('btnResetLive').style.display=tab==='live'?'inline-block':'none';
   document.getElementById('btnResetHistory').style.display=tab==='history'?'inline-block':'none';
-  if(tab==='history')renderHistory(true);
+  if(tab==='history'){_histPage=1;_histLiveMap={};_histImageMap={};renderHistory(true);}
   if(tab==='paperbot')ptRender();
 }
 
@@ -10115,7 +10115,11 @@ function setHistSort(mode){
   document.getElementById('histSortLabel').textContent=labels[mode];
   document.querySelectorAll('#histSortMenu .rug-sort-opt').forEach(el=>el.classList.remove('active'));
   const el=document.getElementById('hsort-'+mode);if(el)el.classList.add('active');
-  renderHistory(true); // force=true — bypass throttle 60s
+  // Réinitialiser la page et le cache live pour repartir du début avec le nouveau tri
+  _histPage=1;
+  _histLiveMap={};
+  _histImageMap={};
+  renderHistory(true);
 }
 // Restaurer le label au chargement
 (function(){
@@ -10190,19 +10194,26 @@ function renderBacktest(){
   </div>`:''}`;
 }
 
+const HIST_PAGE_SIZE = 25;
 let _lastHistoryRender=0;
-async function renderHistory(force=false){
+let _histPage=1;
+let _histLiveMap={};
+let _histImageMap={};
+let _histAllEntries=[];
+let _histCalls={};
+
+async function renderHistory(force=false,resetPage=false){
   const now=Date.now();
-  // Throttle : ne pas re-render si <60s sauf si switch de tab ou refresh manuel
   if(!force && _lastHistoryRender && (now-_lastHistoryRender)<60000) return;
   _lastHistoryRender=now;
+  if(resetPage) _histPage=1;
   const container=document.getElementById('historyContent');
-  // Ne pas effacer si contenu déjà affiché — juste spinner discret en haut
-  const hasContent=container.querySelector('.sc-card,.hist-card');
-  if(!hasContent) container.innerHTML='<div class="hist-empty"><div class="hist-empty-icon">⏳</div><div style="color:var(--muted)">Chargement...</div></div>';
-  // Charger depuis Firebase + localStorage, garder le meilleur ATH des 2
+  const isFirstLoad=!container.querySelector('.tc-card');
+  if(isFirstLoad) container.innerHTML='<div class="hist-empty"><div class="hist-empty-icon">⏳</div><div style="color:var(--muted)">Chargement...</div></div>';
+
+  // Charger depuis Firebase + localStorage
   let calls={};
- try{const fb=await fetch(`${FB_URL}/calls.json`,{signal:AbortSignal.timeout(5000)}).then(r=>r.json());
+  try{const fb=await fetch(`${FB_URL}/calls.json`,{signal:AbortSignal.timeout(6000)}).then(r=>r.json());
     if(fb&&typeof fb==='object')Object.entries(fb).forEach(([k,v])=>{if(v&&v.callTime)calls[k]=v;});}catch(e){}
   try{const local=JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}');
     Object.entries(local).forEach(([addr,val])=>{
@@ -10211,7 +10222,8 @@ async function renderHistory(force=false){
       else{if(!calls[key].addr)calls[key].addr=addr;
         if((val.athMcap||0)>(calls[key].athMcap||0))calls[key].athMcap=val.athMcap;}
     });}catch(e){}
-  // Filtrer : l'utilisateur ne voit que les calls depuis son inscription (admin voit tout)
+  _histCalls=calls;
+
   let registeredAt=0;
   if(!isAdminMode){try{const sess=JSON.parse(localStorage.getItem(SESSION_KEY)||'null');if(sess?.registeredAt)registeredAt=sess.registeredAt;}catch(e){}}
   const entries=Object.entries(calls).filter(([,v])=>!registeredAt||(v.callTime||0)>=registeredAt);
@@ -10219,85 +10231,9 @@ async function renderHistory(force=false){
     const hc=document.getElementById('histCount');if(hc)hc.textContent='';
     container.innerHTML='<div class="hist-empty"><div class="hist-empty-icon">📭</div><div>Aucun call encore</div></div>';return;}
 
-  // Mettre à jour la bannière winrate dès le chargement initial
   updateWrStats(calls);
 
-  // Fetch prix live TOUS les tokens (par batch de 20 — DexScreener limite)
-  const allAddrs=entries.map(([,v])=>v.addr||v.address||'').filter(Boolean);
-  // liveMap stocke {now, athEst} — now = mcap actuel, athEst = ATH estimé depuis DexScreener
-  let liveMap={};
-  let histImageMap={};
-  for(let i=0;i<allAddrs.length;i+=20){
-    try{
-      const chunk=allAddrs.slice(i,i+20);
-      const res=await fetch(`https://api.dexscreener.com/latest/dex/tokens/${chunk.join(',')}`,
-        {signal:AbortSignal.timeout(10000)}).then(r=>r.json());
-      // Grouper par token address, garder la paire avec le plus grand volume
-      const bestPair={};
-      (res.pairs||[]).forEach(p=>{
-        const a=p.baseToken?.address;if(!a)return;
-        if(!bestPair[a]||(p.volume?.h24||0)>(bestPair[a].volume?.h24||0))bestPair[a]=p;
-      });
-      Object.entries(bestPair).forEach(([a,p])=>{
-        const img=p.info?.imageUrl||p.info?.header||p.baseToken?.info?.imageUrl||'';
-        if(img)histImageMap[a]=img;
-        const now=p.marketCap||p.fdv||0;
-        if(!now)return;
-        // ATH estimé depuis priceChange — avec plafond anti-MEV bot
-        // priceChange.hX = variation depuis il y a X heures
-        // Si négatif : le token était plus haut → on recalcule
-        // PLAFOND : max 50x le prix now pour éviter les spikes MEV aberrants
-        const c24=p.priceChange?.h24||0;
-        const c6=p.priceChange?.h6||0;
-        const c1=p.priceChange?.h1||0;
-        const MAX_MULT=500;
-        let athEst=now;
-        // Seuil abaissé à -3% : capture les dips récents même faibles
-        // Plafond anti-MEV : max now * MAX_MULT
-        const cap=now*MAX_MULT;
-        if(c24<-3){const est=now/Math.max(0.001,1+c24/100);if(est<cap)athEst=Math.max(athEst,est);}
-        if(c6 <-3){const est=now/Math.max(0.001,1+c6/100); if(est<cap)athEst=Math.max(athEst,est);}
-        if(c1 <-3){const est=now/Math.max(0.001,1+c1/100); if(est<cap)athEst=Math.max(athEst,est);}
-        liveMap[a]={now, athEst:Math.round(athEst), c24, c6, c1};
-      });
-    }catch(e){}
-  }
-
-  // Mettre a jour ATH via vrai ATH candles DexScreener (meme source GMGN/Axiom)
-  const athUpdates=[];
-  const sevenDaysAgo=Date.now()-7*24*3600000;
-  for(const [key,v] of entries){
-    const addr=v.addr||v.address||'';if(!addr)continue;
-    const live=liveMap[addr];
-    const callMcap=v.callMcap||0;
-    const nowMcap=live?.now||0;
-    const athEst=live?.athEst||0;
-    // ATH >= callMcap toujours — athEst retiré : priceChange.h24 ne connaît pas le callTime
-    // et inclut les pumps PRÉ-call → résultats gonflés. fetchRealAth (filtré par callTime) s'en charge.
-    let bestKnown=Math.max(nowMcap, v.athMcap||0, callMcap);
-
-    if(bestKnown>0&&bestKnown>(v.athMcap||0)){
-      v.athMcap=bestKnown;
-      athUpdates.push({key,addr,athMcap:bestKnown});
-    }
-  }
-  // Sauvegarder les nouveaux ATH en Firebase en batch (non bloquant)
-  if(athUpdates.length){
-    athUpdates.forEach(({key,athMcap})=>{
-      fetch(`${FB_URL}/calls/${key}.json`,{method:'PATCH',body:JSON.stringify({athMcap})}).catch(()=>{});
-    });
-    // Mettre à jour localStorage aussi
-    try{
-      const local=JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}');
-      athUpdates.forEach(({addr,athMcap})=>{if(local[addr])local[addr].athMcap=athMcap;});
-      localStorage.setItem(STORAGE_KEY,JSON.stringify(local));
-    }catch(e){}
-  }
-
-  // Refresh bannière winrate avec ATH mis à jour
-  updateWrStats(calls);
-
-  // Trier selon le mode actuel
+  // Trier d'abord avec les données déjà en mémoire — pas besoin d'API pour ça
   let sorted=[...entries];
   if(currentHistSort==='recent') sorted.sort((a,b)=>(b[1].callTime||0)-(a[1].callTime||0));
   else if(currentHistSort==='old') sorted.sort((a,b)=>(a[1].callTime||0)-(b[1].callTime||0));
@@ -10308,9 +10244,71 @@ async function renderHistory(force=false){
       return xB-xA;
     });
   }
+  _histAllEntries=sorted;
+  const hc=document.getElementById('histCount');if(hc)hc.textContent=sorted.length?`(${sorted.length})`:'';
+
+  // Pagination : uniquement la page courante
+  const pageEnd=_histPage*HIST_PAGE_SIZE;
+  const pageSlice=sorted.slice(0,pageEnd);
+
+  // Fetch prix live SEULEMENT pour les tokens visibles (au lieu de 3000)
+  const visibleAddrs=pageSlice.map(([,v])=>v.addr||v.address||'').filter(Boolean);
+  // Réutiliser le cache liveMap si déjà chargé pour ces adresses
+  const toFetch=visibleAddrs.filter(a=>!_histLiveMap[a]);
+  for(let i=0;i<toFetch.length;i+=20){
+    try{
+      const chunk=toFetch.slice(i,i+20);
+      const res=await fetch(`https://api.dexscreener.com/latest/dex/tokens/${chunk.join(',')}`,
+        {signal:AbortSignal.timeout(10000)}).then(r=>r.json());
+      const bestPair={};
+      (res.pairs||[]).forEach(p=>{
+        const a=p.baseToken?.address;if(!a)return;
+        if(!bestPair[a]||(p.volume?.h24||0)>(bestPair[a].volume?.h24||0))bestPair[a]=p;
+      });
+      Object.entries(bestPair).forEach(([a,p])=>{
+        const img=p.info?.imageUrl||p.info?.header||p.baseToken?.info?.imageUrl||'';
+        if(img)_histImageMap[a]=img;
+        const nowMcap=p.marketCap||p.fdv||0;
+        if(!nowMcap){_histLiveMap[a]={now:0,athEst:0};return;}
+        const c24=p.priceChange?.h24||0,c6=p.priceChange?.h6||0,c1=p.priceChange?.h1||0;
+        const MAX_MULT=500;let athEst=nowMcap;const cap=nowMcap*MAX_MULT;
+        if(c24<-3){const est=nowMcap/Math.max(0.001,1+c24/100);if(est<cap)athEst=Math.max(athEst,est);}
+        if(c6 <-3){const est=nowMcap/Math.max(0.001,1+c6/100); if(est<cap)athEst=Math.max(athEst,est);}
+        if(c1 <-3){const est=nowMcap/Math.max(0.001,1+c1/100); if(est<cap)athEst=Math.max(athEst,est);}
+        _histLiveMap[a]={now:nowMcap,athEst:Math.round(athEst),c24,c6,c1};
+      });
+    }catch(e){}
+  }
+  const liveMap=_histLiveMap;
+  const histImageMap=_histImageMap;
+
+  // Mettre à jour ATH uniquement pour les tokens visibles
+  const athUpdates=[];
+  for(const [key,v] of pageSlice){
+    const addr=v.addr||v.address||'';if(!addr)continue;
+    const live=liveMap[addr];
+    const callMcap=v.callMcap||0;
+    const nowMcap=live?.now||0;
+    let bestKnown=Math.max(nowMcap,v.athMcap||0,callMcap);
+    if(bestKnown>0&&bestKnown>(v.athMcap||0)){
+      v.athMcap=bestKnown;
+      athUpdates.push({key,addr,athMcap:bestKnown});
+    }
+  }
+  if(athUpdates.length){
+    athUpdates.forEach(({key,athMcap})=>{
+      fetch(`${FB_URL}/calls/${key}.json`,{method:'PATCH',body:JSON.stringify({athMcap})}).catch(()=>{});
+    });
+    try{
+      const local=JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}');
+      athUpdates.forEach(({addr,athMcap})=>{if(local[addr])local[addr].athMcap=athMcap;});
+      localStorage.setItem(STORAGE_KEY,JSON.stringify(local));
+    }catch(e){}
+  }
+  updateWrStats(calls);
 
   const cards=[];
-  for(const [key,v] of sorted){
+  for(const [key,v] of pageSlice){
     const addr=v.addr||v.address||'';if(!addr)continue;
     const callMcap=v.callMcap||0;
     const athMcap=v.athMcap||callMcap;
@@ -10402,8 +10400,20 @@ async function renderHistory(force=false){
       </div>
     </div>`);
   }
-  const hc=document.getElementById('histCount');if(hc)hc.textContent=cards.length?`(${cards.length})`:'';
-  container.innerHTML=`<div class="scanner-grid">${cards.join('')}</div>`;
+  const hasMore=sorted.length>pageEnd;
+  const remaining=sorted.length-pageEnd;
+  const loadMoreHtml=hasMore?`
+    <div style="grid-column:1/-1;text-align:center;padding:1.5rem 0 0.5rem;">
+      <button onclick="histLoadMore()" style="background:rgba(99,102,241,0.12);border:1px solid rgba(99,102,241,0.3);color:#a5b4fc;padding:0.75rem 2rem;border-radius:10px;font-size:0.9rem;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;transition:all 0.2s;" onmouseover="this.style.background='rgba(99,102,241,0.22)'" onmouseout="this.style.background='rgba(99,102,241,0.12)'">
+        Charger ${Math.min(remaining,HIST_PAGE_SIZE)} de plus <span style="opacity:.6;font-size:.8rem">(${remaining} restants)</span>
+      </button>
+    </div>`:'';
+  container.innerHTML=`<div class="scanner-grid">${cards.join('')}${loadMoreHtml}</div>`;
+}
+
+async function histLoadMore(){
+  _histPage++;
+  await renderHistory(true);
 }
 
 // ============================================================
