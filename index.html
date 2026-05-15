@@ -4308,6 +4308,251 @@ body.view-outils .lp-footer { display: none !important; }
 /* Le device intérieur reste dark — c'est un mockup UI, le contraste est voulu */
 
 /* ═══════════════════════════════════════════════════════════════
+   HALL OF FAME — CARD DECK CAROUSEL
+═══════════════════════════════════════════════════════════════ */
+.lp-hall {
+  padding: 7rem 2rem 8rem;
+  background: #030308;
+  position: relative;
+  overflow: hidden;
+  text-align: center;
+}
+.lp-hall::before {
+  content: '';
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(ellipse 70% 50% at 30% 60%, rgba(99,102,241,0.07) 0%, transparent 70%),
+    radial-gradient(ellipse 50% 40% at 80% 20%, rgba(139,92,246,0.06) 0%, transparent 60%);
+  pointer-events: none;
+}
+.hall-desc {
+  color: rgba(200,200,255,0.45); font-size: 1rem;
+  margin-bottom: 0; margin-top: 0.5rem;
+}
+.hall-stage {
+  display: flex; flex-direction: column; align-items: center; gap: 3rem;
+  margin-top: 4rem; position: relative;
+}
+/* 3D scene */
+.hall-scene {
+  perspective: 1400px;
+  perspective-origin: 50% 45%;
+  display: flex; justify-content: center; align-items: center;
+  height: 540px; width: 100%;
+  position: relative;
+}
+.hall-deck {
+  position: relative;
+  width: 340px; height: 500px;
+  transform-style: preserve-3d;
+}
+/* Individual cards */
+.hall-card {
+  position: absolute; inset: 0;
+  border-radius: 22px;
+  transform-style: preserve-3d;
+  transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.5s ease,
+              opacity 0.4s ease;
+  pointer-events: none;
+}
+/* Active (front) card */
+.hall-card[data-pos="0"] {
+  transform: translate3d(0, 0, 0) rotateY(0deg) scale(1);
+  z-index: 4;
+  pointer-events: auto;
+  box-shadow:
+    0 60px 120px rgba(0,0,0,0.8),
+    0 0 0 1px rgba(99,102,241,0.18),
+    0 0 60px rgba(99,102,241,0.12);
+}
+/* Back cards stacked in perspective */
+.hall-card[data-pos="1"] {
+  transform: translate3d(26px, -14px, -50px) rotateY(-6deg) scale(0.96);
+  z-index: 3;
+}
+.hall-card[data-pos="2"] {
+  transform: translate3d(48px, -26px, -100px) rotateY(-10deg) scale(0.92);
+  z-index: 2;
+}
+.hall-card[data-pos="3"] {
+  transform: translate3d(66px, -36px, -150px) rotateY(-13deg) scale(0.88);
+  z-index: 1;
+}
+/* Exit animation (swipe out to the left) */
+.hall-card.hall-exit {
+  transform: translate3d(-380px, 20px, -60px) rotateY(40deg) rotateZ(-8deg) scale(0.8) !important;
+  opacity: 0 !important;
+  z-index: 10 !important;
+  pointer-events: none !important;
+  transition: transform 0.45s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.35s ease !important;
+}
+/* Entering from back to front */
+.hall-card.hall-enter {
+  animation: hallEnter 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+@keyframes hallEnter {
+  from { transform: translate3d(66px,-36px,-150px) rotateY(-13deg) scale(0.88); opacity: 0.6; }
+  to   { transform: translate3d(0,0,0) rotateY(0deg) scale(1); opacity: 1; }
+}
+
+/* ── Card FRONT face ──────────────────────────────────────────── */
+.hall-front {
+  position: absolute; inset: 0;
+  background: #0d0d1c;
+  border: 1px solid rgba(99,102,241,0.15);
+  border-radius: 22px; overflow: hidden;
+  display: flex; flex-direction: column;
+}
+/* Hide front on back cards */
+.hall-card:not([data-pos="0"]) .hall-front { opacity: 0; pointer-events: none; }
+
+.hall-card-img-wrap { position: relative; height: 210px; flex-shrink: 0; overflow: hidden; }
+.hall-card-img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.hall-card-img-fallback {
+  width: 100%; height: 100%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 5rem;
+  background: linear-gradient(135deg, #0d0d1c, #1a1030);
+}
+.hall-card-img-grad {
+  position: absolute; inset: 0;
+  background: linear-gradient(to bottom, transparent 35%, #0d0d1c 100%);
+}
+.hall-card-img-info {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  padding: 0 18px 14px;
+}
+.hall-card-name {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 1.45rem; font-weight: 800; color: #fff; line-height: 1.1;
+}
+.hall-card-ticker {
+  font-size: 0.78rem; color: rgba(165,180,252,0.65);
+  font-family: 'Space Mono', monospace; margin-top: 2px;
+}
+.hall-mult-badge {
+  position: absolute; top: 14px; right: 14px;
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: #000; font-family: 'Space Mono', monospace;
+  font-weight: 800; font-size: 1.1rem;
+  padding: 0.3rem 0.75rem; border-radius: 9px;
+  box-shadow: 0 0 24px rgba(245,158,11,0.55);
+  white-space: nowrap;
+}
+.hall-card-body {
+  flex: 1; padding: 14px 18px 18px;
+  display: flex; flex-direction: column; gap: 10px;
+}
+.hall-perf-lbl {
+  font-size: 0.65rem; color: rgba(200,200,255,0.4);
+  text-transform: uppercase; letter-spacing: 0.09em; font-weight: 600;
+}
+.hall-perf-val {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 1.8rem; font-weight: 800; color: #00ff88; line-height: 1;
+}
+.hall-progress {
+  height: 4px; background: rgba(255,255,255,0.06);
+  border-radius: 3px; overflow: hidden; margin-top: 2px;
+}
+.hall-progress-fill {
+  height: 100%; border-radius: 3px;
+  background: linear-gradient(90deg, #6366f1, #00ff88);
+  transition: width 0.8s cubic-bezier(0.16,1,0.3,1);
+}
+.hall-progress-marks {
+  display: flex; justify-content: space-between;
+  font-size: 0.58rem; color: rgba(200,200,255,0.25); margin-top: 3px;
+  font-family: 'Space Mono', monospace;
+}
+.hall-mc-row { display: flex; gap: 14px; margin-top: 4px; }
+.hall-mc-cell { flex: 1; }
+.hall-mc-lbl {
+  font-size: 0.62rem; color: rgba(200,200,255,0.38);
+  text-transform: uppercase; letter-spacing: 0.08em;
+}
+.hall-mc-val {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.98rem; font-weight: 700; color: #e8e8ff; margin-top: 3px;
+}
+.hall-card-score {
+  margin-top: auto; display: flex; align-items: center; gap: 6px;
+  font-size: 0.7rem; color: rgba(200,200,255,0.35);
+}
+.hall-card-score-val { color: #a5b4fc; font-weight: 700; font-family: 'Space Mono', monospace; }
+
+/* ── Card BACK face ──────────────────────────────────────────── */
+.hall-back {
+  position: absolute; inset: 0;
+  border-radius: 22px; overflow: hidden;
+  background: linear-gradient(145deg, #0b0b1e 0%, #0f0f2a 40%, #0b0b1e 100%);
+  border: 1px solid rgba(99,102,241,0.1);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
+}
+/* Grid pattern on back */
+.hall-back::before {
+  content: '';
+  position: absolute; inset: 0;
+  background-image: repeating-linear-gradient(0deg, rgba(99,102,241,0.04) 0px, rgba(99,102,241,0.04) 1px, transparent 1px, transparent 28px),
+                    repeating-linear-gradient(90deg, rgba(99,102,241,0.04) 0px, rgba(99,102,241,0.04) 1px, transparent 1px, transparent 28px);
+  border-radius: 22px;
+}
+.hall-back-logo { position: relative; z-index: 1; opacity: 0.35; }
+.hall-back-label {
+  position: relative; z-index: 1;
+  font-family: 'Space Mono', monospace;
+  font-size: 0.65rem; letter-spacing: 0.2em;
+  color: rgba(165,180,252,0.3); text-transform: uppercase;
+}
+/* Hide back on front card */
+.hall-card[data-pos="0"] .hall-back { opacity: 0; }
+
+/* ── Navigation ──────────────────────────────────────────────── */
+.hall-nav {
+  display: flex; align-items: center; gap: 1.8rem;
+}
+.hall-arrow {
+  width: 50px; height: 50px; border-radius: 50%;
+  background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1);
+  color: rgba(200,200,255,0.5);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: all 0.25s;
+}
+.hall-arrow:hover {
+  background: rgba(99,102,241,0.15); border-color: rgba(99,102,241,0.4);
+  color: #a5b4fc; transform: scale(1.08);
+}
+.hall-arrow:active { transform: scale(0.96); }
+.hall-dots { display: flex; gap: 9px; }
+.hall-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: rgba(255,255,255,0.15); border: none;
+  cursor: pointer; transition: all 0.3s; padding: 0;
+}
+.hall-dot.active {
+  background: #818cf8; transform: scale(1.4);
+  box-shadow: 0 0 10px rgba(129,140,248,0.6);
+}
+.hall-loading {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  color: rgba(200,200,255,0.4); font-size: 0.85rem; font-family: 'Space Mono', monospace;
+}
+/* Mobile */
+@media (max-width: 768px) {
+  .lp-hall { padding: 4rem 1rem 5rem; }
+  .hall-scene { height: 480px; perspective: 900px; }
+  .hall-deck { width: 290px; height: 450px; }
+  .hall-card[data-pos="1"] { transform: translate3d(18px,-10px,-40px) rotateY(-5deg) scale(0.96); }
+  .hall-card[data-pos="2"] { transform: translate3d(33px,-18px,-80px) rotateY(-8deg) scale(0.92); }
+  .hall-card[data-pos="3"] { transform: translate3d(46px,-25px,-120px) rotateY(-11deg) scale(0.88); }
+  .hall-card-img-wrap { height: 170px; }
+  .hall-card-name { font-size: 1.2rem; }
+  .hall-mult-badge { font-size: 0.95rem; }
+  .hall-perf-val { font-size: 1.5rem; }
+}
+
+/* ═══════════════════════════════════════════════════════════════
    RESPONSIVE MOBILE — GLOBAL
    Tous les breakpoints mobiles regroupés ici.
 ═══════════════════════════════════════════════════════════════ */
@@ -4795,6 +5040,31 @@ body.view-outils .lp-footer { display: none !important; }
     </div>
   </div>
 </div>
+
+<!-- ═══ HALL OF FAME — CARD DECK ════════════════════════════════ -->
+<section class="lp-hall" id="hallSection">
+  <div class="lp-container hall-hd">
+    <div class="lp-section-label">Hall of Fame</div>
+    <h2 class="lp-section-title">Les calls qui ont<br>tout changé.</h2>
+    <p class="hall-desc">Les 4 plus grosses performances de notre algorithme. Données réelles.</p>
+  </div>
+  <div class="hall-stage">
+    <div class="hall-scene">
+      <div class="hall-deck" id="hallDeck">
+        <div class="hall-loading">⏳ Chargement des meilleures performances...</div>
+      </div>
+    </div>
+    <div class="hall-nav">
+      <button class="hall-arrow" id="hallPrev" onclick="hallCycle(-1)" aria-label="Précédent">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <div class="hall-dots" id="hallDots"></div>
+      <button class="hall-arrow" id="hallNext" onclick="hallCycle(1)" aria-label="Suivant">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+      </button>
+    </div>
+  </div>
+</section>
 
 <!-- ═══ FEATURES ════════════════════════════════════════════════ -->
 <section class="lp-features" id="features">
@@ -12877,11 +13147,203 @@ function toggleMobSection(id) {
   el.classList.toggle('open');
 }
 
+// ═══════════════════════════════════════════════════════════════
+// HALL OF FAME — CARD DECK CAROUSEL
+// ═══════════════════════════════════════════════════════════════
+let _hallCards = [];    // [{name, symbol, xAth, callMcap, athMcap, score, imgUrl, perf}]
+let _hallActive = 0;    // index of front card in _hallCards
+let _hallAnimating = false;
+
+function fmtHallNum(n){
+  if(!n)return '$0';
+  if(n>=1e6)return '$'+(n/1e6).toFixed(1)+'M';
+  if(n>=1e3)return '$'+(n/1e3).toFixed(1)+'K';
+  return '$'+Math.round(n);
+}
+
+function buildHallCardHTML(c, pos){
+  const xDisp = c.xAth>=1000 ? Math.round(c.xAth).toLocaleString('fr-FR')+'x' : c.xAth.toFixed(1)+'x';
+  const perf   = ((c.xAth-1)*100);
+  const perfStr= perf>=1000 ? '↗ +'+Math.round(perf).toLocaleString('fr-FR')+'%' : '↗ +'+perf.toFixed(0)+'%';
+  const barW   = Math.min(100,(c.xAth-1)/3*100).toFixed(0);
+  const fallback = (c.name||c.symbol).slice(0,3).toUpperCase();
+  const imgHtml = c.imgUrl
+    ? `<img class="hall-card-img" src="${c.imgUrl}" alt="${c.name}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`+
+      `<div class="hall-card-img-fallback" style="display:none">${fallback}</div>`
+    : `<div class="hall-card-img-fallback">${fallback}</div>`;
+  const scoreHtml = c.score>0
+    ? `<div class="hall-card-score">Score au call <span class="hall-card-score-val">${c.score} pts</span></div>` : '';
+
+  return `<div class="hall-card" data-pos="${pos}" data-idx="${_hallCards.indexOf(c)}">
+    <div class="hall-front">
+      <div class="hall-card-img-wrap">
+        ${imgHtml}
+        <div class="hall-card-img-grad"></div>
+        <div class="hall-mult-badge">${xDisp} ⚡</div>
+        <div class="hall-card-img-info">
+          <div class="hall-card-name">${c.name||c.symbol}</div>
+          <div class="hall-card-ticker">$${c.symbol}</div>
+        </div>
+      </div>
+      <div class="hall-card-body">
+        <div>
+          <div class="hall-perf-lbl">Performance</div>
+          <div class="hall-perf-val">${perfStr}</div>
+        </div>
+        <div>
+          <div class="hall-progress"><div class="hall-progress-fill" style="width:${barW}%"></div></div>
+          <div class="hall-progress-marks"><span>×1</span><span>×1.5</span><span>×2</span><span>×2.5+</span></div>
+        </div>
+        <div class="hall-mc-row">
+          <div class="hall-mc-cell">
+            <div class="hall-mc-lbl">MC Initial</div>
+            <div class="hall-mc-val">${fmtHallNum(c.callMcap)}</div>
+          </div>
+          <div class="hall-mc-cell">
+            <div class="hall-mc-lbl">MC Max</div>
+            <div class="hall-mc-val">${fmtHallNum(c.athMcap)}</div>
+          </div>
+        </div>
+        ${scoreHtml}
+      </div>
+    </div>
+    <div class="hall-back">
+      <div class="hall-back-logo">
+        <svg width="52" height="52" viewBox="0 0 60 60" fill="none">
+          <circle cx="30" cy="30" r="29" fill="#0a0612" stroke="#6156d9" stroke-width="1.5"/>
+          <circle cx="30" cy="30" r="24" fill="#150f22"/>
+          <ellipse cx="30" cy="34" rx="13" ry="11" fill="#5a4fc7"/>
+          <ellipse cx="30" cy="33" rx="11" ry="9" fill="#6156d9"/>
+          <circle cx="23" cy="24" r="4" fill="#7c6aff"/>
+          <circle cx="37" cy="24" r="4" fill="#7c6aff"/>
+          <circle cx="23" cy="24" r="2" fill="#0a0612"/>
+          <circle cx="37" cy="24" r="2" fill="#0a0612"/>
+          <circle cx="24" cy="23" r=".8" fill="white"/>
+          <circle cx="38" cy="23" r=".8" fill="white"/>
+        </svg>
+      </div>
+      <div class="hall-back-label">MemeScanner</div>
+    </div>
+  </div>`;
+}
+
+function renderHallDeck(){
+  const deck = document.getElementById('hallDeck');
+  if(!deck||!_hallCards.length) return;
+  // 4 cards in the deck, starting from _hallActive
+  const htmls = [];
+  for(let pos=0;pos<4;pos++){
+    const idx = (_hallActive + pos) % _hallCards.length;
+    htmls.push(buildHallCardHTML(_hallCards[idx], pos));
+  }
+  deck.innerHTML = htmls.join('');
+  // Dots
+  const dots = document.getElementById('hallDots');
+  if(dots){
+    dots.innerHTML = _hallCards.map((_,i)=>
+      `<button class="hall-dot${i===_hallActive?' active':''}" onclick="hallGoTo(${i})" aria-label="Call ${i+1}"></button>`
+    ).join('');
+  }
+}
+
+function hallCycle(dir){
+  if(_hallAnimating || _hallCards.length<2) return;
+  _hallAnimating = true;
+
+  if(dir>0){
+    // Next: active card exits, next card enters
+    const frontCard = document.querySelector('.hall-card[data-pos="0"]');
+    if(frontCard){
+      frontCard.classList.add('hall-exit');
+      // After exit anim, advance index and re-render
+      setTimeout(()=>{
+        _hallActive = (_hallActive + 1) % _hallCards.length;
+        renderHallDeck();
+        // Brief "enter" flash on new front card
+        const newFront = document.querySelector('.hall-card[data-pos="0"]');
+        if(newFront){ newFront.classList.add('hall-enter'); setTimeout(()=>newFront.classList.remove('hall-enter'),600); }
+        setTimeout(()=>{ _hallAnimating=false; },100);
+      }, 420);
+    } else { _hallAnimating=false; }
+  } else {
+    // Prev: go back one
+    _hallActive = (_hallActive - 1 + _hallCards.length) % _hallCards.length;
+    renderHallDeck();
+    const newFront = document.querySelector('.hall-card[data-pos="0"]');
+    if(newFront){ newFront.classList.add('hall-enter'); setTimeout(()=>newFront.classList.remove('hall-enter'),600); }
+    setTimeout(()=>{ _hallAnimating=false; },150);
+  }
+}
+
+function hallGoTo(idx){
+  if(_hallAnimating || idx===_hallActive) return;
+  const dir = idx > _hallActive ? 1 : -1;
+  _hallActive = idx;
+  renderHallDeck();
+  const newFront = document.querySelector('.hall-card[data-pos="0"]');
+  if(newFront){ newFront.classList.add('hall-enter'); setTimeout(()=>newFront.classList.remove('hall-enter'),600); }
+}
+
+async function initHallOfFame(){
+  try{
+    const res = await fetch(`${FB_URL}/calls.json`,{signal:AbortSignal.timeout(6000)}).then(r=>r.json());
+    if(!res||typeof res!=='object') return;
+    // Sort by xAth descending, take top 4
+    const top4 = Object.entries(res)
+      .filter(([,v])=>v?.callMcap>0&&v?.athMcap>0)
+      .map(([,v])=>({
+        name:    v.name||v.symbol||'TOKEN',
+        symbol:  v.symbol||'???',
+        xAth:    v.athMcap/v.callMcap,
+        callMcap:v.callMcap,
+        athMcap: v.athMcap,
+        score:   v.callScore||v.score||0,
+        addr:    v.addr||v.address||'',
+        imgUrl:  v.raw?.info?.imageUrl||v.raw?.info?.header||'',
+      }))
+      .sort((a,b)=>b.xAth-a.xAth)
+      .slice(0,4);
+
+    if(!top4.length) return;
+
+    // Fetch images from DexScreener for tokens that don't have one
+    const noImg = top4.filter(c=>!c.imgUrl&&c.addr).map(c=>c.addr);
+    if(noImg.length){
+      try{
+        const r2 = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${noImg.join(',')}`,
+          {signal:AbortSignal.timeout(6000)}).then(r=>r.json());
+        const imgMap={};
+        (r2.pairs||[]).forEach(p=>{
+          const a=p.baseToken?.address; if(!a)return;
+          const img=p.info?.imageUrl||p.info?.header||''; if(img)imgMap[a]=img;
+        });
+        top4.forEach(c=>{ if(imgMap[c.addr])c.imgUrl=imgMap[c.addr]; });
+      }catch(e){}
+    }
+
+    _hallCards = top4;
+    _hallActive = 0;
+    renderHallDeck();
+
+    // Swipe support mobile
+    const deck = document.getElementById('hallDeck');
+    if(deck){
+      let startX=0;
+      deck.addEventListener('touchstart',e=>{ startX=e.touches[0].clientX; },{passive:true});
+      deck.addEventListener('touchend',e=>{
+        const dx=e.changedTouches[0].clientX-startX;
+        if(Math.abs(dx)>50) hallCycle(dx<0?1:-1);
+      },{passive:true});
+    }
+  }catch(e){}
+}
+
 window.addEventListener('DOMContentLoaded',()=>{
   try{
     checkSession();loadReviews();
     document.getElementById('codeModal').addEventListener('click',e=>{if(e.target.id==='codeModal')closeCode();});
     initDailyBox();
+    initHallOfFame();
     fetchKolMentions();
     setInterval(fetchKolMentions, KOL_CACHE_TTL);
 
