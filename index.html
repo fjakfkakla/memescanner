@@ -4307,6 +4307,134 @@ body.view-outils .lp-footer { display: none !important; }
 }
 /* Le device intérieur reste dark — c'est un mockup UI, le contraste est voulu */
 
+/* ═══════════════════════════════════════════════════════════════
+   RESPONSIVE MOBILE — GLOBAL
+   Tous les breakpoints mobiles regroupés ici.
+═══════════════════════════════════════════════════════════════ */
+
+/* ── NAV mobile ─────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  #mainNav { padding: 0 1rem !important; height: 60px !important; }
+  #mainNav .nav-right { display: none !important; }
+  #mainNav .nav-hamburger { display: flex !important; }
+  .nav-mobile-menu { top: 60px; }
+  /* Forcer la couleur du hamburger dans le contexte dark */
+  #mainNav .nav-hamburger span { background: rgba(255,255,255,0.8); }
+}
+
+/* ── HERO V2 (landing index.html) ───────────────────────────────── */
+@media (max-width: 768px) {
+  #hero.hero-v2 { padding: 80px 1.2rem 3rem !important; }
+  .hero-v2-title { font-size: clamp(1.9rem, 7vw, 2.8rem) !important; }
+  .hero-v2-sub { font-size: 0.92rem !important; max-width: 100% !important; }
+  .hero-v2-cta { flex-direction: column; align-items: center; gap: 0.7rem; }
+  .hero-v2-btn-primary, .hero-v2-btn-ghost {
+    width: 100%; max-width: 320px; text-align: center;
+    padding: .8rem 1.4rem !important;
+  }
+  .hero-v2-video-wrap { border-radius: 12px !important; }
+
+  /* ── LANDING HERO (app.html style) ───────────────────────────── */
+  .lp-hero { padding: 2rem 1rem 3rem !important; }
+  .lp-hero-title { font-size: 2.2rem !important; letter-spacing: -0.03em !important; }
+  .lp-hero-sub { font-size: 0.93rem !important; max-width: 100% !important; }
+  .lp-hero-cta { gap: 0.6rem; }
+  .lp-btn-primary, .lp-btn-ghost { padding: .75rem 1.4rem !important; font-size: .92rem !important; }
+  .lp-hero-stats { gap: 0; flex-wrap: wrap; margin-top: 1.2rem; }
+  .lp-hstat { padding: 0.5rem 0.8rem; }
+  .lp-hstat-val { font-size: 1.3rem !important; }
+  .lp-hstat-sep { display: none; }
+  .lp-container { padding: 0 1rem !important; }
+
+  /* ── LANDING SECTIONS ────────────────────────────────────────── */
+  .lp-section-title { font-size: 1.85rem !important; letter-spacing: -0.03em !important; }
+  .lp-features-grid { grid-template-columns: 1fr !important; gap: 0.9rem !important; }
+  .lp-score-cats { grid-template-columns: repeat(2, 1fr) !important; gap: 0.75rem !important; }
+  .lp-testi-grid { grid-template-columns: 1fr !important; }
+  .lp-pricing-grid { grid-template-columns: 1fr !important; }
+  .lp-footer-inner { grid-template-columns: 1fr !important; gap: 2rem; }
+  .lp-footer-links { grid-template-columns: repeat(2, 1fr); }
+  .lp-sm-inner { grid-template-columns: 1fr !important; gap: 2rem !important; }
+  .lp-features, .lp-smartmoney, .lp-scoring,
+  .lp-testimonials, .lp-pricing-preview, .lp-comparison { padding: 3rem 0 !important; }
+  .lp-feat-card { padding: 1.4rem !important; }
+
+  /* ── COMPARISON TABLE ─────────────────────────────────────────── */
+  .lp-cmp-table-wrap, [class*="cmp-table"] { overflow-x: auto !important; -webkit-overflow-scrolling: touch; }
+  .lp-cmp-table { min-width: 480px; }
+
+  /* ── CS DEVICE (live demo scrollable) ────────────────────────── */
+  .cs-sticky { flex-direction: column !important; padding: 2rem 1rem !important; gap: 2rem !important; }
+  .cs-device-outer { width: 100% !important; max-width: 380px; margin: 0 auto; }
+  .cs-header-text { text-align: center; }
+  .cs-big-title { font-size: 1.75rem !important; }
+
+  /* ── TOOLS SECTION ───────────────────────────────────────────── */
+  #tools-section { padding: 3rem 0 !important; }
+  .tools-panel.active { grid-template-columns: 1fr !important; }
+  .tools-header { margin-bottom: 2.5rem; }
+
+  /* ── SCANNER ─────────────────────────────────────────────────── */
+  .scanner-section { padding: 1rem 1rem !important; }
+  .scanner-header { flex-direction: column; align-items: flex-start; gap: 0.6rem; }
+  .scanner-controls { flex-wrap: wrap; gap: 0.5rem; }
+  .scanner-tabs {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    flex-wrap: nowrap !important;
+    scrollbar-width: none;
+    padding-bottom: 1px;
+  }
+  .scanner-tabs::-webkit-scrollbar { display: none; }
+  .s-tab { flex-shrink: 0; padding: .5rem 1rem; font-size: .83rem; }
+  .scanner-grid { grid-template-columns: 1fr !important; gap: 0.9rem; }
+
+  /* ── HISTORY ─────────────────────────────────────────────────── */
+  .history-grid { grid-template-columns: 1fr !important; }
+
+  /* ── RUG GRID ────────────────────────────────────────────────── */
+  .rug-grid { grid-template-columns: 1fr !important; }
+
+  /* ── PAPER TRADER ────────────────────────────────────────────── */
+  #ptOpenTable, #ptClosedTable { overflow-x: auto !important; -webkit-overflow-scrolling: touch; display: block !important; }
+  .pt-stats { grid-template-columns: repeat(3, 1fr) !important; }
+  .pt-stats2 { grid-template-columns: repeat(2, 1fr) !important; }
+
+  /* ── GEMS ────────────────────────────────────────────────────── */
+  .gems-grid { grid-template-columns: 1fr !important; }
+
+  /* ── PRICING MODAL ───────────────────────────────────────────── */
+  .pricing-cards-modal { grid-template-columns: 1fr !important; }
+
+  /* ── MODALS ──────────────────────────────────────────────────── */
+  .modal-inner { max-height: 90vh; overflow-y: auto; padding: 1.2rem !important; }
+  .modal-wrap { align-items: flex-end !important; padding: 0 !important; }
+  .modal-inner { border-radius: 16px 16px 0 0 !important; }
+
+  /* ── APP DIVIDER ─────────────────────────────────────────────── */
+  .app-divider { padding: 1.5rem 1rem; }
+
+  /* ── FLOATING CTA ────────────────────────────────────────────── */
+  #floatingCTA { padding: 0.7rem 1rem; gap: 0.8rem; }
+  .flt-btn { padding: 0.55rem 1.2rem; }
+}
+
+@media (max-width: 480px) {
+  #mainNav { padding: 0 0.75rem !important; }
+  .hero-v2-title { font-size: 1.85rem !important; }
+  .lp-hero-title { font-size: 1.9rem !important; }
+  .lp-section-title { font-size: 1.6rem !important; }
+  .scanner-section { padding: 0.75rem 0.75rem !important; }
+  .lp-score-cats { grid-template-columns: 1fr !important; }
+  .lp-hstat { padding: 0.4rem 0.5rem; }
+  .lp-feat-card { padding: 1.1rem !important; }
+  .lp-hero-stats { row-gap: 0.4rem; }
+  .scanner-title { font-size: 1.05rem !important; }
+  section#scanner { padding-top: 0 !important; }
+  .pt-stats { grid-template-columns: repeat(2, 1fr) !important; }
+  .s-tab { padding: .45rem 0.8rem; font-size: .78rem; }
+}
+
 </style>
 </head>
 <body>
@@ -4384,7 +4512,22 @@ body.view-outils .lp-footer { display: none !important; }
     <span class="nav-user-badge" id="navUserEmail"></span>
     <button class="nav-btn btn-outline" onclick="logout()">Déconnexion</button>
   </div>
+  <!-- Hamburger mobile -->
+  <button class="nav-hamburger" id="navHamburger" onclick="toggleMobileMenu()" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
 </nav>
+
+<!-- ── MOBILE MENU ──────────────────────────────────────────── -->
+<div class="nav-mobile-menu" id="navMobileMenu">
+  <a href="#hero" class="mob-simple-link" onclick="showView('home');closeMobileMenu()">Accueil</a>
+  <a href="#features" class="mob-simple-link" onclick="closeMobileMenu()">Comment ça marche</a>
+  <a href="#pricing-preview" class="mob-simple-link" onclick="closeMobileMenu()">Tarifs</a>
+  <a href="#reviews" class="mob-simple-link" onclick="closeMobileMenu()">Avis</a>
+  <div style="border-top:1px solid #f3f4f6;margin:8px 16px;"></div>
+  <button class="mob-simple-link" style="background:none;border:none;cursor:pointer;text-align:left;width:100%;font-size:.97rem;font-weight:600;color:#111827;" onclick="openLoginModal();closeMobileMenu()">Se connecter</button>
+  <button class="mob-simple-link" style="background:none;border:none;cursor:pointer;text-align:left;width:100%;font-size:.97rem;font-weight:600;color:#4f46e5;" onclick="openSignupModal();closeMobileMenu()">S'inscrire →</button>
+</div>
 
 <div id="landing-wrap">
 
