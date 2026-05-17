@@ -936,6 +936,16 @@ section{scroll-margin-top:64px;}
 }
 
 /* ── SCANNER TABS ───────────────────────────────────────────── */
+/* ── SCANNER FILTERS ───────────────────────────────────────── */
+.scanner-filters{display:flex;align-items:center;gap:.5rem;padding:.6rem 0 .8rem;flex-wrap:wrap;}
+.sf-label{font-size:.7rem;color:rgba(255,255,255,.3);font-family:var(--font-mono);text-transform:uppercase;letter-spacing:.07em;margin-right:.2rem;white-space:nowrap;}
+.sf-chip{padding:.28rem .75rem;border-radius:20px;border:1px solid rgba(97,86,217,.2);background:rgba(97,86,217,.06);color:rgba(169,156,255,.55);font-size:.75rem;font-weight:600;cursor:pointer;transition:.2s;white-space:nowrap;font-family:var(--font);}
+.sf-chip:hover{border-color:rgba(97,86,217,.45);color:#a99cff;background:rgba(97,86,217,.12);}
+.sf-chip.active{border-color:rgba(97,86,217,.7);background:rgba(97,86,217,.22);color:#c5bcff;}
+.sf-chip.kol-active{border-color:rgba(0,255,136,.45);background:rgba(0,255,136,.08);color:#00ff88;}
+.sf-sep{width:1px;height:18px;background:rgba(255,255,255,.08);margin:0 .2rem;flex-shrink:0;}
+.sf-count{font-size:.7rem;color:rgba(255,255,255,.25);font-family:var(--font-mono);margin-left:auto;}
+
 .scanner-tabs{display:flex;gap:0;border-bottom:1px solid rgba(97,86,217,.15);margin-bottom:1.5rem;}
 .s-tab{padding:.6rem 1.5rem;font-size:.95rem;font-weight:600;cursor:pointer;border:none;background:none;color:var(--muted);border-bottom:2px solid transparent;transition:.25s;font-family:var(--font);}
 .s-tab.active{color:var(--purple2);border-bottom-color:var(--purple);}
@@ -5423,6 +5433,19 @@ body.view-outils .lp-footer { display: none !important; }
       </button>
     </div>
   </div>
+  <!-- SCANNER FILTERS -->
+  <div class="scanner-filters" id="scannerFilters">
+    <span class="sf-label">Score min</span>
+    <button class="sf-chip active" id="sfScore0"  onclick="setSfScore(0)">Tous</button>
+    <button class="sf-chip"        id="sfScore55" onclick="setSfScore(55)">55+</button>
+    <button class="sf-chip"        id="sfScore80" onclick="setSfScore(80)">80+</button>
+    <button class="sf-chip"        id="sfScore95" onclick="setSfScore(95)">95+</button>
+    <button class="sf-chip"        id="sfScore110" onclick="setSfScore(110)">110+</button>
+    <div class="sf-sep"></div>
+    <button class="sf-chip" id="sfKolBtn" onclick="toggleSfKol()">≥1 KOL</button>
+    <span class="sf-count" id="sfCountLabel"></span>
+  </div>
+
   <div class="scanner-tabs" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;">
     <div style="display:flex;">
       <button class="s-tab active" id="tabLive" onclick="switchTab('live')">
@@ -6643,6 +6666,8 @@ let isAdminMode = _adminExpiry > Date.now(); // session admin persistée 24h
 let debugModeOn = false;
 let lastScored = [];
 let refreshTimer = null;
+let liveFilterMinScore = 0;
+let liveFilterMinKol = false;
 // dipTracker : addr → { peakMcap, callMcap, firstSeenAt }
 const dipTracker = new Map();
 const callScoreData = new Map();
@@ -10229,6 +10254,8 @@ function switchTab(tab){
   document.getElementById('tabPaperBot').classList.toggle('active',tab==='paperbot');
   document.getElementById('btnResetLive').style.display=tab==='live'?'inline-block':'none';
   document.getElementById('btnResetHistory').style.display=tab==='history'?'inline-block':'none';
+  const sf=document.getElementById('scannerFilters');
+  if(sf)sf.style.display=tab==='live'?'flex':'none';
   if(tab==='history'){_histPage=1;_histLiveMap={};_histImageMap={};renderHistory(true);}
   if(tab==='paperbot')ptRender();
 }
@@ -11424,9 +11451,34 @@ function getScoreEmoji(score){
   return '📡';
 }
 
+function setSfScore(val){
+  liveFilterMinScore=val;
+  document.querySelectorAll('#scannerFilters .sf-chip[id^="sfScore"]').forEach(b=>b.classList.remove('active'));
+  const btn=document.getElementById('sfScore'+val);
+  if(btn)btn.classList.add('active');
+  if(lastScored.length)renderTokenTable(lastScored);
+}
+function toggleSfKol(){
+  liveFilterMinKol=!liveFilterMinKol;
+  const btn=document.getElementById('sfKolBtn');
+  if(btn)btn.classList.toggle('kol-active',liveFilterMinKol);
+  if(lastScored.length)renderTokenTable(lastScored);
+}
+function _applyLiveFilters(tokens){
+  return tokens.filter(t=>{
+    if(liveFilterMinScore>0&&(t.score||0)<liveFilterMinScore)return false;
+    if(liveFilterMinKol&&(t.debug?.kolCount||0)<1)return false;
+    return true;
+  });
+}
 async function renderTokenTable(tokens){
   const content=document.getElementById('scannerContent');
   const cards=[];
+
+  // Appliquer les filtres live
+  tokens=_applyLiveFilters(tokens);
+  const sfLabel=document.getElementById('sfCountLabel');
+  if(sfLabel)sfLabel.textContent=tokens.length?`${tokens.length} token${tokens.length>1?'s':''}`:''
 
   // Fetch prix live pour tous les tokens du Live — même fiabilité que Historique
   const liveAddrs=tokens.map(t=>t.addr).filter(Boolean).slice(0,20);
