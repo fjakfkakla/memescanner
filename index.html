@@ -1712,6 +1712,58 @@ footer{border-top:1px solid var(--border);}
 .scb-cat-row:hover .scb-cat{color:#c5bcff;}
 
 /* ── PAPER BOT ──────────────────────────────────────────────── */
+/* ===== PORTFOLIO TRACKER UI ===== */
+.port-wrap{padding:.5rem 0;}
+.port-connect{display:flex;flex-direction:column;align-items:center;text-align:center;padding:3rem 1rem 2.5rem;gap:.9rem;}
+.port-connect-icon{font-size:2.8rem;filter:drop-shadow(0 0 20px rgba(97,86,217,.4));}
+.port-connect-title{font-family:var(--font-head);font-size:1.5rem;font-weight:700;}
+.port-connect-sub{font-size:.87rem;color:var(--muted);max-width:460px;line-height:1.6;}
+.port-input-row{display:flex;gap:.5rem;width:100%;max-width:580px;flex-wrap:wrap;}
+.port-inp{flex:1;min-width:220px;background:rgba(255,255,255,.05);border:1px solid rgba(97,86,217,.25);border-radius:10px;color:#fff;padding:.6rem 1rem;font-size:.87rem;font-family:var(--font-mono);outline:none;transition:.2s;}
+.port-inp:focus{border-color:rgba(97,86,217,.6);background:rgba(97,86,217,.08);}
+.port-inp::placeholder{color:rgba(255,255,255,.2);}
+.port-btn-analyze{display:flex;align-items:center;gap:.4rem;padding:.6rem 1.2rem;background:linear-gradient(135deg,var(--purple),var(--purple2));border:none;border-radius:10px;color:#fff;font-size:.85rem;font-weight:700;cursor:pointer;white-space:nowrap;transition:.2s;font-family:var(--font);}
+.port-btn-analyze:hover{filter:brightness(1.15);}
+.port-btn-phantom{display:flex;align-items:center;gap:.4rem;padding:.6rem 1rem;background:rgba(171,159,242,.12);border:1px solid rgba(171,159,242,.3);border-radius:10px;color:#AB9FF2;font-size:.85rem;font-weight:700;cursor:pointer;white-space:nowrap;transition:.2s;font-family:var(--font);}
+.port-btn-phantom:hover{background:rgba(171,159,242,.22);border-color:rgba(171,159,242,.55);}
+.port-err{color:#ff4466;font-size:.8rem;font-family:var(--font-mono);}
+.port-results-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:.5rem;}
+.port-addr-label{font-family:var(--font-mono);font-size:.82rem;color:rgba(255,255,255,.55);}
+.port-addr-sub{font-size:.72rem;color:var(--muted);margin-top:.1rem;}
+.port-last-update{font-size:.68rem;color:rgba(255,255,255,.2);font-family:var(--font-mono);}
+.port-btn-sm{padding:.3rem .75rem;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:7px;color:rgba(255,255,255,.5);font-size:.75rem;cursor:pointer;transition:.2s;font-family:var(--font);}
+.port-btn-sm:hover{background:rgba(97,86,217,.15);border-color:rgba(97,86,217,.3);color:#a99cff;}
+.port-btn-back:hover{background:rgba(255,40,80,.12);border-color:rgba(255,40,80,.25);color:#ff4466;}
+.port-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:.75rem;margin-bottom:1.2rem;}
+@media(max-width:600px){.port-stats{grid-template-columns:repeat(2,1fr);}}
+.port-stat{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:.85rem 1rem;}
+.port-stat-lbl{font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:.3rem;}
+.port-stat-val{font-family:var(--font-mono);font-size:1.1rem;font-weight:700;color:#fff;}
+.port-stat-val.green{color:var(--green);}
+.port-sort-bar{display:flex;align-items:center;gap:.4rem;margin-bottom:.8rem;flex-wrap:wrap;}
+.port-sort-lbl{font-size:.7rem;color:rgba(255,255,255,.3);font-family:var(--font-mono);text-transform:uppercase;letter-spacing:.07em;margin-right:.2rem;}
+.port-sort-chip{padding:.22rem .7rem;border-radius:20px;border:1px solid rgba(255,255,255,.1);background:transparent;color:rgba(255,255,255,.35);font-size:.73rem;font-weight:600;cursor:pointer;transition:.2s;font-family:var(--font);}
+.port-sort-chip:hover{border-color:rgba(97,86,217,.4);color:#a99cff;}
+.port-sort-chip.active{border-color:rgba(97,86,217,.6);background:rgba(97,86,217,.18);color:#c5bcff;}
+.port-token-list{display:flex;flex-direction:column;gap:.5rem;}
+.port-row{display:grid;grid-template-columns:36px 1fr auto auto auto;align-items:center;gap:.8rem;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:12px;padding:.7rem 1rem;transition:.2s;cursor:default;}
+.port-row:hover{background:rgba(97,86,217,.06);border-color:rgba(97,86,217,.18);}
+.port-row.scanner-hit{border-left:2px solid var(--purple);background:rgba(97,86,217,.06);}
+@media(max-width:600px){.port-row{grid-template-columns:30px 1fr auto auto;}.port-row .port-col-value{display:none;}}
+.port-token-img{width:34px;height:34px;border-radius:50%;object-fit:cover;background:rgba(97,86,217,.15);flex-shrink:0;}
+.port-token-img-fallback{width:34px;height:34px;border-radius:50%;background:rgba(97,86,217,.15);display:flex;align-items:center;justify-content:center;font-size:.95rem;flex-shrink:0;}
+.port-col-info{min-width:0;}
+.port-token-sym{font-weight:700;font-size:.9rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.port-token-amt{font-size:.72rem;color:var(--muted);font-family:var(--font-mono);}
+.port-col-price{text-align:right;font-family:var(--font-mono);font-size:.82rem;color:rgba(255,255,255,.65);}
+.port-col-change{text-align:right;font-family:var(--font-mono);font-size:.82rem;font-weight:700;min-width:56px;}
+.port-col-change.up{color:var(--green);}
+.port-col-change.down{color:#ff4466;}
+.port-col-change.flat{color:rgba(255,255,255,.35);}
+.port-col-value{text-align:right;font-family:var(--font-mono);font-size:.87rem;font-weight:700;color:#fff;}
+.port-scanner-badge{font-size:.6rem;font-weight:700;background:rgba(97,86,217,.2);border:1px solid rgba(97,86,217,.35);color:#a99cff;border-radius:4px;padding:1px 5px;letter-spacing:.05em;margin-left:.3rem;vertical-align:middle;}
+.port-empty-state{text-align:center;padding:2.5rem 1rem;color:var(--muted);font-size:.87rem;}
+
 /* ===== PAPER TRADING BOT UI ===== */
 .pt-wrap{padding:.5rem 0;}
 .pt-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px;}
@@ -5457,6 +5509,7 @@ body.view-outils .lp-footer { display: none !important; }
       <button class="s-tab" id="tabHistory" onclick="switchTab('history')">Historique <span id="histCount" class="hist-count"></span></button>
       <button class="s-tab" id="tabDebugCA" onclick="switchTab('debugca')" style="display:none">Debug CA</button>
       <button class="s-tab" id="tabPaperBot" onclick="switchTab('paperbot')">Paper Bot <span id="ptOpenCount" class="hist-count"></span></button>
+      <button class="s-tab" id="tabPortfolio" onclick="switchTab('portfolio')">💼 Portfolio</button>
     </div>
     <div style="display:flex;gap:.4rem;padding:.3rem 0;">
       <button class="btn-reset" id="btnResetLive" onclick="resetLive()" style="display:none">Vider Live</button>
@@ -5544,6 +5597,84 @@ body.view-outils .lp-footer { display: none !important; }
       <button class="dca-btn" onclick="debugCA()">🔬 Analyser</button>
     </div>
     <div id="dcaResult"></div>
+  </div>
+</div>
+
+<!-- ── PORTFOLIO TRACKER ── -->
+<div id="panelPortfolio" style="display:none">
+  <div class="port-wrap">
+    <!-- Connect -->
+    <div class="port-connect" id="portConnectArea">
+      <div class="port-connect-icon">💼</div>
+      <div class="port-connect-title">Portfolio Tracker</div>
+      <div class="port-connect-sub">Connecte ton wallet ou colle une adresse Solana pour voir tes positions en temps réel.</div>
+      <div class="port-input-row">
+        <input class="port-inp" id="portWalletInput" placeholder="Adresse Solana (ex: ABC...XYZ)" maxlength="44" onkeydown="if(event.key==='Enter')loadPortfolio()">
+        <button class="port-btn-analyze" onclick="loadPortfolio()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          Analyser
+        </button>
+        <button class="port-btn-phantom" onclick="connectPhantom()" id="portPhantomBtn">
+          <svg width="14" height="14" viewBox="0 0 128 128" fill="none"><rect width="128" height="128" rx="24" fill="#AB9FF2"/><path d="M110.5 64c0 25.7-20.8 46.5-46.5 46.5S17.5 89.7 17.5 64 38.3 17.5 64 17.5 110.5 38.3 110.5 64Z" fill="#fff" fill-opacity=".15"/><path d="M76 52.5c0 6.9-5.6 12.5-12.5 12.5S51 59.4 51 52.5 56.6 40 63.5 40 76 45.6 76 52.5Z" fill="#fff"/><path d="M88 74c0 5.5-4.5 10-10 10H50c-5.5 0-10-4.5-10-10s4.5-10 10-10h28c5.5 0 10 4.5 10 10Z" fill="#fff"/></svg>
+          Phantom
+        </button>
+      </div>
+      <div class="port-err" id="portErr" style="display:none"></div>
+    </div>
+
+    <!-- Results (hidden until loaded) -->
+    <div id="portResults" style="display:none">
+      <!-- Header row with address + refresh -->
+      <div class="port-results-header">
+        <div>
+          <div class="port-addr-label" id="portAddrLabel">—</div>
+          <div class="port-addr-sub" id="portAddrSub">Solana Mainnet</div>
+        </div>
+        <div style="display:flex;gap:.5rem;align-items:center;">
+          <span class="port-last-update" id="portLastUpdate"></span>
+          <button class="port-btn-sm" onclick="loadPortfolio(null,true)">↻ Refresh</button>
+          <button class="port-btn-sm port-btn-back" onclick="portReset()">✕</button>
+        </div>
+      </div>
+
+      <!-- Stats grid -->
+      <div class="port-stats" id="portStatsGrid">
+        <div class="port-stat">
+          <div class="port-stat-lbl">Valeur totale</div>
+          <div class="port-stat-val green" id="portTotalVal">$0</div>
+        </div>
+        <div class="port-stat">
+          <div class="port-stat-lbl">SOL</div>
+          <div class="port-stat-val" id="portSolBal">0 SOL</div>
+        </div>
+        <div class="port-stat">
+          <div class="port-stat-lbl">Tokens</div>
+          <div class="port-stat-val" id="portTokenCount">0</div>
+        </div>
+        <div class="port-stat">
+          <div class="port-stat-lbl">Meilleur 24h</div>
+          <div class="port-stat-val green" id="portBest24h">—</div>
+        </div>
+      </div>
+
+      <!-- Sort bar -->
+      <div class="port-sort-bar">
+        <span class="port-sort-lbl">Trier par</span>
+        <button class="port-sort-chip active" id="psortVal" onclick="portSetSort('value')">Valeur</button>
+        <button class="port-sort-chip" id="psortChange" onclick="portSetSort('change')">24h %</button>
+        <button class="port-sort-chip" id="psortName" onclick="portSetSort('name')">Nom</button>
+        <span style="margin-left:auto;font-size:.7rem;color:rgba(255,255,255,.2);font-family:var(--font-mono)" id="portTokenTotal"></span>
+      </div>
+
+      <!-- Token list -->
+      <div class="port-token-list" id="portTokenList"></div>
+    </div>
+
+    <!-- Loading state -->
+    <div id="portLoading" style="display:none;text-align:center;padding:3rem 1rem;">
+      <div class="spinner"></div>
+      <div style="font-family:var(--font-mono);font-size:.82rem;color:var(--muted);margin-top:.8rem" id="portLoadingMsg">Chargement du wallet...</div>
+    </div>
   </div>
 </div>
 
@@ -10254,6 +10385,8 @@ function switchTab(tab){
   document.getElementById('tabPaperBot').classList.toggle('active',tab==='paperbot');
   document.getElementById('btnResetLive').style.display=tab==='live'?'inline-block':'none';
   document.getElementById('btnResetHistory').style.display=tab==='history'?'inline-block':'none';
+  document.getElementById('panelPortfolio').style.display=tab==='portfolio'?'block':'none';
+  document.getElementById('tabPortfolio').classList.toggle('active',tab==='portfolio');
   const sf=document.getElementById('scannerFilters');
   if(sf)sf.style.display=tab==='live'?'flex':'none';
   if(tab==='history'){_histPage=1;_histLiveMap={};_histImageMap={};renderHistory(true);}
@@ -12796,6 +12929,214 @@ function toggleLang(){
 function openRugPnl(addr,sym,callMcap,athMcap){
   openScannerPnl(addr,sym,callMcap,athMcap,0);
 }
+// ============================================================
+// PORTFOLIO TRACKER
+// ============================================================
+let _portCurrentAddr = null;
+let _portData = [];
+let _portSort = 'value';
+let _portSolPrice = 0;
+
+async function connectPhantom(){
+  try{
+    if(!window.solana||!window.solana.isPhantom){
+      document.getElementById('portErr').textContent='Phantom non détecté — installe l\'extension.';
+      document.getElementById('portErr').style.display='block';
+      return;
+    }
+    const resp=await window.solana.connect();
+    const addr=resp.publicKey.toString();
+    document.getElementById('portWalletInput').value=addr;
+    loadPortfolio(addr);
+  }catch(e){
+    document.getElementById('portErr').textContent='Connexion annulée.';
+    document.getElementById('portErr').style.display='block';
+  }
+}
+
+async function loadPortfolio(addrOverride=null,silent=false){
+  const addr=addrOverride||document.getElementById('portWalletInput').value.trim();
+  if(!addr||addr.length<32){
+    document.getElementById('portErr').textContent='Adresse invalide.';
+    document.getElementById('portErr').style.display='block';
+    return;
+  }
+  document.getElementById('portErr').style.display='none';
+  _portCurrentAddr=addr;
+
+  // Show loading
+  document.getElementById('portConnectArea').style.display='none';
+  document.getElementById('portResults').style.display='none';
+  document.getElementById('portLoading').style.display='block';
+  document.getElementById('portLoadingMsg').textContent='Chargement du wallet...';
+
+  try{
+    // 1) SOL balance
+    const solResp=await fetch(HELIUS_RPC,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({jsonrpc:'2.0',id:1,method:'getBalance',params:[addr]})}).then(r=>r.json());
+    const solLamports=solResp?.result?.value||0;
+    const solBal=solLamports/1e9;
+
+    document.getElementById('portLoadingMsg').textContent='Chargement des tokens SPL...';
+
+    // 2) SPL token accounts
+    const tokResp=await fetch(HELIUS_RPC,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({jsonrpc:'2.0',id:2,method:'getTokenAccountsByOwner',
+        params:[addr,{programId:'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'},{encoding:'jsonParsed'}]})
+    }).then(r=>r.json());
+
+    const accounts=(tokResp?.result?.value||[])
+      .map(a=>({
+        mint:a.account.data.parsed.info.mint,
+        amount:parseFloat(a.account.data.parsed.info.tokenAmount.uiAmountString||0),
+        decimals:a.account.data.parsed.info.tokenAmount.decimals,
+      }))
+      .filter(a=>a.amount>0&&a.decimals>0);
+
+    if(!accounts.length){
+      document.getElementById('portLoading').style.display='none';
+      document.getElementById('portConnectArea').style.display='flex';
+      document.getElementById('portErr').textContent='Aucun token SPL trouvé dans ce wallet.';
+      document.getElementById('portErr').style.display='block';
+      return;
+    }
+
+    document.getElementById('portLoadingMsg').textContent='Récupération des prix...';
+
+    // 3) Prices from DexScreener (batch 30 mints)
+    const mints=accounts.map(a=>a.mint);
+    const priceMap={};
+    for(let i=0;i<mints.length;i+=30){
+      const chunk=mints.slice(i,i+30);
+      try{
+        const ds=await fetch(`https://api.dexscreener.com/latest/dex/tokens/${chunk.join(',')}`,
+          {signal:AbortSignal.timeout(10000)}).then(r=>r.json());
+        const best={};
+        (ds.pairs||[]).forEach(p=>{
+          const a=p.baseToken?.address;if(!a)return;
+          if(p.chainId!=='solana')return;
+          if(!best[a]||(p.liquidity?.usd||0)>(best[a].liquidity?.usd||0))best[a]=p;
+        });
+        Object.entries(best).forEach(([a,p])=>{
+          priceMap[a]={
+            symbol:p.baseToken?.symbol||'?',
+            name:p.baseToken?.name||'',
+            priceUsd:parseFloat(p.priceUsd||0),
+            change24h:parseFloat(p.priceChange?.h24||0),
+            liqUsd:p.liquidity?.usd||0,
+            dexUrl:p.url||`https://dexscreener.com/solana/${a}`,
+            imageUrl:p.info?.imageUrl||'',
+          };
+        });
+      }catch(e){}
+    }
+
+    // 4) SOL price
+    try{
+      const sp=await fetch('https://api.dexscreener.com/latest/dex/tokens/So11111111111111111111111111111111111111112',
+        {signal:AbortSignal.timeout(6000)}).then(r=>r.json());
+      const sBest=(sp.pairs||[]).find(p=>p.chainId==='solana'&&(p.baseToken?.symbol==='SOL'||p.quoteToken?.symbol==='SOL'));
+      if(sBest)_portSolPrice=parseFloat(sBest.priceNative||sBest.priceUsd||0)||parseFloat(sBest.priceUsd||0);
+      if(!_portSolPrice){
+        const r2=await fetch('https://price.jup.ag/v4/price?ids=SOL',{signal:AbortSignal.timeout(5000)}).then(r=>r.json());
+        _portSolPrice=r2?.data?.SOL?.price||0;
+      }
+    }catch(e){_portSolPrice=150;}
+
+    // 5) Build positions
+    const scannerAddrs=new Set(lastScored.map(t=>t.addr));
+    _portData=accounts.map(a=>{
+      const p=priceMap[a.mint]||{};
+      const valueUsd=(p.priceUsd||0)*a.amount;
+      return{
+        mint:a.mint,
+        symbol:p.symbol||a.mint.slice(0,4)+'...',
+        name:p.name||'',
+        amount:a.amount,
+        priceUsd:p.priceUsd||0,
+        change24h:p.change24h||0,
+        valueUsd,
+        liqUsd:p.liqUsd||0,
+        dexUrl:p.dexUrl||`https://dexscreener.com/solana/${a.mint}`,
+        imageUrl:p.imageUrl||'',
+        inScanner:scannerAddrs.has(a.mint),
+      };
+    }).filter(a=>a.priceUsd>0||a.valueUsd>0);
+
+    // 6) Render
+    const solValueUsd=solBal*_portSolPrice;
+    const totalUsd=_portData.reduce((s,t)=>s+t.valueUsd,0)+solValueUsd;
+    const best=_portData.filter(t=>t.change24h>0).sort((a,b)=>b.change24h-a.change24h)[0];
+
+    document.getElementById('portTotalVal').textContent='$'+fmtNum(totalUsd);
+    document.getElementById('portSolBal').textContent=solBal.toFixed(3)+' SOL'+(solValueUsd>0?' (~$'+fmtNum(solValueUsd)+')':'');
+    document.getElementById('portTokenCount').textContent=_portData.length;
+    document.getElementById('portBest24h').textContent=best?`${best.symbol} +${best.change24h.toFixed(1)}%`:'—';
+    document.getElementById('portBest24h').style.color=best?'var(--green)':'rgba(255,255,255,.4)';
+    document.getElementById('portAddrLabel').textContent=addr.slice(0,6)+'...'+addr.slice(-6);
+    document.getElementById('portTokenTotal').textContent=`${_portData.length} positions`;
+    document.getElementById('portLastUpdate').textContent='Mis à jour '+new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+
+    portRenderList();
+
+    document.getElementById('portLoading').style.display='none';
+    document.getElementById('portResults').style.display='block';
+  }catch(e){
+    document.getElementById('portLoading').style.display='none';
+    document.getElementById('portConnectArea').style.display='flex';
+    document.getElementById('portErr').textContent='Erreur : '+e.message;
+    document.getElementById('portErr').style.display='block';
+  }
+}
+
+function portSetSort(s){
+  _portSort=s;
+  document.querySelectorAll('.port-sort-chip').forEach(b=>b.classList.remove('active'));
+  const btn=document.getElementById('psort'+s.charAt(0).toUpperCase()+s.slice(1));
+  if(btn)btn.classList.add('active');
+  portRenderList();
+}
+
+function portRenderList(){
+  const list=[..._portData];
+  if(_portSort==='value')list.sort((a,b)=>b.valueUsd-a.valueUsd);
+  else if(_portSort==='change')list.sort((a,b)=>b.change24h-a.change24h);
+  else list.sort((a,b)=>a.symbol.localeCompare(b.symbol));
+
+  const container=document.getElementById('portTokenList');
+  if(!list.length){container.innerHTML='<div class="port-empty-state">Aucune position trouvée.</div>';return;}
+  container.innerHTML=list.map(t=>{
+    const chgCls=t.change24h>0.5?'up':t.change24h<-0.5?'down':'flat';
+    const chgStr=t.change24h>=0?'+'+t.change24h.toFixed(2)+'%':t.change24h.toFixed(2)+'%';
+    const priceStr=t.priceUsd>=0.01?'$'+t.priceUsd.toFixed(4):'$'+t.priceUsd.toExponential(2);
+    const valStr=t.valueUsd>0?'$'+fmtNum(t.valueUsd):'—';
+    const amtStr=t.amount>=1000?fmtNum(t.amount):t.amount.toFixed(2);
+    const img=t.imageUrl?
+      `<img class="port-token-img" src="${t.imageUrl}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div class="port-token-img-fallback" style="display:none">🪙</div>`:
+      `<div class="port-token-img-fallback">🪙</div>`;
+    const scanBadge=t.inScanner?'<span class="port-scanner-badge">SCAN</span>':'';
+    return`<div class="port-row${t.inScanner?' scanner-hit':''}" onclick="window.open('${t.dexUrl}','_blank')">
+      <div>${img}</div>
+      <div class="port-col-info">
+        <div class="port-token-sym">${t.symbol}${scanBadge}</div>
+        <div class="port-token-amt">${amtStr} tokens</div>
+      </div>
+      <div class="port-col-price">${priceStr}</div>
+      <div class="port-col-change ${chgCls}">${chgStr}</div>
+      <div class="port-col-value">${valStr}</div>
+    </div>`;
+  }).join('');
+}
+
+function portReset(){
+  _portCurrentAddr=null;_portData=[];
+  document.getElementById('portConnectArea').style.display='flex';
+  document.getElementById('portResults').style.display='none';
+  document.getElementById('portLoading').style.display='none';
+  document.getElementById('portWalletInput').value='';
+  document.getElementById('portErr').style.display='none';
+}
+
 function closePnl(){document.getElementById('pnlOverlay').classList.remove('open');}
 function pnlCopyAddr(){
   const a=window._pnlCurrentAddr; if(!a)return;
