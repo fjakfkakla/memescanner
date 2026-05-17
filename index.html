@@ -1763,6 +1763,7 @@ footer{border-top:1px solid var(--border);}
 .port-col-value{text-align:right;font-family:var(--font-mono);font-size:.87rem;font-weight:700;color:#fff;}
 .port-scanner-badge{font-size:.6rem;font-weight:700;background:rgba(97,86,217,.2);border:1px solid rgba(97,86,217,.35);color:#a99cff;border-radius:4px;padding:1px 5px;letter-spacing:.05em;margin-left:.3rem;vertical-align:middle;}
 .port-empty-state{text-align:center;padding:2.5rem 1rem;color:var(--muted);font-size:.87rem;}
+.port-row-dim{opacity:.45;}
 
 /* ===== PAPER TRADING BOT UI ===== */
 .pt-wrap{padding:.5rem 0;}
@@ -12971,39 +12972,48 @@ async function loadPortfolio(addrOverride=null,silent=false){
   document.getElementById('portLoadingMsg').textContent='Chargement du wallet...';
 
   try{
-    // 1) SOL balance
-    const solResp=await fetch(HELIUS_RPC,{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({jsonrpc:'2.0',id:1,method:'getBalance',params:[addr]})}).then(r=>r.json());
-    const solLamports=solResp?.result?.value||0;
-    const solBal=solLamports/1e9;
+    // 1) SOL balance + SPL tokens via Helius Balances REST API (plus fiable que RPC)
+    let solBal=0;
+    let accounts=[];
+    try{
+      const balRes=await fetch(`https://api.helius.xyz/v0/addresses/${addr}/balances?api-key=${HELIUS_KEY}`,
+        {signal:AbortSignal.timeout(12000)}).then(r=>r.json());
+      solBal=(balRes?.nativeBalance||0)/1e9;
+      accounts=(balRes?.tokens||[])
+        .filter(t=>t.amount>0)
+        .map(t=>({
+          mint:t.mint,
+          amount:t.amount/Math.pow(10,t.decimals||0),
+          decimals:t.decimals||0,
+        }))
+        .filter(a=>a.amount>0&&!(a.decimals===0&&a.amount===1)); // exclure NFTs (decimals=0, amount=1)
+    }catch(e){
+      // fallback: RPC public
+      document.getElementById('portLoadingMsg').textContent='Fallback RPC...';
+      const solResp=await fetch(PUBLIC_RPC,{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({jsonrpc:'2.0',id:1,method:'getBalance',params:[addr]}),signal:AbortSignal.timeout(8000)}).then(r=>r.json());
+      solBal=(solResp?.result?.value||0)/1e9;
 
-    document.getElementById('portLoadingMsg').textContent='Chargement des tokens SPL...';
-
-    // 2) SPL token accounts
-    const tokResp=await fetch(HELIUS_RPC,{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({jsonrpc:'2.0',id:2,method:'getTokenAccountsByOwner',
-        params:[addr,{programId:'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'},{encoding:'jsonParsed'}]})
-    }).then(r=>r.json());
-
-    const accounts=(tokResp?.result?.value||[])
-      .map(a=>({
-        mint:a.account.data.parsed.info.mint,
-        amount:parseFloat(a.account.data.parsed.info.tokenAmount.uiAmountString||0),
-        decimals:a.account.data.parsed.info.tokenAmount.decimals,
-      }))
-      .filter(a=>a.amount>0&&a.decimals>0);
-
-    if(!accounts.length){
-      document.getElementById('portLoading').style.display='none';
-      document.getElementById('portConnectArea').style.display='flex';
-      document.getElementById('portErr').textContent='Aucun token SPL trouvé dans ce wallet.';
-      document.getElementById('portErr').style.display='block';
-      return;
+      const tokResp=await fetch(PUBLIC_RPC,{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({jsonrpc:'2.0',id:2,method:'getTokenAccountsByOwner',
+          params:[addr,{programId:'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'},{encoding:'jsonParsed'}]}),
+        signal:AbortSignal.timeout(12000)}).then(r=>r.json());
+      if(tokResp?.error)throw new Error('RPC: '+tokResp.error.message);
+      accounts=(tokResp?.result?.value||[])
+        .map(a=>{
+          const info=a.account?.data?.parsed?.info?.tokenAmount;
+          return{
+            mint:a.account.data.parsed.info.mint,
+            amount:parseFloat(info?.uiAmountString||0)||info?.uiAmount||0,
+            decimals:info?.decimals??0,
+          };
+        })
+        .filter(a=>a.amount>0&&!(a.decimals===0&&a.amount===1));
     }
 
     document.getElementById('portLoadingMsg').textContent='Récupération des prix...';
 
-    // 3) Prices from DexScreener (batch 30 mints)
+    // 2) Prices from DexScreener (batch 30 mints)
     const mints=accounts.map(a=>a.mint);
     const priceMap={};
     for(let i=0;i<mints.length;i+=30){
@@ -13031,26 +13041,20 @@ async function loadPortfolio(addrOverride=null,silent=false){
       }catch(e){}
     }
 
-    // 4) SOL price
+    // 3) SOL price
     try{
-      const sp=await fetch('https://api.dexscreener.com/latest/dex/tokens/So11111111111111111111111111111111111111112',
-        {signal:AbortSignal.timeout(6000)}).then(r=>r.json());
-      const sBest=(sp.pairs||[]).find(p=>p.chainId==='solana'&&(p.baseToken?.symbol==='SOL'||p.quoteToken?.symbol==='SOL'));
-      if(sBest)_portSolPrice=parseFloat(sBest.priceNative||sBest.priceUsd||0)||parseFloat(sBest.priceUsd||0);
-      if(!_portSolPrice){
-        const r2=await fetch('https://price.jup.ag/v4/price?ids=SOL',{signal:AbortSignal.timeout(5000)}).then(r=>r.json());
-        _portSolPrice=r2?.data?.SOL?.price||0;
-      }
-    }catch(e){_portSolPrice=150;}
+      const r2=await fetch('https://price.jup.ag/v4/price?ids=SOL',{signal:AbortSignal.timeout(5000)}).then(r=>r.json());
+      _portSolPrice=r2?.data?.SOL?.price||0;
+    }catch(e){_portSolPrice=_portSolPrice||150;}
 
-    // 5) Build positions
+    // 4) Build positions (garde tous les tokens même sans prix DexScreener)
     const scannerAddrs=new Set(lastScored.map(t=>t.addr));
     _portData=accounts.map(a=>{
       const p=priceMap[a.mint]||{};
       const valueUsd=(p.priceUsd||0)*a.amount;
       return{
         mint:a.mint,
-        symbol:p.symbol||a.mint.slice(0,4)+'...',
+        symbol:p.symbol||a.mint.slice(0,6)+'…',
         name:p.name||'',
         amount:a.amount,
         priceUsd:p.priceUsd||0,
@@ -13060,10 +13064,20 @@ async function loadPortfolio(addrOverride=null,silent=false){
         dexUrl:p.dexUrl||`https://dexscreener.com/solana/${a.mint}`,
         imageUrl:p.imageUrl||'',
         inScanner:scannerAddrs.has(a.mint),
+        noPrice:!p.priceUsd,
       };
-    }).filter(a=>a.priceUsd>0||a.valueUsd>0);
+    });
 
-    // 6) Render
+    // Pas de tokens du tout
+    if(!_portData.length&&solBal<0.001){
+      document.getElementById('portLoading').style.display='none';
+      document.getElementById('portConnectArea').style.display='flex';
+      document.getElementById('portErr').textContent='Wallet vide ou introuvable.';
+      document.getElementById('portErr').style.display='block';
+      return;
+    }
+
+    // Render
     const solValueUsd=solBal*_portSolPrice;
     const totalUsd=_portData.reduce((s,t)=>s+t.valueUsd,0)+solValueUsd;
     const best=_portData.filter(t=>t.change24h>0).sort((a,b)=>b.change24h-a.change24h)[0];
@@ -13103,29 +13117,39 @@ function portRenderList(){
   else if(_portSort==='change')list.sort((a,b)=>b.change24h-a.change24h);
   else list.sort((a,b)=>a.symbol.localeCompare(b.symbol));
 
+  // tokens avec prix en premier, puis sans prix (poussière/inconnue)
+  list.sort((a,b)=>{
+    if(_portSort==='value')return (b.valueUsd||0)-(a.valueUsd||0);
+    if(_portSort==='change')return (b.change24h||0)-(a.change24h||0);
+    return a.symbol.localeCompare(b.symbol);
+  });
   const container=document.getElementById('portTokenList');
   if(!list.length){container.innerHTML='<div class="port-empty-state">Aucune position trouvée.</div>';return;}
-  container.innerHTML=list.map(t=>{
+  const withPrice=list.filter(t=>!t.noPrice);
+  const noPrice=list.filter(t=>t.noPrice);
+  const renderRow=t=>{
     const chgCls=t.change24h>0.5?'up':t.change24h<-0.5?'down':'flat';
     const chgStr=t.change24h>=0?'+'+t.change24h.toFixed(2)+'%':t.change24h.toFixed(2)+'%';
-    const priceStr=t.priceUsd>=0.01?'$'+t.priceUsd.toFixed(4):'$'+t.priceUsd.toExponential(2);
+    const priceStr=t.priceUsd>0?(t.priceUsd>=0.01?'$'+t.priceUsd.toFixed(4):'$'+t.priceUsd.toExponential(2)):'—';
     const valStr=t.valueUsd>0?'$'+fmtNum(t.valueUsd):'—';
     const amtStr=t.amount>=1000?fmtNum(t.amount):t.amount.toFixed(2);
     const img=t.imageUrl?
       `<img class="port-token-img" src="${t.imageUrl}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div class="port-token-img-fallback" style="display:none">🪙</div>`:
       `<div class="port-token-img-fallback">🪙</div>`;
     const scanBadge=t.inScanner?'<span class="port-scanner-badge">SCAN</span>':'';
-    return`<div class="port-row${t.inScanner?' scanner-hit':''}" onclick="window.open('${t.dexUrl}','_blank')">
+    return`<div class="port-row${t.inScanner?' scanner-hit':''}${t.noPrice?' port-row-dim':''}" onclick="window.open('${t.dexUrl}','_blank')">
       <div>${img}</div>
       <div class="port-col-info">
         <div class="port-token-sym">${t.symbol}${scanBadge}</div>
         <div class="port-token-amt">${amtStr} tokens</div>
       </div>
       <div class="port-col-price">${priceStr}</div>
-      <div class="port-col-change ${chgCls}">${chgStr}</div>
+      <div class="port-col-change ${chgCls}">${t.noPrice?'—':chgStr}</div>
       <div class="port-col-value">${valStr}</div>
     </div>`;
-  }).join('');
+  };
+  container.innerHTML=withPrice.map(renderRow).join('')
+    +(noPrice.length?`<div style="font-size:.68rem;color:rgba(255,255,255,.2);font-family:var(--font-mono);text-transform:uppercase;letter-spacing:.07em;padding:.6rem .2rem .3rem;">Tokens sans prix (${noPrice.length})</div>`+noPrice.map(renderRow).join(''):'');
 }
 
 function portReset(){
