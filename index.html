@@ -1712,6 +1712,103 @@ footer{border-top:1px solid var(--border);}
 .scb-cat-row:hover .scb-cat{color:#c5bcff;}
 
 /* ── PAPER BOT ──────────────────────────────────────────────── */
+/* ===== FORMATION UI ===== */
+#formation-section{display:none;min-height:100vh;background:var(--bg);padding:0;}
+body.view-formation #formation-section{display:block!important;}
+body.view-formation #landing-wrap,body.view-formation #app-top,
+body.view-formation section#scanner,body.view-formation section#rugsnip,
+body.view-formation section#pricing,body.view-formation section#reviews,
+body.view-formation .lp-footer{display:none!important;}
+body.view-formation{background:#080a12!important;}
+
+.form-layout{display:grid;grid-template-columns:300px 1fr;min-height:calc(100vh - 60px);}
+@media(max-width:860px){.form-layout{grid-template-columns:1fr;}}
+
+/* Sidebar */
+.form-sidebar{background:#0d0f1a;border-right:1px solid rgba(97,86,217,.15);position:sticky;top:60px;height:calc(100vh - 60px);overflow-y:auto;padding:0;}
+.form-sidebar::-webkit-scrollbar{width:3px;}
+.form-sidebar::-webkit-scrollbar-thumb{background:rgba(97,86,217,.3);border-radius:2px;}
+.form-sidebar-header{padding:1.4rem 1.2rem 1rem;border-bottom:1px solid rgba(97,86,217,.12);}
+.form-sidebar-back{display:flex;align-items:center;gap:.4rem;font-size:.75rem;color:rgba(255,255,255,.3);cursor:pointer;margin-bottom:.9rem;transition:.2s;}
+.form-sidebar-back:hover{color:#a5b4fc;}
+.form-sidebar-title{font-family:var(--font-head);font-size:1rem;font-weight:700;margin-bottom:.7rem;}
+.form-global-row{display:flex;align-items:center;gap:.6rem;}
+.form-global-bar{flex:1;height:5px;background:rgba(255,255,255,.07);border-radius:3px;overflow:hidden;}
+.form-global-fill{height:100%;background:linear-gradient(90deg,var(--purple),var(--purple2));border-radius:3px;transition:width .5s;}
+.form-global-pct{font-size:.72rem;font-family:var(--font-mono);color:rgba(255,255,255,.4);white-space:nowrap;}
+
+.form-module-block{border-bottom:1px solid rgba(255,255,255,.04);}
+.form-module-hd{display:flex;align-items:center;gap:.7rem;padding:.9rem 1.2rem;cursor:pointer;transition:.15s;user-select:none;}
+.form-module-hd:hover{background:rgba(97,86,217,.06);}
+.form-module-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;}
+.form-module-meta{flex:1;min-width:0;}
+.form-module-name{font-size:.82rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.form-module-progress{font-size:.65rem;color:rgba(255,255,255,.3);font-family:var(--font-mono);margin-top:2px;}
+.form-module-chevron{font-size:.65rem;color:rgba(255,255,255,.25);transition:transform .2s;flex-shrink:0;}
+.form-module-block.open .form-module-chevron{transform:rotate(180deg);}
+.form-module-bar{height:3px;margin:0 1.2rem .5rem;background:rgba(255,255,255,.06);border-radius:2px;overflow:hidden;}
+.form-module-bar-fill{height:100%;border-radius:2px;transition:width .5s;}
+
+.form-lessons-list{padding:0 .6rem .5rem;}
+.form-lesson-btn{display:flex;align-items:center;gap:.6rem;width:100%;padding:.5rem .7rem;border-radius:8px;border:none;background:transparent;color:rgba(255,255,255,.5);font-size:.8rem;cursor:pointer;text-align:left;transition:.15s;font-family:var(--font);}
+.form-lesson-btn:hover{background:rgba(97,86,217,.1);color:#c5bcff;}
+.form-lesson-btn.active{background:rgba(97,86,217,.18);color:#fff;font-weight:600;}
+.form-lesson-btn.done .form-lesson-check{opacity:1;color:var(--green);}
+.form-lesson-check{font-size:.7rem;opacity:.2;transition:.2s;flex-shrink:0;}
+.form-lesson-num{font-size:.65rem;font-family:var(--font-mono);color:rgba(255,255,255,.2);min-width:14px;}
+.form-lesson-title{flex:1;}
+.form-lesson-dur{font-size:.62rem;color:rgba(255,255,255,.2);font-family:var(--font-mono);white-space:nowrap;}
+
+/* Main content */
+.form-main{padding:2.5rem 3rem;max-width:860px;}
+@media(max-width:860px){.form-main{padding:1.5rem 1.2rem;}}
+
+/* Welcome screen */
+.form-welcome{display:flex;flex-direction:column;align-items:center;text-align:center;padding:3rem 1rem;}
+.form-welcome-icon{font-size:3.5rem;margin-bottom:1rem;filter:drop-shadow(0 0 30px rgba(97,86,217,.5));}
+.form-welcome-title{font-family:var(--font-head);font-size:2rem;font-weight:700;margin-bottom:.7rem;}
+.form-welcome-sub{font-size:.97rem;color:var(--muted);max-width:480px;line-height:1.7;margin-bottom:2.5rem;}
+.form-stat-row{display:flex;gap:2rem;margin-bottom:2.5rem;}
+.form-stat{text-align:center;}
+.form-stat-num{font-family:var(--font-head);font-size:1.8rem;font-weight:700;color:#a5b4fc;}
+.form-stat-lbl{font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;}
+.form-start-btn{padding:.75rem 2rem;background:linear-gradient(135deg,var(--purple),var(--purple2));color:#fff;border:none;border-radius:12px;font-size:.97rem;font-weight:700;cursor:pointer;font-family:var(--font);transition:.2s;box-shadow:0 4px 20px rgba(97,86,217,.3);}
+.form-start-btn:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(97,86,217,.45);}
+
+/* Lesson view */
+.form-lesson-header{margin-bottom:2rem;padding-bottom:1.5rem;border-bottom:1px solid rgba(255,255,255,.06);}
+.form-lesson-breadcrumb{font-size:.72rem;color:rgba(255,255,255,.3);font-family:var(--font-mono);margin-bottom:.6rem;text-transform:uppercase;letter-spacing:.05em;}
+.form-lesson-h1{font-family:var(--font-head);font-size:1.7rem;font-weight:700;margin-bottom:.7rem;line-height:1.2;}
+.form-lesson-badges{display:flex;gap:.5rem;flex-wrap:wrap;}
+.form-badge{padding:.22rem .75rem;border-radius:20px;font-size:.72rem;font-weight:700;border:1px solid;}
+.form-badge.debutant{background:rgba(0,255,136,.08);color:#00ff88;border-color:rgba(0,255,136,.2);}
+.form-badge.intermediaire{background:rgba(97,86,217,.1);color:#a5b4fc;border-color:rgba(97,86,217,.25);}
+.form-badge.avance{background:rgba(255,109,0,.1);color:#ff9500;border-color:rgba(255,109,0,.25);}
+.form-badge.dur{background:rgba(255,255,255,.06);color:rgba(255,255,255,.4);border-color:rgba(255,255,255,.1);}
+
+.form-body{font-size:.95rem;line-height:1.8;color:rgba(255,255,255,.82);}
+.form-body h3{font-family:var(--font-head);font-size:1.15rem;font-weight:700;color:#fff;margin:2rem 0 .7rem;}
+.form-body h3:first-child{margin-top:0;}
+.form-body p{margin:0 0 1rem;}
+.form-body ul{margin:0 0 1rem;padding-left:1.4rem;display:flex;flex-direction:column;gap:.35rem;}
+.form-body li{color:rgba(255,255,255,.75);}
+.form-tip{background:rgba(0,255,136,.06);border:1px solid rgba(0,255,136,.18);border-left:3px solid #00ff88;border-radius:10px;padding:1rem 1.2rem;margin:1.2rem 0;}
+.form-tip::before{content:'💡 ';font-size:.9rem;}
+.form-warn{background:rgba(255,68,102,.06);border:1px solid rgba(255,68,102,.18);border-left:3px solid #ff4466;border-radius:10px;padding:1rem 1.2rem;margin:1.2rem 0;}
+.form-warn::before{content:'⚠️ ';font-size:.9rem;}
+.form-key{background:rgba(97,86,217,.07);border:1px solid rgba(97,86,217,.2);border-radius:12px;padding:1.2rem 1.4rem;margin:1.5rem 0;}
+.form-key-title{font-size:.72rem;font-weight:700;color:#a5b4fc;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.6rem;}
+.form-key ul{margin:0;padding-left:1.2rem;gap:.25rem;}
+.form-key li{font-size:.88rem;color:rgba(200,190,255,.8);}
+
+.form-nav-bar{display:flex;align-items:center;justify-content:space-between;margin-top:2.5rem;padding-top:1.5rem;border-top:1px solid rgba(255,255,255,.06);gap:1rem;flex-wrap:wrap;}
+.form-nav-btn{padding:.6rem 1.3rem;border-radius:10px;border:1px solid rgba(255,255,255,.1);background:transparent;color:rgba(255,255,255,.5);font-size:.85rem;font-weight:600;cursor:pointer;transition:.2s;font-family:var(--font);}
+.form-nav-btn:hover{border-color:rgba(97,86,217,.4);color:#a5b4fc;}
+.form-complete-btn{padding:.65rem 1.5rem;background:linear-gradient(135deg,var(--purple),var(--purple2));color:#fff;border:none;border-radius:10px;font-size:.87rem;font-weight:700;cursor:pointer;transition:.2s;font-family:var(--font);box-shadow:0 2px 12px rgba(97,86,217,.25);}
+.form-complete-btn:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(97,86,217,.4);}
+.form-complete-btn.done{background:rgba(0,255,136,.12);border:1px solid rgba(0,255,136,.3);color:#00ff88;box-shadow:none;}
+.form-complete-btn.done:hover{background:rgba(0,255,136,.18);}
+
 /* ===== PORTFOLIO TRACKER UI ===== */
 .port-wrap{padding:.5rem 0;}
 .port-connect{display:flex;flex-direction:column;align-items:center;text-align:center;padding:3rem 1rem 2.5rem;gap:.9rem;}
@@ -4818,6 +4915,7 @@ body.view-outils .lp-footer { display: none !important; }
   <div class="nav-right nav-auth-bar" id="navAuth" style="display:none">
     <a class="nav-tool-link" onclick="scrollToSection('scanner')">Scanner</a>
     <a class="nav-tool-link" onclick="scrollToSection('rugsnip')">Rug Sniping</a>
+    <a class="nav-tool-link" onclick="showFormation()" style="color:#a5b4fc;font-weight:700;">🎓 Formation</a>
     <span class="nav-user-badge" id="navUserEmail"></span>
     <button class="nav-btn btn-outline" onclick="logout()">Déconnexion</button>
   </div>
@@ -13161,6 +13259,391 @@ function portReset(){
   document.getElementById('portErr').style.display='none';
 }
 
+// ============================================================
+// FORMATION
+// ============================================================
+const FORMATION_DATA = [
+  {
+    id:'m1', title:'Les bases des Memecoins', icon:'🎓', color:'#6366f1',
+    lessons:[
+      { id:'l1', title:"Qu'est-ce qu'un memecoin ?", dur:'5 min', level:'debutant',
+        content:`<h3>La définition</h3>
+<p>Un memecoin est un token crypto dont la valeur repose principalement sur la <strong>viralité, la communauté et la spéculation</strong> plutôt que sur une utilité technique. Contrairement à Bitcoin ou Ethereum, un memecoin n'a pas de cas d'usage précis — son seul carburant, c'est l'attention collective.</p>
+<div class="form-tip">Les memecoins les plus performants suivent tous un schéma similaire : un narrative fort (chien, grenouille, personnage viral), une communauté qui s'emballe sur X/Twitter, et un timing parfait avec le marché.</div>
+<h3>Pourquoi Solana ?</h3>
+<p>Solana est devenu <strong>la blockchain de référence pour les memecoins</strong> grâce à ses frais ultra-bas (moins de 0,001$ par transaction) et ses confirmations en moins d'une seconde. Sur Ethereum, les frais de gas rendaient impossible le trading de petites positions.</p>
+<ul><li>Frais quasi nuls → les dégens peuvent entrer/sortir librement</li><li>Vitesse → les pumps se font en minutes, pas en heures</li><li>Pump.fun → création de token en 2 clics pour 0,02 SOL</li></ul>
+<h3>Le cycle de vie d'un memecoin</h3>
+<p>La majorité des memecoins suivent un cycle prévisible :</p>
+<ul><li><strong>Launch</strong> — création sur Pump.fun, premiers holders, pas de liquidité</li><li><strong>Bonding curve</strong> — prix monte au fur et à mesure des achats sur Pump.fun</li><li><strong>Migration Raydium</strong> — seuil de 69K$ MC → liquidité verrouillée, DEX listing</li><li><strong>Pump</strong> — attention X/Twitter, volume explosif, nouveaux holders</li><li><strong>Dump</strong> — les early holders vendent, les retardataires achètent le top</li></ul>
+<div class="form-warn">90% des memecoins finissent à 0. Le jeu, c'est d'être dans les 10% gagnants grâce à l'analyse, pas à la chance.</div>
+<div class="form-key"><div class="form-key-title">Points clés</div><ul><li>Un memecoin = pari sur la viralité, pas sur la tech</li><li>Solana = chain dominante memecoins (frais bas, vitesse)</li><li>Cycle : Launch → Pump.fun → Raydium → Pump → Dump</li><li>L'edge vient de l'analyse on-chain et du timing</li></ul></div>`
+      },
+      { id:'l2', title:"L'écosystème Solana", dur:'8 min', level:'debutant',
+        content:`<h3>Les acteurs clés</h3>
+<p>Pour trader efficacement, tu dois comprendre les outils qui font l'écosystème Solana. Chaque acteur joue un rôle précis dans la chaîne d'un trade.</p>
+<h3>Pump.fun — le labo à memecoins</h3>
+<p>Pump.fun est la <strong>plateforme de lancement n°1</strong> sur Solana. N'importe qui peut créer un token en 30 secondes pour environ 0,02 SOL. Le mécanisme de bonding curve garantit que le prix monte automatiquement à chaque achat.</p>
+<ul><li>Prix déterminé par la courbe, pas un LP traditionnel</li><li>À 69K$ de MC → migration automatique vers Raydium avec liquidité verrouillée</li><li>Des centaines de tokens créés chaque heure → filtre essentiel</li></ul>
+<h3>Raydium — le DEX principal</h3>
+<p>Raydium est le <strong>principal AMM (Automated Market Maker)</strong> de Solana. C'est là que les tokens arrivent après la migration de Pump.fun. Le trading y est plus libre, les volumes plus importants.</p>
+<div class="form-tip">Un token qui migre de Pump.fun vers Raydium avec du volume et des holders solides est un signal positif — les early believers ont tenu.</div>
+<h3>Jupiter — l'agrégateur</h3>
+<p>Jupiter agrège toutes les sources de liquidité de Solana pour te donner le <strong>meilleur prix possible</strong> sur chaque swap. C'est l'outil de trading utilisé par 80% des traders Solana.</p>
+<h3>DexScreener & Birdeye — la data</h3>
+<p>Ces outils permettent de visualiser en temps réel les charts, volumes, holders et transactions d'un token. Indispensables pour toute analyse.</p>
+<div class="form-key"><div class="form-key-title">Points clés</div><ul><li>Pump.fun = création + early stage (bonding curve)</li><li>Raydium = DEX principal post-migration</li><li>Jupiter = meilleur prix d'exécution</li><li>DexScreener = analyse des données on-chain</li></ul></div>`
+      },
+      { id:'l3', title:"Tokenomics : supply, liquidité & holders", dur:'10 min', level:'intermediaire',
+        content:`<h3>Comprendre la supply</h3>
+<p>La <strong>supply totale</strong> d'un memecoin est généralement fixe (1 milliard ou 1 trillion de tokens). Ce qui compte, c'est comment elle est distribuée.</p>
+<ul><li><strong>Supply max</strong> — nombre total de tokens qui existeront jamais</li><li><strong>Supply circulante</strong> — tokens actuellement en circulation</li><li><strong>Market Cap = Prix × Supply circulante</strong></li></ul>
+<h3>La liquidité</h3>
+<p>La liquidité (LP) représente les fonds disponibles dans le pool de trading. <strong>Plus la liquidité est faible, plus il est facile de manipuler le prix.</strong></p>
+<ul><li>Liquidité &lt; 5K$ → manipulation triviale, éviter</li><li>Liquidité 20K-100K$ → zone de trading des early memecoins</li><li>Liquidité &gt; 500K$ → token établi, moins de risque de rug</li></ul>
+<div class="form-warn">LP verrouillée ≠ LP burnt. Une LP verrouillée peut être déverrouillée à terme. Une LP entièrement brûlée (sent to dead wallet) est plus sûre — le dev ne peut plus retirer.</div>
+<h3>La distribution des holders</h3>
+<p>La santé d'un token se lit dans sa répartition de holders :</p>
+<ul><li><strong>Top 10 holders &gt; 30%</strong> → concentration dangereuse, risque de dump coordonné</li><li><strong>Dev wallet &gt; 5%</strong> → red flag majeur</li><li><strong>Wallet tracker actifs</strong> → smart money qui croit au projet = signal positif</li></ul>
+<h3>La market cap et le potentiel</h3>
+<p>La market cap détermine le "x" potentiel. Un token à 50K$ MC peut faire ×10 pour atteindre 500K$. Un token à 10M$ MC a besoin de 100M$ pour faire le même ×10 — beaucoup plus difficile.</p>
+<div class="form-tip">Les meilleurs setups : MC entre 50K$ et 500K$ au moment de l'entrée, liquidité &gt; 20K$, top 10 holders &lt; 25%, au moins 1 wallet smart money dedans.</div>
+<div class="form-key"><div class="form-key-title">Points clés</div><ul><li>MC = prix × supply circulante</li><li>Liquidité faible = manipulation facile</li><li>LP brûlée &gt; LP verrouillée en termes de sécurité</li><li>Top 10 holders &lt; 25% = distribution saine</li></ul></div>`
+      },
+      { id:'l4', title:"Le vocabulaire du degen", dur:'6 min', level:'debutant',
+        content:`<h3>Le lexique indispensable</h3>
+<p>La culture memecoin a son propre vocabulaire. Voici les termes que tu croiseras au quotidien sur X/Twitter, Telegram et Discord.</p>
+<h3>Termes de marché</h3>
+<ul><li><strong>Rug / Rug pull</strong> — le dev retire toute la liquidité et disparaît</li><li><strong>Pump & dump</strong> — montée artificielle suivie d'un dump massif</li><li><strong>Honeypot</strong> — contrat qui empêche la revente (tu peux acheter mais pas vendre)</li><li><strong>Bundler</strong> — script qui achète en masse depuis plusieurs wallets au lancement pour contrôler le supply</li><li><strong>Sniper</strong> — bot ou trader qui achète dans les premières secondes après le lancement</li></ul>
+<h3>Culture et sentiment</h3>
+<ul><li><strong>NGMI</strong> — Not Gonna Make It (tu vas te faire ruiner)</li><li><strong>WAGMI</strong> — We're All Gonna Make It</li><li><strong>Degen</strong> — trader agressif qui prend des risques élevés</li><li><strong>FOMO</strong> — Fear Of Missing Out, acheter par peur de manquer le pump</li><li><strong>Alpha</strong> — information exclusive ou edge qu'on n'a pas encore</li><li><strong>Ape in</strong> — acheter sans analyse, à l'instinct</li></ul>
+<h3>Métriques</h3>
+<ul><li><strong>ATH</strong> — All Time High, plus haut historique du prix</li><li><strong>MC</strong> — Market Cap</li><li><strong>LP</strong> — Liquidity Pool</li><li><strong>FDV</strong> — Fully Diluted Valuation (MC si toute la supply était en circulation)</li><li><strong>×2, ×5, ×10</strong> — multiplieur de gain depuis l'entrée</li></ul>
+<div class="form-tip">Comprendre le vocabulaire, c'est comprendre les conversations alpha. Sur Telegram et X, les signaux viennent souvent avant les charts.</div>
+<div class="form-key"><div class="form-key-title">Points clés</div><ul><li>Rug = retrait LP par le dev</li><li>Bundler = achat coordonné au launch = red flag</li><li>Alpha = info exclusive = edge</li><li>FDV ≠ MC — méfie-toi des FDV gonflés</li></ul></div>`
+      }
+    ]
+  },
+  {
+    id:'m2', title:'Lire les données on-chain', icon:'📊', color:'#0ea5e9',
+    lessons:[
+      { id:'l1', title:'Maîtriser DexScreener', dur:'8 min', level:'debutant',
+        content:`<h3>L'interface en un coup d'œil</h3>
+<p>DexScreener est l'outil d'analyse le plus utilisé pour les memecoins. Il centralise toutes les données d'un token : prix, volume, liquidité, holders, transactions.</p>
+<h3>Les métriques essentielles</h3>
+<ul><li><strong>Prix & Market Cap</strong> — en haut à gauche, avec l'évolution sur 5m / 1h / 6h / 24h</li><li><strong>Volume 24h</strong> — le volume de trading. Un bon signal si &gt; 10% de la MC</li><li><strong>Liquidité</strong> — doit être &gt; 20K$ pour un memecoin sain</li><li><strong>Holders</strong> — nombre de wallets uniques. Croissance = adoption</li><li><strong>Txns 24h</strong> — buys vs sells. Un ratio buy/sell &gt; 60% est positif</li></ul>
+<h3>Lire le chart</h3>
+<p>Le chart DexScreener montre les <strong>bougies OHLC</strong> (Open, High, Low, Close). Les patterns importants :</p>
+<ul><li><strong>Consolidation avant pump</strong> → bougies serrées, volume bas, puis cassure</li><li><strong>Higher highs / Higher lows</strong> → tendance haussière, structure intacte</li><li><strong>Wick long vers le bas</strong> → absorption des vendeurs, potentiel rebond</li><li><strong>Volume décroissant sur pump</strong> → faiblesse, pump non confirmé</li></ul>
+<div class="form-tip">Active l'affichage des transactions en bas de page sur DexScreener. Tu peux voir en temps réel qui achète et qui vend, et les montants. Un gros wallet qui accumule discrètement = signal fort.</div>
+<h3>La section Info</h3>
+<p>Clique sur "Info" pour accéder aux métadonnées du token : liens sociaux (Twitter, Telegram, site), age du token, audit si disponible, et les liens vers Solscan.</p>
+<div class="form-warn">L'absence de liens sociaux vérifiables = red flag. Un projet sérieux a au minimum un Twitter et un Telegram actifs.</div>
+<div class="form-key"><div class="form-key-title">Points clés</div><ul><li>Volume &gt; 10% MC = activité saine</li><li>Liquidité &gt; 20K$ = minimum acceptable</li><li>Ratio buy/sell &gt; 60% = pression acheteuse</li><li>Vérifie TOUJOURS les liens sociaux</li></ul></div>`
+      },
+      { id:'l2', title:'Market Cap, FDV et Volume', dur:'7 min', level:'intermediaire',
+        content:`<h3>Market Cap vs FDV</h3>
+<p>Ces deux métriques sont souvent confondues mais <strong>critiques à différencier</strong> :</p>
+<ul><li><strong>Market Cap</strong> = Prix × Supply en circulation actuellement</li><li><strong>FDV</strong> = Prix × Supply TOTALE (même non encore en circulation)</li></ul>
+<p>Pour un memecoin avec supply fixe entièrement en circulation, MC = FDV. Mais si seulement 50% de la supply circule, le FDV est le double de la MC — ce qui signifie que du supply additionnel peut être vendu.</p>
+<div class="form-warn">Un FDV >> MC signifie que des gros holders (team, early investors) ont des tokens non déblocables qu'ils peuvent vendre. Méfiance.</div>
+<h3>Le volume et ce qu'il révèle</h3>
+<p>Le volume est l'un des indicateurs les plus fiables :</p>
+<ul><li><strong>Volume / MC &gt; 100%</strong> → activité intense, momentum fort (ou manipulation)</li><li><strong>Volume croissant + prix stable</strong> → accumulation discrète</li><li><strong>Volume décroissant + prix qui pump</strong> → pump artificiel, risque élevé</li><li><strong>Volume &gt; 1M$ en 24h</strong> → token qui passe en trending, nouvelle vague d'attention</li></ul>
+<h3>Calculer les objectifs de prix</h3>
+<p>Avant d'entrer sur un token, calcule <strong>les cibles réalistes</strong> :</p>
+<ul><li>Token à 100K$ MC → ×5 = 500K$ → ×10 = 1M$</li><li>À 1M$ MC, un ×10 demande 10M$ de MC — est-ce réaliste vu le narrative ?</li><li>Compare au MC d'autres memecoins similaires à leur peak</li></ul>
+<div class="form-tip">La méthode des comparables : si un memecoin similaire (même niche, même période de marché) a atteint 5M$ de MC, ton token peut viser 5M$ — calcule ton multiple depuis ton entrée.</div>
+<div class="form-key"><div class="form-key-title">Points clés</div><ul><li>FDV = dilution potentielle, vérifier toujours</li><li>Volume/MC &gt; 100% = momentum ou manipulation</li><li>Calcule toujours les cibles avant d'entrer</li><li>Benchmark sur des comparables du même cycle</li></ul></div>`
+      },
+      { id:'l3', title:'Holders, Smart Money & wallets', dur:'10 min', level:'intermediaire',
+        content:`<h3>Pourquoi les holders sont critiques</h3>
+<p>La distribution des holders est l'un des meilleurs indicateurs de santé d'un token. Un token avec 5 wallets qui détiennent 80% du supply est une bombe à retardement.</p>
+<h3>Analyser la distribution</h3>
+<ul><li><strong>Top 10 holders</strong> → idéalement &lt; 25% du supply. Sur DexScreener, clique "Holders"</li><li><strong>LP address</strong> → souvent classé dans le top, déduis-le de l'analyse</li><li><strong>Wallets &lt; 1000 tokens</strong> → retail holders = base saine</li><li><strong>Wallets qui achètent régulièrement</strong> → conviction forte</li></ul>
+<h3>Le Smart Money</h3>
+<p>Le "Smart Money" désigne les <strong>wallets de traders professionnels</strong> avec un track record prouvé. Quand un de ces wallets entre sur un token, c'est un signal fort — ils ont fait leur analyse avant toi.</p>
+<ul><li>Identifiés par leur historique de trades gagnants</li><li>Souvent des KOL (Key Opinion Leaders) ou fonds crypto</li><li>Leurs achats sont visibles on-chain — rien n'est caché sur Solana</li></ul>
+<div class="form-tip">MemeScanner track 1000+ wallets Smart Money en temps réel. Quand plusieurs de ces wallets entrent sur le même token dans la même heure, le score monte significativement — c'est exactement ce signal qu'on cherche.</div>
+<h3>Détecter les bundlers</h3>
+<p>Un bundler est un script qui achète un token depuis <strong>des dizaines de wallets différents au même bloc</strong>. L'objectif : contrôler 20-40% du supply dès le lancement, créer une illusion d'adoption, puis dump.</p>
+<p>Comment les repérer :</p>
+<ul><li>Des dizaines de wallets ont acheté au même timestamp exactement</li><li>Ces wallets n'avaient jamais tradé avant ce token</li><li>Souvent financés depuis le même wallet source</li></ul>
+<div class="form-warn">Un token bundlé n'est pas systématiquement à éviter (parfois l'équipe bundle pour contrôler la liquidité initiale), mais augmente fortement le risque de dump coordonné.</div>
+<div class="form-key"><div class="form-key-title">Points clés</div><ul><li>Top 10 holders &lt; 25% = bonne distribution</li><li>Smart Money = wallets à track record → signal d'achat</li><li>Bundler = achat coordonné au lancement = risque élevé</li><li>Toujours checker Solscan pour les gros holders</li></ul></div>`
+      },
+      { id:'l4', title:'Red flags et arnaques courantes', dur:'8 min', level:'debutant',
+        content:`<h3>Les signaux d'alerte à ne jamais ignorer</h3>
+<p>Avant d'entrer sur un token, passe une checklist de red flags. Chaque item coché réduit drastiquement les risques.</p>
+<h3>Red flags majeurs (= ne pas entrer)</h3>
+<ul><li><strong>Honeypot</strong> → simuler une vente avec TokenSniffer ou Rugcheck avant d'acheter</li><li><strong>LP non verrouillée ET non brûlée</strong> → le dev peut retirer à tout moment</li><li><strong>Dev wallet &gt; 10%</strong> → pression de vente imminente</li><li><strong>Bundling massif au launch</strong> → 30-40% contrôlés par quelques wallets liés</li><li><strong>Mint authority active</strong> → le dev peut créer de nouveaux tokens et diluer</li><li><strong>Freeze authority active</strong> → le dev peut geler ton wallet</li></ul>
+<div class="form-warn">Freeze authority = absolument rédhibitoire. Si active, le créateur du token peut bloquer tes fonds. C'est rare mais existe.</div>
+<h3>Red flags modérés (= réduire la position)</h3>
+<ul><li><strong>Liens sociaux absents ou créés le jour J</strong></li><li><strong>Nom/ticker déjà utilisé par un projet rugué</strong></li><li><strong>Chart en parfaite escalier (pump artificiel)</strong></li><li><strong>Très peu de holders malgré un MC élevé</strong></li><li><strong>Volume uniquement en buys, zéro sells</strong> → simulation de volume</li></ul>
+<h3>Comment vérifier</h3>
+<ul><li><strong>Rugcheck.xyz</strong> → analyse automatique des risques du contrat</li><li><strong>Solscan</strong> → voir les top holders et les transactions du dev</li><li><strong>Birdeye</strong> → checker l'age du dev wallet et son historique</li></ul>
+<div class="form-tip">La règle des 2 minutes : avant chaque trade, passe 2 minutes sur Rugcheck + DexScreener holders. Ça prend 2 min et peut éviter de perdre 100% de ta mise.</div>
+<div class="form-key"><div class="form-key-title">Checklist avant entrée</div><ul><li>✓ LP verrouillée ou brûlée</li><li>✓ Mint authority désactivée</li><li>✓ Freeze authority désactivée</li><li>✓ Dev wallet &lt; 5%</li><li>✓ Liens sociaux vérifiables</li><li>✓ Pas de bundling massif</li></ul></div>`
+      }
+    ]
+  },
+  {
+    id:'m3', title:'Stratégies de trading', icon:'⚡', color:'#f59e0b',
+    lessons:[
+      { id:'l1', title:'Early entry vs momentum', dur:'10 min', level:'intermediaire',
+        content:`<h3>Deux approches, deux profils de risque</h3>
+<p>Il n'y a pas de "bonne" stratégie universelle — il y a des stratégies adaptées à ton profil de risque et à ta disponibilité.</p>
+<h3>L'early entry (entrée précoce)</h3>
+<p>Tu achètes dans les premières minutes ou heures après le lancement, quand la MC est encore basse (5K-50K$).</p>
+<ul><li><strong>Avantage</strong> → potentiel de ×10, ×50, ×100 si le token pump</li><li><strong>Inconvénient</strong> → 80-90% des tokens échouent à ce stade</li><li><strong>Profil</strong> → trader actif, disponible, avec une gestion du risque stricte</li><li><strong>Sizing recommandé</strong> → 0,5% - 2% de ton capital par trade</li></ul>
+<div class="form-tip">En early entry, tu compenses le taux d'échec élevé par un risk/reward asymétrique : perte max = 100% de ta mise (souvent 1-2% du capital), gain potentiel = ×10 à ×100.</div>
+<h3>Le momentum (entrée sur confirmation)</h3>
+<p>Tu attends une première confirmation — volume qui explose, KOL qui tweete, migration Raydium — avant d'entrer.</p>
+<ul><li><strong>Avantage</strong> → meilleur taux de succès, signal plus clair</li><li><strong>Inconvénient</strong> → tu n'es plus aux meilleures conditions d'entrée, ×5 max probable</li><li><strong>Profil</strong> → trader plus patient, moins de transactions</li><li><strong>Sizing recommandé</strong> → 2% - 5% de ton capital</li></ul>
+<h3>La stratégie hybride</h3>
+<p>Les meilleurs traders combinent les deux : <strong>une petite position early entry</strong> (1%) dès que le scanner call, et <strong>un renforcement momentum</strong> (2-3%) si le token confirme avec volume et KOL.</p>
+<div class="form-warn">Ne jamais moyenner à la baisse sur un memecoin. Si ton early entry dump de 50%, ne renforce pas — la thèse est invalidée.</div>
+<div class="form-key"><div class="form-key-title">Points clés</div><ul><li>Early entry = risque élevé, reward élevé, petit sizing</li><li>Momentum = risque modéré, reward modéré, sizing plus large</li><li>Hybride = meilleur des deux mondes</li><li>Ne jamais moyenner à la baisse</li></ul></div>`
+      },
+      { id:'l2', title:'Risk management & sizing', dur:'12 min', level:'intermediaire',
+        content:`<h3>La règle qui différencie les survivants</h3>
+<p>La plupart des traders qui perdent tout n'ont pas échoué par manque d'alpha — ils ont échoué par mauvaise gestion du risque. Un seul trade trop gros peut effacer des semaines de gains.</p>
+<h3>Le sizing par trade</h3>
+<p>La règle de base : <strong>ne jamais risquer plus de 2-3% de ton capital total sur un seul trade.</strong></p>
+<ul><li>Capital 1000$ → max 20-30$ par trade memecoin early entry</li><li>Capital 5000$ → max 100-150$ par trade</li><li>Capital 10000$ → max 200-300$ par trade</li></ul>
+<div class="form-tip">Si ton capital est de 1000$ et tu fais 20 trades à 2% de sizing, tu peux perdre les 20 en même temps et il te reste encore 600$. Avec 10% de sizing, 5 mauvais trades d'affilée = 50% de drawdown.</div>
+<h3>Le stop-loss mental</h3>
+<p>Sur les memecoins, un stop-loss sur plateforme n'est souvent pas possible. Tu dois définir ton <strong>stop-loss mental avant d'entrer</strong> :</p>
+<ul><li>Early entry : stop à -50% (MC divisée par 2)</li><li>Momentum entry : stop à -30%</li><li>Si le token perd ses liens sociaux ou le dev vend → sortie immédiate</li></ul>
+<h3>Le take profit progressif</h3>
+<p>Ne jamais sortir en une seule fois. Utilise les <strong>paliers de sortie</strong> :</p>
+<ul><li><strong>×2</strong> → sors 30% (récupère ta mise initiale)</li><li><strong>×5</strong> → sors 30% supplémentaires</li><li><strong>×10+</strong> → laisse courir les 40% restants ("free money")</li></ul>
+<div class="form-warn">La discipline du take profit est ce qui sépare un bon trade d'un mauvais. Beaucoup de traders ont vu leur ×10 se transformer en -80% faute de sortie partielle.</div>
+<h3>Le drawdown maximum toléré</h3>
+<p>Définis ton <strong>drawdown maximum mensuel</strong> : si tu perds X% en un mois, tu t'arrêtes pour analyser. La plupart des pros se fixent 15-20% de drawdown max mensuel.</p>
+<div class="form-key"><div class="form-key-title">Points clés</div><ul><li>Max 2-3% du capital par trade</li><li>Stop-loss mental défini AVANT l'entrée</li><li>Take profit progressif : ×2, ×5, ×10+</li><li>Drawdown max mensuel = règle sacrée</li></ul></div>`
+      },
+      { id:'l3', title:'Le Rug Sniping expliqué', dur:'9 min', level:'avance',
+        content:`<h3>C'est quoi le rug sniping ?</h3>
+<p>Le rug sniping, c'est <strong>entrer intentionnellement sur un token en phase de rug pull</strong> pour profiter de la chute. Contre-intuitif, mais c'est une stratégie qui fonctionne quand elle est bien exécutée.</p>
+<h3>Comment un rug se déroule</h3>
+<p>Un rug pull suit un pattern assez prévisible :</p>
+<ul><li><strong>Phase 1</strong> → Le dev vend massivement, le prix chute brusquement de 30-60%</li><li><strong>Phase 2</strong> → Panique des holders retail, ventes en cascade</li><li><strong>Phase 3</strong> → Stabilisation temporaire si une communauté forte existe</li><li><strong>Phase 4</strong> → Soit mort lent, soit revival (buyback communautaire)</li></ul>
+<div class="form-tip">Le "rug snip" consiste à acheter pendant la phase 2 — quand tout le monde panique — pour revendre pendant une phase 3 de rebond. Le timing est clé.</div>
+<h3>Les conditions d'un bon rug snip</h3>
+<ul><li>Token avec une forte communauté (Telegram actif, 1000+ holders)</li><li>Rug partiel du dev, pas total (LP encore présente)</li><li>Volume de sell qui se tarit (moins de pression vendeuse)</li><li>Un ou plusieurs wallets smart money qui rebuy</li><li>Narrative fort (token reconnaissable, pas un énième copier-coller)</li></ul>
+<h3>Les risques</h3>
+<ul><li>Le rug peut être total — tu achètes 0</li><li>Pas de rebond — tu restes coincé dans un token mort</li><li>Deuxième wave de dump — les holders qui avaient résisté finissent par vendre</li></ul>
+<div class="form-warn">Le rug sniping n'est PAS une stratégie pour débutants. Elle demande une excellente lecture des charts, de l'on-chain et une gestion du risque irréprochable. Sizing max = 0,5-1% du capital.</div>
+<h3>Comment MemeScanner aide</h3>
+<p>La section Rug Snip de MemeScanner détecte automatiquement les patterns de rug (vente dev massive, chute de prix brutale) et te les présente en temps réel. Tu peux voir le % de chute, le volume restant et les signaux de rebond.</p>
+<div class="form-key"><div class="form-key-title">Points clés</div><ul><li>Rug snip = entrer pendant la panique pour revendre sur rebond</li><li>Nécessite : communauté forte, LP résiduelle, smart money rebuy</li><li>Sizing ultra-réduit : 0,5-1% du capital</li><li>Stratégie avancée uniquement</li></ul></div>`
+      },
+      { id:'l4', title:'Copy trading & KOL tracking', dur:'8 min', level:'intermediaire',
+        content:`<h3>Pourquoi suivre les wallets des pros</h3>
+<p>Sur Solana, toutes les transactions sont publiques et traçables. Cela signifie qu'on peut <strong>identifier les wallets des meilleurs traders</strong> et suivre leurs mouvements en temps réel.</p>
+<h3>Les KOL (Key Opinion Leaders)</h3>
+<p>Les KOL sont des influenceurs crypto qui ont un impact direct sur le prix des memecoins. Quand un KOL tweete à 500K abonnés "j'ai acheté X", le token pumpe dans les minutes qui suivent.</p>
+<ul><li>Certains KOL accumulent AVANT de tweeter — c'est là que l'edge est</li><li>Identifier leurs wallets via les analyses on-chain de leurs tweets passés</li><li>MemeScanner track leurs achats en temps réel via leurs wallets connus</li></ul>
+<div class="form-tip">Le meilleur signal KOL : un wallet connu achète un token AVANT que le KOL tweete. C'est l'alpha maximal — tu es positionné avant l'annonce publique.</div>
+<h3>Les wallets Smart Money</h3>
+<p>Au-delà des KOL, il existe des wallets de traders discrets avec un track record exceptionnel. Ils n'ont pas de followers Twitter mais leurs trades sont presque toujours gagnants.</p>
+<ul><li>Identifiés par leur historique : taux de wins &gt; 70%, average ×5+ sur les gains</li><li>Souvent les premiers sur un nouveau token (avant tout le monde)</li><li>Leur accumulation = signal plus fort qu'un tweet</li></ul>
+<h3>Limites du copy trading</h3>
+<ul><li>Tu arrives toujours APRÈS eux — le prix a déjà bougé</li><li>Ils peuvent vendre à tout moment sans prévenir</li><li>Certains wallets sont suivis par des milliers de bots → price impact fort à l'entrée</li></ul>
+<div class="form-warn">Ne copie jamais à l'aveugle. Utilise les wallets smart money comme signal de confirmation, pas comme instruction directe. Toujours faire ta propre analyse du token avant d'entrer.</div>
+<div class="form-key"><div class="form-key-title">Points clés</div><ul><li>KOL wallet = signal fort AVANT le tweet public</li><li>Smart Money = traders discrets à track record prouvé</li><li>Utilise comme confirmation, jamais à l'aveugle</li><li>Arrive-t-on avant ou après le gros volume ?</li></ul></div>`
+      }
+    ]
+  },
+  {
+    id:'m4', title:'Maîtriser MemeScanner', icon:'🔍', color:'#00ff88',
+    lessons:[
+      { id:'l1', title:'Le scanner live et les scores', dur:'7 min', level:'debutant',
+        content:`<h3>Comment fonctionne le scanner</h3>
+<p>MemeScanner tourne en continu et analyse des centaines de tokens toutes les 45 secondes. Chaque token reçoit un <strong>score sur 150 points</strong> selon 12 critères pondérés.</p>
+<h3>Les composantes du score</h3>
+<ul><li><strong>Wallet & KOL Analysis (40 pts)</strong> → nombre de wallets smart money, KOL et gros traders présents</li><li><strong>Holder Score (25 pts)</strong> → qualité de la distribution, présence de pros dans le top 50</li><li><strong>Pattern Score (20 pts)</strong> → liquidité, volume h1, accélération du volume</li><li><strong>Social Score (20 pts)</strong> → présence et qualité des liens sociaux</li><li><strong>Age & Momentum (15 pts)</strong> → âge du token, variation de prix 5m/1h</li><li><strong>MC Score (10 pts)</strong> → plage de MC optimale</li><li><strong>GMGN Score (10 pts)</strong> → activité on-chain GMGN</li><li><strong>Rug Risk (-20 pts)</strong> → pénalités pour risques détectés</li></ul>
+<h3>Les labels</h3>
+<ul><li><strong>☢️ NUCLEAR SEND</strong> (≥130) → signal le plus fort, tous les critères au vert</li><li><strong>💎 DIAMOND RADAR</strong> (≥110) → très fort signal, haut de gamme</li><li><strong>🚀 EARLY RUNNER</strong> (≥95) → signal fort, early stage confirmé</li><li><strong>📋 CALL</strong> (≥80) → call standard, bon setup</li><li><strong>📡 ON RADAR</strong> (≥55) → token intéressant, à surveiller</li></ul>
+<div class="form-tip">Les tokens NUCLEAR SEND et DIAMOND RADAR sont rarissimes — quelques par semaine. Ce sont ceux qui génèrent les meilleurs multiples. Ne les rate pas.</div>
+<h3>Les filtres</h3>
+<p>Utilise les filtres Score min et KOL toggle pour affiner l'affichage selon ta stratégie. Un filtre "80+ + ≥1 KOL" te donne les meilleurs setups du jour.</p>
+<div class="form-key"><div class="form-key-title">Points clés</div><ul><li>Score basé sur 12 critères, max 150 pts</li><li>NUCLEAR SEND / DIAMOND RADAR = signaux les plus rares et les plus forts</li><li>Filtre 80+ avec KOL = meilleurs setups</li><li>Rafraîchissement toutes les 45 secondes</li></ul></div>`
+      },
+      { id:'l2', title:'KOL Tracker et Wallet Tracker', dur:'6 min', level:'intermediaire',
+        content:`<h3>Le Wallet Tracker</h3>
+<p>MemeScanner analyse en temps réel les transactions de <strong>1000+ wallets</strong> identifiés comme Smart Money, KOL, gros traders et DEV. Dès qu'un de ces wallets entre sur un token, le score de ce token monte.</p>
+<h3>Les catégories de wallets</h3>
+<ul><li><strong>KOL</strong> → influenceurs crypto reconnus. Leur entrée = signal publique potentiel imminent</li><li><strong>Gros trader</strong> → traders discrétionnaires avec track record. Le plus fiable long terme</li><li><strong>DEV</strong> → wallets de développeurs connus. Si un dev est présent = peut indiquer un projet sérieux</li><li><strong>Farmer</strong> → wallets qui farm les airdrops. Signal neutre à négatif</li></ul>
+<h3>Lire les données wallet sur une carte token</h3>
+<p>Sur chaque card du scanner, tu vois :</p>
+<ul><li>Le nombre de KOL présents (ex: "3 KOL")</li><li>Le nombre de gros traders (ex: "2 traders")</li><li>En cliquant sur la card → détail de chaque wallet avec son nom et son type</li></ul>
+<div class="form-tip">Le combo le plus fort : 2+ KOL + 2+ gros traders sur le même token au même moment. Ce signal combiné donne un bonus de +20 points dans l'algo — c'est rare, et c'est de l'or.</div>
+<h3>Le KOL Tracker Twitter</h3>
+<p>Au-delà des wallets, MemeScanner track les <strong>mentions de tokens sur Twitter par les KOL identifiés</strong>. Tu es alerté avant que le tweet devienne viral.</p>
+<div class="form-key"><div class="form-key-title">Points clés</div><ul><li>1000+ wallets suivis en continu</li><li>KOL + gros trader sur même token = signal or</li><li>Bonus combo +20pts dans l'algo</li><li>KOL Twitter tracker = alpha avant la viralité</li></ul></div>`
+      },
+      { id:'l3', title:'Rug Snip, Paper Bot et Portfolio', dur:'8 min', level:'avance',
+        content:`<h3>Le Rug Snip en pratique</h3>
+<p>La section Rug Snip de MemeScanner détecte automatiquement les <strong>patterns de rug en cours</strong> sur Solana. Chaque card affiche :</p>
+<ul><li>Le % de dump depuis le pic (ex: "Crash 1h -58%")</li><li>L'âge au moment du rug</li><li>Le volume restant et la liquidité</li><li>Les signaux de rebond potentiel</li></ul>
+<h3>Comment utiliser Rug Snip</h3>
+<p>Regarde la liste des rugs détectés. Pour chaque token, évalue :</p>
+<ul><li>Le dump est-il total (LP retirée) ou partiel ?</li><li>Y a-t-il encore du volume de buy ?</li><li>La communauté réagit-elle (Telegram actif, reposts X) ?</li></ul>
+<div class="form-tip">Les meilleures opportunités de rug snip arrivent 15-30 minutes après le rug initial, quand la panique est au maximum mais que le token a encore de la liquidité.</div>
+<h3>Le Paper Bot</h3>
+<p>Le Paper Bot simule des trades automatiques sur chaque call du scanner, sans capital réel. Il te permet de :</p>
+<ul><li>Tester ta stratégie de sizing et de TP sans risque</li><li>Mesurer la performance réelle de l'algo sur tes paramètres</li><li>Affiner les seuils de score minimum avant de passer en mode réel</li></ul>
+<h3>Le Portfolio Tracker</h3>
+<p>Connecte ton wallet Solana pour voir en temps réel :</p>
+<ul><li>Toutes tes positions (tokens détenus + valeur USD)</li><li>Variation 24h de chaque token</li><li>Valeur totale du portfolio</li><li>Un badge SCAN sur les tokens qui ont été callés par MemeScanner</li></ul>
+<div class="form-key"><div class="form-key-title">Points clés</div><ul><li>Rug Snip = opération 15-30min après le rug, taille ultra-réduite</li><li>Paper Bot = teste sans risque avant le mode réel</li><li>Portfolio = suivi de positions + cross-référence avec scanner</li><li>Toujours vérifier LP encore présente avant rug snip</li></ul></div>`
+      }
+    ]
+  }
+];
+
+const FORM_STORAGE_KEY = 'ms_formation_v1';
+
+function formGetProgress(){
+  try{return JSON.parse(localStorage.getItem(FORM_STORAGE_KEY)||'{}');}catch(e){return{};}
+}
+function formMarkDone(moduleId, lessonId){
+  const p=formGetProgress();
+  p[moduleId+'_'+lessonId]=true;
+  localStorage.setItem(FORM_STORAGE_KEY, JSON.stringify(p));
+}
+function formIsLessonDone(moduleId, lessonId){
+  return !!formGetProgress()[moduleId+'_'+lessonId];
+}
+function formTotalLessons(){return FORMATION_DATA.reduce((s,m)=>s+m.lessons.length,0);}
+function formCompletedLessons(){const p=formGetProgress();return Object.keys(p).filter(k=>p[k]).length;}
+
+function showFormation(){
+  document.body.classList.add('view-formation');
+  formRenderSidebar();
+  document.getElementById('formWelcome').style.display='flex';
+  document.getElementById('formLessonView').style.display='none';
+  formUpdateGlobalProgress();
+}
+function hideFormation(){
+  document.body.classList.remove('view-formation');
+  document.body.classList.add('view-outils');
+}
+
+function formUpdateGlobalProgress(){
+  const total=formTotalLessons(), done=formCompletedLessons();
+  const pct=total?Math.round(done/total*100):0;
+  const fill=document.getElementById('formGlobalFill');
+  const lbl=document.getElementById('formGlobalPct');
+  if(fill)fill.style.width=pct+'%';
+  if(lbl)lbl.textContent=pct+'%';
+}
+
+function formRenderSidebar(){
+  const prog=formGetProgress();
+  const container=document.getElementById('formModulesList');
+  if(!container)return;
+  container.innerHTML=FORMATION_DATA.map((mod,mi)=>{
+    const total=mod.lessons.length;
+    const done=mod.lessons.filter(l=>prog[mod.id+'_'+l.id]).length;
+    const pct=total?Math.round(done/total*100):0;
+    return`<div class="form-module-block${mi===0?' open':''}" id="fmod-${mod.id}">
+      <div class="form-module-hd" onclick="formToggleModule('${mod.id}')">
+        <div class="form-module-icon" style="background:${mod.color}22;color:${mod.color}">${mod.icon}</div>
+        <div class="form-module-meta">
+          <div class="form-module-name">${mod.title}</div>
+          <div class="form-module-progress">${done}/${total} leçons · ${pct}%</div>
+        </div>
+        <span class="form-module-chevron">▾</span>
+      </div>
+      <div class="form-module-bar"><div class="form-module-bar-fill" style="width:${pct}%;background:${mod.color}"></div></div>
+      <div class="form-lessons-list">
+        ${mod.lessons.map((l,li)=>{
+          const isDone=prog[mod.id+'_'+l.id];
+          return`<button class="form-lesson-btn${isDone?' done':''}" id="fbtn-${mod.id}-${l.id}" onclick="formOpenLesson('${mod.id}','${l.id}')">
+            <span class="form-lesson-num">${li+1}</span>
+            <span class="form-lesson-title">${l.title}</span>
+            <span class="form-lesson-dur">${l.dur}</span>
+            <span class="form-lesson-check">${isDone?'✓':'○'}</span>
+          </button>`;
+        }).join('')}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function formToggleModule(modId){
+  const el=document.getElementById('fmod-'+modId);
+  if(el)el.classList.toggle('open');
+}
+
+function formOpenLesson(moduleId, lessonId){
+  const mod=FORMATION_DATA.find(m=>m.id===moduleId);
+  if(!mod)return;
+  const lesson=mod.lessons.find(l=>l.id===lessonId);
+  if(!lesson)return;
+
+  // Ouvrir le module dans la sidebar
+  document.querySelectorAll('.form-module-block').forEach(b=>b.classList.remove('open'));
+  const modBlock=document.getElementById('fmod-'+moduleId);
+  if(modBlock)modBlock.classList.add('open');
+
+  // Highlight leçon active
+  document.querySelectorAll('.form-lesson-btn').forEach(b=>b.classList.remove('active'));
+  const activeBtn=document.getElementById('fbtn-'+moduleId+'-'+lessonId);
+  if(activeBtn)activeBtn.classList.add('active');
+
+  // Badges
+  const levelLabels={debutant:'Débutant',intermediaire:'Intermédiaire',avance:'Avancé'};
+  const badges=`<span class="form-badge ${lesson.level}">${levelLabels[lesson.level]||lesson.level}</span>
+    <span class="form-badge dur">⏱ ${lesson.dur}</span>`;
+
+  // Navigation prev/next
+  const allLessons=[];
+  FORMATION_DATA.forEach(m=>m.lessons.forEach(l=>allLessons.push({mId:m.id,lId:l.id})));
+  const idx=allLessons.findIndex(x=>x.mId===moduleId&&x.lId===lessonId);
+  const prev=allLessons[idx-1];
+  const next=allLessons[idx+1];
+  const isDone=formIsLessonDone(moduleId,lessonId);
+
+  const navBar=`
+    ${prev?`<button class="form-nav-btn" onclick="formOpenLesson('${prev.mId}','${prev.lId}')">← Précédente</button>`:'<span></span>'}
+    <button class="form-complete-btn${isDone?' done':''}" id="formCompleteBtn" onclick="formComplete('${moduleId}','${lessonId}','${next?next.mId:''}','${next?next.lId:''}')">
+      ${isDone?'✓ Terminé':'Marquer comme terminé →'}
+    </button>
+    ${next?`<button class="form-nav-btn" onclick="formOpenLesson('${next.mId}','${next.lId}')">Suivante →</button>`:'<span></span>'}
+  `;
+
+  document.getElementById('formBreadcrumb').textContent=`${mod.title} — Leçon ${mod.lessons.indexOf(lesson)+1}`;
+  document.getElementById('formLessonTitle').textContent=lesson.title;
+  document.getElementById('formLessonBadges').innerHTML=badges;
+  document.getElementById('formLessonBody').innerHTML=lesson.content;
+  document.getElementById('formNavBar').innerHTML=navBar;
+  document.getElementById('formWelcome').style.display='none';
+  document.getElementById('formLessonView').style.display='block';
+  document.getElementById('formMain').scrollTop=0;
+  // scroll sidebar vers la leçon active
+  if(activeBtn)activeBtn.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+function formComplete(moduleId, lessonId, nextMId, nextLId){
+  formMarkDone(moduleId, lessonId);
+  const btn=document.getElementById('formCompleteBtn');
+  if(btn){btn.classList.add('done');btn.textContent='✓ Terminé';}
+  // Update sidebar
+  const lBtn=document.getElementById('fbtn-'+moduleId+'-'+lessonId);
+  if(lBtn){lBtn.classList.add('done');lBtn.querySelector('.form-lesson-check').textContent='✓';}
+  formRenderSidebar();
+  formUpdateGlobalProgress();
+  // Highlight active lesson again after sidebar re-render
+  const activeBtn=document.getElementById('fbtn-'+moduleId+'-'+lessonId);
+  if(activeBtn)activeBtn.classList.add('active');
+  // Auto-next after 800ms
+  if(nextMId&&nextLId)setTimeout(()=>formOpenLesson(nextMId,nextLId),700);
+}
+
 function closePnl(){document.getElementById('pnlOverlay').classList.remove('open');}
 function pnlCopyAddr(){
   const a=window._pnlCurrentAddr; if(!a)return;
@@ -15305,7 +15788,51 @@ function scrollToSection(id){
     }
   } catch(e) {}
 })();
-</script></body>
+</script>
+
+<!-- ══════════════════════════════════════════════════════════
+     SECTION FORMATION
+════════════════════════════════════════════════════════════ -->
+<div id="formation-section">
+  <div class="form-layout">
+    <!-- SIDEBAR -->
+    <aside class="form-sidebar" id="formSidebar">
+      <div class="form-sidebar-header">
+        <div class="form-sidebar-back" onclick="hideFormation()">← Retour</div>
+        <div class="form-sidebar-title">🎓 Formation Memecoin</div>
+        <div class="form-global-row">
+          <div class="form-global-bar"><div class="form-global-fill" id="formGlobalFill" style="width:0%"></div></div>
+          <span class="form-global-pct" id="formGlobalPct">0%</span>
+        </div>
+      </div>
+      <div id="formModulesList"></div>
+    </aside>
+    <!-- MAIN -->
+    <main class="form-main" id="formMain">
+      <div id="formWelcome" class="form-welcome">
+        <div class="form-welcome-icon">🚀</div>
+        <div class="form-welcome-title">Devenez un Expert Memecoin</div>
+        <div class="form-welcome-sub">4 modules progressifs pour maîtriser l'analyse on-chain, les stratégies de trading et les outils MemeScanner.</div>
+        <div class="form-stat-row">
+          <div class="form-stat"><div class="form-stat-num">4</div><div class="form-stat-lbl">Modules</div></div>
+          <div class="form-stat"><div class="form-stat-num">15</div><div class="form-stat-lbl">Leçons</div></div>
+          <div class="form-stat"><div class="form-stat-num">~2h</div><div class="form-stat-lbl">De contenu</div></div>
+        </div>
+        <button class="form-start-btn" onclick="formOpenLesson('m1','l1')">Commencer la formation →</button>
+      </div>
+      <div id="formLessonView" style="display:none">
+        <div class="form-lesson-header">
+          <div class="form-lesson-breadcrumb" id="formBreadcrumb"></div>
+          <div class="form-lesson-h1" id="formLessonTitle"></div>
+          <div class="form-lesson-badges" id="formLessonBadges"></div>
+        </div>
+        <div class="form-body" id="formLessonBody"></div>
+        <div class="form-nav-bar" id="formNavBar"></div>
+      </div>
+    </main>
+  </div>
+</div>
+</body>
 </html>
 
 
